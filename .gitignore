@@ -1,0 +1,64 @@
+# Python byte code
+*.pyc
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Certificates
+*.pem
+*.cert
+
+# OS generated files
+.DS_Store*
+.AppleDouble
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Development files
+docs/book/_build/
+.idea/
+.project
+.pydevproject
+
+# Python package stuff
+.eggs/
+.cache
+Cuckoo.egg-info/
+venv
+lib/python2.7/
+build/
+dist/
+local/
+.pytest_cache/
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Cuckoo package stuff
+cuckoo/private/.cwd
+
+# Frontend compilation services
+node_modules/
+bower_components/
+.sass-cache/
+cuckoo/web/src/package-lock.json
+*.map
