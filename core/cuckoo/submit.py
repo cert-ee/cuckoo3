@@ -8,42 +8,13 @@ from datetime import datetime
 
 from cuckoo.processing import typehelpers
 
-from . import machinery
-from .ipc import message_unix_socket
-from .storage import Binaries, make_analysis_folder, Paths, AnalysisPaths
+from cuckoo.common.ipc import message_unix_socket
+from cuckoo.common.storage import (
+    Binaries, make_analysis_folder, Paths, AnalysisPaths
+)
 
 class SubmissionError(Exception):
     pass
-
-
-class Settings(typehelpers.Settings):
-    
-    def __init__(self, **kwargs):
-        try:
-            super(Settings, self).__init__(**kwargs)
-        except (ValueError, TypeError) as e:
-            raise SubmissionError(e).with_traceback(e.__traceback__)
-
-        self.check_constraints()
-
-    def check_constraints(self):
-        errors = []
-        if self.priority < 1:
-            errors.append("Priority must be 1 at least")
-        if self.machines and (self.platforms or self.machine_tags):
-            errors.append(
-                "It is not possible to specify specific machines and "
-                "platforms or tags at the same time"
-            )
-        for machine in self.machines:
-            if not machinery.name_exists(machine):
-                errors.append(f"Machine with name '{machine}' does not exist")
-
-        if errors:
-            raise SubmissionError(
-                f"One or more invalid settings were specified: "
-                f"{'. '.join(errors)}"
-            )
 
 
 def write_analysis_info(analysis_id, settings, submitted_target):
@@ -82,5 +53,5 @@ def file(file_helper, settings, file_name=None):
 
 def notify():
     message_unix_socket(
-        Paths.unix_socket("controller.sock"), {"subject": "tracknew"}
+        Paths.unix_socket("statecontroller.sock"), {"subject": "tracknew"}
     )

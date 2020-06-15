@@ -8,9 +8,17 @@ from ..helpers import Reporter
 class Event(Reporter):
 
     def report_identification(self):
-        # TODO implement this. Should send some form of 'event' so other
-        # components known this is done. This event layer does not exist yet.
+        # TODO implement this. Can be used to notify other components about
+        # this identification stage state/result
         print(
             f"Hello other components, {self.analysis.id} identification is "
+            f"done!"
+        )
+
+    def report_pre_analysis(self):
+        # TODO implement this. Can be used to notify other components about
+        # this pre-analysis stage state/result
+        print(
+            f"Hello other components, {self.analysis.id} pre analysis is "
             f"done!"
         )

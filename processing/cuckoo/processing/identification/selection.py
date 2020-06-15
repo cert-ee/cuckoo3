@@ -34,7 +34,7 @@ class Identify(Processor):
             )
 
         # Retain the original file name. Instead of the hash that
-        # originates from the file path being a path to the binaries
+        # originates from the filepath being a path to the binaries
         # folder.
         original_filename = self.analysis.submitted.filename.encode()
 
@@ -53,11 +53,15 @@ class Identify(Processor):
         selected = []
         find_selected(f, selected)
 
+        platforms = []
+        if f.platform:
+            platforms.append(f.platform)
+
         return {
             "selection": selected,
             "submitted": {
                 "filename": f.filename,
-                "platform": f.platform,
+                "platforms": platforms,
                 "size": f.filesize,
                 "package": f.package,
                 "filetype": f.magic,
@@ -103,8 +107,6 @@ class SelectFile(Processor):
         # might be different for each type of container.
         # E.g: mail, PDF, archive
         if submitted.get("type") == "container":
-            print("Yes, container")
-
             prio_order = self.CONTAINER_TYPE_PRIO.get(
                 submitted.get["media_type"]
             )
@@ -115,8 +117,6 @@ class SelectFile(Processor):
 
         if not type_priority:
             type_priority = self.PRIO_DEFAULT
-
-        print(f"Prio order is: {type_priority}")
 
         for ext in type_priority:
             for f in selection:
@@ -135,9 +135,13 @@ class SelectFile(Processor):
             else:
                 return {}
 
+        platforms = []
+        if selected.platform:
+            platforms.append(selected.platform)
+
         return {
             "filename": selected.filename,
-            "platform": selected.platform,
+            "platforms": platforms,
             "size": selected.filesize,
             "package": selected.package,
             "filetype": selected.magic,

@@ -1,0 +1,39 @@
+# Specify a Libvirt URI connection string
+dsn: "{{ dsn }}"
+
+# Specify the name of a network interface that the machines are connected to/traffic is routed over.
+# This interface is used to create network traffic dumps during analyses.
+# Example: virbr0
+interface: {{ interface }}
+
+machines:
+{% for name, machine in machines.items() %}
+  {{ name }}:
+    # The identifier of the machine that the hypervisor knows. Cuckoo will use it
+    # to ask the hypervisor to start this specific machine.
+    label: {{ machine.label}}
+    # The static IP address that has been configured inside of the machine.
+    ip: {{ machine.ip }}
+    # The operating system platform installed on the machine.
+    platform: {{ machine.platform }}
+    # A string that specifies the version of the operating system installed.
+    # Example: "10" for Windows 10, "7" for Windows 7, "18.04" for Ubuntu 18.04.
+    os_version: "{{ machine.os_version }}"
+    # (Optional) The MAC address of the network interface of the machine that is used to connect to
+    # to the resultserver and the internet.
+    mac_address: {{ machine.mac_address }}
+    # (Optional) a named snapshot that Cuckoo must restore the machine to
+    # after each analysis. If this snapshot is not provided, a 'current' snapshot must be set.
+    snapshot: {{ machine.snapshot }}
+    # (Optional) Specify the name of the network interface that should be used
+    # when dumping network traffic from this machine with tcpdump.
+    interface: {{ machine.interface }}
+    # Machine tags that identify the installed software and other characteristics of the machine.
+    # These are used to select the correct machine for a sample that has dependencies. *Notice*: correct tags are
+    # crucial in selecting machines that can actually run a submitted sample.
+    # Tags and dependencies can be defined in X config.
+    tags:
+    {% for tag in machine.tags -%}
+    - {{ tag }}
+    {% endfor -%}
+{% endfor %}

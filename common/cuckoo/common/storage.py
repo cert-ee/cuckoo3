@@ -13,19 +13,95 @@ from datetime import datetime
 
 import sflock
 
-class AnalysisPaths:
+class CWDNotSetError(Exception):
+    pass
+
+class InvalidCWDError(Exception):
+    pass
+
+class _CuckooCWD:
+
+    DEFAULT = pathlib.Path.home().joinpath(".cuckoocwd")
+
+    def __init__(self):
+        self._dir = None
+
+    @property
+    def root(self):
+        if not self._dir:
+            raise CWDNotSetError(
+                "The Cuckoo CWD must be set before performing any actions "
+                "that read from or write to it."
+            )
+
+        return self._dir
 
     @staticmethod
-    def _path(analysis_id, *args):
-        try:
-            date, analysis = analysis_id.split("-", 1)
-        except ValueError:
+    def exists(path):
+        return os.path.isdir(path)
+
+    @staticmethod
+    def is_valid(path):
+        return os.path.isfile(os.path.join(path, ".cuckoocwd"))
+
+    def set(self, path):
+        if not _CuckooCWD.exists(path):
+            raise InvalidCWDError(f"Cuckoo CWD {path} does not exist")
+
+        if not _CuckooCWD.is_valid(path):
+            raise InvalidCWDError(f"{path} is not a Cuckoo CWD")
+
+        self._dir = path
+
+    @staticmethod
+    def create(path):
+        if os.path.exists(path):
+            raise IsADirectoryError(f"Directory {path} already exists.")
+
+        os.makedirs(path)
+        for dirname in ("storage", "conf", "operational"):
+            os.makedirs(os.path.join(path, dirname))
+
+        for dirname in ("analyses", "binaries", "untracked"):
+            os.mkdir(os.path.join(path, "storage", dirname))
+
+        for dirname in ("sockets", "generated"):
+            os.mkdir(os.path.join(path, "operational", dirname))
+
+        pathlib.Path(path).joinpath(".cuckoocwd").touch()
+
+cuckoocwd = _CuckooCWD()
+
+def _split_analysis_id(analysis_id):
+        date_analysis = analysis_id.split("-", 1)
+        if len(date_analysis) != 2:
             raise ValueError(
                 "Invalid analysis ID given. Format must be YYYYMMDD-analysis"
             )
 
+        return date_analysis
+
+def _split_task_id(task_id):
+
+    analysis_id_tasknumber = task_id.split("_", 1)
+    if len(analysis_id_tasknumber) != 2:
+        raise ValueError(
+            "Invalid task ID given. Format must be analysisid_tasknumber"
+        )
+
+    date, analysis = _split_analysis_id(analysis_id_tasknumber[0])
+    return date, analysis, analysis_id_tasknumber[1]
+
+def make_task_id(analysis_id, task_number):
+    return f"{analysis_id}_{task_number}"
+
+class AnalysisPaths:
+
+    @staticmethod
+    def _path(analysis_id, *args):
+        date, analysis = _split_analysis_id(analysis_id)
         return os.path.join(
-            _cwd_root, "storage", "analyses", date, analysis, *args
+            cuckoocwd.root, "storage", "analyses", date, analysis, *args
         )
 
     @staticmethod
@@ -44,11 +120,42 @@ class AnalysisPaths:
     def submitted_file(analysis_id):
         return os.path.realpath(AnalysisPaths._path(analysis_id, "binary"))
 
+    @staticmethod
+    def analyses(*args):
+        return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+
+class TaskPaths:
+
+    @staticmethod
+    def _path(task_id,  *args):
+        date, analysis, task_number = _split_task_id(task_id)
+        return os.path.join(
+            cuckoocwd.root, "storage", "analyses", date, analysis,
+            f"task_{task_number}", *args
+        )
+
+    @staticmethod
+    def path(task_id):
+        return TaskPaths._path(task_id)
+
+    @staticmethod
+    def taskjson(task_id):
+        return TaskPaths._path(task_id, "task.json")
+
+    @staticmethod
+    def memory_dump(task_id):
+        return TaskPaths._path(task_id, "memory.dmp")
+
+
 class Paths(object):
 
     @staticmethod
     def unix_socket(sockname):
-        return os.path.join(_cwd_root, "sockets", sockname)
+        return os.path.join(cuckoocwd.root, "operational", "sockets", sockname)
+
+    @staticmethod
+    def dbfile():
+        return os.path.join(cuckoocwd.root, "cuckoo.db")
 
     @staticmethod
     def analysis(analysis):
@@ -57,13 +164,33 @@ class Paths(object):
     @staticmethod
     def untracked(analysis=None):
         if analysis:
-            return os.path.join(_cwd_root, "storage", "untracked", analysis)
-        return os.path.join(_cwd_root, "storage", "untracked")
+            return os.path.join(
+                cuckoocwd.root, "storage", "untracked", analysis
+            )
+        return os.path.join(cuckoocwd.root, "storage", "untracked")
 
     @staticmethod
     def binaries():
-        return os.path.join(_cwd_root, "storage", "binaries")
+        return os.path.join(cuckoocwd.root, "storage", "binaries")
 
+    @staticmethod
+    def machinestates():
+        return os.path.join(
+            cuckoocwd.root, "operational", "generated", "machinestates.json"
+        )
+
+    @staticmethod
+    def analyses(*args):
+        return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+
+    @staticmethod
+    def config(file=None, subpkg=None):
+        args = ["conf"]
+        if subpkg:
+            args.append(subpkg)
+        if file:
+            args.append(file)
+        return os.path.join(cuckoocwd.root, *tuple(args))
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):
@@ -74,31 +201,22 @@ def cwd(*args, **kwargs):
                 "Invalid analysis ID given. Format must be YYYYMMDD-analysis"
             )
 
-        return os.path.join(_cwd_root, "storage", "analyses", date, analysis)
+        return os.path.join(
+            cuckoocwd.root, "storage", "analyses", date, analysis
+        )
 
     elif kwargs.get("day"):
         return os.path.join(
-            _cwd_root, "storage", "analyses", str(kwargs["day"])
+            cuckoocwd.root, "storage", "analyses", str(kwargs["day"])
         )
 
     elif kwargs.get("socket"):
         return os.path.join(
-            _cwd_root, "sockets", str(kwargs["socket"])
+            cuckoocwd.root, "sockets", str(kwargs["socket"])
         )
 
-    return os.path.join(_cwd_root, *args)
+    return os.path.join(cuckoocwd.root, *args)
 
-def set_cwd(path):
-    global _cwd_root
-    _cwd_root = path
-
-def make_cwd(path):
-    os.makedirs(path)
-    for dirname in ("storage", "conf", "sockets"):
-        os.makedirs(os.path.join(path, dirname))
-
-    for dirname in ("analyses", "binaries", "untracked"):
-        os.mkdir(os.path.join(path, "storage", dirname))
 
 def make_analysis_folder():
     """Creates day dir, analysis dir, and returns the analysis id and path
@@ -126,11 +244,6 @@ def make_analysis_folder():
 
     return analysis, analysis_path
 
-cuckoo_cwd = os.path.join(pathlib.Path.home(), "cuckoocwd")
-if not os.path.isdir(cuckoo_cwd):
-    make_cwd(cuckoo_cwd)
-
-set_cwd(cuckoo_cwd)
 
 def safe_copyfile(source, destination):
     """Copies source to destination. Full paths must be provided.
@@ -194,7 +307,6 @@ class Binaries(object):
 class File(object):
 
     def __init__(self, file_path):
-        """@param file_path: file path"""
         self.file_path = file_path
 
         if not self.valid():

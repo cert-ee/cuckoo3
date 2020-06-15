@@ -56,8 +56,6 @@ class JSONDump(Reporter):
         if isinstance(fname, bytes):
             target["filename"] = fname.decode()
 
-        # Platform must be a string
-        target["platform"] = target["platform"] or ""
 
         info.update({
             "selected": selected,

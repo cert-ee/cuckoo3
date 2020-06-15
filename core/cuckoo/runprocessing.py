@@ -3,15 +3,21 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import multiprocessing
+import threading
 import os
 import select
 import signal
 import traceback
 
+from cuckoo.common.storage import Paths, AnalysisPaths
+from cuckoo.common.packages import enumerate_plugins
 from cuckoo.processing import helpers, typehelpers
 
-from .ipc import UnixSocketServer, UnixSockClient, ReaderWriter
-from .storage import Paths, AnalysisPaths
+from cuckoo.common.ipc import (
+    UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
+)
+
+from . import started
 
 class PluginWorkerError(Exception):
     pass
@@ -20,6 +26,7 @@ class States(object):
     SETUP = "setup"
     READY = "ready"
     IDLE = "idle"
+    STOPPED = "stopped"
     WORKING = "working"
     FINISHED = "finished"
     WORK_FAIL = "work_failed"
@@ -82,11 +89,16 @@ class PluginWorker(object):
         instances = self.get_plugin_instances(self.work_plugins)
         results = self.run_work_plugins(instances)
 
-        if self.errtracker.errors:
-            print(
-                f"{len(self.errtracker.errors)} error(s) during "
-                f"{self.analysis_id} {self.worktype} work"
-            )
+        if self.errtracker.has_errors():
+            print(f"Error(s) during work: {self.analysis_id} {self.worktype}")
+            for err in self.errtracker.errors:
+                print(err)
+
+            if self.errtracker.fatal_err:
+                print(
+                    f"Fatal error: {self.errtracker.fatal_err['error']} "
+                    f"{self.errtracker.fatal_err['traceback']}"
+                )
 
         self.run_reporting_plugins(self.reporting_plugins, results)
 
@@ -181,20 +193,25 @@ class WorkReceiver(UnixSocketServer):
         super().__init__(sockpath)
 
     def start(self):
-        try:
-            signal.signal(signal.SIGTERM, self.cleanup)
-            self.initialize_plugins()
-            self.create_socket(backlog=1)
-            self.start_accepting()
-        except KeyboardInterrupt:
-            print(f"{self.name} stopping..")
+        def _signal_handler(sig, f):
+            if self.do_run:
+                print(f"{self.name} stopping..")
+                self.stop()
+                self.cleanup()
+
+        signal.signal(signal.SIGTERM, _signal_handler)
+        signal.signal(signal.SIGINT, _signal_handler)
+
+        self.initialize_plugins()
+        self.create_socket(backlog=1)
+        self.start_accepting()
 
     def send_msg(self, message_dict):
         self.reader.send_json_message(message_dict)
 
     def initialize_plugins(self):
         try:
-            work = helpers.enumerate_plugins(
+            work = enumerate_plugins(
                 f"{self.PLUGIN_BASEPATH}.{self.worktype}", globals(),
                 helpers.Processor
             )
@@ -203,7 +220,7 @@ class WorkReceiver(UnixSocketServer):
             return False
 
         try:
-            reporting = helpers.enumerate_plugins(
+            reporting = enumerate_plugins(
                 self.REPORTING_PLUGIN_PATH, globals(), helpers.Reporter
             )
         except ImportError as e:
@@ -252,8 +269,8 @@ class WorkReceiver(UnixSocketServer):
             if w.errtracker.state != w.errtracker.OK:
                 self.update_state(
                     States.WORK_FAIL, {
-                        "traceback": w.errtracker.fatal["traceback"],
-                        "error": w.errtracker.fatal["error"]
+                        "traceback": w.errtracker.fatal_err["traceback"],
+                        "error": w.errtracker.fatal_err["error"]
                     }
                 )
             else:
@@ -269,7 +286,7 @@ class WorkReceiver(UnixSocketServer):
 
         del w
 
-class WorkerHandler(object):
+class ProcessingWorkerHandler(threading.Thread):
 
     MAX_WORKERS = {
         "identification": 2,
@@ -277,11 +294,11 @@ class WorkerHandler(object):
         "behavior": 0
     }
 
-    def __init__(self, controller_sock_path):
+    def __init__(self):
+        super().__init__()
         self.do_run = True
         self.unready_workers = []
         self.connected_workers = {}
-        self.controller_comm = UnixSockClient(controller_sock_path)
 
         # Queues with work
         self.queues = {
@@ -297,21 +314,16 @@ class WorkerHandler(object):
         self.queues["pre"].append(analysis_id)
 
     def behavioral_analysis(self, analysis_id):
+        # TODO supply task id, not analysis id. Do when we start performing
+        # post analysis processing
         self.queues["behavior"].append(analysis_id)
 
-    def start(self):
-        self.controller_comm.connect()
-
+    def run(self):
         for worktype, max_workers in self.MAX_WORKERS.items():
             for worker_number in range(max_workers):
                 self.start_worker(f"{worktype}{worker_number}", worktype)
 
-        try:
-            self.handle_workers()
-        except KeyboardInterrupt:
-            print("Stopping worker handler..")
-        finally:
-            self.stop()
+        self.handle_workers()
 
     def find_worker(self, name):
         for worker in self.connected_workers.values():
@@ -322,9 +334,12 @@ class WorkerHandler(object):
 
     def stop(self):
         self.do_run = False
-        for worker in self.connected_workers.values():
+
+        # If any workers have not stopped yet, stop them. Make a list of
+        # generator so we can delete from workers dict while iterating.
+        for worker in list(self.connected_workers.values()):
             try:
-                worker["process"].terminate()
+                self.stop_worker(worker)
             except OSError:
                 pass
 
@@ -363,14 +378,21 @@ class WorkerHandler(object):
         self.queues[worktype].insert(job)
 
     def stop_worker(self, worker):
-        sock = worker["comm"].sock
-        worker["comm"].cleanup()
         try:
             worker["process"].terminate()
         except OSError:
             pass
 
-        self.connected_workers.pop(sock, None)
+        self.set_worker_state(States.STOPPED, worker)
+
+    def untrack_worker(self, worker):
+        if worker["state"] != States.STOPPED:
+            raise NotImplementedError(
+                f"Cannot untrack a worker without stopping it first. {worker}"
+            )
+
+        self.connected_workers.pop(worker["comm"].sock, None)
+        worker["comm"].cleanup()
 
     def set_worker_state(self, state, worker):
         worker["state"] = state
@@ -391,22 +413,29 @@ class WorkerHandler(object):
 
     def handle_incoming(self, sock):
         """Handle incoming finishes, fail, ready messages"""
-
         # Retrieve the worker information that is mapped to the connected sock
         worker = self.connected_workers[sock]
+
         try:
             msg = worker["comm"].recv_json_message()
         except (EOFError, ValueError) as e:
             # If worker is working or setting up, we expect a message. Messages
             # during other states can be ignored.
+            print(f"Invalid message received from worker {worker}: {e}")
             if worker["state"] in (States.WORKING, States.SETUP):
-                print(f"Invalid message received from worker {worker}: {e}")
                 self.requeue_work(worker)
                 self.stop_worker(worker)
             return
 
-        if not msg:
+        except NotConnectedError:
+            if not self.do_run:
+                return
+
+            print("Worker disconnected unexpectedly")
             self.stop_worker(worker)
+
+            # Untrack as it is disconnected
+            self.untrack_worker(worker)
             return
 
         # Read the state send to us by the worker
@@ -448,18 +477,18 @@ class WorkerHandler(object):
             )
 
     def controller_workdone(self, worker):
-        self.controller_comm.send_json_message({
-            "subject": "workdone",
-            "worktype": worker["worktype"],
-            "work": worker["job"]
-        })
+        started.state_controller.work_done(
+            worktype=worker["worktype"],
+            analysis_id=worker["job"]["analysis_id"],
+            task_id=worker["job"].get("task_id")
+        )
 
     def controller_workfail(self, worker):
-        self.controller_comm.send_json_message({
-            "subject": "workfail",
-            "worktype": worker["worktype"],
-            "work": worker["job"]
-        })
+        started.state_controller.work_failed(
+            worktype=worker["worktype"],
+            analysis_id=worker["job"]["analysis_id"],
+            task_id=worker["job"].get("task_id")
+        )
 
     def available_workers(self):
         available = []

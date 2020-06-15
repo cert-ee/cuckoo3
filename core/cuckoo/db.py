@@ -50,6 +50,8 @@ class Task(Base):
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     machine = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     machine_tags = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
+    platform = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
+    os_version = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
 
     def __repr__(self):
         return f"<Task(number={self.number}, analysis={self.analysis})>"

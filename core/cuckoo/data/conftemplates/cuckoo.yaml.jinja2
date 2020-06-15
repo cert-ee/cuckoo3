@@ -1,0 +1,12 @@
+# A YAML list of all machinery modules Cuckoo will be using. Machines for each of the modules
+# specified here have to be configured in their respective configuration
+# in the conf/machineries directory.
+# Example:
+#
+# machineries:
+#   - machinery1
+#   - machinery2
+machineries:
+  {% for machinery in machineries -%}
+    - {{ machinery }}
+  {% endfor -%}

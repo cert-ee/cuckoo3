@@ -66,28 +66,37 @@ class StrictContainer:
 
     def _verify_key_types(self):
         errors = []
-        for key, expected_type in self.FIELDS.items():
-            type_instance = self.loaded[key]
-
-            # If the expected type is a Cuckoo JSON file or tuple
-            # (multiple possible Cuckoo JSON files), set the type to verify to
-            # a dict, as the type should still currently be a dict as we have
-            # not created its expected type object yet.
-            if not isinstance(type_instance, expected_type):
-                if isinstance(expected_type, tuple):
-                    expected_type = dict
-                elif issubclass(expected_type, StrictContainer):
-                    expected_type = dict
-
-            if not isinstance(type_instance, expected_type):
-                errors.append(
-                    f"Value of key '{key}' must be {expected_type}. "
-                    f"Found {type_instance.__class__.__name__}"
-                )
+        for key in self.FIELDS.keys():
+            try:
+                self._verify_key_type(key, self.loaded[key])
+            except TypeError as e:
+                errors.append(str(e))
 
         if errors:
-            print(self.loaded)
             raise TypeError(f"{', '.join(errors)}")
+
+    def _verify_key_type(self, key, type_instance):
+        # We only want to verify types for keys that have actually been defined
+        # in the fields attribute. We don't care about other keys.
+        expected_type = self.FIELDS.get(key)
+        if not expected_type:
+            return
+
+        # If the expected type is a Cuckoo JSON file or tuple
+        # (multiple possible Cuckoo JSON files), set the type to verify to
+        # a dict, as the type should still currently be a dict as we have
+        # not created its expected type object yet.
+        if not isinstance(type_instance, expected_type):
+            if isinstance(expected_type, tuple):
+                expected_type = dict
+            elif issubclass(expected_type, StrictContainer):
+                expected_type = dict
+
+        if not isinstance(type_instance, expected_type):
+            raise TypeError(
+                f"Value of key '{key}' must be {expected_type.__name__}. "
+                f"Found {type_instance.__class__.__name__}"
+            )
 
     def _create_child_type(self, child_type, key):
         try:
@@ -141,6 +150,8 @@ class StrictContainer:
         self._verify_key_types()
         # Load al CuckooJSONFile subtypes
         self._create_child_types()
+        # Check if the values meet the constraints
+        self.check_constraints()
 
     @classmethod
     def from_file(cls, filepath):
@@ -170,6 +181,18 @@ class StrictContainer:
         with open(path, "w") as fp:
             json.dump(self.to_dict(), fp, default=serialize_disk_json)
 
+    def update(self, values):
+        if not isinstance(values, dict):
+            raise TypeError(
+                f"Values must be a dictionary. Got: {type(values)}"
+            )
+
+        current_copy = self.loaded.copy()
+        current_copy.update(values)
+        self.__class__(**current_copy)
+        self.loaded = current_copy
+
+
     def __getattr__(self, item):
         try:
             return self.loaded[item]
@@ -178,7 +201,6 @@ class StrictContainer:
                 f"type object '{self.__class__.__name__}' has no attribute "
                 f"'{item}'"
             )
-
 
 class Settings(StrictContainer):
 
@@ -230,7 +252,6 @@ class Analysis(StrictContainer):
         "submitted": (SubmittedFile, SubmittedURL)
     }
 
-
 class Errors(StrictContainer):
 
     FIELDS = {
@@ -243,7 +264,8 @@ class TargetFile(StrictContainer):
     PARENT_KEYVAL = ("category", "file")
     FIELDS = {
         "filename": str,
-        "platform": str,
+        "platforms": list,
+        "machine_tags": list,
         "size": int,
         "filetype": str,
         "media_type": str,
@@ -251,11 +273,17 @@ class TargetFile(StrictContainer):
         "extrpath": list,
         "container": bool
     }
-    ALLOW_EMPTY = ("extrpath",)
+    ALLOW_EMPTY = ("extrpath", "machine_tags")
 
 class TargetURL(StrictContainer):
 
     PARENT_KEYVAL = ("category", "url")
+    FIELDS = {
+        "url": str,
+        "platforms": list,
+        "machine_tags": list
+    }
+    ALLOW_EMPTY = ("machine_tags",)
 
 class Identification(StrictContainer):
 

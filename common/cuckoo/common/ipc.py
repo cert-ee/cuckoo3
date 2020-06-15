@@ -8,10 +8,13 @@ import socket
 import json
 import select
 import time
+import stat
 
 class IPCError(Exception):
     pass
 
+class NotConnectedError(IPCError):
+    pass
 
 class ReaderWriter(object):
     # 5 MB JSON blob
@@ -32,6 +35,7 @@ class ReaderWriter(object):
                 raise ValueError(
                     f"Received message exceeds {self.MAX_INFO_BUF} bytes"
                 )
+
             try:
                 buf = self._read()
             except BlockingIOError as e:
@@ -39,11 +43,15 @@ class ReaderWriter(object):
                     return
                 raise
 
-            if not buf and not self.rcvbuf:
-                return
-
+            # Socket was disconnected
             if not buf:
-                raise EOFError(f"Last byte is: {repr(self.rcvbuf[:1])}")
+                if self.has_buffered():
+                    raise EOFError(
+                        f"Last byte must be '\\n'. "
+                        f"Actual last byte is: {repr(self.rcvbuf[:1])}"
+                    )
+
+                raise NotConnectedError()
 
             self.rcvbuf += buf
 
@@ -59,7 +67,7 @@ class ReaderWriter(object):
     def get_json_message(self):
         try:
             message = self.readline()
-        except (ValueError, EOFError):
+        except (ValueError, EOFError, NotConnectedError):
             self.clear_buf()
             raise
 
@@ -89,12 +97,18 @@ class UnixSocketServer:
     def create_socket(self, backlog=0):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
+            # TODO either here or at usage, check if the path already exists
+            # and if we can delete it. EG: pidfile is no longer locked.
             sock.bind(self.sock_path)
         except socket.error as e:
             raise IPCError(
                 f"Failed to bind to unix socket path {self.sock_path}. "
                 f"Error: {e}"
             )
+
+        # For now, only allow the user running Cuckoo to read from, write
+        # to, and execute the created sockets
+        os.chmod(self.sock_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         sock.listen(backlog)
         self.sock = sock
@@ -113,13 +127,25 @@ class UnixSocketServer:
 
         self.socks_readers.pop(sock, None)
 
+    def timeout_action(self):
+        """Called after the select timeout expires"""
+        pass
+
     def start_accepting(self, select_timeout=2):
 
         while self.do_run:
-            incoming, _o, _e = select.select(
-                list(self.socks_readers.keys()) + [self.sock], [], [],
-                select_timeout
-            )
+            try:
+                incoming, _o, _e = select.select(
+                    list(self.socks_readers.keys()) + [self.sock], [], [],
+                    select_timeout
+                )
+            except OSError as e:
+                if e.errno == errno.EBADF and not self.do_run:
+                    return
+
+                raise
+
+            self.timeout_action()
 
             if not incoming:
                 continue
@@ -128,6 +154,7 @@ class UnixSocketServer:
 
                 # Handle new connection
                 if sock == self.sock:
+
                     clientsock, addr = sock.accept()
                     clientsock.setblocking(0)
                     self.handle_connection(clientsock, addr)
@@ -137,7 +164,6 @@ class UnixSocketServer:
                         print("NO READER")
                         continue
 
-                    first = True
                     while True:
                         try:
                             msg = reader.get_json_message()
@@ -149,29 +175,33 @@ class UnixSocketServer:
                             self.untrack(sock)
                             break
 
-                        if not msg:
-                            if first:
-                                print("REMOVING DISCONNECTED SOCKET MAPPING")
-                                self.untrack(sock)
+                        except NotConnectedError:
+                            print("REMOVING DISCONNECTED SOCKET MAPPING")
+                            self.untrack(sock)
                             break
 
-                        first = False
+                        if not msg:
+                            break
+
                         self.handle_message(sock, msg)
 
+    def cleanup(self):
+        if self.do_run:
+            return
 
-    def cleanup(self, sig=None, f=None):
-        self.do_run = False
-        if self.sock:
+        if not self.sock:
+            return
+
+        try:
+            self.sock.close()
+        except socket.error:
+            pass
+
+        finally:
             try:
-                self.sock.close()
-            except socket.error:
+                os.unlink(self.sock_path)
+            except FileNotFoundError:
                 pass
-            finally:
-                try:
-                    os.unlink(self.sock_path)
-                except FileNotFoundError:
-                    pass
-
 
     def handle_connection(self, sock, addr):
         pass
@@ -179,16 +209,20 @@ class UnixSocketServer:
     def handle_message(self, sock, msg):
         pass
 
-    def __del__(self):
-        self.cleanup()
-
 
 class UnixSockClient:
 
-    def __init__(self, sockpath):
+    def __init__(self, sockpath, blockingreads=True):
+        self.blockingreads = blockingreads
         self.sockpath = sockpath
         self.sock = None
         self.reader = None
+
+    def reconnect(self, maxtries=5):
+        self.cleanup()
+        self.sock = None
+        self.reader = None
+        self.connect(maxtries)
 
     def connect(self, maxtries=5):
         if self.sock:
@@ -208,20 +242,22 @@ class UnixSockClient:
             except socket.error as e:
                 err = f"Failed to connect to unix socket: {self.sockpath}. " \
                       f"Error: {e}"
+
                 if maxtries and tries >= tries:
                     raise IPCError(err)
 
                 print(err)
                 time.sleep(3)
 
+        if not self.blockingreads:
+            sock.setblocking(0)
+
         self.sock = sock
         self.reader = ReaderWriter(sock)
 
     def send_json_message(self, mes_dict):
-        msg = json.dumps(mes_dict)
-
         try:
-            self.sock.sendall(f"{msg}\n".encode())
+            self.reader.send_json_message(mes_dict)
         except socket.error as e:
             raise IPCError(
                 f"Failed to send message to {self.sockpath}. Error: {e}"
