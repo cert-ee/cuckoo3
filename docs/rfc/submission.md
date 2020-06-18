@@ -1,6 +1,6 @@
 # Analyses and tasks
 
-Analyses are created for a submitted target. Zero or more tasks are created after target has been through the identification phase. The amount of tasks depend on the identified required platforms, if a target is selected (determined by Sflock), or if a target type is whitelisted/ignored. The created tasks are tied to an analysis.
+Analyses are created for a submitted target. Zero or more tasks are created after target has been through the identification phase. The amount of tasks depend on the identified required platforms, if a target is selected (determined by Sflock), or if a target type is safelisted/ignored. The created tasks are tied to an analysis.
 
 
 # Submission

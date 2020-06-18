@@ -36,12 +36,12 @@ class Ignore(Processor):
 
     def match_sha256(self, f):
         if f.sha256 in self.SHA256:
-            return True, "Whitelisted sha256 hash"
+            return True, "Safelisted sha256 hash"
 
         return False, None
 
     def match_exts(self, f):
         if f.filename.decode().lower().endswith(self.EXTS):
-            return True, "Whitelisted extension"
+            return True, "Safelisted extension"
 
         return False, None

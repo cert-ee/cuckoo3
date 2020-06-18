@@ -22,7 +22,7 @@ There are three processing phases between submission and the final report:
 
 Identification is the first processing stage. It runs once for each created analysis. It is to identify the submitted target. Only lightweight/fast plugins may run here. This is because this action is meant to completely quick, as it will happen immediately after submission. A user that submits through the web interface has to wait for it to complete, so that they can select/choose settings.
 
-Currently, it identifies target(s) that are interesting to run, ignore whitelisted files, make a final selection of the target to analyse, and to determine what platform it must run on. If no target is selected after this phase, the analysis is cancelled.
+Currently, it identifies target(s) that are interesting to run, ignore safelisted files, make a final selection of the target to analyse, and to determine what platform it must run on. If no target is selected after this phase, the analysis is cancelled.
 
 The most import plugin for Identification is 'identification'. It uses Sflock to determine the type of submitted file, the platform(s) it can run on, the dependencies it has, and if it is interesting to run.
 
