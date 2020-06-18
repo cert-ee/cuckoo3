@@ -81,7 +81,7 @@ def _split_analysis_id(analysis_id):
 
         return date_analysis
 
-def _split_task_id(task_id):
+def split_task_id(task_id):
 
     analysis_id_tasknumber = task_id.split("_", 1)
     if len(analysis_id_tasknumber) != 2:
@@ -128,7 +128,7 @@ class TaskPaths:
 
     @staticmethod
     def _path(task_id,  *args):
-        date, analysis, task_number = _split_task_id(task_id)
+        date, analysis, task_number = split_task_id(task_id)
         return os.path.join(
             cuckoocwd.root, "storage", "analyses", date, analysis,
             f"task_{task_number}", *args
@@ -145,6 +145,10 @@ class TaskPaths:
     @staticmethod
     def memory_dump(task_id):
         return TaskPaths._path(task_id, "memory.dmp")
+
+    @staticmethod
+    def logfile(task_id, filename):
+        return TaskPaths._path(task_id, "logs", filename)
 
 
 class Paths(object):
