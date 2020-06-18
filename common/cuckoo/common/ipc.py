@@ -127,12 +127,15 @@ class UnixSocketServer:
 
         self.socks_readers.pop(sock, None)
 
+    def untrack_all(self):
+        for sock in list(self.socks_readers):
+            self.untrack(sock)
+
     def timeout_action(self):
         """Called after the select timeout expires"""
         pass
 
     def start_accepting(self, select_timeout=2):
-
         while self.do_run:
             try:
                 incoming, _o, _e = select.select(
@@ -176,7 +179,6 @@ class UnixSocketServer:
                             break
 
                         except NotConnectedError:
-                            print("REMOVING DISCONNECTED SOCKET MAPPING")
                             self.untrack(sock)
                             break
 
@@ -256,6 +258,11 @@ class UnixSockClient:
         self.reader = ReaderWriter(sock)
 
     def send_json_message(self, mes_dict):
+        if not self.sock:
+            raise NotConnectedError(
+                "Not connected to socket. Cannot send message"
+            )
+
         try:
             self.reader.send_json_message(mes_dict)
         except socket.error as e:
@@ -264,6 +271,11 @@ class UnixSockClient:
             )
 
     def recv_json_message(self):
+        if not self.sock:
+            raise NotConnectedError(
+                "Not connected to socket. Cannot receive message"
+            )
+
         try:
             return self.reader.get_json_message()
         except socket.error as e:
@@ -287,6 +299,8 @@ class UnixSockClient:
 
 
 def message_unix_socket(sock_path, message_dict):
+    """Send the given message dict to the provided unix socket and
+     disconnect"""
     if not os.path.exists(sock_path):
         raise IPCError(f"Unix socket {sock_path} does not exist")
 
@@ -300,3 +314,17 @@ def message_unix_socket(sock_path, message_dict):
     sock.sendall(f"{json.dumps(message_dict)}\n".encode())
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
+
+def request_unix_socket(sock_path, message_dict):
+    """Send the given message dict to the provided unix socket, wait for a
+    response, disconnect, and return the response"""
+    if not os.path.exists(sock_path):
+        raise IPCError(f"Unix socket {sock_path} does not exist")
+
+    client = UnixSockClient(sock_path)
+    client.connect(maxtries=1)
+    client.send_json_message(message_dict)
+
+    resp = client.recv_json_message()
+    client.cleanup()
+    return resp
