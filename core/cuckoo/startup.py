@@ -3,6 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import os
+import time
 from importlib import import_module
 from pkgutil import iter_modules
 from threading import Thread
@@ -11,7 +12,7 @@ from cuckoo.common import config
 from cuckoo.common.packages import (
     get_conf_typeloaders, get_conftemplates, enumerate_plugins
 )
-from cuckoo.common.storage import Paths
+from cuckoo.common.storage import Paths, cuckoocwd
 
 from . import started, shutdown
 
@@ -166,3 +167,41 @@ def start_statecontroller():
     )
     shutdown.register_shutdown(started.state_controller.stop)
     started.state_controller.start()
+
+def start_resultserver():
+    from .resultserver import ResultServer, servers
+    from multiprocessing import Process
+
+    sockpath = Paths.unix_socket("resultserver.sock")
+    if os.path.exists(sockpath):
+        raise StartupError(
+            "Resultserver unix socket already/still exists. "
+            "Remove it there is no other Cuckoo instance running"
+            f" using the specified Cuckoo CWD. {sockpath}"
+        )
+
+    ip = config.cfg("cuckoo", "resultserver", "listen_ip")
+    port = config.cfg("cuckoo", "resultserver", "listen_port")
+    rs = ResultServer(sockpath, cuckoocwd.root, ip, port)
+    rs_proc = Process(target=rs.start)
+
+    def _rs_stopper():
+        rs_proc.terminate()
+
+    shutdown.register_shutdown(_rs_stopper)
+    rs_proc.start()
+
+    waited = 0
+    MAXWAIT = 5
+    while not os.path.exists(sockpath):
+        if waited >= MAXWAIT:
+            raise StartupError(
+                f"Resultserver was not started after {MAXWAIT} seconds."
+            )
+
+        if not rs_proc.is_alive():
+            raise StartupError("Resultserver stopped unexpectedly")
+        waited += 0.5
+        time.sleep(0.5)
+
+    servers.add(sockpath, ip, port)

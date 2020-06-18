@@ -39,6 +39,9 @@ def _create_task(analysis_id, task_number, platform, machine_tags,
             f"Already exists: {e}"
         )
 
+    for dirname in ("logs",):
+        os.mkdir(os.path.join(task_path, dirname))
+
     task_values = {
         "number": task_number,
         "id": task_id,

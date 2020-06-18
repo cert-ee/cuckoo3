@@ -34,7 +34,6 @@ def call_registered_shutdowns():
             traceback.print_exc()
 
 def _wrap_call_registered_shutdowns(sig, frame):
-    print("Stopping Cuckoo..")
     call_registered_shutdowns()
 
 signal.signal(signal.SIGTERM, _wrap_call_registered_shutdowns)

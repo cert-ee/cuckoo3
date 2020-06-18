@@ -29,6 +29,10 @@ class Machinery(config.String):
 
 typeloaders = {
     "cuckoo.yaml": {
-        "machineries": config.List(Machinery, ["kvm"])
+        "machineries": config.List(Machinery, ["kvm"]),
+        "resultserver": {
+            "listen_ip": config.String(default_val="192.168.122.1"),
+            "listen_port": config.Int(default_val=2042, min_value=1024)
+        }
     }
 }

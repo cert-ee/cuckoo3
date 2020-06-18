@@ -30,7 +30,21 @@ def main(ctx, cwd):
     if ctx.invoked_subcommand:
         return
 
-    start_cuckoo()
+    from .startup import StartupError
+    from .shutdown import register_shutdown, call_registered_shutdowns
+
+    def _stopmsg():
+        print("Stopping Cuckoo..")
+
+    register_shutdown(_stopmsg, order=1)
+
+    try:
+        start_cuckoo()
+    except StartupError as e:
+        print(f"Failure during Cuckoo startup: {e}")
+        sys.exit(1)
+    finally:
+        call_registered_shutdowns()
 
 def start_cuckoo():
     from multiprocessing import set_start_method
@@ -38,8 +52,8 @@ def start_cuckoo():
 
     from cuckoo.common.config import MissingConfigurationFileError
     from .startup import (
-        load_configurations, start_machinerymanager, StartupError,
-        init_database, start_processing_handler, start_statecontroller
+        load_configurations, start_machinerymanager, init_database,
+        start_processing_handler, start_statecontroller, start_resultserver
     )
 
     print(f"Starting Cuckoo. Using CWD {cuckoocwd.root}")
@@ -50,15 +64,15 @@ def start_cuckoo():
         print(f"Missing configuration file: {e}")
         sys.exit(1)
 
+    print("Starting resultserver")
+    start_resultserver()
     print("Loading machineries and starting machinery manager")
-    try:
-        start_machinerymanager()
-    except StartupError as e:
-        print(e)
-        sys.exit(1)
-
+    start_machinerymanager()
+    print("Initializing database")
     init_database()
+    print("Starting processing handler and workers")
     start_processing_handler()
+    print("Starting state controller")
     start_statecontroller()
 
 @main.command("createcwd")
