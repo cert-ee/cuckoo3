@@ -16,14 +16,15 @@ def main(ctx, cwd):
         cwd = cuckoocwd.DEFAULT
 
     ctx.cwd_path = cwd
-
     if not cuckoocwd.exists(cwd):
-        if ctx.invoked_subcommand != "createcwd":
-            print(
-                f"Cuckoo CWD {cwd} does not yet exist. Run "
-                f"'cuckoo createcwd' if this is the first time you are "
-                f"running Cuckoo with this CWD path"
-            )
+        if ctx.invoked_subcommand == "createcwd":
+            return
+
+        print(
+            f"Cuckoo CWD {cwd} does not yet exist. Run "
+            f"'cuckoo createcwd' if this is the first time you are "
+            f"running Cuckoo with this CWD path"
+        )
         sys.exit(1)
 
     cuckoocwd.set(cwd)
@@ -136,7 +137,7 @@ def submission(target, machine_tag, platform, timeout, priority):
 
     try:
         s = analyses.Settings(
-            timeout=timeout, priority=priority, enforce_timeout=False,
+            timeout=timeout, priority=priority, enforce_timeout=True,
             dump_memory=False, options={}, machine_tags=list(machine_tag),
             platforms=[], machines=[], manual=False
         )
