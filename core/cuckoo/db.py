@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative.declarative_base()
 
-class AnalysisStates(object):
+class AnalysisStates:
 
     PENDING_IDENTIFICATION = "pending_identification"
     NO_SELECTED = "no_selected"
@@ -19,10 +19,14 @@ class AnalysisStates(object):
     PENDING_PRE = "pending_pre"
     COMPLETED_PRE = "completed_pre"
 
-class TaskStates(object):
+class AnalysisKinds:
+    STANDARD = "standard"
+
+class TaskStates:
     PENDING = "pending"
     RUNNING = "running"
-    COMPLETED = "completed"
+    FATAL_ERROR = "fatal_error"
+    PENDING_POST = "pending_post"
     REPORTED = "reported"
 
 class Analysis(Base):
@@ -30,6 +34,9 @@ class Analysis(Base):
     __tablename__ = "analyses"
 
     id = sqlalchemy.Column(sqlalchemy.String(15), primary_key=True)
+    kind = sqlalchemy.Column(
+        sqlalchemy.String(32), default=AnalysisKinds.STANDARD
+    )
     created_on = sqlalchemy.Column(
         sqlalchemy.DateTime, nullable=False, default=datetime.utcnow()
     )
@@ -43,10 +50,16 @@ class Task(Base):
 
     __tablename__ = "tasks"
 
-    number = sqlalchemy.Column(
-        sqlalchemy.Integer, primary_key=True, autoincrement=False
+    id = sqlalchemy.Column(sqlalchemy.String(32), primary_key=True)
+    kind = sqlalchemy.Column(
+        sqlalchemy.String(32), default=AnalysisKinds.STANDARD
     )
-    analysis = sqlalchemy.Column(sqlalchemy.String(15), primary_key=True)
+    number = sqlalchemy.Column(
+        sqlalchemy.Integer, autoincrement=False, nullable=False
+    )
+    created_on = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+    analysis_id = sqlalchemy.Column(sqlalchemy.String(15), nullable=False)
+    priority = sqlalchemy.Column(sqlalchemy.Integer, default=1)
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     machine = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     machine_tags = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
@@ -54,7 +67,8 @@ class Task(Base):
     os_version = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
 
     def __repr__(self):
-        return f"<Task(number={self.number}, analysis={self.analysis})>"
+        return f"<Task(id={self.id}, number={self.number}," \
+               f" analysis={self.analysis_id})>"
 
 class _DBMS(object):
 
@@ -83,21 +97,10 @@ class _DBMS(object):
 
 dbms = _DBMS()
 
-
 def set_analysis_state(analysis_id, state):
     ses = dbms.session()
     try:
         ses.query(Analysis).filter_by(id=analysis_id).update({"state": state})
-        ses.commit()
-    finally:
-        ses.close()
-
-def set_task_state(analysis_id, task_id, state):
-    ses = dbms.session()
-    try:
-        ses.query(Task).filter(
-            Task.number==task_id, Task.analysis==analysis_id
-        ).update({"state": state})
         ses.commit()
     finally:
         ses.close()

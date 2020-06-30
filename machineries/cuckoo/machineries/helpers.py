@@ -2,15 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import time
-
-from collections import namedtuple
-from uuid import uuid4
 from threading import Lock
-
-from cuckoo.common.ipc import UnixSockClient, NotConnectedError
-
-from .errors import MachineryManagerClientError, ResponseTimeoutError
 
 class MachineStates:
 
@@ -39,6 +31,7 @@ class Machine:
         self.tags = tags
         self.snapshot = snapshot
         self.mac_address = mac_address
+        self.interface = ""
 
         self.machinery = machinery
 
@@ -91,7 +84,7 @@ class Machine:
 
     def clear_lock(self):
         self.locked_by = ""
-        self.locked = True
+        self.locked = False
 
     def disable(self, reason):
         self.disabled = True
@@ -150,94 +143,3 @@ class Machine:
             disabled=d["disabled"], disabled_reason=d["disabled_reason"],
             errors=d["errors"]
         )
-
-class MachineryManagerClient(UnixSockClient):
-
-    _Response = namedtuple("_Response", ["success", "msg_id", "reason"])
-
-    def __init__(self, sockpath):
-        super().__init__(sockpath, blockingreads=False)
-        self._responses = {}
-
-    def _store_response(self, response):
-        self._responses[response.msg_id] = response
-
-    def _wait_response(self, msg_id, timeout):
-        waited = 0
-        sleep_length = 1
-        while True:
-            if waited > timeout:
-                raise ResponseTimeoutError()
-
-            response = self.get_response(msg_id)
-
-            if response is not None:
-                return response
-
-            waited += sleep_length
-            time.sleep(sleep_length)
-
-    def get_response(self, msg_id):
-        try:
-            json_msg = self.recv_json_message()
-        except NotConnectedError:
-            raise MachineryManagerClientError("Client not connected")
-
-        if json_msg:
-            try:
-                self._store_response(self._Response(
-                    success=json_msg["success"], msg_id=json_msg["msg_id"],
-                    reason=json_msg.get("reason", "")
-                ))
-            except KeyError as e:
-                raise MachineryManagerClientError(
-                    f"Response {repr(json_msg)} does not contain "
-                    f"mandatory key {e}"
-                )
-
-        response = self._responses.pop(msg_id, None)
-        if not response:
-            return None
-
-        return response
-
-    def machine_action(self, action, machine_name,
-                       wait_response=True, timeout=120):
-        msg_id = str(uuid4())
-        self.send_json_message({
-            "msg_id": msg_id,
-            "action": action,
-            "machine": machine_name
-        })
-
-        if not wait_response:
-            return msg_id
-
-        return self._wait_response(msg_id, timeout)
-
-    def restore_start(self, machine_name, wait_response=True, timeout=120):
-        return self.machine_action(
-            "restore_start", machine_name, wait_response=wait_response,
-            timeout=timeout
-        )
-
-    def norestore_start(self, machine_name, wait_response=True, timeout=120):
-        return self.machine_action(
-            "norestore_start", machine_name, wait_response=wait_response,
-            timeout=timeout
-        )
-
-    def stop(self, machine_name, wait_response=True, timeout=120):
-        return self.machine_action(
-            "stop", machine_name, wait_response=wait_response,
-            timeout=timeout
-        )
-
-    def acpi_stop(self, machine_name, wait_response=True, timeout=120):
-        return self.machine_action(
-            "acpi_stop", machine_name, wait_response=wait_response,
-            timeout=timeout
-        )
-
-    def memory_dump(self, machine_name, wait_response=True, timeout=120):
-        raise NotImplementedError()

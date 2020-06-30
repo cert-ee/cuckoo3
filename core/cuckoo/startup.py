@@ -4,6 +4,7 @@
 
 import os
 import time
+import requests
 from importlib import import_module
 from pkgutil import iter_modules
 from threading import Thread
@@ -141,7 +142,13 @@ def start_machinerymanager():
     # to ensure any machines started during shutdown is still stopped.
     shutdown.register_shutdown(shutdown_all, order=999)
 
-    manager = MachineryManager(Paths.unix_socket("machinerymanager.sock"))
+    sockpath = Paths.unix_socket("machinerymanager.sock")
+    if os.path.exists(sockpath):
+        raise StartupError(
+            f"Machinery manager socket path already exists: {sockpath}"
+        )
+
+    manager = MachineryManager(sockpath)
     started.machinery_manager = manager
 
     shutdown.register_shutdown(manager.stop)
@@ -162,11 +169,21 @@ def start_processing_handler():
 
 def start_statecontroller():
     from .control import StateController
-    started.state_controller = StateController(
-        Paths.unix_socket("statecontroller.sock")
-    )
+    sockpath = Paths.unix_socket("statecontroller.sock")
+    if os.path.exists(sockpath):
+        raise StartupError(
+            f"Failed to start state controller: "
+            f"Unix socket path already exists: {sockpath}"
+        )
+
+    started.state_controller = StateController(sockpath)
     shutdown.register_shutdown(started.state_controller.stop)
-    started.state_controller.start()
+
+    # Check if any untracked analyses exist after starting
+    started.state_controller.track_new_analyses()
+
+    state_th = Thread(target=started.state_controller.start)
+    state_th.start()
 
 def start_resultserver():
     from .resultserver import ResultServer, servers
@@ -205,3 +222,56 @@ def start_resultserver():
         time.sleep(0.5)
 
     servers.add(sockpath, ip, port)
+
+def start_taskrunner():
+    from .taskrunner import TaskRunner
+    from multiprocessing import Process
+
+    sockpath = Paths.unix_socket("taskrunner.sock")
+    if os.path.exists(sockpath):
+        raise StartupError(
+            f"Task runner socket path already exists: {sockpath}"
+        )
+
+    taskrunner = TaskRunner(sockpath, cuckoocwd.root)
+    runner_proc = Process(target=taskrunner.start)
+
+    def _taskrunner_stopper():
+        runner_proc.terminate()
+        runner_proc.join(timeout=30)
+
+    # This should be stopped as one of the first components. This way, tasks
+    # that are stopped during a run can still more cleanly stop.
+    shutdown.register_shutdown(_taskrunner_stopper, order=2)
+    runner_proc.start()
+
+    waited = 0
+    MAXWAIT = 5
+    while not os.path.exists(sockpath):
+        if waited >= MAXWAIT:
+            raise StartupError(
+                f"Task runner was not started after {MAXWAIT} seconds."
+            )
+
+        if not runner_proc.is_alive():
+            raise StartupError("Task runner stopped unexpectedly")
+        waited += 0.5
+        time.sleep(0.5)
+
+def start_scheduler():
+    from .scheduler import task_queue, Scheduler
+    from .db import dbms, Task, TaskStates
+
+    ses = dbms.session()
+    try:
+        pending = ses.query(Task).filter_by(state=TaskStates.PENDING)
+    finally:
+        ses.close()
+
+    if pending:
+        task_queue.queue_many(pending)
+
+    started.scheduler = Scheduler()
+    shutdown.register_shutdown(started.scheduler.stop, order=2)
+
+    started.scheduler.start()

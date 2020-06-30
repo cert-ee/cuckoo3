@@ -6,26 +6,12 @@ import os
 
 from . import db, machinery
 from cuckoo.common.storage import TaskPaths, make_task_id
-
-from cuckoo.processing import typehelpers
+from cuckoo.common.strictcontainer import Task, Errors
 
 class TaskCreationError(Exception):
     pass
 
-class Task(typehelpers.StrictContainer):
-
-    FIELDS = {
-        "number": int,
-        "id": str,
-        "platform": str,
-        "os_version": str,
-        "machine_tags": list,
-        "machine": str
-    }
-    ALLOW_EMPTY = ("machine", "machine_tags", "os_version")
-
-
-def _create_task(analysis_id, task_number, platform, machine_tags,
+def _create_task(analysis_id, task_number, platform, os_version, machine_tags,
                  machine=None):
     task_id = make_task_id(analysis_id, task_number)
 
@@ -43,11 +29,12 @@ def _create_task(analysis_id, task_number, platform, machine_tags,
         os.mkdir(os.path.join(task_path, dirname))
 
     task_values = {
+        "kind": db.AnalysisKinds.STANDARD,
         "number": task_number,
         "id": task_id,
-        "analysis": analysis_id,
+        "analysis_id": analysis_id,
         "platform": platform,
-        "os_version": "",
+        "os_version": os_version,
         "machine_tags": machine_tags,
         "machine": machine or ""
     }
@@ -76,7 +63,9 @@ def create_all(analysis):
         for platform in analysis.settings.platforms:
             tasks.append(_create_task(
                 analysis_id=analysis.id, task_number=tasknum,
-                platform=platform, machine_tags=analysis.settings.machine_tags
+                platform=platform["platform"],
+                os_version=platform["os_version"],
+                machine_tags=analysis.settings.machine_tags
             ))
             tasknum += 1
 
@@ -84,6 +73,8 @@ def create_all(analysis):
     for task_dict in tasks:
         task_dict["state"] = db.TaskStates.PENDING
         task_dict["machine_tags"] = ",".join(task_dict["machine_tags"])
+        task_dict["created_on"] = analysis.created_on
+        task_dict["priority"] = analysis.settings.priority
 
     ses = db.dbms.session()
     try:
@@ -91,3 +82,30 @@ def create_all(analysis):
         ses.commit()
     finally:
         ses.close()
+
+    return tasks
+
+def set_db_state(task_id, state):
+    ses = db.dbms.session()
+    try:
+        ses.query(db.Task).filter_by(id=task_id).update({"state": state})
+        ses.commit()
+    finally:
+        ses.close()
+
+def merge_run_errors(task_id):
+    errpath = TaskPaths.runerr_json(task_id)
+    if not os.path.exists(errpath):
+        return
+
+    taskpath = TaskPaths.taskjson(task_id)
+    task = Task.from_file(taskpath)
+    errs = Errors.from_file(errpath)
+    if task.errors:
+        task.errors.merge_errors(errs)
+    else:
+        task.errors = errs
+
+    # Update the pre json file
+    task.to_file_safe(taskpath)
+    os.remove(errpath)

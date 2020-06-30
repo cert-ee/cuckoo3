@@ -77,12 +77,14 @@ def load_machineries(machinery_classes, machine_states={}):
 
         print(f"Loading machinery '{machinery_class.name}' and its machines.")
         try:
+            machinery_class.verify_dependencies()
             machinery = machinery_class(machine_conf)
             machinery.init()
             machinery.load_machines()
         except errors.MachineryError as e:
             raise MachineryManagerError(
-                f"Loading of machinery module {machinery.name} failed. {e}"
+                f"Loading of machinery module {machinery_class.name} "
+                f"failed. {e}"
             )
 
         for machine in machinery.list_machines():
@@ -121,16 +123,16 @@ def _dump_machines_info(path):
 
     shutil.move(tmppath, path)
 
-def find(platform="", platform_version="", tags=set()):
+def find(platform="", os_version="", tags=set()):
     """Find any machine that matches the given platform, version and
     has the given tags."""
-    machines = _machines
+    machines = list(_machines.values())
     if not machines:
         return None
 
     if platform:
         machines = find_platform(
-            machines, platform, platform_version
+            machines, platform, os_version
         )
         if not machines:
             return None
@@ -142,7 +144,7 @@ def find(platform="", platform_version="", tags=set()):
 
     return machines[0]
 
-def find_available(name="", platform="", platform_version="", tags=set()):
+def find_available(name="", platform="", os_version="", tags=set()):
     """Find an available machine by name or platform, os_version, and tags.
     return None if no available machine is found."""
     if name:
@@ -158,7 +160,7 @@ def find_available(name="", platform="", platform_version="", tags=set()):
 
     if platform:
         machines = find_platform(
-            machines, platform, platform_version
+            machines, platform, os_version
         )
         if not machines:
             return None
@@ -179,7 +181,6 @@ def get_available():
 
     return available
 
-
 def get_by_name(name):
     """Return the machine that matches the machine name.
     Raises MachineDoesNotExistError if the machine is not found."""
@@ -190,13 +191,13 @@ def get_by_name(name):
             f"Machine with name {name} does not exist."
         )
 
-def find_platform(find_in, platform, version=""):
-    """Find all machines with the specified platform and version in t
-    he dictionary of name:machines given."""
+def find_platform(find_in, platform, os_version=""):
+    """Find all machines with the specified platform and version in the
+     list of machines given."""
     matches = []
-    for _, machine in find_in.items():
+    for machine in find_in:
         if machine.platform == platform:
-            if version and machine.platform_version != version:
+            if os_version and machine.os_version != os_version:
                 continue
 
             matches.append(machine)
@@ -204,8 +205,8 @@ def find_platform(find_in, platform, version=""):
     return matches
 
 def find_tags(find_in, tags):
-    """Find all machines that have the specified tags in the dictionary
-    of name:machines given. Tags must be a set."""
+    """Find all machines that have the specified tags in the list
+    of machines given. Tags must be a set."""
     if not isinstance(tags, set):
         if isinstance(tags, (list, tuple)):
             tags = set(tags)
@@ -213,19 +214,19 @@ def find_tags(find_in, tags):
         raise TypeError(f"tags must be a set of strings. Not {type(tags)}")
 
     matches = []
-    for _, machine in find_in.items():
+    for machine in find_in:
         if tags.issubset(machine.tags):
             matches.append(machine)
 
     return matches
 
 def acquire_available(task_id, name="", platform="",
-                      platform_version="", tags=set()):
+                      os_version="", tags=set()):
     """Find and lock a machine for task_id that matches the given name or
     platform, os_version, and has the given tags."""
     with _machines_lock:
         machine = find_available(
-            name, platform, platform_version, tags
+            name, platform, os_version, tags
         )
 
         if not machine:
@@ -234,7 +235,7 @@ def acquire_available(task_id, name="", platform="",
         _lock(machine, task_id)
         return machine
 
-def _unlock(machine):
+def unlock(machine):
     """Unlock the given machine to put it back in the pool of available
     machines"""
     with _machines_lock:
@@ -324,18 +325,17 @@ def shutdown_all():
 class _MachineryMessages:
 
     @staticmethod
-    def success(msg_id):
-        return {"success": True, "msg_id": msg_id}
+    def success():
+        return {"success": True}
 
     @staticmethod
-    def fail(msg_id):
-        return {"success": False, "msg_id": msg_id}
+    def fail():
+        return {"success": False}
 
     @staticmethod
-    def invalid_msg(msg_id, reason):
+    def invalid_msg(reason):
         return {
             "success": False,
-            "msg_id": msg_id,
             "reason": reason
         }
 
@@ -494,11 +494,10 @@ class MachineryWorker(threading.Thread):
 
 class WorkTracker:
 
-    def __init__(self, func, machine, readerwriter, msg_id, machinerymngr):
+    def __init__(self, func, machine, readerwriter, machinerymngr):
         self.work_func = func
         self.machine = machine
         self.readerwriter = readerwriter
-        self.msg_id = msg_id
         self.machinerymngr = machinerymngr
 
         # Set by return values of the executed work
@@ -524,13 +523,13 @@ class WorkTracker:
     def work_failed(self):
         self.unlock_work()
         self.machinerymngr.queue_response(
-            self.readerwriter, _MachineryMessages.fail(self.msg_id)
+            self.readerwriter, _MachineryMessages.fail()
         )
 
     def work_success(self):
         self.unlock_work()
         self.machinerymngr.queue_response(
-            self.readerwriter, _MachineryMessages.success(self.msg_id)
+            self.readerwriter, _MachineryMessages.success()
         )
 
     def run_work(self):
@@ -545,14 +544,13 @@ class WorkTracker:
         """Creates a new entry in the msg handler work queue of the current
         work. Can be used if the work cannot be performed for some reason"""
         self.machinerymngr.work_queue.add_work(
-            self.work_func, self.machine, self.readerwriter, self.msg_id,
-            self.machinerymngr
+            self.work_func, self.machine, self.readerwriter, self.machinerymngr
         )
 
     def fall_back(self):
         """Queue a work instance of the fallback function in the work queue"""
         self.machinerymngr.work_queue.add_work(
-            self.fallback_func, self.machine, self.readerwriter, self.msg_id,
+            self.fallback_func, self.machine, self.readerwriter,
             self.machinerymngr
         )
 
@@ -588,9 +586,9 @@ class _WorkQueue:
         self._queue = []
         self._lock = threading.Lock()
 
-    def add_work(self, work_action, machine, readerwriter, msg_id, msghandler):
+    def add_work(self, work_action, machine, readerwriter, msghandler):
         self._queue.append(
-            WorkTracker(work_action, machine, readerwriter, msg_id, msghandler)
+            WorkTracker(work_action, machine, readerwriter, msghandler)
         )
 
     def get_work(self):
@@ -713,19 +711,17 @@ class MachineryManager(UnixSocketServer):
             _clear_machines_updated()
 
     def handle_message(self, sock, msg):
-        msg_id = str(msg.get("msg_id"))
         action = msg.get("action")
         machine_name = msg.get("machine")
 
         readerwriter = self.socks_readers[sock]
 
         # If no action or machine is given, send error and cleanup sock
-        if not msg_id or not action or not machine_name:
+        if not action or not machine_name:
             self.queue_response(
                 readerwriter,
                 _MachineryMessages.invalid_msg(
-                    msg_id=None,
-                    reason="Missing msg_id, action or machine name"
+                    reason="Missing action or machine name"
                 ), close=True
             )
             return
@@ -736,9 +732,7 @@ class MachineryManager(UnixSocketServer):
             # Send error if the machine does not exist.
             self.queue_response(
                 readerwriter,
-                _MachineryMessages.invalid_msg(
-                    msg_id, reason="No such machine"
-                )
+                _MachineryMessages.invalid_msg(reason="No such machine")
             )
             return
 
@@ -748,13 +742,9 @@ class MachineryManager(UnixSocketServer):
         if not worker_action:
             self.queue_response(
                 readerwriter,
-                _MachineryMessages.invalid_msg(
-                    msg_id, reason="No such action"
-                ),
+                _MachineryMessages.invalid_msg(reason="No such action"),
                 close=True
             )
             return
 
-        self.work_queue.add_work(
-            worker_action, machine, readerwriter, msg_id, self
-        )
+        self.work_queue.add_work(worker_action, machine, readerwriter, self)

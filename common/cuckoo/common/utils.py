@@ -9,3 +9,12 @@ def parse_bool(value):
     if value in ("false", "False", "None", "no", "0", "off"):
         return False
     return bool(int(value))
+
+def bytes_to_human(num, suffix='B'):
+    # Stolen from Stackoverflow. https://stackoverflow.com/a/1094933
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+

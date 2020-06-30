@@ -5,8 +5,9 @@
 import json
 import os
 
-from ..helpers import Reporter
-from ..typehelpers import Identification
+from ..abtracts import Reporter
+
+from cuckoo.common.strictcontainer import Identification
 
 class JSONDump(Reporter):
 
@@ -19,12 +20,11 @@ class JSONDump(Reporter):
         submitted = ident.get("submitted", {})
 
         info = {
-            "errors": self.errtracker.to_dict(),
             "category": self.analysis.category,
             "selected": False
         }
 
-        if self.errtracker.state != self.errtracker.OK:
+        if self.errtracker.has_fatal():
             Identification(**info).to_file(dump_path)
             return
 
@@ -55,7 +55,6 @@ class JSONDump(Reporter):
         fname = target["filename"]
         if isinstance(fname, bytes):
             target["filename"] = fname.decode()
-
 
         info.update({
             "selected": selected,

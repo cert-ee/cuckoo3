@@ -2,9 +2,12 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import os
 import datetime
 import dateutil.parser
 import json
+from shutil import move
+from tempfile import mkstemp
 
 def deserialize_disk_json(obj):
     if "__isodt__" in obj:
@@ -28,24 +31,23 @@ def serialize_api_json(obj):
         return obj.isoformat()
     return obj
 
-
 class StrictContainer:
 
     FIELDS = {}
-    ALLOW_EMPTY = ("")
+    ALLOW_EMPTY = ("",)
     PARENT_KEYVAL = ("", "")
 
     def __init__(self, **kwargs):
         if kwargs:
-            self.loaded = kwargs
+            self._loaded = kwargs
             self._load()
         else:
-            self.loaded = {}
+            self._loaded = {}
 
     def _verify_keys(self):
         missing = []
         for key in self.FIELDS:
-            if key not in self.loaded:
+            if key not in self._loaded:
                 if key not in self.ALLOW_EMPTY:
                     missing.append(key)
                 else:
@@ -55,11 +57,11 @@ class StrictContainer:
                     expected_type = self.FIELDS[key]
 
                     if isinstance(expected_type, tuple):
-                        self.loaded[key] = {}
+                        self._loaded[key] = {}
                     elif issubclass(expected_type, StrictContainer):
-                        self.loaded[key] = {}
+                        self._loaded[key] = {}
                     else:
-                        self.loaded[key]= self.FIELDS[key]()
+                        self._loaded[key]= self.FIELDS[key]()
 
         if missing:
             raise KeyError(f"{', '.join(missing)}")
@@ -68,7 +70,7 @@ class StrictContainer:
         errors = []
         for key in self.FIELDS.keys():
             try:
-                self._verify_key_type(key, self.loaded[key])
+                self._verify_key_type(key, self._loaded[key])
             except TypeError as e:
                 errors.append(str(e))
 
@@ -100,7 +102,7 @@ class StrictContainer:
 
     def _create_child_type(self, child_type, key):
         try:
-            self.loaded[key] = child_type(**self.loaded[key])
+            self._loaded[key] = child_type(**self._loaded[key])
         except KeyError as e:
             raise KeyError(
                 f"Key '{key}' is missing subkeys: {e}"
@@ -116,7 +118,7 @@ class StrictContainer:
         # with data that currently resides in its key. Replace the dict with
         # the type instance. Do the same for all its children
         for key, expected_type in self.FIELDS.items():
-            type_instance = self.loaded[key]
+            type_instance = self._loaded[key]
 
             # If the value is already an instance of the type, skip it.
             if isinstance(type_instance, expected_type):
@@ -137,7 +139,7 @@ class StrictContainer:
                         # Find the value of the key specified by this potential
                         # child key type. If it matches, choose this type class
                         parent_key, parent_val = type_entry.PARENT_KEYVAL
-                        if self.loaded[parent_key] == parent_val:
+                        if self._loaded[parent_key] == parent_val:
                             self._create_child_type(type_entry, key)
 
             elif issubclass(expected_type, StrictContainer):
@@ -171,7 +173,7 @@ class StrictContainer:
     def to_dict(self):
         return {
             k: v.to_dict() if isinstance(v, StrictContainer) else v for k, v in
-            self.loaded.items()
+            self._loaded.items()
         }
 
     def to_api_json(self):
@@ -181,26 +183,37 @@ class StrictContainer:
         with open(path, "w") as fp:
             json.dump(self.to_dict(), fp, default=serialize_disk_json)
 
+    def to_file_safe(self, path):
+        fd, tmppath = mkstemp()
+        with os.fdopen(fd, "w") as fp:
+            json.dump(self.to_dict(), fp, default=serialize_disk_json)
+
+        move(tmppath, path)
+
     def update(self, values):
         if not isinstance(values, dict):
             raise TypeError(
                 f"Values must be a dictionary. Got: {type(values)}"
             )
 
-        current_copy = self.loaded.copy()
+        current_copy = self._loaded.copy()
         current_copy.update(values)
         self.__class__(**current_copy)
-        self.loaded = current_copy
-
+        self._loaded = current_copy
 
     def __getattr__(self, item):
-        try:
-            return self.loaded[item]
-        except KeyError:
-            raise AttributeError(
-                f"type object '{self.__class__.__name__}' has no attribute "
-                f"'{item}'"
-            )
+        if item in self.__dict__.get("_loaded", {}):
+            return self._loaded[item]
+
+        return super().__getattribute__(item)
+
+    def __setattr__(self, key, value):
+        # TODO add type checking
+        if key in self.__dict__.get("_loaded", {}):
+            self._loaded[key] = value
+        else:
+            super().__setattr__(key, value)
+
 
 class Settings(StrictContainer):
 
@@ -215,6 +228,17 @@ class Settings(StrictContainer):
         "machines": list,
         "manual": bool
     }
+
+class Errors(StrictContainer):
+
+    FIELDS = {
+        "errors": list,
+        "fatal": list
+    }
+
+    def merge_errors(self, errors_container):
+        self._loaded["errors"].extend(errors_container.errors)
+        self._loaded["fatal"].extend(errors_container.fatal)
 
 class SubmittedFile(StrictContainer):
 
@@ -246,18 +270,27 @@ class Analysis(StrictContainer):
 
     FIELDS = {
         "id": str,
+        "kind": str,
         "settings": Settings,
         "created_on": datetime.datetime,
         "category": str,
         "submitted": (SubmittedFile, SubmittedURL)
     }
 
-class Errors(StrictContainer):
+class Task(StrictContainer):
 
     FIELDS = {
-        "errors": list,
-        "fatal": dict
+        "id": str,
+        "analysis_id": str,
+        "kind": str,
+        "number": int,
+        "platform": str,
+        "os_version": str,
+        "machine_tags": list,
+        "machine": str,
+        "errors": Errors
     }
+    ALLOW_EMPTY = ("machine", "machine_tags", "os_version", "errors")
 
 class TargetFile(StrictContainer):
 
@@ -295,4 +328,10 @@ class Identification(StrictContainer):
         "parent": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("target", "parent", "ignored")
+    ALLOW_EMPTY = ("target", "parent", "ignored", "errors")
+
+class Pre(StrictContainer):
+    FIELDS = {
+        "errors": Errors
+    }
+    ALLOW_EMPTY = ("errors",)

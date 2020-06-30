@@ -12,6 +12,7 @@ import threading
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.storage import cuckoocwd, TaskPaths, split_task_id
 from cuckoo.shutdown import register_shutdown, call_registered_shutdowns
+from cuckoo.common.utils import bytes_to_human
 
 class CancelResult(Exception):
     pass
@@ -140,7 +141,8 @@ class WriteLimiter:
         if size and size != write:
             self.fp.write(b"... (truncated by resultserver)")
             raise MaxBytesWritten(
-                f"Max size of {self.limit} reached. File truncated."
+                f"Max size of {bytes_to_human(self.limit)} reached. "
+                f"File truncated."
             )
 
     def flush(self):
@@ -158,7 +160,7 @@ class FileUpload(ProtocolHandler):
          )
 
          try:
-             self.fd = open( path_helper(self.task_id, fname), "xb")
+             self.fd = open(path_helper(self.task_id, fname), "xb")
          except OSError as e:
              if e.errno == errno.EEXIST:
                  raise CancelResult(
@@ -169,7 +171,9 @@ class FileUpload(ProtocolHandler):
              raise CancelResult(f"Unhandled error: {e}")
 
          try:
-             await copy_to_fd(self.reader, self.fd, self.max_upload_size)
+             await copy_to_fd(
+                 self.reader, self.fd, self.max_upload_size, readsize=2048
+             )
          except MaxBytesWritten as e:
              raise CancelResult(
                  f"Task {self.task_id} file upload {dirpart}/{fname!r}"
@@ -178,7 +182,7 @@ class FileUpload(ProtocolHandler):
          finally:
              print(
                  f"Task {self.task_id} file upload {dirpart}/{fname!r} "
-                 f"finished. Size {self.fd.tell()}."
+                 f"finished. Size {bytes_to_human(self.fd.tell())}."
              )
 
 class _AsyncResultServer:
@@ -192,13 +196,19 @@ class _AsyncResultServer:
         self._mapping_lock = threading.RLock()
         self._ip_asynctask = {}
 
+        # Initialized when start() is called.
+        self._loop = None
+        self._server = None
+
     def map_task_ip(self, task_id, ip):
-        print("Mapping..")
         with self._mapping_lock:
+            if task_id in self._ip_task_id:
+                raise KeyError(
+                    f"IP {ip} is already mapped to task {self._ip_task_id[ip]}"
+                )
+
             self._ip_task_id[ip] = task_id
             self._ip_asynctask[ip] = set()
-
-        print(self._ip_task_id)
 
     def unmap_ip(self, ip):
         with self._mapping_lock:
@@ -206,7 +216,9 @@ class _AsyncResultServer:
             incompleted_tasks = self._ip_asynctask.pop(ip, None)
 
         if incompleted_tasks:
-            asyncio.Task(self.cancel_asynctasks(incompleted_tasks))
+            self._loop.call_soon_threadsafe(
+                self.cancel_asynctasks, incompleted_tasks
+            )
 
     def cancel_all(self):
         with self._mapping_lock:
@@ -243,7 +255,7 @@ class _AsyncResultServer:
         except CancelResult as e:
             print(f"Task {protocol_instance.task_id} cancelled: {e}")
 
-    async def cancel_asynctasks(self, tasks):
+    def cancel_asynctasks(self, tasks):
         for task in list(tasks):
             try:
                 task.cancel()
@@ -251,7 +263,6 @@ class _AsyncResultServer:
                 print(f"Ok,cancelled: {task}")
 
     async def new_result(self, reader, writer):
-        print("New result")
         ip, port = writer.get_extra_info("peername")
         try:
             task_id = self.get_task_id(ip)
@@ -280,6 +291,41 @@ class _AsyncResultServer:
         async_task.add_done_callback(cleanup)
         asynctasks.add(async_task)
 
+    def start(self, listen_ip, listen_port):
+        """Start the asyncresultserver on the given ip:port and handle
+        incoming results that are mapped."""
+        self._loop = asyncio.get_event_loop()
+        routine = asyncio.start_server(
+            self.new_result, listen_ip, listen_port, loop=self._loop
+        )
+
+        try:
+            self._server = self._loop.run_until_complete(routine)
+        except OSError as e:
+            sys.exit(
+                f"Failed to start resultserver on: "
+                f"{listen_ip}:{listen_port}. {e}"
+            )
+
+        print(f"Started resultserver on: {listen_ip}:{listen_port}")
+
+        # Give the loop its own thread so we can accept add/remove requests
+        # in the main thread.
+        loopth = threading.Thread(target=self._loop.run_forever)
+        loopth.daemon = True
+        loopth.start()
+        return loopth
+
+    def stop(self):
+        def _stop_loop():
+            self._loop.stop()
+            self._server.close()
+            self._server.wait_closed()
+
+        if self._server:
+            self._loop.call_soon_threadsafe(_stop_loop)
+
+
 class _RSResponses:
 
     @staticmethod
@@ -300,8 +346,8 @@ class ResultServer(UnixSocketServer):
     def __init__(self, unix_sock_path, cuckoo_cwd, listen_ip, listen_port):
         super().__init__(unix_sock_path)
         self.cuckoocwd = cuckoo_cwd
-        self.list_ip = listen_ip
-        self.list_port = listen_port
+        self.listen_ip = listen_ip
+        self.listen_port = listen_port
 
         self._rs = None
         self._loop = None
@@ -322,25 +368,13 @@ class ResultServer(UnixSocketServer):
         except IPCError as e:
             sys.exit(f"Failed to create unix socket: {e}")
 
-        self._loop = asyncio.get_event_loop()
-        routine = asyncio.start_server(
-            self._rs.new_result, self.list_ip, self.list_port, loop=self._loop
-        )
         try:
-            self._server = self._loop.run_until_complete(routine)
+            loopth = self._rs.start(self.listen_ip, self.listen_port)
         except OSError as e:
             sys.exit(
                 f"Failed to start resultserver on: "
-                f"{self.list_ip}:{self.list_port}. {e}"
+                f"{self.listen_ip}:{self.listen_port}. {e}"
             )
-
-        print(f"Started resultserver on: {self.list_ip}:{self.list_port}")
-
-        # Give the loop its own thread so we can accept add/remove requests
-        # in the main thread.
-        loopth = threading.Thread(target=self._loop.run_forever)
-        loopth.daemon = True
-        loopth.start()
 
         # Start accepting requests to add/remove for ip/tasks for which to
         # accept results for.
@@ -356,11 +390,6 @@ class ResultServer(UnixSocketServer):
         finally:
             call_registered_shutdowns()
 
-    def _stop_loop(self):
-        self._loop.stop()
-        self._server.close()
-        self._server.wait_closed()
-
     def stop(self):
         if not self.do_run:
             return
@@ -370,8 +399,7 @@ class ResultServer(UnixSocketServer):
         self.untrack_all()
         self._rs.cancel_all()
         self.cleanup()
-        if self._server:
-            self._loop.call_soon_threadsafe(self._stop_loop)
+        self._rs.stop()
 
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))
@@ -399,31 +427,25 @@ class ResultServer(UnixSocketServer):
         except ValueError as e:
             self.respond(
                 readerwriter,
-                 _RSResponses.fail(f"Invalid task_id: {e}")
+                _RSResponses.fail(f"Invalid task_id: {e}")
             )
             return
 
         try:
             socket.inet_aton(ip)
         except (ValueError, TypeError):
-            self.respond(
-                readerwriter,
-                 _RSResponses.fail("Invalid ip")
-            )
+            self.respond(readerwriter, _RSResponses.fail("Invalid ip"))
             return
 
         if action == "add":
-            self._rs.map_task_ip(task_id, ip)
-            self.respond(
-                readerwriter, _RSResponses.success()
-            )
+            try:
+                self._rs.map_task_ip(task_id, ip)
+                self.respond(readerwriter, _RSResponses.success())
+            except KeyError as e:
+                self.respond(readerwriter, _RSResponses.fail(str(e)))
+
         elif action == "remove":
             self._rs.unmap_ip(ip)
-            self.respond(
-                readerwriter, _RSResponses.success()
-            )
+            self.respond(readerwriter, _RSResponses.success())
         else:
-            self.respond(
-                readerwriter,
-                 _RSResponses.fail("Unsupported method")
-            )
+            self.respond(readerwriter, _RSResponses.fail("Unsupported method"))

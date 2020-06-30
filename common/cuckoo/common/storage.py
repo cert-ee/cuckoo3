@@ -72,11 +72,19 @@ class _CuckooCWD:
 
 cuckoocwd = _CuckooCWD()
 
+_ANALYSIS_ID_LEN = 6
+
 def _split_analysis_id(analysis_id):
         date_analysis = analysis_id.split("-", 1)
         if len(date_analysis) != 2:
             raise ValueError(
-                "Invalid analysis ID given. Format must be YYYYMMDD-analysis"
+                "Invalid analysis ID given. Format must be YYYYMMDD-analysis."
+            )
+
+        if not date_analysis[1].isalnum():
+            raise ValueError(
+                "Invalid analysis ID given. ID part can only contain "
+                "A-Z and 0-9."
             )
 
         return date_analysis
@@ -117,8 +125,20 @@ class AnalysisPaths:
         return AnalysisPaths._path(analysis_id, "identification.json")
 
     @staticmethod
+    def prejson(analysis_id):
+        return AnalysisPaths._path(analysis_id, "pre.json")
+
+    @staticmethod
     def submitted_file(analysis_id):
         return os.path.realpath(AnalysisPaths._path(analysis_id, "binary"))
+
+    @staticmethod
+    def zipified_file(analysis_id):
+        return AnalysisPaths._path(analysis_id, "target.zip")
+
+    @staticmethod
+    def processingerr_json(analysis_id):
+        return AnalysisPaths._path(analysis_id, "processing_errors.json")
 
     @staticmethod
     def analyses(*args):
@@ -149,6 +169,23 @@ class TaskPaths:
     @staticmethod
     def logfile(task_id, filename):
         return TaskPaths._path(task_id, "logs", filename)
+
+    @staticmethod
+    def payloadlog(task_id):
+        return TaskPaths._path(task_id, "payload.log")
+
+    @staticmethod
+    def machinejson(task_id):
+        return TaskPaths._path(task_id, "machine.json")
+
+    @staticmethod
+    def runerr_json(task_id):
+        return TaskPaths._path(task_id, "run_errors.json")
+
+    @staticmethod
+    def processingerr_json(task_id):
+        return TaskPaths._path(task_id, "processing_errors.json")
+
 
 
 class Paths(object):
@@ -196,6 +233,10 @@ class Paths(object):
             args.append(file)
         return os.path.join(cuckoocwd.root, *tuple(args))
 
+    @staticmethod
+    def monitor(*args):
+        return os.path.join(cuckoocwd.root, "monitor", *args)
+
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):
         try:
@@ -235,7 +276,9 @@ def make_analysis_folder():
         pass
 
     identifier = ''.join(
-        random.choices(string.ascii_uppercase + string.digits, k=6)
+        random.choices(
+            string.ascii_uppercase + string.digits, k=_ANALYSIS_ID_LEN
+        )
     )
     analysis = f"{today}-{identifier}"
     analysis_path = cwd(analysis=analysis)
@@ -272,7 +315,6 @@ def safe_copyfile(source, destination):
     except (OSError, FileExistsError):
         os.unlink(tmp_path)
         raise
-
 
 class Binaries(object):
 

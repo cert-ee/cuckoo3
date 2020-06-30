@@ -14,12 +14,11 @@ Configuration files are generated to {CuckooCWD}/conf/{Subpackage name}/{confnam
 
 1. Create a config.py in the root of the package.
 2. Declare a variable called 'typeloaders'. This must be a dictionary of key: typeloader.
-    * Typehelpers are value verification tools that can be imported from cuckoo.common.config.
+    * typeloaders are value verification tools that can be imported from cuckoo.common.config.
 
 Example (Creating a kvm.yaml conf):
 
 ```python
-
 typeloaders = {
     "kvm.yaml": {
          "dsn": config.String(default_val="qemu:///system")

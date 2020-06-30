@@ -7,7 +7,8 @@ import zipfile
 
 import sflock
 
-from ..helpers import Processor
+from ..abtracts import Processor
+from ..errors import CancelProcessing
 
 def find_child(archive, extraction_paths):
     current = None
@@ -67,10 +68,10 @@ class CreateZip(Processor):
 
         selected_file = find_child(f, target.extrpath)
         if not selected_file:
-            self.errtracker.fatal_error(
-                f"Path: {target.extrpath} not found in container. "
-                f"No file to unpack"
-            )
+            err = f"Path: {target.extrpath} not found in container. " \
+                  f"No file to unpack"
+            self.errtracker.fatal_error(err)
+            raise CancelProcessing(err)
 
         zipify(
             selected_file.parent,

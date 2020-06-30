@@ -36,4 +36,9 @@ setuptools.setup(
     description="Cuckoo Sandbox common and utility code",
     zip_safe=False,
     include_package_data=True,
+    install_requires=[
+        "pyyaml",
+        "jinja2",
+        "requests"
+    ]
 )

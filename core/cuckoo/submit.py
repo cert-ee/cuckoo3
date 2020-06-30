@@ -6,12 +6,13 @@ import os
 import pathlib
 from datetime import datetime
 
-from cuckoo.processing import typehelpers
-
 from cuckoo.common.ipc import message_unix_socket
 from cuckoo.common.storage import (
     Binaries, make_analysis_folder, Paths, AnalysisPaths
 )
+from cuckoo.common.strictcontainer import Analysis, SubmittedFile
+
+from .db import AnalysisKinds
 
 class SubmissionError(Exception):
     pass
@@ -19,8 +20,9 @@ class SubmissionError(Exception):
 
 def write_analysis_info(analysis_id, settings, submitted_target):
 
-    analysis_info = typehelpers.Analysis(**{
+    analysis_info = Analysis(**{
         "id": analysis_id,
+        "kind": AnalysisKinds.STANDARD,
         "settings": settings,
         "created_on": datetime.utcnow(),
         "category": submitted_target.category,
@@ -46,7 +48,7 @@ def file(file_helper, settings, file_name=None):
     target_info["filename"] = file_name or file_helper.sha256
     target_info["category"] = "file"
 
-    submitted_file = typehelpers.SubmittedFile(**target_info)
+    submitted_file = SubmittedFile(**target_info)
     write_analysis_info(analysis_id, settings, submitted_file)
 
     return analysis_id

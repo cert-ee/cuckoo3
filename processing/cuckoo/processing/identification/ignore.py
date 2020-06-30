@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from ..helpers import Processor
+from ..abtracts import Processor
 
 
 class Ignore(Processor):

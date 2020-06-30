@@ -41,6 +41,9 @@ class Machinery:
     def acpi_stop(self, machine):
         raise NotImplementedError
 
+    def state(self, machine):
+        raise NotImplementedError
+
     def dump_memory(self, machine, path):
         raise NotImplementedError
 
@@ -59,3 +62,7 @@ class Machinery:
     def version(self):
         """Return the string version of the virtualization software."""
         return ""
+
+    @staticmethod
+    def verify_dependencies():
+        pass

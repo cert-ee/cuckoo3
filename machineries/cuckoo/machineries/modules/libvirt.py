@@ -2,7 +2,13 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import libvirt
+
+try:
+    import libvirt
+    _HAVE_LIBVIRT = True
+except ImportError:
+    _HAVE_LIBVIRT = False
+
 import threading
 
 from cuckoo.common.config import cfg
@@ -225,6 +231,15 @@ class Libvirt(Machinery):
         # cannot be removed. Look into a way to properly solve this before
         # using the workaround.
         pass
+
+    @staticmethod
+    def verify_dependencies():
+        if not _HAVE_LIBVIRT:
+            raise errors.MachineryDependencyError(
+                "Python package 'libvirt-python' is not installed. "
+                "To install it the following system package must also be "
+                "installed: 'libvirt-dev'"
+            )
 
 class KVM(Libvirt):
     name = "kvm"

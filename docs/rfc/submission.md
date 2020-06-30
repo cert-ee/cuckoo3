@@ -25,24 +25,27 @@ Available settings are:
 
 - timeout (integer)
     * The timeout of all created tasks in seconds
-- enforce_timeout (boolean)
-    * A boolean determining if the tasks must run until the timeout, even if a target exits before that.
-- dump_memory (boolean)
-    * A boolean determining if the machine memory should be dumped at the end of a task.
 - priority (integer)
     * The priority can be used to move tasks to infront of queued tasks with a lower priority.
-- options (dictionary)
-    * A dictionary containing additional settings.
-- machine_tags (list of strings)
-    * A list of tags that determine what machine can be chosen
-- platforms (list of strings)
-    * A list of platform names that will be used to choose the machines of the specified platforms. Windows10, windows7, etc. TODO: rename this? Do we want to include the os_version here or in a different field?
-- machines (list of strings)
-    * A list of machine names that must be used.
+- platforms (list of strings) TODO: rename this? Do we want to include the os_version here or in a different field?
+    * A list of dictionaries with 'platform' and 'os_version' keys. os_version can only be specified if platform is specified. Both values must be strings. Platform names and os_versions will be used to choose the machines of the specified platforms.
 - manual (boolean)
     * A boolean that determines if the next state after identification is 'WAITING_MANUAL', to allow a user to select a file and change settings such as chosen platforms.
 
 Settings must be accepted accepted and verified through a StrictContainer. These verify the type of a field and can check field constraints.
+
+Available settings in the future:
+
+- enforce_timeout (boolean)
+    * A boolean determining if the tasks must run until the timeout, even if a target exits before that.
+- dump_memory (boolean)
+    * A boolean determining if the machine memory should be dumped at the end of a task.
+- options (dictionary)
+    * A dictionary containing additional settings.
+- machine_tags (list of strings) ()
+    * A list of tags that determine what machine can be chosen
+- machines (list of strings)
+    * A list of machine names that must be used.
 
 
 ```python

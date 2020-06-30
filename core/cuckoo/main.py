@@ -5,13 +5,21 @@
 import os
 import click
 import sys
+import platform
 
-from cuckoo.common.storage import cuckoocwd
+from cuckoo.common.storage import cuckoocwd, Paths
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.pass_context
 def main(ctx, cwd):
+    if platform.system().lower() != "linux":
+        print(
+            "Currently Cuckoo3 is still in development and "
+            "will only run on Linux."
+        )
+        sys.exit(1)
+
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -28,6 +36,17 @@ def main(ctx, cwd):
         sys.exit(1)
 
     cuckoocwd.set(cwd)
+    if not os.path.exists(Paths.monitor()):
+        if ctx.invoked_subcommand == "getmonitor":
+            return
+
+        print(
+            "No monitor and stager binaries are present yet. "
+            "Use 'cuckoo getmonitor <zip path>' to unpack and use monitor "
+            "and stagers from a Cuckoo monitor zip."
+        )
+        sys.exit(1)
+
     if ctx.invoked_subcommand:
         return
 
@@ -54,7 +73,8 @@ def start_cuckoo():
     from cuckoo.common.config import MissingConfigurationFileError
     from .startup import (
         load_configurations, start_machinerymanager, init_database,
-        start_processing_handler, start_statecontroller, start_resultserver
+        start_processing_handler, start_statecontroller, start_resultserver,
+        start_taskrunner, start_scheduler
     )
 
     print(f"Starting Cuckoo. Using CWD {cuckoocwd.root}")
@@ -73,8 +93,12 @@ def start_cuckoo():
     init_database()
     print("Starting processing handler and workers")
     start_processing_handler()
+    print("Starting task runner")
+    start_taskrunner()
     print("Starting state controller")
     start_statecontroller()
+    print("Starting scheduler")
+    start_scheduler()
 
 @main.command("createcwd")
 @click.option("--regen-configs", is_flag=True)
@@ -105,13 +129,25 @@ def create_cwd(ctx, regen_configs):
     create_configurations()
     print(f"Create Cuckoo CWD at: {cwd_path}")
 
+@main.command("getmonitor")
+@click.argument("zip_path")
+def get_monitor(zip_path):
+    """Use the monitor and stager binaries from the given
+    Cuckoo monitor zip file."""
+    from cuckoo.common.guest import unpack_monitor_components
+    if not os.path.isfile(zip_path):
+        print(f"Zip file does not exist: {zip_path}")
+        sys.exit(1)
+
+    unpack_monitor_components(zip_path, cuckoocwd.root)
+
 @main.command("submit")
 @click.argument("target", nargs=-1)
-@click.option(
-    "--machine-tag", multiple=True,
-    help="Additional machine tag to the ones that are automatically selected "
-         "in target identification."
-)
+# @click.option(
+#     "--machine-tag", multiple=True,
+#     help="Additional machine tag to the ones that are automatically selected "
+#          "in target identification."
+# )
 @click.option(
     "--platform", multiple=True,
     help="The platform and optionally the OS version the analysis task must "
@@ -119,7 +155,7 @@ def create_cwd(ctx, regen_configs):
 )
 @click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds")
 @click.option("--priority", type=int, default=1, help="The priority of this analysis")
-def submission(target, machine_tag, platform, timeout, priority):
+def submission(target, platform, timeout, priority):
     """Create a new file analysis"""
     from . import submit, analyses
     from cuckoo.common.ipc import IPCError
@@ -133,13 +169,29 @@ def submission(target, machine_tag, platform, timeout, priority):
         )
         sys.exit(1)
 
+    # Change platform,version to dict with those keys
+    platforms = []
+    for p_v in platform:
+        platform_version = p_v.split(",", 1)
+
+        if len(platform_version) == 2:
+            platforms.append({
+                "platform": platform_version[0],
+                "os_version": platform_version[1]
+            })
+        else:
+            platforms.append({
+                "platform": platform_version[0],
+                "os_version": ""
+            })
+
     set_machines_dump(read_machines_dump(Paths.machinestates()))
 
     try:
         s = analyses.Settings(
             timeout=timeout, priority=priority, enforce_timeout=True,
-            dump_memory=False, options={}, machine_tags=list(machine_tag),
-            platforms=[], machines=[], manual=False
+            dump_memory=False, options={}, machine_tags=[],
+            platforms=platforms, machines=[], manual=False
         )
     except (ValueError, TypeError, analyses.AnalysisError) as e:
         print(f"Failed to submit: {e}")

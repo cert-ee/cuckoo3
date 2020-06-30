@@ -7,11 +7,12 @@ import queue
 import threading
 import traceback
 
-from cuckoo.processing import typehelpers
-
-from . import analyses, db, started, task
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.storage import Paths, AnalysisPaths
+from cuckoo.common.strictcontainer import Analysis, Identification
+
+from . import analyses, db, started, task
+from .scheduler import task_queue
 
 def track_untracked():
     analysis_ids = os.listdir(Paths.untracked())
@@ -38,7 +39,7 @@ def track_untracked():
 
 
 def handle_identification_done(analysis_id):
-    analysis = typehelpers.Analysis.from_file(
+    analysis = Analysis.from_file(
         AnalysisPaths.analysisjson(analysis_id)
     )
     if analysis.settings.manual:
@@ -46,9 +47,7 @@ def handle_identification_done(analysis_id):
             analysis_id, db.AnalysisStates.WAITING_MANUAL
         )
     else:
-        ident = typehelpers.Identification.from_file(
-            AnalysisPaths.identjson(analysis_id)
-        )
+        ident = Identification.from_file(AnalysisPaths.identjson(analysis_id))
 
         if ident.selected:
             db.set_analysis_state(
@@ -61,17 +60,14 @@ def handle_identification_done(analysis_id):
             )
 
 def handle_pre_done(analysis_id):
-    analysis = typehelpers.Analysis.from_file(
-        AnalysisPaths.analysisjson(analysis_id)
-    )
+    analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
 
     # We currently only use the identified platforms and tags if the user
     # did not supply either. TODO improve this and move logic to location
-    # where the analysis json is already being stored.
+    # where the analysis json is already being stored. TODO tags will be per
+    # platform/analysis machine. Combine tags when tasks are created
     if not analysis.settings.platforms and not analysis.settings.machine_tags:
-        ident = typehelpers.Identification.from_file(
-            AnalysisPaths.identjson(analysis_id)
-        )
+        ident = Identification.from_file(AnalysisPaths.identjson(analysis_id))
 
         analyses.update_settings(
             analysis, platforms=ident.target.platforms,
@@ -81,7 +77,7 @@ def handle_pre_done(analysis_id):
 
     print(f"Creating tasks for {analysis_id}")
     try:
-        task.create_all(analysis)
+        tasks = task.create_all(analysis)
     except task.TaskCreationError as e:
         print(
             f"Fatal error while creating tasks for analysis: {analysis_id}. "
@@ -91,21 +87,45 @@ def handle_pre_done(analysis_id):
         return
 
     db.set_analysis_state(analysis_id, db.AnalysisStates.COMPLETED_PRE)
+    task_queue.queue_many(tasks)
+    started.scheduler.newtask()
 
 def set_next_state(worktype, analysis_id, task_id=None):
     if worktype == "identification":
+        analyses.merge_ident_errors(analysis_id)
         handle_identification_done(analysis_id)
 
     elif worktype == "pre":
+        analyses.merge_pre_errors(analysis_id)
         handle_pre_done(analysis_id)
 
 def set_failed(worktype, analysis_id, task_id=None):
     print(f"Fatal error with analysis: {analysis_id}")
     if worktype == "identification":
         db.set_analysis_state(analysis_id, db.AnalysisStates.FATAL_ERROR)
+        analyses.merge_ident_errors(analysis_id)
 
     elif worktype == "pre":
         db.set_analysis_state(analysis_id, db.AnalysisStates.FATAL_ERROR)
+        analyses.merge_pre_errors(analysis_id)
+
+    else:
+        raise ValueError(
+            f"Unknown work type {worktype} for analysis: {analysis_id}"
+        )
+
+def handle_task_done(task_id):
+    print(f"Setting task {task_id} to reported")
+    started.scheduler.task_ended(task_id)
+    task.set_db_state(task_id, db.TaskStates.REPORTED)
+    task.merge_run_errors(task_id)
+
+def set_task_failed(task_id):
+    print(f"Setting task {task_id} to failed.")
+    started.scheduler.task_ended(task_id)
+    task.set_db_state(task_id, db.TaskStates.FATAL_ERROR)
+    task.merge_run_errors(task_id)
+
 
 class StateControllerWorker(threading.Thread):
 
@@ -146,7 +166,9 @@ class StateController(UnixSocketServer):
         self.subject_handler = {
             "tracknew": self.track_new_analyses,
             "workdone": self.work_done,
-            "workfail": self.work_failed
+            "workfail": self.work_failed,
+            "taskrundone": self.task_done,
+            "taskrunfailed": self.task_failed
         }
 
     def queue_call(self, func, kwargsdict={}):
@@ -175,6 +197,20 @@ class StateController(UnixSocketServer):
             }
         )
 
+    def task_done(self, **kwargs):
+        self.queue_call(
+            handle_task_done, {
+                "task_id": kwargs["task_id"]
+            }
+        )
+
+    def task_failed(self, **kwargs):
+        self.queue_call(
+            set_task_failed, {
+                "task_id": kwargs["task_id"]
+            }
+        )
+
     def track_new_analyses(self, **kwargs):
         self.queue_call(track_untracked)
 
@@ -195,6 +231,9 @@ class StateController(UnixSocketServer):
         except KeyError as e:
             traceback.print_exc()
             print(f"Incomplete message. Error {e}. Message: {msg}")
+        except TypeError as e:
+            traceback.print_exc()
+            print(f"Incorrect message. Error {e}. Message: {msg}")
 
     def stop(self):
         if not self.do_run and not self.workers:

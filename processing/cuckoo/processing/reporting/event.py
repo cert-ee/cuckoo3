@@ -3,7 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 
-from ..helpers import Reporter
+from ..abtracts import Reporter
 
 class Event(Reporter):
 

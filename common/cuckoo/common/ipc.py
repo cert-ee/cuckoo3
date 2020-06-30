@@ -16,6 +16,9 @@ class IPCError(Exception):
 class NotConnectedError(IPCError):
     pass
 
+class ResponseTimeoutError(IPCError):
+    pass
+
 class ReaderWriter(object):
     # 5 MB JSON blob
     MAX_INFO_BUF = 5 * 1024 * 1024
@@ -157,8 +160,16 @@ class UnixSocketServer:
 
                 # Handle new connection
                 if sock == self.sock:
+                    try:
+                        clientsock, addr = sock.accept()
+                    except OSError as e:
+                        # Can be thrown if connection socket kills connection
+                        # at just the right time.
+                        if e.errno == errno.EBADF:
+                            continue
 
-                    clientsock, addr = sock.accept()
+                        raise
+
                     clientsock.setblocking(0)
                     self.handle_connection(clientsock, addr)
                 else:
@@ -315,16 +326,42 @@ def message_unix_socket(sock_path, message_dict):
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
 
-def request_unix_socket(sock_path, message_dict):
+
+def _timeout_read_response(client, timeout):
+    waited = 0
+    while True:
+        resp = client.recv_json_message()
+        if resp is not None:
+            return resp
+
+        if waited >= timeout:
+            raise ResponseTimeoutError(
+                f"No response within timeout of {timeout} seconds."
+            )
+
+        waited += 1
+        time.sleep(1)
+
+def request_unix_socket(sock_path, message_dict, timeout=0):
     """Send the given message dict to the provided unix socket, wait for a
-    response, disconnect, and return the response"""
+    response, disconnect, and return the response. If the timeout is a higher
+    integer than 0, this will be used a maximum amount of seconds
+    to wait for the response. If it is reached, a ResponseTimeoutError
+    is raised."""
     if not os.path.exists(sock_path):
         raise IPCError(f"Unix socket {sock_path} does not exist")
 
-    client = UnixSockClient(sock_path)
+    if timeout > 0:
+        client = UnixSockClient(sock_path, blockingreads=False)
+    else:
+        client = UnixSockClient(sock_path)
+
     client.connect(maxtries=1)
     client.send_json_message(message_dict)
-
-    resp = client.recv_json_message()
-    client.cleanup()
-    return resp
+    try:
+        if timeout > 0:
+            return _timeout_read_response(client, timeout)
+        else:
+            return client.recv_json_message()
+    finally:
+        client.cleanup()

@@ -11,6 +11,9 @@ class MachineryConnectionError(MachineryError):
 class MachineryUnhandledStateError(MachineryError):
     pass
 
+class MachineryDependencyError(MachineryError):
+    pass
+
 class MachineNotFoundError(MachineryError):
     pass
 
@@ -18,10 +21,4 @@ class MachineUnexpectedStateError(MachineryError):
     pass
 
 class MachineStateReachedError(MachineryError):
-    pass
-
-class MachineryManagerClientError(Exception):
-    pass
-
-class ResponseTimeoutError(MachineryManagerClientError):
     pass

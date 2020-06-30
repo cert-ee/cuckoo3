@@ -7,7 +7,8 @@ import os
 
 import sflock
 
-from ..helpers import Processor, bytes_to_str
+from ..abtracts import Processor
+from ..errors import CancelProcessing
 
 def find_selected(f, tracklist):
     if f.selected:
@@ -16,6 +17,16 @@ def find_selected(f, tracklist):
     if f.children:
         for child in f.children:
             find_selected(child, tracklist)
+
+def _bytes_to_str(b):
+    if isinstance(b, bytes):
+        return b.decode()
+
+def _write_filetree(dir_path, tree):
+    filetree_path = os.path.join(dir_path, "filetree.json")
+    with open(filetree_path, "w") as fp:
+        json.dump(tree, fp, default=_bytes_to_str, indent=2)
+
 
 class Identify(Processor):
 
@@ -28,10 +39,10 @@ class Identify(Processor):
             return
 
         if not os.path.isfile(self.submitted_file):
-            self.errtracker.fatal_error(
-                f"Submitted file for analysis: {self.analysis.id} "
-                f"does not exist"
-            )
+            err = f"Submitted file for analysis: {self.analysis.id} " \
+                  f"does not exist"
+            self.errtracker.fatal_error(err)
+            raise CancelProcessing(err)
 
         # Retain the original file name. Instead of the hash that
         # originates from the filepath being a path to the binaries
@@ -44,18 +55,25 @@ class Identify(Processor):
                 self.submitted_file.encode(), filename=original_filename
             )
         except Exception as e:
-            self.errtracker.fatal_exception(f"Sflock unpacking failure. {e}")
+            err = f"Sflock unpacking failure. {e}"
+            self.errtracker.fatal_exception(err)
+            raise CancelProcessing(err)
 
         if f.children:
             tree = f.astree(sanitize=True, finger=True)
-            self.write_filetree(tree)
+            _write_filetree(self.analysis_path, tree)
 
         selected = []
         find_selected(f, selected)
 
         platforms = []
         if f.platform:
-            platforms.append(f.platform)
+            # TODO replace later when strictcontainer can handle lists of
+            # strictcontainers
+            platforms.append({
+                "platform": f.platform,
+                "os_version": ""
+            })
 
         return {
             "selection": selected,
@@ -73,10 +91,7 @@ class Identify(Processor):
             }
         }
 
-    def write_filetree(self, tree):
-        filetree_path = os.path.join(self.analysis_path, "filetree.json")
-        with open(filetree_path, "w") as fp:
-            json.dump(tree, fp, default=bytes_to_str, indent=2)
+
 
 class SelectFile(Processor):
 
@@ -137,7 +152,12 @@ class SelectFile(Processor):
 
         platforms = []
         if selected.platform:
-            platforms.append(selected.platform)
+            # TODO replace later when strictcontainer can handle lists of
+            # strictcontainers
+            platforms.append({
+                "platform": selected.platform,
+                "os_version": ""
+            })
 
         return {
             "filename": selected.filename,
