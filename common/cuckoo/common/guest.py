@@ -374,8 +374,8 @@ class TmStage(StagerHelper):
     platforms = ["windows"]
     archs = ["amd64"]
 
-    STAGER_BINARY = "zmstage.exe"
-    MONITOR_BINARY = "onemon.sys"
+    STAGER_BINARY = "tmstage.exe"
+    MONITOR_BINARY = "threemon.sys"
 
     @staticmethod
     def _build_settings(debug, resultserver, options, target, is_archive):
