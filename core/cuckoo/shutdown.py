@@ -5,7 +5,7 @@
 import traceback
 import signal
 
-from threading import Lock
+from threading import Lock, Thread
 
 _shutdown_methods = []
 _teardown_lock = Lock()
@@ -34,7 +34,12 @@ def call_registered_shutdowns():
             traceback.print_exc()
 
 def _wrap_call_registered_shutdowns(sig, frame):
-    call_registered_shutdowns()
+    if _teardown_lock.locked():
+        return
+
+    # Delegate the actual handling of the signal to a new thread as IO
+    # is not safe in a signal handler: https://bugs.python.org/issue24283
+    Thread(target=call_registered_shutdowns).start()
 
 signal.signal(signal.SIGTERM, _wrap_call_registered_shutdowns)
 signal.signal(signal.SIGINT, _wrap_call_registered_shutdowns)
