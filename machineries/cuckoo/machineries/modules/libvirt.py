@@ -2,13 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-
-try:
-    import libvirt
-    _HAVE_LIBVIRT = True
-except ImportError:
-    _HAVE_LIBVIRT = False
-
 import threading
 
 from cuckoo.common.config import cfg
@@ -16,6 +9,12 @@ from cuckoo.common.config import cfg
 from ..abstracts import Machinery
 from ..helpers import MachineStates
 from .. import errors
+
+try:
+    import libvirt
+    _HAVE_LIBIRT = True
+except ImportError:
+    _HAVE_LIBIRT = False
 
 class LibvirtConn:
 
@@ -72,10 +71,18 @@ class LibvirtConn:
 
 
 statemapping = {
-    libvirt.VIR_DOMAIN_RUNNING: MachineStates.RUNNING,
-    libvirt.VIR_DOMAIN_SHUTOFF: MachineStates.POWEROFF,
-    libvirt.VIR_DOMAIN_SHUTDOWN: MachineStates.STOPPING,
-    libvirt.VIR_DOMAIN_PAUSED: MachineStates.PAUSED
+    # Using the value of the constants so we can import the module
+    # set a _HAVE_LIBIRT without it failing when being imported. The
+    # verify_dependencies method will cause it to notify about the missing
+    # depenencies properly.
+    # libvirt.VIR_DOMAIN_RUNNING
+    1: MachineStates.RUNNING,
+    # libvirt.VIR_DOMAIN_PAUSED
+    3: MachineStates.PAUSED,
+    # libvirt.VIR_DOMAIN_SHUTDOWN
+    4: MachineStates.STOPPING,
+    # libvirt.VIR_DOMAIN_SHUTOFF
+    5: MachineStates.POWEROFF,
 }
 
 class Libvirt(Machinery):
@@ -234,7 +241,7 @@ class Libvirt(Machinery):
 
     @staticmethod
     def verify_dependencies():
-        if not _HAVE_LIBVIRT:
+        if not _HAVE_LIBIRT:
             raise errors.MachineryDependencyError(
                 "Python package 'libvirt-python' is not installed. "
                 "To install it the following system package must also be "
