@@ -39,6 +39,7 @@ setuptools.setup(
     install_requires=[
         "pyyaml",
         "jinja2",
-        "requests"
+        "requests",
+        "python-dateutil"
     ]
 )

@@ -59,7 +59,7 @@ class _CuckooCWD:
             raise IsADirectoryError(f"Directory {path} already exists.")
 
         os.makedirs(path)
-        for dirname in ("storage", "conf", "operational"):
+        for dirname in ("storage", "conf", "operational", "log"):
             os.makedirs(os.path.join(path, dirname))
 
         for dirname in ("analyses", "binaries", "untracked"):
@@ -236,6 +236,10 @@ class Paths(object):
     @staticmethod
     def monitor(*args):
         return os.path.join(cuckoocwd.root, "monitor", *args)
+
+    @staticmethod
+    def log(filename):
+        return os.path.join(cuckoocwd.root, "log", filename)
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):

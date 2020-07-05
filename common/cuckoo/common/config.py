@@ -415,7 +415,7 @@ def load_config(filepath, subpkg=""):
     with open(filepath, "r") as fp:
         try:
             conf = yaml.safe_load(fp)
-        except yaml.scanner.ScannerError as e:
+        except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML in {filepath}. {e}")
 
     # Copy the typeloaders are we do not want to overwrite values of the

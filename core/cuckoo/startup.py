@@ -4,7 +4,6 @@
 
 import os
 import time
-import requests
 from importlib import import_module
 from pkgutil import iter_modules
 from threading import Thread
@@ -14,6 +13,9 @@ from cuckoo.common.packages import (
     get_conf_typeloaders, get_conftemplates, enumerate_plugins
 )
 from cuckoo.common.storage import Paths, cuckoocwd
+from cuckoo.common.log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
 
 from . import started, shutdown
 
@@ -46,7 +48,13 @@ def find_cuckoo_packages(do_import=True):
 def load_machinery_configs():
     for machinery in config.cfg("cuckoo", "machineries"):
         confpath = Paths.config(file=f"{machinery}.yaml", subpkg="machineries")
-        config.load_config(confpath, subpkg="machineries")
+        log.debug("Loading config.", confpath=confpath)
+        try:
+            config.load_config(confpath, subpkg="machineries")
+        except config.ConfigurationError as e:
+            raise StartupError(
+                f"Failed to load config file {confpath}. {e}"
+            )
 
 def load_configurations():
     # Load cuckoo all configurations for Cuckoo and all installed Cuckoo
@@ -70,7 +78,13 @@ def load_configurations():
                     f"Configuration file {confname} is missing."
                 )
 
-            config.load_config(confpath, subpkg=subpkg)
+            log.debug("Loading config.", confpath=confpath)
+            try:
+                config.load_config(confpath, subpkg=subpkg)
+            except config.ConfigurationError as e:
+                raise StartupError(
+                    f"Failed to load config file {confpath}. {e}"
+                )
 
     for custom_loader in custom_load.values():
         custom_loader()
@@ -102,8 +116,9 @@ def create_configurations():
 
             template_path = templates.get(confname)
             if not template_path:
-                print(f"No configuration template exists for {confname}")
-                continue
+                raise StartupError(
+                    f"No configuration template exists for {confname}"
+                )
 
             config.render_config(template_path, typeloaders, config_path)
 
@@ -200,6 +215,10 @@ def start_resultserver():
     ip = config.cfg("cuckoo", "resultserver", "listen_ip")
     port = config.cfg("cuckoo", "resultserver", "listen_port")
     rs = ResultServer(sockpath, cuckoocwd.root, ip, port)
+    log.debug(
+        "Starting resultserver.", listenip=ip, listenport=port,
+        sockpath=sockpath, cwd=cuckoocwd.root
+    )
     rs_proc = Process(target=rs.start)
 
     def _rs_stopper():
@@ -220,6 +239,8 @@ def start_resultserver():
             raise StartupError("Resultserver stopped unexpectedly")
         waited += 0.5
         time.sleep(0.5)
+
+    log.debug("Resultserver process started.", pid=rs_proc.pid)
 
     servers.add(sockpath, ip, port)
 
@@ -275,3 +296,48 @@ def start_scheduler():
     shutdown.register_shutdown(started.scheduler.stop, order=2)
 
     started.scheduler.start()
+
+def init_global_logging(level, filepath):
+    from logging import StreamHandler
+    import logging
+    from logging.handlers import WatchedFileHandler
+    from cuckoo.common.log import (
+        start_queue_listener, stop_queue_listener, KeyValueLogFormatter,
+        ConsoleFormatter, set_level, add_rootlogger_handler, ColorText
+    )
+
+    # Replace WARNING with WARN to keep log line shorter,
+    # alligned, and readable
+    logging.addLevelName(logging.WARNING, "WARN")
+
+    # Set the Cuckoo log module level. This level will be set to
+    # each handler added and logger created using the cuckoo log module.
+    set_level(level)
+
+    file_log_fmt = "%(asctime)s %(levelname)-5s [%(name)s]: %(message)s"
+    logtime_fmt = "%Y-%m-%d %H:%M:%S"
+    globallog_h = WatchedFileHandler(filepath, mode="a")
+    globallog_h.setFormatter(KeyValueLogFormatter(file_log_fmt, logtime_fmt))
+
+    # Ensure the log queue thread is stopped last when stopping Cuckoo
+    shutdown.register_shutdown(stop_queue_listener, order=999)
+
+    # Let file logging be handled by the queuelistener
+    start_queue_listener(globallog_h)
+
+    # The console formatter has a '-22' because the console formatter
+    # adds ansi colors, which adds length to the levelname. If the current
+    # terminal does not support colors, use -5.
+    format_len = -22
+    if not ColorText.terminal_supported():
+        format_len = -5
+
+    console_fmt = f"%(asctime)s %(levelname){format_len}s " \
+                  f"[%(name)s]: %(message)s"
+    streamhandler = StreamHandler()
+    streamhandler.setLevel(logging.DEBUG)
+    streamhandler.setFormatter(ConsoleFormatter(console_fmt, logtime_fmt))
+
+    # Add extra handler to get logs to the console.
+    # Let log to console printing be handled at by the actual caller.
+    add_rootlogger_handler(streamhandler)

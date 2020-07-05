@@ -4,21 +4,23 @@
 
 import os
 import click
-import sys
 import platform
+import logging
 
 from cuckoo.common.storage import cuckoocwd, Paths
+from cuckoo.common.log import (
+    exit_error, print_info, print_error, print_warning, CuckooGlobalLogger
+)
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.pass_context
 def main(ctx, cwd):
     if platform.system().lower() != "linux":
-        print(
+        exit_error(
             "Currently Cuckoo3 is still in development and "
             "will only run on Linux."
         )
-        sys.exit(1)
 
     if not cwd:
         cwd = cuckoocwd.DEFAULT
@@ -28,29 +30,27 @@ def main(ctx, cwd):
         if ctx.invoked_subcommand == "createcwd":
             return
 
-        print(
+        exit_error(
             f"Cuckoo CWD {cwd} does not yet exist. Run "
             f"'cuckoo createcwd' if this is the first time you are "
             f"running Cuckoo with this CWD path"
         )
-        sys.exit(1)
 
     cuckoocwd.set(cwd)
     if not os.path.exists(Paths.monitor()):
         if ctx.invoked_subcommand == "getmonitor":
             return
 
-        print(
+        exit_error(
             "No monitor and stager binaries are present yet. "
             "Use 'cuckoo getmonitor <zip path>' to unpack and use monitor "
             "and stagers from a Cuckoo monitor zip."
         )
-        sys.exit(1)
 
     if ctx.invoked_subcommand:
         return
 
-    from .startup import StartupError
+    from .startup import StartupError, init_global_logging
     from .shutdown import register_shutdown, call_registered_shutdowns
 
     def _stopmsg():
@@ -58,11 +58,13 @@ def main(ctx, cwd):
 
     register_shutdown(_stopmsg, order=1)
 
+    # Initialize globing logging to cuckoo.log
+    init_global_logging(logging.DEBUG, Paths.log("cuckoo.log"))
+
     try:
         start_cuckoo()
     except StartupError as e:
-        print(f"Failure during Cuckoo startup: {e}")
-        sys.exit(1)
+        exit_error(f"Failure during Cuckoo startup: {e}")
     finally:
         call_registered_shutdowns()
 
@@ -77,27 +79,28 @@ def start_cuckoo():
         start_taskrunner, start_scheduler
     )
 
-    print(f"Starting Cuckoo. Using CWD {cuckoocwd.root}")
-    print("Loading configurations")
+    log = CuckooGlobalLogger(__name__)
+
+    log.info(f"Starting Cuckoo.", cwd=cuckoocwd.root)
+    log.info("Loading configurations")
     try:
         load_configurations()
     except MissingConfigurationFileError as e:
-        print(f"Missing configuration file: {e}")
-        sys.exit(1)
+        log.fatal_error(f"Missing configuration file: {e}", includetrace=False)
 
-    print("Starting resultserver")
+    log.info("Starting resultserver")
     start_resultserver()
-    print("Loading machineries and starting machinery manager")
+    log.info("Loading machineries and starting machinery manager")
     start_machinerymanager()
-    print("Initializing database")
+    log.info("Initializing database")
     init_database()
-    print("Starting processing handler and workers")
+    log.info("Starting processing handler and workers")
     start_processing_handler()
-    print("Starting task runner")
+    log.info("Starting task runner")
     start_taskrunner()
-    print("Starting state controller")
+    log.info("Starting state controller")
     start_statecontroller()
-    print("Starting scheduler")
+    log.info("Starting scheduler")
     start_scheduler()
 
 @main.command("createcwd")
@@ -105,29 +108,33 @@ def start_cuckoo():
 @click.pass_context
 def create_cwd(ctx, regen_configs):
     """Create the specified Cuckoo CWD"""
-    from .startup import create_configurations
+    from .startup import create_configurations, StartupError
 
     cwd_path = ctx.parent.cwd_path
     if os.path.isdir(ctx.parent.cwd_path):
         if not regen_configs:
-            print(f"Path {cwd_path} already exists.")
-            sys.exit(1)
+            exit_error(f"Path {cwd_path} already exists.")
 
         if not cuckoocwd.is_valid(cwd_path):
-            print(
+            exit_error(
                 f"Path {cwd_path} is not a valid Cuckoo CWD. "
                 f"Cannot regenerate configurations."
             )
-            sys.exit(1)
-        create_configurations()
-        print("Re-created missing configuration files")
-        return
 
+        try:
+            create_configurations()
+            print_info("Re-created missing configuration files")
+            return
+        except StartupError as e:
+            exit_error(f"Failure during configuration generation: {e}")
 
     cuckoocwd.create(cwd_path)
     cuckoocwd.set(cwd_path)
-    create_configurations()
-    print(f"Create Cuckoo CWD at: {cwd_path}")
+    try:
+        create_configurations()
+        print_info(f"Created Cuckoo CWD at: {cwd_path}")
+    except StartupError as e:
+        exit_error(f"Failure during configuration generation: {e}")
 
 @main.command("getmonitor")
 @click.argument("zip_path")
@@ -136,8 +143,7 @@ def get_monitor(zip_path):
     Cuckoo monitor zip file."""
     from cuckoo.common.guest import unpack_monitor_components
     if not os.path.isfile(zip_path):
-        print(f"Zip file does not exist: {zip_path}")
-        sys.exit(1)
+        exit_error(f"Zip file does not exist: {zip_path}")
 
     unpack_monitor_components(zip_path, cuckoocwd.root)
 
@@ -163,11 +169,10 @@ def submission(target, platform, timeout, priority):
     from .machinery import read_machines_dump, set_machines_dump
 
     if not os.path.exists(Paths.machinestates()):
-        print(
+        exit_error(
             "No machines have ever been loaded. "
             "Start Cuckoo to load these from the machine configurations."
         )
-        sys.exit(1)
 
     # Change platform,version to dict with those keys
     platforms = []
@@ -194,8 +199,7 @@ def submission(target, platform, timeout, priority):
             platforms=platforms, machines=[], manual=False
         )
     except (ValueError, TypeError, analyses.AnalysisError) as e:
-        print(f"Failed to submit: {e}")
-        sys.exit(1)
+        exit_error(f"Failed to submit: {e}")
 
     files = []
     for path in target:
@@ -206,11 +210,13 @@ def submission(target, platform, timeout, priority):
             filename = os.path.basename(path)
             try:
                 analysis_id = submit.file(File(path), s, file_name=filename)
-                print(f"Submitted. {analysis_id} -> {path}")
+                print_info(f"Submitted. {analysis_id} -> {path}")
             except submit.SubmissionError as e:
-                print(f"Failed to submit {path}. {e}")
+                print_error(f"Failed to submit {path}. {e}")
     finally:
         try:
             submit.notify()
         except IPCError as e:
-            print(f"Could not notify Cuckoo process. Is Cuckoo running? {e}")
+            print_warning(
+                f"Could not notify Cuckoo process. Is Cuckoo running? {e}"
+            )

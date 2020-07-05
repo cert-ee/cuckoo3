@@ -10,9 +10,12 @@ import traceback
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.storage import Paths, AnalysisPaths
 from cuckoo.common.strictcontainer import Analysis, Identification
+from cuckoo.common.log import CuckooGlobalLogger
 
 from . import analyses, db, started, task
 from .scheduler import task_queue
+
+log = CuckooGlobalLogger(__name__)
 
 def track_untracked():
     analysis_ids = os.listdir(Paths.untracked())
@@ -23,16 +26,16 @@ def track_untracked():
     for untracked_id in analysis_ids:
         untracked_path = Paths.analysis(untracked_id)
         if not os.path.isdir(untracked_path):
-            print(
-                f"Invalid analysis id, analysis dir {untracked_path} "
-                f"does not exist"
+            log.error(
+                "Cannot track new analysis ID. Analysis path does not exist",
+                analysis_path=untracked_path
             )
             continue
 
         valid_untracked.append(untracked_id)
 
     analyses.track_analyses(valid_untracked)
-    print("Tracked new analyses")
+    log.info("Tracked new analyses.", amount=len(valid_untracked))
     for tracked in valid_untracked:
         started.processing_handler.identify(tracked)
         os.unlink(Paths.untracked(tracked))
@@ -75,13 +78,13 @@ def handle_pre_done(analysis_id):
         )
         analysis.to_file(AnalysisPaths.analysisjson(analysis_id))
 
-    print(f"Creating tasks for {analysis_id}")
+    log.debug("Creating tasks for analysis.", analysis_id=analysis_id)
     try:
         tasks = task.create_all(analysis)
     except task.TaskCreationError as e:
-        print(
-            f"Fatal error while creating tasks for analysis: {analysis_id}. "
-            f"Error: {e}"
+        log.error(
+            "Failed to create tasks for analysis.",
+            analysis_id=analysis_id, error=e
         )
         db.set_analysis_state(analysis_id, db.AnalysisStates.FATAL_ERROR)
         return
@@ -100,12 +103,15 @@ def set_next_state(worktype, analysis_id, task_id=None):
         handle_pre_done(analysis_id)
 
 def set_failed(worktype, analysis_id, task_id=None):
-    print(f"Fatal error with analysis: {analysis_id}")
     if worktype == "identification":
+        log.error(
+            "Analysis identification stage failed", analysis_id=analysis_id
+        )
         db.set_analysis_state(analysis_id, db.AnalysisStates.FATAL_ERROR)
         analyses.merge_ident_errors(analysis_id)
 
     elif worktype == "pre":
+        log.error("Analysis pre stage failed", analysis_id=analysis_id)
         db.set_analysis_state(analysis_id, db.AnalysisStates.FATAL_ERROR)
         analyses.merge_pre_errors(analysis_id)
 
@@ -115,13 +121,13 @@ def set_failed(worktype, analysis_id, task_id=None):
         )
 
 def handle_task_done(task_id):
-    print(f"Setting task {task_id} to reported")
+    log.info("Setting task to state reported", task_id=task_id)
     started.scheduler.task_ended(task_id)
     task.set_db_state(task_id, db.TaskStates.REPORTED)
     task.merge_run_errors(task_id)
 
 def set_task_failed(task_id):
-    print(f"Setting task {task_id} to failed.")
+    log.error("Setting task to state failed", task_id=task_id)
     started.scheduler.task_ended(task_id)
     task.set_db_state(task_id, db.TaskStates.FATAL_ERROR)
     task.merge_run_errors(task_id)
@@ -145,9 +151,9 @@ class StateControllerWorker(threading.Thread):
             try:
                 func(**kwargs)
             except Exception as e:
-                traceback.print_exc()
-                print(
-                    f"Failed to run function: {func} with args: {kwargs}: {e}"
+                log.exception(
+                    "Failed to run handler function.",
+                    function=func, args=kwargs, error=e
                 )
 
     def stop(self):
@@ -156,7 +162,9 @@ class StateControllerWorker(threading.Thread):
 
 class StateController(UnixSocketServer):
 
-    NUM_STATE_CONTROLLER_WORKERS = 2
+    # Keep amount of worker to 1 for now to prevent db locking issues with
+    # sqlite. 1 thread should be enough.
+    NUM_STATE_CONTROLLER_WORKERS = 1
     
     def __init__(self, controller_sock_path):
         super().__init__(controller_sock_path)
@@ -229,11 +237,9 @@ class StateController(UnixSocketServer):
         try:
             handler(**msg)
         except KeyError as e:
-            traceback.print_exc()
-            print(f"Incomplete message. Error {e}. Message: {msg}")
+            log.warning("Incomplete message received.", msg=msg, error=e)
         except TypeError as e:
-            traceback.print_exc()
-            print(f"Incorrect message. Error {e}. Message: {msg}")
+            log.warning("Incorrect message received.", msg=msg, error=e)
 
     def stop(self):
         if not self.do_run and not self.workers:

@@ -15,11 +15,14 @@ from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, cuckoocwd
 from cuckoo.common.strictcontainer import Analysis, Identification
 from cuckoo.common.errors import ErrorTracker
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.processing import abtracts
 from cuckoo.processing.errors import CancelProcessing, CancelReporting
 
 
 from . import started, shutdown
+
+log = CuckooGlobalLogger(__name__)
 
 class PluginWorkerError(Exception):
     pass
@@ -328,6 +331,7 @@ class ProcessingWorkerHandler(threading.Thread):
         self.queues["behavior"].append(analysis_id)
 
     def run(self):
+        log.debug("Starting processing workers")
         for worktype, max_workers in self.MAX_WORKERS.items():
             for worker_number in range(max_workers):
                 self.start_worker(f"{worktype}{worker_number}", worktype)
@@ -358,14 +362,19 @@ class ProcessingWorkerHandler(threading.Thread):
 
         sockpath = Paths.unix_socket(f"{name}.sock")
         if os.path.exists(sockpath):
-            print(f"Socket {sockpath} still exists. Removing..")
+            # TODO use pidfile to determine if a sockpath can be removed
+            log.warning(
+                f"Unix socket path still exists. Removing it.",
+                sockpath=sockpath
+            )
             os.unlink(sockpath)
 
-        print(f"Starting worker: {name}")
+        log.info(f"Starting {worktype} worker.", workername=name)
         worker = WorkReceiver(sockpath, worktype, name, cuckoocwd.root)
         proc = multiprocessing.Process(target=worker.start)
         proc.daemon = True
         proc.start()
+        log.debug("Worker process started", workername=name, pid=proc.pid)
 
         self.unready_workers.append({
             "name": name,
@@ -379,15 +388,21 @@ class ProcessingWorkerHandler(threading.Thread):
 
     def requeue_work(self, worker):
         if worker["state"] != States.WORKING:
-            print("Cannot requeue work for worker without work")
+            log.error(
+                "Cannot requeue work for worker without work", worker=worker
+            )
             return
 
         job = worker["job"]
         worktype = worker["worktype"]
-        print(f"Requeuing job {job} from worker {worker['name']}")
+        log.warning(
+            "Requeuing job from worker", workername=worker["name"], job=job,
+            worktype=worktype
+        )
         self.queues[worktype].insert(job)
 
     def stop_worker(self, worker):
+        log.debug("Stopping worker", workername=worker["name"])
         try:
             worker["process"].terminate()
         except OSError:
@@ -431,7 +446,11 @@ class ProcessingWorkerHandler(threading.Thread):
         except (EOFError, ValueError) as e:
             # If worker is working or setting up, we expect a message. Messages
             # during other states can be ignored.
-            print(f"Invalid message received from worker {worker}: {e}")
+            log.error(
+                "Invalid message received from worker",
+                workername=worker["name"], error=e
+            )
+
             if worker["state"] in (States.WORKING, States.SETUP):
                 self.requeue_work(worker)
                 self.stop_worker(worker)
@@ -441,7 +460,9 @@ class ProcessingWorkerHandler(threading.Thread):
             if not self.do_run:
                 return
 
-            print("Worker disconnected unexpectedly")
+            log.error(
+                "Worker disconnected unexpectedly", workername=worker["name"]
+            )
             self.stop_worker(worker)
 
             # Untrack as it is disconnected
@@ -458,16 +479,17 @@ class ProcessingWorkerHandler(threading.Thread):
             job = worker["job"]
             worker["job"] = None
             self.set_worker_state(States.IDLE, worker)
-
-            print(f"Worker {worker['name']} finished job: {job}")
+            log.debug(
+                "Worker finished job", workername=worker["name"], job=job
+            )
 
         # Worker has set up/loaded plugins and is ready to receive a job.
         elif state == States.READY:
-            print(f"Worker {worker['name']} is done setting up")
+            log.debug("Worker is done setting up.", workername=worker["name"])
             self.set_worker_state(States.IDLE, worker)
 
-        # A fatal error occurred during processing. Inform the controller of
-        # the fail.
+        # The job of the worker failed. Inform the state controller of the
+        # fail
         elif state == States.WORK_FAIL:
             self.controller_workfail(worker)
             worker["job"] = None
@@ -480,10 +502,9 @@ class ProcessingWorkerHandler(threading.Thread):
             self.controller_workfail(worker)
             # TODO: Depending on what the fail is, we might want to kill and
             # restart the worker?
-            print(
-                f"Fail from worker: {worker['name']}. "
-                f"Error: {msg.get('error')}. "
-                f"traceback: {msg.get('traceback')}"
+            log.error(
+                "Unhandled exception in worker.", workername=worker["name"],
+                error=msg.get("error", ""), traceback=msg.get("traceback", "")
             )
 
     def controller_workdone(self, worker):
@@ -518,7 +539,10 @@ class ProcessingWorkerHandler(threading.Thread):
             self.assign_worker(worker, analysis_id)
 
     def assign_worker(self, worker, analysis_id):
-        print(f"Assigning {analysis_id} to: {worker['name']}")
+        log.debug(
+            "Assigning job to worker", workername=worker["name"],
+            job=analysis_id
+        )
 
         worker["comm"].send_json_message({
             "analysis": analysis_id,

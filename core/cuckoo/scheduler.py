@@ -8,6 +8,9 @@ from threading import RLock, Event
 from cuckoo.common.clients import TaskRunnerClient, ActionFailedError
 from cuckoo.common.config import cfg
 from cuckoo.common.storage import Paths
+from cuckoo.common.log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
 
 from .machinery import acquire_available, get_available, unlock
 
@@ -108,9 +111,9 @@ class Scheduler:
         self._newtasks_event = Event()
 
     def start_task(self, task, machine):
-        print(
-            f"Scheduler -> Requesting task runner to start "
-            f"task {task.id} with machine {machine.name}"
+        log.info(
+            "Requesting task runner to start task.",
+            task_id=task.id, machine=machine.name
         )
 
         self._assigned_machines[task.id] = machine
@@ -123,7 +126,7 @@ class Scheduler:
                 result_port=cfg("cuckoo", "resultserver", "listen_port")
             )
         except ActionFailedError as e:
-            print(f"Scheduler -> Failed to start task {task.id}. {e}")
+            log.error("Failed to start task.", task_id=task.id, error=e)
             self.task_ended(task.id)
 
     def task_ended(self, task_id):
@@ -140,14 +143,14 @@ class Scheduler:
     def start(self):
         while self.do_run:
             if task_queue.size < 1:
-                print("Scheduler -> No new tasks")
+                log.debug("No new tasks")
                 self._newtasks_event.clear()
                 self._newtasks_event.wait(timeout=60)
                 continue
 
             available = get_available()
             if not available:
-                print("Scheduler -> No available machines")
+                log.debug("No available machines")
                 self._unlock_event.clear()
                 self._unlock_event.wait(timeout=10)
                 continue

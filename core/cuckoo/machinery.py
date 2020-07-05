@@ -2,27 +2,29 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import json
+import os
+import queue
+import shutil
+import socket
+import tempfile
 import threading
 import time
-import queue
-import socket
-import json
-import tempfile
-import shutil
-import os
 
-from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
-from cuckoo.common.storage import TaskPaths, Paths
 from cuckoo.common.config import cfg
-
-from cuckoo.machineries.helpers import MachineStates, Machine
+from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
+from cuckoo.common.log import CuckooGlobalLogger
+from cuckoo.common.storage import TaskPaths, Paths
 from cuckoo.machineries import errors
+from cuckoo.machineries.helpers import MachineStates, Machine
 
 class MachineryManagerError(Exception):
     pass
 
 class MachineDoesNotExistError(MachineryManagerError):
     pass
+
+log = CuckooGlobalLogger(__name__)
 
 # Machine object instances mapping to their machine name. 'machine tracker'
 # Is used to track if a machine is available.
@@ -75,7 +77,10 @@ def load_machineries(machinery_classes, machine_states={}):
     for machinery_class in machinery_classes:
         machine_conf = cfg(machinery_class.name, subpkg="machineries")
 
-        print(f"Loading machinery '{machinery_class.name}' and its machines.")
+        log.debug(
+            f"Loading machinery and its machines.",
+            machinery=machinery_class.name
+        )
         try:
             machinery_class.verify_dependencies()
             machinery = machinery_class(machine_conf)
@@ -102,10 +107,14 @@ def load_machineries(machinery_classes, machine_states={}):
                 machine.load_stored_states(dumped_machine)
 
             _machines[machine.name] = machine
+            log.debug(
+                "Machinery loaded machine.",
+                machinery=machinery.name, machine=machine.name
+            )
 
         _machineries[machinery.name] = machinery
 
-    print(f"Loaded {len(_machines)} analysis machines")
+    log.info(f"Loaded analysis machines", amount=len(_machines) )
 
 def _dump_machines_info(path):
     """Dump the json version of each loaded machine (_machines) to the given
@@ -319,7 +328,7 @@ def shutdown_all():
     """Shutdown the machines of all loaded machinery modules"""
     if _machineries:
         for name, module in _machineries.items():
-            print(f"Shutting down machinery: {name}")
+            log.info("Shutting down machinery.", machinery=name)
             shutdown(module)
 
 class _MachineryMessages:
@@ -373,13 +382,12 @@ class MachineryWorker(threading.Thread):
 
         try:
             for work in self._state_waiters[:]:
-                print(f"Checking state for {work}")
                 try:
                     state = machine_state(work.machine)
                 except errors.MachineryUnhandledStateError as e:
-                    print(
-                        f"Unhandled machine state for {work.machine.name}. "
-                        f"Disabling machine. {e}"
+                    log.error(
+                        "Unhandled machine state. Disabling machine.",
+                        machine=work.machine.name, error=e
                     )
                     work.work_failed()
                     _mark_disabled(work.machine, str(e))
@@ -390,16 +398,17 @@ class MachineryWorker(threading.Thread):
                     continue
 
                 if state == work.expected_state:
-                    print(
-                        f"Updating state for {work.machine.name} to "
-                        f"{work.expected_state}"
+                    log.debug(
+                        "Updating machine state.",
+                        machine=work.machine.name, newstate=work.expected_state
                     )
+
                     _set_state(work.machine, work.expected_state)
                     work.work_success()
                 elif state == MachineStates.ERROR:
-                    print(
-                        f"Machine {work.machine.name} has an error state. "
-                        f"Disabling machine"
+                    log.error(
+                        "Machinery returned error state for machine. "
+                        "Disabling machine.", machine=work.machine.name
                     )
                     work.work_failed()
                     _mark_disabled(work.machine, "Machine has error state")
@@ -411,12 +420,21 @@ class MachineryWorker(threading.Thread):
                     if work.has_fallback():
                         work.fall_back()
                     else:
-                        err = f"Waiting for machine {work.machine.name} to " \
-                              f"reach state {work.expected_state} exceeded " \
-                              f"timeout. Disabling machine."
-                        print(err)
+                        log.error(
+                            "Timeout reached while waiting for machine to "
+                            "reach expected state. Disabling machine.",
+                            machine=work.machine.name,
+                            expected_state=work.expected_state,
+                            actual_state=state
+                        )
+
                         work.work_failed()
-                        _mark_disabled(work.machine, err)
+                        _mark_disabled(
+                            work.machine,
+                            f"Timeout reached while waiting for machine to "
+                            f"reach state: {work.expected_state}. Actual "
+                            f"state: {state}"
+                        )
 
                 work.stop_wait()
         finally:
@@ -431,15 +449,15 @@ class MachineryWorker(threading.Thread):
                 time.sleep(1)
                 continue
 
-            print(f"Performing work: {work}")
-
             try:
                 work.run_work()
                 work.start_wait()
             except NotImplementedError as e:
-                print(
-                    f"Machinery {work.machine.machinery.name} does not support"
-                    f" work of type: {work.work_func}. {e}"
+                log.error(
+                    "Machinery does not support work type.",
+                    machine=work.machine.name,
+                    machinery=work.machine.machinery.name,
+                    action=work.work_func
                 )
                 work.work_failed()
 
@@ -447,46 +465,50 @@ class MachineryWorker(threading.Thread):
                 # Machine already has the state the executed work should put
                 # it in. Log as warning for now. These errors should only occur
                 # when stopping a machine, not when starting.
-                print(e)
+                log.debug(
+                    "Machine already has expected state on action start.",
+                    machine=work.machine.name,
+                    expected_state=work.expected_state,
+                    action=work.work_func
+                )
                 work.work_success()
 
             except errors.MachineUnexpectedStateError as e:
-                # TODO add 'fixes' for specific unexpected states? Do we want
-                # to stop and restore a machine if a user has left it running?
-                # Or is this fully up to the user?
-                print(
-                    f"'{work.machine.machinery.name}' machine "
-                    f"'{work.machine.name}' Unexpected machine state. {e}. "
-                    f"Disabling machine."
+                log.error(
+                    "Machine has unexpected state. Disabling machine.",
+                    machine=work.machine.name,
+                    machinery=work.machine.machinery.name,
+                    error=e
                 )
                 _mark_disabled(work.machine, str(e))
                 work.work_failed()
 
             except errors.MachineryUnhandledStateError as e:
-                print(
-                    f"{work.machine.machinery.name} machine "
-                    f"'{work.machine.name}' has an unknown/unhandled state. "
-                    f"Disabling machine. {e}"
+                log.error(
+                    "Machine has an unknown/unhandled state. "
+                    "Disabling machine", machine=work.machine.name,
+                    machinery=work.machine.machinery.name, error=e
                 )
                 _mark_disabled(work.machine, str(e))
                 work.work_failed()
 
             except errors.MachineryError as e:
-                print(
-                    f"{work.machine.machinery.name} machine "
-                    f"{work.machine.name} unhandled error. "
-                    f"Disabling machine. {e}"
+                log.error(
+                    "Machinery module error. Disabling machine.",
+                    machine=work.machine.name,
+                    machinery=work.machine.machinery.name, error=e
                 )
                 _mark_disabled(work.machine, str(e))
                 work.work_failed()
 
             except Exception as e:
-                print(
-                    f"Unhandled error in machinery "
-                    f"'{work.machine.machinery.name}' when performing "
-                    f"action {work.work_func} for machine "
-                    f"{work.machine.name}. {e}"
+                log.exception(
+                    "Unhandled error in machinery module.",
+                    machine=work.machine.name,
+                    machinery=work.machine.machinery.name,
+                    action=work.work_func, error=e
                 )
+
                 work.work_failed()
                 # TODO mark this fatal error somewhere, so that it is clear
                 # this happened.
@@ -533,6 +555,10 @@ class WorkTracker:
         )
 
     def run_work(self):
+        log.debug(
+            "Starting work.", machine=self.machine.name,
+            action=self.work_func
+        )
         self.expected_state, self.timeout, self.fallback_func = self.work_func(
             self.machine
         )
@@ -557,7 +583,7 @@ class WorkTracker:
     def start_wait(self):
         """Adds this object to the MachineryManager instance state_waiters
         list."""
-        self.since = time.time()
+        self.since = time.monotonic()
         self.machinerymngr.state_waiters.append(self)
 
     def stop_wait(self):
@@ -566,16 +592,8 @@ class WorkTracker:
         self.machinerymngr.state_waiters.remove(self)
 
     def timeout_reached(self):
-        waited = time.time() - self.since
-
-        # If the system time changed or the check is quick, the
-        # waiting duration can be less than a second.
-        # Set it to 1 second as a minimum
-        if waited < 0:
-            waited = 1
-
-        self.waited += waited
-        if waited >= self.timeout:
+        self.waited += time.monotonic() - self.since
+        if self.waited >= self.timeout:
             return True
         return False
 
@@ -587,6 +605,9 @@ class _WorkQueue:
         self._lock = threading.Lock()
 
     def add_work(self, work_action, machine, readerwriter, msghandler):
+        log.debug(
+            "Machine action request", machine=machine.name, action=work_action
+        )
         self._queue.append(
             WorkTracker(work_action, machine, readerwriter, msghandler)
         )
@@ -698,7 +719,7 @@ class MachineryManager(UnixSocketServer):
             try:
                 readerwriter.send_json_message(response)
             except socket.error as e:
-                print(f"Failed to send response: {e}")
+                log.debug("Failed to send response.", error=e)
                 self.untrack(readerwriter.sock)
                 continue
 
