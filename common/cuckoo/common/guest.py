@@ -100,7 +100,7 @@ class Agent:
         url = self._make_url(method)
         try:
             response = ses.get(url, **kwargs)
-        except requests.ConnectionError as e:
+        except (requests.ConnectionError, requests.exceptions.Timeout) as e:
             raise AgentConnectionError(
                 f"Failed performing HTTP GET on: {url}: {e}"
             )
@@ -115,7 +115,7 @@ class Agent:
         url = self._make_url(method)
         try:
             response = ses.post(url, **kwargs)
-        except requests.ConnectionError as e:
+        except (requests.ConnectionError, requests.exceptions.Timeout) as e:
             raise AgentConnectionError(
                 f"Failed performing HTTP POST on: {url}: {e}"
             )
@@ -185,9 +185,9 @@ class Agent:
             data={"dirpath": extract_dir}
         )
 
-    def execute(self, command, cwd):
+    def execute(self, command, cwd, timeout=None):
         response = self._get_json(self._post(
-            "/execute", data={"command": command, "cwd": cwd}
+            "/execute", data={"command": command, "cwd": cwd}, timeout=timeout
         ))
         return response["stdout"], response["stderr"]
 
@@ -307,13 +307,15 @@ class StagerHelper:
     MONITOR_BINARY = ""
 
     def __init__(self, agent, task, analysis, identification, result_ip,
-                 result_port):
+                 result_port, logger):
         self.agent = agent
         self.task = task
         self.analysis = analysis
         self.identification = identification
         self.result_ip = result_ip
         self.result_port = result_port
+
+        self.log = logger
 
         # Should be set after calling prepare with a ready Payload instance.
         self.payload = None
@@ -440,7 +442,7 @@ class TmStage(StagerHelper):
         except AgentError as e:
             # A failing deletion is not fatal, we can still continue. It can
             # indicate permission problems, however. So we do log it.
-            print(f"Failed to delete agent file: {e}")
+            self.log.warning("Failed to delete agent file", error=e)
         try:
             tmpdir = self.agent.mkdtemp()
         except AgentError as e:
@@ -453,7 +455,11 @@ class TmStage(StagerHelper):
 
         command = PureWindowsPath(tmpdir, self.STAGER_BINARY)
         try:
-            stdout, stderr = self.agent.execute(command, cwd=tmpdir)
+            # A timeout is important when delivering the payload in case the
+            # agent stops responding.
+            stdout, stderr = self.agent.execute(
+                command, cwd=tmpdir, timeout=20 # TODO use task timeout?
+            )
         except AgentError as e:
             raise StagerError(f"Failed to execute stager: {e}")
 
@@ -476,7 +482,7 @@ class TmStage(StagerHelper):
         except AgentError as e:
             # A failing kill is not fatal, we can still continue. It can
             # indicate permission problems, however. So we do log it.
-            print(f"Failed to kill agent: {e}")
+            self.log.warning(f"Failed to kill agent.", error=e)
 
 _stagers = {
     "windows": TmStage

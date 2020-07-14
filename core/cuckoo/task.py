@@ -7,15 +7,48 @@ import os
 from . import db, machinery
 from cuckoo.common.storage import TaskPaths, make_task_id
 from cuckoo.common.strictcontainer import Task, Errors
+from cuckoo.common.log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
 
 class TaskCreationError(Exception):
+    def __init__(self, msg, reasons=[]):
+        self.reasons = reasons
+        super().__init__(msg)
+
+class MissingResourceError(TaskCreationError):
     pass
 
-def _create_task(analysis_id, task_number, platform, os_version, machine_tags,
-                 machine=None):
-    task_id = make_task_id(analysis_id, task_number)
+class NoTasksCreatedError(TaskCreationError):
+    pass
 
-    print(f"Creating task {task_id}")
+class NotAllTasksCreatedError(TaskCreationError):
+    pass
+
+
+def _create_task(analysis_id, task_number, platform="", machine_tags=set(),
+                 os_version="", machine_name=None):
+
+    if machine_name:
+        if not machinery.get_by_name(machine_name):
+            raise MissingResourceError(
+                f"Machine {machine_name} does not exist"
+            )
+
+    if platform:
+        if machine_tags and not isinstance(machine_tags, set):
+            machine_tags = set(machine_tags)
+
+        machine = machinery.find(platform, os_version, machine_tags)
+        if not machine:
+            raise MissingResourceError(
+                f"No machine with platform: '{platform}'. "
+                f"Os version: '{os_version}'. "
+                f"Tags: '{' ,'.join(tag for tag in machine_tags)}'."
+            )
+
+    task_id = make_task_id(analysis_id, task_number)
+    log.debug("Creating task.", task_id=task_id)
     task_path = TaskPaths.path(task_id)
     try:
         os.mkdir(task_path)
@@ -36,7 +69,7 @@ def _create_task(analysis_id, task_number, platform, os_version, machine_tags,
         "platform": platform,
         "os_version": os_version,
         "machine_tags": machine_tags,
-        "machine": machine or ""
+        "machine": machine_name or ""
     }
 
     task = Task(**task_values)
@@ -46,28 +79,36 @@ def _create_task(analysis_id, task_number, platform, os_version, machine_tags,
 def create_all(analysis):
     tasks = []
     tasknum = 1
+    resource_errors = []
 
     if analysis.settings.machines:
-        for name in analysis.settings.machines:
-            machine = machinery.get_by_name(name)
-            if not machine:
-                raise TaskCreationError(f"Machine {name} does not exist")
-
-            tasks.append(_create_task(
-                analysis_id=analysis.id, task_number=tasknum,
-                platform=machine.platform, machine_tags=[],
-                machine=machine.name
-            ))
-            tasknum += 1
+        for machine_name in analysis.settings.machines:
+            try:
+                tasks.append(_create_task(
+                    analysis_id=analysis.id, task_number=tasknum,
+                    machine_name=machine_name
+                ))
+                tasknum += 1
+            except MissingResourceError as e:
+                resource_errors.append(str(e))
     else:
         for platform in analysis.settings.platforms:
-            tasks.append(_create_task(
-                analysis_id=analysis.id, task_number=tasknum,
-                platform=platform["platform"],
-                os_version=platform["os_version"],
-                machine_tags=analysis.settings.machine_tags
-            ))
-            tasknum += 1
+            try:
+                tasks.append(_create_task(
+                    analysis_id=analysis.id, task_number=tasknum,
+                    platform=platform["platform"],
+                    os_version=platform["os_version"],
+                    machine_tags=analysis.settings.machine_tags
+                ))
+                tasknum += 1
+            except MissingResourceError as e:
+                resource_errors.append(str(e))
+
+
+    if not tasks:
+        raise NoTasksCreatedError(
+            "No tasks were created", reasons=resource_errors
+        )
 
     # Set the default state for each task dict
     for task_dict in tasks:
@@ -83,7 +124,7 @@ def create_all(analysis):
     finally:
         ses.close()
 
-    return tasks
+    return tasks, resource_errors
 
 def set_db_state(task_id, state):
     ses = db.dbms.session()
@@ -93,19 +134,23 @@ def set_db_state(task_id, state):
     finally:
         ses.close()
 
+def merge_task_errors(task_id, errors_container):
+    taskjson_path = TaskPaths.taskjson(task_id)
+    task = Task.from_file(taskjson_path)
+
+    if task.errors:
+        task.errors.merge_errors(errors_container)
+    else:
+        task.errors = errors_container
+
+    task.to_file_safe(taskjson_path)
+
 def merge_run_errors(task_id):
     errpath = TaskPaths.runerr_json(task_id)
     if not os.path.exists(errpath):
         return
 
-    taskpath = TaskPaths.taskjson(task_id)
-    task = Task.from_file(taskpath)
-    errs = Errors.from_file(errpath)
-    if task.errors:
-        task.errors.merge_errors(errs)
-    else:
-        task.errors = errs
+    errors_container = Errors.from_file(errpath)
+    merge_task_errors(task_id, errors_container)
 
-    # Update the pre json file
-    task.to_file_safe(taskpath)
     os.remove(errpath)

@@ -41,7 +41,7 @@ class Ignore(Processor):
         return False, None
 
     def match_exts(self, f):
-        if f.filename.decode().lower().endswith(self.EXTS):
+        if f.filename.lower().endswith(self.EXTS):
             return True, "Safelisted extension"
 
         return False, None

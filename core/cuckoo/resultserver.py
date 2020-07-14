@@ -4,15 +4,20 @@
 
 import asyncio
 import errno
+import logging
 import os
 import socket
-import sys
 import threading
 
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
-from cuckoo.common.storage import cuckoocwd, TaskPaths, split_task_id
-from cuckoo.shutdown import register_shutdown, call_registered_shutdowns
+from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
+from cuckoo.common.storage import cuckoocwd, TaskPaths, Paths, split_task_id
 from cuckoo.common.utils import bytes_to_human
+from cuckoo.shutdown import register_shutdown, call_registered_shutdowns
+
+from .startup import init_global_logging
+
+log = CuckooGlobalLogger(__name__)
 
 class CancelResult(Exception):
     pass
@@ -71,7 +76,7 @@ RESULT_UPLOADABLE = {
 
 # Prevent malicious clients from using potentially dangerous filenames
 # E.g. C API confusion by using null, or using the colon on NTFS (Alternate
-# Data Streams); XXX: just replace illegal chars?
+# Data Streams);
 BANNED_PATH_CHARS = "\x00:"
 
 
@@ -85,6 +90,7 @@ def sanitize_dumppath(path):
         raise IllegalFilePath(f"Banned path requested in upload: {path!r}")
 
     if any(c in BANNED_PATH_CHARS for c in path):
+        # Replace any illegal chars with X
         for c in BANNED_PATH_CHARS:
             name = name.replace(c, "X")
 
@@ -110,9 +116,8 @@ class ProtocolHandler(object):
 
     Any state at which an incoming result must be ignored/stopped a
     CancelResult must be raised."""
-    def __init__(self, task_id, ip, reader):
-        self.task_id = task_id
-        self.ip = ip
+    def __init__(self, task_mapping, reader):
+        self.task = task_mapping
         self.reader = reader
         self.fd = None
 
@@ -155,16 +160,16 @@ class FileUpload(ProtocolHandler):
      async def handle(self):
          dir_fname = await self.reader.readline()
          path_helper, dirpart, fname = sanitize_dumppath(dir_fname.decode())
-         print(
-             f"Task {self.task_id} file upload {dirpart}/{fname!r} starting."
-         )
+
+         newfile = repr(f"{dirpart}/{fname}")
+         self.task.log.debug("New file upload starting.", newfile=newfile)
 
          try:
-             self.fd = open(path_helper(self.task_id, fname), "xb")
+             self.fd = open(path_helper(self.task.task_id, fname), "xb")
          except OSError as e:
              if e.errno == errno.EEXIST:
                  raise CancelResult(
-                     f"Task {self.task_id} file upload {dirpart}/{fname!r} "
+                     f"Task {self.task.task_id} file upload {newfile}"
                      f"file overwrite attempt stopped."
                  )
 
@@ -180,10 +185,42 @@ class FileUpload(ProtocolHandler):
                  f" cancelled. {e}"
              )
          finally:
-             print(
-                 f"Task {self.task_id} file upload {dirpart}/{fname!r} "
-                 f"finished. Size {bytes_to_human(self.fd.tell())}."
+             self.task.log.debug(
+                 "File upload finished.", newfile=newfile,
+                 size=bytes_to_human(self.fd.tell())
              )
+
+class _MappedTask:
+
+    def __init__(self, task_id, ip, asyncio_rs):
+        self.task_id = task_id
+        self.ip = ip
+        self.asyncio_rs = asyncio_rs
+
+        self.log = TaskLogger(__name__, task_id)
+        self.asynctasks = set()
+
+    async def cancel_running_tasks(self):
+        for task in list(self.asynctasks):
+            try:
+                task.cancel()
+                await task
+            except asyncio.CancelledError:
+                self.log.debug("Cancelled async task.", asynctask=task)
+
+        self.log.close()
+
+    def close(self):
+        if not self.asynctasks:
+            self.log.close()
+            return
+
+        # Start a coroutine which will cancel each still running asyncio
+        # task and wait until it is cancelled. Closes the log after that.
+        asyncio.run_coroutine_threadsafe(
+            self.cancel_running_tasks(), self.asyncio_rs.loop
+        )
+
 
 class _AsyncResultServer:
 
@@ -192,49 +229,46 @@ class _AsyncResultServer:
     }
 
     def __init__(self):
-        self._ip_task_id = {}
+        self._ip_task = {}
         self._mapping_lock = threading.RLock()
-        self._ip_asynctask = {}
 
         # Initialized when start() is called.
-        self._loop = None
+        self.loop = None
         self._server = None
 
     def map_task_ip(self, task_id, ip):
         with self._mapping_lock:
-            if task_id in self._ip_task_id:
+            if task_id in self._ip_task:
+                existing_mapping = self._ip_task[ip]
                 raise KeyError(
-                    f"IP {ip} is already mapped to task {self._ip_task_id[ip]}"
+                    f"IP {ip} is already mapped to task "
+                    f"{existing_mapping.task_id}"
                 )
 
-            self._ip_task_id[ip] = task_id
-            self._ip_asynctask[ip] = set()
+            self._ip_task[ip] = _MappedTask(task_id, ip, self)
 
     def unmap_ip(self, ip):
         with self._mapping_lock:
-            self._ip_task_id.pop(ip, None)
-            incompleted_tasks = self._ip_asynctask.pop(ip, None)
+            taskmapping = self._ip_task.pop(ip, None)
+            if not taskmapping:
+                return
 
-        if incompleted_tasks:
-            self._loop.call_soon_threadsafe(
-                self.cancel_asynctasks, incompleted_tasks
-            )
+            taskmapping.close()
 
     def cancel_all(self):
         with self._mapping_lock:
-            for ip in list(self._ip_task_id):
+            for ip in list(self._ip_task):
                 self.unmap_ip(ip)
 
-    def get_task_id(self, ip):
+    def get_task_mapping(self, ip):
         with self._mapping_lock:
-            task_id = self._ip_task_id.get(ip)
-            if not task_id:
-                print(self._ip_task_id)
+            task_mapping = self._ip_task.get(ip)
+            if not task_mapping:
                 raise UnmappedIPError(
                     f"IP {ip} is not mapped to any tasks. Cannot store "
                     f"results."
                 )
-            return task_id
+            return task_mapping
 
     async def get_protocolhandler(self, reader):
         header = await reader.readline()
@@ -253,77 +287,74 @@ class _AsyncResultServer:
         try:
             await protocol_instance.handle()
         except CancelResult as e:
-            print(f"Task {protocol_instance.task_id} cancelled: {e}")
-
-    def cancel_asynctasks(self, tasks):
-        for task in list(tasks):
-            try:
-                task.cancel()
-            except asyncio.CancelledError:
-                print(f"Ok,cancelled: {task}")
+            protocol_instance.task.log.warning(
+                "Result for task cancelled.", error=e
+            )
 
     async def new_result(self, reader, writer):
         ip, port = writer.get_extra_info("peername")
         try:
-            task_id = self.get_task_id(ip)
+            task_mapping = self.get_task_mapping(ip)
         except UnmappedIPError as e:
-            print(e)
+            log.error("Failed to store new task result.", error=e)
             return
 
         try:
             protocol_handler, protocol = await self.get_protocolhandler(reader)
         except CancelResult as e:
-            print(
-                f"Task {task_id} result cancelled during "
-                f"initialization: {e}"
+            task_mapping.log.warning(
+                "Task result cancelled during initialization.",
+                task_id=task_mapping.task_id, error=e
             )
             return
 
-        asynctasks = self._ip_asynctask[ip]
-        handler = protocol_handler(task_id, ip, reader)
+        handler = protocol_handler(task_mapping, reader)
 
         def cleanup(task):
             handler.close()
             writer.close()
-            asynctasks.discard(task)
+            task_mapping.asynctasks.discard(task)
 
         async_task = asyncio.Task(self.handle_protocol(handler))
+        task_mapping.asynctasks.add(async_task)
         async_task.add_done_callback(cleanup)
-        asynctasks.add(async_task)
 
     def start(self, listen_ip, listen_port):
         """Start the asyncresultserver on the given ip:port and handle
         incoming results that are mapped."""
-        self._loop = asyncio.get_event_loop()
+        self.loop = asyncio.get_event_loop()
         routine = asyncio.start_server(
-            self.new_result, listen_ip, listen_port, loop=self._loop
+            self.new_result, listen_ip, listen_port, loop=self.loop
         )
 
         try:
-            self._server = self._loop.run_until_complete(routine)
+            self._server = self.loop.run_until_complete(routine)
         except OSError as e:
-            sys.exit(
+            exit_error(
                 f"Failed to start resultserver on: "
                 f"{listen_ip}:{listen_port}. {e}"
             )
 
-        print(f"Started resultserver on: {listen_ip}:{listen_port}")
+        log.info(
+            "Started resultserver.", listen_ip=listen_ip,
+            listen_port=listen_port
+        )
 
         # Give the loop its own thread so we can accept add/remove requests
         # in the main thread.
-        loopth = threading.Thread(target=self._loop.run_forever)
+        loopth = threading.Thread(target=self.loop.run_forever)
         loopth.daemon = True
         loopth.start()
         return loopth
 
     def stop(self):
         def _stop_loop():
-            self._loop.stop()
+            self.loop.stop()
             self._server.close()
             self._server.wait_closed()
 
         if self._server:
-            self._loop.call_soon_threadsafe(_stop_loop)
+            self.loop.call_soon_threadsafe(_stop_loop)
 
 
 class _RSResponses:
@@ -343,19 +374,24 @@ class _RSResponses:
 
 class ResultServer(UnixSocketServer):
 
-    def __init__(self, unix_sock_path, cuckoo_cwd, listen_ip, listen_port):
+    def __init__(self, unix_sock_path, cuckoo_cwd, listen_ip, listen_port,
+                 loglevel=logging.DEBUG):
         super().__init__(unix_sock_path)
         self.cuckoocwd = cuckoo_cwd
         self.listen_ip = listen_ip
         self.listen_port = listen_port
+        self.loglevel = loglevel
 
         self._rs = None
-        self._loop = None
-        self._server = None
 
     def init(self):
         cuckoocwd.set(self.cuckoocwd)
         register_shutdown(self.stop)
+
+        init_global_logging(
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
+            warningsonly=["asyncio"]
+        )
 
         # Initialize here, as we are currently using multiprocessing.Process
         # to start this in a new process. _AsyncResultServer uses an RLock,
@@ -366,12 +402,12 @@ class ResultServer(UnixSocketServer):
         try:
             self.create_socket()
         except IPCError as e:
-            sys.exit(f"Failed to create unix socket: {e}")
+            exit_error(f"Failed to create unix socket: {e}")
 
         try:
             loopth = self._rs.start(self.listen_ip, self.listen_port)
         except OSError as e:
-            sys.exit(
+            exit_error(
                 f"Failed to start resultserver on: "
                 f"{self.listen_ip}:{self.listen_port}. {e}"
             )
@@ -394,7 +430,7 @@ class ResultServer(UnixSocketServer):
         if not self.do_run:
             return
 
-        print("Stopping resultserver..")
+        log.info("Stopping resultserver..")
         super().stop()
         self.untrack_all()
         self._rs.cancel_all()
@@ -408,7 +444,10 @@ class ResultServer(UnixSocketServer):
         try:
             readerwriter.send_json_message(response)
         except socket.error as e:
-            print(f"Failed to send response: {e}")
+            log.debug(
+                "Failed to send response to action requester.",
+                response=response, error=e
+            )
 
     def handle_message(self, sock, msg):
         ip = msg.get("ip")

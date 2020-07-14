@@ -4,11 +4,16 @@
 
 import os
 
-from . import db, machinery
+from cuckoo.common.config import cfg
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import AnalysisPaths
 from cuckoo.common.strictcontainer import (
     Settings, Analysis, Identification, Pre, Errors
 )
+
+from . import db, machinery
+
+log = CuckooGlobalLogger(__name__)
 
 class AnalysisError(Exception):
     pass
@@ -86,6 +91,64 @@ def track_analyses(analysis_ids):
 
 def update_settings(analysis, **kwargs):
     analysis.settings.update(kwargs)
+
+def merge_settings_ident(analysis, identification):
+    if analysis.settings.machines:
+        return False
+
+    was_updated = False
+    use_autotag = cfg("cuckoo", "platform", "autotag")
+    if use_autotag and identification.target.machine_tags:
+        update_settings(
+            analysis, machine_tags=identification.target.machine_tags
+        )
+        was_updated = True
+
+    if analysis.settings.platforms:
+        return was_updated
+
+    if identification.target.platforms:
+        # Only use the platforms specified in the config if more than one
+        # platform was identified during the identification phase.
+        if len(identification.target.platforms) > 1:
+            allowed_ident = cfg("cuckoo", "platform", "multi_platform")
+            for platform in identification.target.platforms[:]:
+                if platform["platform"] not in allowed_ident:
+                    identification.target.platforms.remove(platform)
+
+        update_settings(analysis, platforms=identification.target.platforms)
+        was_updated = True
+
+    else:
+        platform = cfg("cuckoo", "platform", "default_platform", "platform")
+        os_version = cfg(
+            "cuckoo", "platform", "default_platform", "os_version"
+        )
+
+        log.debug(
+            "No platform given or identified. Using default_platform.",
+            analysis_id=analysis.id, platform=platform, os_version=os_version
+        )
+        default = {
+            "platform": platform,
+            "os_version": os_version
+        }
+        update_settings(
+            analysis, platforms=[default]
+        )
+        was_updated = True
+
+    return was_updated
+
+def merge_analysis_errors(analysis_id, error_container):
+    analysisjson_path = AnalysisPaths.analysisjson(analysis_id)
+    analysis = Analysis.from_file(analysisjson_path)
+    if analysis.errors:
+        analysis.errors.merge_errors(error_container)
+    else:
+        analysis.errors = error_container
+
+    analysis.to_file_safe(analysisjson_path)
 
 def merge_ident_errors(analysis_id):
     errpath = AnalysisPaths.processingerr_json(analysis_id)

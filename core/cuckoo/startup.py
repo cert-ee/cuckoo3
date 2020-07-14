@@ -13,7 +13,7 @@ from cuckoo.common.packages import (
     get_conf_typeloaders, get_conftemplates, enumerate_plugins
 )
 from cuckoo.common.storage import Paths, cuckoocwd
-from cuckoo.common.log import CuckooGlobalLogger
+from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
 
 log = CuckooGlobalLogger(__name__)
 
@@ -45,7 +45,7 @@ def find_cuckoo_packages(do_import=True):
 
     return found
 
-def load_machinery_configs():
+def _load_machinery_configs():
     for machinery in config.cfg("cuckoo", "machineries"):
         confpath = Paths.config(file=f"{machinery}.yaml", subpkg="machineries")
         log.debug("Loading config.", confpath=confpath)
@@ -61,7 +61,7 @@ def load_configurations():
     # subpackages, except for subpackages listed in 'custom_load'.
     # These have custom loading routines.
     custom_load = {
-        "machineries": load_machinery_configs
+        "machineries": _load_machinery_configs
     }
     for pkgname, subpkg, pkg in find_cuckoo_packages(do_import=True):
         if subpkg in custom_load:
@@ -86,9 +86,8 @@ def load_configurations():
                     f"Failed to load config file {confpath}. {e}"
                 )
 
-    for custom_loader in custom_load.values():
+    for subpkg, custom_loader in custom_load.items():
         custom_loader()
-
 
 def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
@@ -214,7 +213,9 @@ def start_resultserver():
 
     ip = config.cfg("cuckoo", "resultserver", "listen_ip")
     port = config.cfg("cuckoo", "resultserver", "listen_port")
-    rs = ResultServer(sockpath, cuckoocwd.root, ip, port)
+    rs = ResultServer(
+        sockpath, cuckoocwd.root, ip, port, loglevel=get_global_loglevel()
+    )
     log.debug(
         "Starting resultserver.", listenip=ip, listenport=port,
         sockpath=sockpath, cwd=cuckoocwd.root
@@ -254,7 +255,9 @@ def start_taskrunner():
             f"Task runner socket path already exists: {sockpath}"
         )
 
-    taskrunner = TaskRunner(sockpath, cuckoocwd.root)
+    taskrunner = TaskRunner(
+        sockpath, cuckoocwd.root, loglevel=get_global_loglevel()
+    )
     runner_proc = Process(target=taskrunner.start)
 
     def _taskrunner_stopper():
@@ -297,47 +300,47 @@ def start_scheduler():
 
     started.scheduler.start()
 
-def init_global_logging(level, filepath):
-    from logging import StreamHandler
+def init_global_logging(level, filepath, use_logqueue=True, warningsonly=[]):
     import logging
-    from logging.handlers import WatchedFileHandler
     from cuckoo.common.log import (
-        start_queue_listener, stop_queue_listener, KeyValueLogFormatter,
-        ConsoleFormatter, set_level, add_rootlogger_handler, ColorText
+        start_queue_listener, stop_queue_listener, set_level,
+        add_rootlogger_handler, set_logger_level, logtime_fmt_str,
+        file_handler, file_formatter, file_log_fmt_str, console_formatter,
+        console_handler, console_log_fmt_str
     )
-
-    # Replace WARNING with WARN to keep log line shorter,
-    # alligned, and readable
-    logging.addLevelName(logging.WARNING, "WARN")
 
     # Set the Cuckoo log module level. This level will be set to
     # each handler added and logger created using the cuckoo log module.
     set_level(level)
 
-    file_log_fmt = "%(asctime)s %(levelname)-5s [%(name)s]: %(message)s"
-    logtime_fmt = "%Y-%m-%d %H:%M:%S"
-    globallog_h = WatchedFileHandler(filepath, mode="a")
-    globallog_h.setFormatter(KeyValueLogFormatter(file_log_fmt, logtime_fmt))
+    # Set the level of the giving logger names to warning. Is used to ignore
+    # log messages lower than warning by third party libraries.
+    for loggername in warningsonly:
+        set_logger_level(loggername, logging.WARNING)
 
-    # Ensure the log queue thread is stopped last when stopping Cuckoo
-    shutdown.register_shutdown(stop_queue_listener, order=999)
+    globallog_handler = file_handler(filepath, mode="a")
+    globallog_handler.setFormatter(
+        file_formatter(file_log_fmt_str, logtime_fmt_str)
+    )
 
-    # Let file logging be handled by the queuelistener
-    start_queue_listener(globallog_h)
+    if use_logqueue:
+        # Ensure the log queue thread is stopped last when stopping Cuckoo
+        shutdown.register_shutdown(stop_queue_listener, order=999)
 
-    # The console formatter has a '-22' because the console formatter
-    # adds ansi colors, which adds length to the levelname. If the current
-    # terminal does not support colors, use -5.
-    format_len = -22
-    if not ColorText.terminal_supported():
-        format_len = -5
+        # Let file logging be handled by the queuelistener
+        start_queue_listener(globallog_handler)
+    else:
+        # Low log line amount processes don't need a separate logwriting
+        # thread. These processes (resultserver, processing worker, etc) can
+        # set use_logqueue=False
+        add_rootlogger_handler(globallog_handler)
 
-    console_fmt = f"%(asctime)s %(levelname){format_len}s " \
-                  f"[%(name)s]: %(message)s"
-    streamhandler = StreamHandler()
-    streamhandler.setLevel(logging.DEBUG)
-    streamhandler.setFormatter(ConsoleFormatter(console_fmt, logtime_fmt))
+    consolelog_handler = console_handler()
+    consolelog_handler.setLevel(level)
+    consolelog_handler.setFormatter(
+        console_formatter(console_log_fmt_str, logtime_fmt_str)
+    )
 
     # Add extra handler to get logs to the console.
     # Let log to console printing be handled at by the actual caller.
-    add_rootlogger_handler(streamhandler)
+    add_rootlogger_handler(consolelog_handler)

@@ -4,6 +4,7 @@
 
 import os
 import json
+import platform
 
 from copy import deepcopy
 
@@ -38,6 +39,8 @@ _cache = {}
 class TypeLoader:
 
     EMPTY_VALUE = _YAML_NULL
+
+    IS_CONTAINER = False
 
     def __init__(self, value=None, default_val=None, required=True,
                  allow_empty=False, sensitive=False):
@@ -193,6 +196,8 @@ class Boolean(TypeLoader):
 
 class List(TypeLoader):
 
+    IS_CONTAINER = True
+
     def __init__(self, element_class, value=None, default_val=None,
                  required=True, allow_empty=False):
         self.element_class = element_class
@@ -218,23 +223,28 @@ class List(TypeLoader):
             return None
 
         if isinstance(value, str):
-            return [self.element_class(value=value.strip())]
+            loader = self.element_class(value=value)
+            parsed = loader.parse(value)
+            loader.value = parsed
+            return [loader]
 
         if isinstance(value, list):
             elements = []
             for item in value:
-                item = item.strip()
                 if not item:
                     continue
 
-                elements.append(self.element_class(value=item))
+                loader = self.element_class(value=item)
+                parsed = loader.parse(item)
+                loader.value = parsed
+
+                elements.append(loader)
 
             return elements
 
         raise IncorrectTypeError(
             f"Expected type list, got {type(value).__name__}"
         )
-
 
     def constraints(self, value):
         if not isinstance(value, list):
@@ -244,6 +254,66 @@ class List(TypeLoader):
 
         for element in value:
             element.check_constraints(element.value)
+
+class Dict(TypeLoader):
+
+    def __init__(self, element_class, value=None, default_val=None,
+                 required=True, allow_empty=False):
+
+        self.element_class = element_class
+
+        super().__init__(value=value, default_val=default_val,
+                         required=required, allow_empty=allow_empty)
+
+    @property
+    def usable_value(self):
+        if self.is_empty(self.value):
+            return {}
+
+        return self.value
+
+    def is_empty(self, value):
+        return not value or value is None
+
+    def parse(self, value):
+        if value is None:
+            return None
+
+        if not isinstance(value, dict):
+            raise IncorrectTypeError(
+                f"Expected type dict, got {type(value).__name__}"
+            )
+
+        # If the given typeloader is also a container, it must be a class
+        # instance instead of a class, as to pass its typeloader to it.
+        # Create the dictionary values using the given element class
+        # and its element class
+        kv = {}
+        if self.element_class.IS_CONTAINER:
+            element_class = self.element_class.__class__
+            container_content_class = self.element_class.element_class
+
+            for k, v in value.items():
+                loader = element_class(container_content_class, v)
+                parsed = loader.parse(v)
+                loader.value = parsed
+                kv[k] = loader
+
+            return kv
+
+        for k, v in value.items():
+            loader = self.element_class(v)
+            parsed = loader.parse(v)
+            loader.value = parsed
+            kv[k] = loader
+
+        return kv
+
+    def constraints(self, value):
+        if not isinstance(value, dict):
+            raise IncorrectTypeError(
+                f"Expected type dict, got {type(value).__name__}"
+            )
 
 class NestedDictionary:
 
@@ -280,6 +350,13 @@ class NestedDictionary:
             typeloaders[section] = deepcopy(self.child_typeloaders)
         return typeloaders
 
+def platformconditional(default, **kwargs):
+    plat = platform.system().lower()
+    plat_val = kwargs.get(plat)
+    if plat_val:
+        return plat_val
+    return  default
+
 def typeloaders_to_templatedict(config_dictionary):
     def _typeloader_to_yamlval(obj):
         if isinstance(obj, TypeLoader):
@@ -311,7 +388,7 @@ def render_config(template_path, typeloaders, write_to):
 
     import jinja2
     with open(template_path, "r") as fp:
-        template = jinja2.Template(fp.read())
+        template = jinja2.Template(fp.read(), lstrip_blocks=True, trim_blocks=True)
 
     rendered = template.render(values)
     with open(write_to, "w") as fp:
@@ -350,7 +427,7 @@ def cfg(file, *args, subpkg="", load_missing=False):
                 val = val[k]
             else:
                 val = file_values[k]
-        except KeyError:
+        except (KeyError, TypeError):
             raise ConfigurationError(
                 f"Configuration file {file} "
                 f"{f'in package folder {subpkg}' if subpkg else ''} "

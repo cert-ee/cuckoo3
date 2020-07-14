@@ -33,7 +33,9 @@ machines:
     # crucial in selecting machines that can actually run a submitted sample.
     # Tags and dependencies can be defined in X config.
     tags:
-    {% for tag in machine.tags -%}
+    {% for tag in machine.tags %}
     - {{ tag }}
-    {% endfor -%}
+    {% endfor %}
 {% endfor %}
+
+# Wow dank leuk

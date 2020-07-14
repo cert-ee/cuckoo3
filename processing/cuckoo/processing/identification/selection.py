@@ -7,6 +7,8 @@ import os
 
 import sflock
 
+from cuckoo.common.config import cfg
+
 from ..abtracts import Processor
 from ..errors import CancelProcessing
 
@@ -47,19 +49,26 @@ class Identify(Processor):
         # Retain the original file name. Instead of the hash that
         # originates from the filepath being a path to the binaries
         # folder.
-        original_filename = self.analysis.submitted.filename.encode()
+        original_filename = self.analysis.submitted.filename
 
         # TODO properly handle and propagate as Sflock errors in Sflock.
         try:
             f = sflock.unpack(
-                self.submitted_file.encode(), filename=original_filename
+                self.submitted_file, filename=original_filename
             )
         except Exception as e:
             err = f"Sflock unpacking failure. {e}"
             self.errtracker.fatal_exception(err)
             raise CancelProcessing(err)
 
+
+        if f.error:
+            self.errtracker.add_error(f.error, self)
+
         if f.children:
+            # Move tree writing to selection module. All 'selected' files
+            # in the sflock tree should be set to False first, except the
+            # actual chosen candidate for analysis.
             tree = f.astree(sanitize=True, finger=True)
             _write_filetree(self.analysis_path, tree)
 
@@ -67,13 +76,14 @@ class Identify(Processor):
         find_selected(f, selected)
 
         platforms = []
-        if f.platform:
+        if f.platforms:
             # TODO replace later when strictcontainer can handle lists of
             # strictcontainers
-            platforms.append({
-                "platform": f.platform,
-                "os_version": ""
-            })
+            for platform in f.platforms:
+                platforms.append({
+                    "platform": platform,
+                    "os_version": ""
+                })
 
         return {
             "selection": selected,
@@ -81,7 +91,6 @@ class Identify(Processor):
                 "filename": f.filename,
                 "platforms": platforms,
                 "size": f.filesize,
-                "package": f.package,
                 "filetype": f.magic,
                 "media_type": f.mime,
                 "sha256": f.sha256,
@@ -94,19 +103,33 @@ class Identify(Processor):
 
 
 class SelectFile(Processor):
+    """The SelectFile module must run as the last module that does anything
+    with the list of sflock File objects created in the Identify module.
+    Modules that run between those two are free to edit the list."""
 
     ORDER = 999
     KEY = "selected"
     CATEGORY = ["file"]
 
     # PoC values. TODO replace with values from config etc later.
-    PRIO_DEFAULT = [".exe", ".msi", ".docx", ".docm", ".pdf"]
+    PRIO_DEFAULT = [".exe", ".msi", ".docm", ".docx", ".pdf"]
     PRIO_CONTAINER = [".msi"] + PRIO_DEFAULT
 
     CONTAINER_TYPE_PRIO = {
         "archive": [".msi"] + PRIO_DEFAULT,
         "application/pdf": [".pdf"] + PRIO_DEFAULT
     }
+
+    def init(self):
+        self.tag_deps = cfg("identification", "tags", subpkg="processing")
+
+    def _get_tags_dep(self, dep):
+        tags = []
+        for tag, deplist in self.tag_deps.items():
+            if dep in deplist:
+                tags.append(tag)
+
+        return tags
 
     def start(self):
         if self.analysis.category != "file":
@@ -135,7 +158,7 @@ class SelectFile(Processor):
 
         for ext in type_priority:
             for f in selection:
-                if f.filename.decode().endswith(ext):
+                if f.filename.endswith(ext):
                     selected = f
                     break
 
@@ -151,23 +174,35 @@ class SelectFile(Processor):
                 return {}
 
         platforms = []
-        if selected.platform:
+        if selected.platforms:
             # TODO replace later when strictcontainer can handle lists of
             # strictcontainers
-            platforms.append({
-                "platform": selected.platform,
-                "os_version": ""
-            })
+            for platform in selected.platforms:
+                platforms.append({
+                    "platform": platform,
+                    "os_version": ""
+                })
+
+        self.analysislog.debug("File selected.", file=repr(selected.filename))
+        ident_filename = selected.filename
+        ident_ext = selected.extension
+        if ident_ext and not ident_filename.endswith(ident_ext):
+            ident_filename = f"{ident_filename}.{ident_ext}"
+            self.analysislog.debug(
+                "Identify detected a different file type than extension "
+                "indicates.", detected=ident_ext, filename=repr(ident_filename)
+            )
 
         return {
-            "filename": selected.filename,
+            "filename": ident_filename,
+            "orig_name": selected.filename,
             "platforms": platforms,
             "size": selected.filesize,
-            "package": selected.package,
             "filetype": selected.magic,
             "media_type": selected.mime,
             "sha256": selected.sha256,
             "extrpath": selected.extrpath,
             "password": selected.password or "",
+            "machine_tags": self._get_tags_dep(selected.dependency),
             "container": len(selected.children) > 0
         }

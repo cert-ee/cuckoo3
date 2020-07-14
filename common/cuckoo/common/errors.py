@@ -20,17 +20,17 @@ class ErrorTracker:
         else:
             self.errors.append(str(error))
 
-    def _set_fatal_error(self, error, exception=False):
+    def _add_fatal_error(self, error, exception=False):
         self.fatal_errs.append({
             "error": str(error),
             "traceback": format_exc() if exception else ""
         })
 
     def fatal_error(self, error):
-        self._set_fatal_error(error, exception=False)
+        self._add_fatal_error(error, exception=False)
 
     def fatal_exception(self, error):
-        self._set_fatal_error(error, exception=True)
+        self._add_fatal_error(error, exception=True)
 
     def has_errors(self):
         return len(self.errors) > 0 or self.has_fatal()
@@ -43,6 +43,9 @@ class ErrorTracker:
             "errors": self.errors,
             "fatal": self.fatal_errs
         }
+
+    def to_container(self):
+        return Errors(**self.to_dict())
 
     def to_file(self, filepath):
         Errors(**self.to_dict()).to_file(filepath)

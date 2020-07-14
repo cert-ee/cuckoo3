@@ -1,0 +1,10 @@
+# The file identification module can identify dependencies for a file type.
+# these dependency strings can be mapped to machine tags here. Identified tags will be automatically
+# used when creating a task to ensure the correct analysis machine is used.
+tags:
+{% for tag, dependencies in tags.items() %}
+  {{ tag }}:
+    {% for dep in dependencies %}
+    - {{ dep }}
+    {% endfor %}
+{% endfor %}

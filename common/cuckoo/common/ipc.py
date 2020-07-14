@@ -10,6 +10,8 @@ import select
 import time
 import stat
 
+from .log import CuckooGlobalLogger
+
 class IPCError(Exception):
     pass
 
@@ -18,6 +20,8 @@ class NotConnectedError(IPCError):
 
 class ResponseTimeoutError(IPCError):
     pass
+
+log = CuckooGlobalLogger(__name__)
 
 class ReaderWriter(object):
     # 5 MB JSON blob
@@ -54,7 +58,9 @@ class ReaderWriter(object):
                         f"Actual last byte is: {repr(self.rcvbuf[:1])}"
                     )
 
-                raise NotConnectedError()
+                raise NotConnectedError(
+                    "Socket disconnected. Cannot receive message."
+                )
 
             self.rcvbuf += buf
 
@@ -175,7 +181,10 @@ class UnixSocketServer:
                 else:
                     reader = self.socks_readers.get(sock)
                     if not reader:
-                        print("NO READER")
+                        log.warning(
+                            "No reader for existing socket connection.",
+                            sock=sock
+                        )
                         continue
 
                     while True:
@@ -183,7 +192,10 @@ class UnixSocketServer:
                             msg = reader.get_json_message()
                         except (socket.error, ValueError, EOFError,
                                 json.decoder.JSONDecodeError) as e:
-                            print(f"Failure reading message: {e}")
+                            log.warning(
+                                "Failed to read message. Disconnecting "
+                                "client.", error=e, sock=sock
+                            )
                             # Untrack this socket. Clients must follow the
                             # communication rules.
                             self.untrack(sock)
@@ -253,13 +265,12 @@ class UnixSockClient:
                 sock.connect(self.sockpath)
                 break
             except socket.error as e:
-                err = f"Failed to connect to unix socket: {self.sockpath}. " \
-                      f"Error: {e}"
-
                 if maxtries and tries >= tries:
-                    raise IPCError(err)
+                    raise IPCError(
+                        f"Failed to connect to unix socket: {self.sockpath}. "
+                        f"Error: {e}"
+                    )
 
-                print(err)
                 time.sleep(3)
 
         if not self.blockingreads:

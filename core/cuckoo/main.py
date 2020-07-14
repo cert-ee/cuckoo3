@@ -14,8 +14,10 @@ from cuckoo.common.log import (
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
+@click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
+@click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
 @click.pass_context
-def main(ctx, cwd):
+def main(ctx, cwd, debug, quiet):
     if platform.system().lower() != "linux":
         exit_error(
             "Currently Cuckoo3 is still in development and "
@@ -58,8 +60,16 @@ def main(ctx, cwd):
 
     register_shutdown(_stopmsg, order=1)
 
+
+    if quiet:
+        level = logging.WARNING
+    elif debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
     # Initialize globing logging to cuckoo.log
-    init_global_logging(logging.DEBUG, Paths.log("cuckoo.log"))
+    init_global_logging(level, Paths.log("cuckoo.log"))
 
     try:
         start_cuckoo()

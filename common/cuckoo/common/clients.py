@@ -26,7 +26,7 @@ class ResultServerClient:
             )
         except IPCError as e:
             raise ActionFailedError(
-                f"Failed to send request to resultserver: {e}"
+                f"Failure during resultserver add request: {e}"
             )
 
         if msg.get("status") == "ok":
@@ -42,7 +42,7 @@ class ResultServerClient:
             )
         except IPCError as e:
             raise ActionFailedError(
-                f"Failed to send request to resultserver: {e}"
+                f"Failure during resultserver remove request: {e}"
             )
 
         if msg.get("status") == "ok":

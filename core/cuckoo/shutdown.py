@@ -2,10 +2,12 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import traceback
 import signal
-
 from threading import Lock, Thread
+
+from cuckoo.common.log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
 
 _shutdown_methods = []
 _teardown_lock = Lock()
@@ -30,8 +32,10 @@ def call_registered_shutdowns():
         try:
             shutmethod()
         except Exception as e:
-            print(f"Error while shutting down: {e}")
-            traceback.print_exc()
+            log.exception(
+                "Error while calling shutdown method.",
+                error=e, method=shutmethod
+            )
 
 def _wrap_call_registered_shutdowns(sig, frame):
     if _teardown_lock.locked():

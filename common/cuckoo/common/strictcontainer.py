@@ -274,8 +274,10 @@ class Analysis(StrictContainer):
         "settings": Settings,
         "created_on": datetime.datetime,
         "category": str,
-        "submitted": (SubmittedFile, SubmittedURL)
+        "submitted": (SubmittedFile, SubmittedURL),
+        "errors": Errors,
     }
+    ALLOW_EMPTY = ("errors",)
 
 class Task(StrictContainer):
 
@@ -308,6 +310,10 @@ class TargetFile(StrictContainer):
     }
     ALLOW_EMPTY = ("extrpath", "machine_tags")
 
+    @property
+    def target(self):
+        return self.filename
+
 class TargetURL(StrictContainer):
 
     PARENT_KEYVAL = ("category", "url")
@@ -317,6 +323,10 @@ class TargetURL(StrictContainer):
         "machine_tags": list
     }
     ALLOW_EMPTY = ("machine_tags",)
+
+    @property
+    def target(self):
+        return self.url
 
 class Identification(StrictContainer):
 

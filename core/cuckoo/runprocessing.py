@@ -7,6 +7,7 @@ import os
 import select
 import threading
 import traceback
+import logging
 
 from cuckoo.common.ipc import (
     UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
@@ -14,13 +15,16 @@ from cuckoo.common.ipc import (
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, cuckoocwd
 from cuckoo.common.strictcontainer import Analysis, Identification
+from cuckoo.common.config import MissingConfigurationFileError
 from cuckoo.common.errors import ErrorTracker
-from cuckoo.common.log import CuckooGlobalLogger
+from cuckoo.common.log import (
+    CuckooGlobalLogger, AnalysisLogger, get_global_loglevel
+)
 from cuckoo.processing import abtracts
 from cuckoo.processing.errors import CancelProcessing, CancelReporting
 
-
 from . import started, shutdown
+from .startup import init_global_logging, load_configurations
 
 log = CuckooGlobalLogger(__name__)
 
@@ -51,6 +55,7 @@ class PluginWorker(object):
         self.binary_path = binary_path
 
         self.errtracker = ErrorTracker()
+        self.analysislog = AnalysisLogger(__name__, self.analysis_id)
 
     def get_plugin_instances(self, classes):
         # TODO: add configurations and only load enabled plugins
@@ -74,14 +79,15 @@ class PluginWorker(object):
             try:
                 instance = plugin_class(
                     analysis=analysis_info, analysis_path=self.analysis_path,
+                    logger=self.analysislog,
                     identification=identification, task_id=self.taskid,
                     submitted_file=self.binary_path
                 )
                 instance.init()
             except Exception as e:
-                print(
-                    f"ERROR: Failed to initialize plugin: {plugin_class}. "
-                    f"Error: {e}"
+                log.exception(
+                    "Failed to initialize plugin.", plugin=plugin_class,
+                    error=e
                 )
                 continue
 
@@ -95,7 +101,7 @@ class PluginWorker(object):
         try:
             results = self.run_work_plugins(processing_instances)
         except CancelProcessing as e:
-            print(e)
+            self.analysislog.error("Processing cancelled", error=e)
             results = {}
 
         self.run_cleanup(processing_instances)
@@ -103,8 +109,8 @@ class PluginWorker(object):
         reporting_instances = self.get_plugin_instances(self.reporting_plugins)
         try:
             self.run_reporting_plugins(reporting_instances, results)
-        except CancelReporting(e):
-            print(e)
+        except CancelReporting as e:
+            self.analysislog.error("Reporting cancelled", error=e)
 
         self.run_cleanup(reporting_instances)
 
@@ -120,7 +126,6 @@ class PluginWorker(object):
             else:
                 path = AnalysisPaths.processingerr_json(self.analysis_id)
 
-            print("Printing to file")
             self.errtracker.to_file(path)
 
     def run_work_plugins(self, instances):
@@ -133,14 +138,16 @@ class PluginWorker(object):
             plugin_instance.set_errortracker(self.errtracker)
             plugin_instance.set_results(results)
 
+            self.analysislog.debug(
+                "Running processing plugin", plugin=name, stage=self.worktype
+            )
             try:
                 data = plugin_instance.start()
             except CancelProcessing as e:
                 raise CancelProcessing(
-                    f"Plugin '{name}' cancelled for "
+                    f"Plugin '{name}' cancelled processing for "
                     f"{'task' if self.taskid else 'analysis'} "
-                    f"{self.taskid if self.taskid else self.analysis_id} "
-                    f"processing. {e}"
+                    f"{self.taskid if self.taskid else self.analysis_id}. {e}"
                 )
 
             except Exception as e:
@@ -165,11 +172,10 @@ class PluginWorker(object):
             try:
                 plugin_instance.cleanup()
             except Exception as e:
-                print(
-                    f"cleanup failed for plugin: {plugin_instance}. "
-                    f"Error: {e}"
+                self.analysislog.exception(
+                    "Cleanup failure for plugin.", plugin=plugin_instance,
+                    error=e
                 )
-                print(traceback.format_exc())
 
     def run_reporting_plugins(self, instances, results):
         # Run all plugin instances.
@@ -183,24 +189,41 @@ class PluginWorker(object):
         if not report_stage_handler:
             return
 
+        self.analysislog.debug(
+            "Running reporting plugin.",
+            plugin=plugin_instance.__class__.__name__, stage=self.worktype
+        )
         try:
             report_stage_handler()
         except Exception as e:
             err = f"Failure in reporting {self.worktype} " \
                   f"stage {report_stage_handler}. Error: {e}"
-            print(traceback.format_exc())
+            log.exception(
+                "Reporting plugin failure.", plugin=plugin_instance,
+                stage=self.worktype, error=e
+            )
             self.errtracker.fatal_exception(err)
             raise CancelReporting(err).with_traceback(e.__traceback__)
+
+    def cleanup(self):
+        if self.analysislog:
+            self.analysislog.close()
+
+    def __del__(self):
+        self.cleanup()
+
 
 class WorkReceiver(UnixSocketServer):
 
     PLUGIN_BASEPATH = "cuckoo.processing"
     REPORTING_PLUGIN_PATH = "cuckoo.processing.reporting"
 
-    def __init__(self, sockpath, worktype, name, cuckoocwd):
+    def __init__(self, sockpath, worktype, name, cuckoocwd,
+                 loglevel=logging.DEBUG):
         self.name = name
         self.worktype = worktype
         self.cuckoocwd = cuckoocwd
+        self.loglevel = loglevel
 
         self.reader = None
         self.work_plugins = []
@@ -212,13 +235,28 @@ class WorkReceiver(UnixSocketServer):
     def start(self):
         def _stop_wrapper():
             if self.do_run:
-                print(f"{self.name} stopping..")
+                log.info(
+                    "Worker stopping..", worker=self.name,
+                    worktype=self.worktype
+                )
                 self.stop()
                 self.cleanup()
 
         shutdown.register_shutdown(_stop_wrapper)
 
         cuckoocwd.set(self.cuckoocwd)
+        init_global_logging(
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
+        )
+
+        log.debug("Loading configuration files", worker=self.name)
+        try:
+            load_configurations()
+        except MissingConfigurationFileError as e:
+            log.fatal_error(
+                f"Missing configuration file.", error=e, includetrace=False
+            )
+
         self.initialize_plugins()
         self.create_socket(backlog=1)
         self.start_accepting()
@@ -233,7 +271,10 @@ class WorkReceiver(UnixSocketServer):
                 abtracts.Processor
             )
         except ImportError as e:
-            print(f"Failed to import worker plugins: {e}")
+            log.error(
+                "Failed to import processing plugins for worker",
+                worker=self.name, error=e
+            )
             return False
 
         try:
@@ -241,7 +282,10 @@ class WorkReceiver(UnixSocketServer):
                 self.REPORTING_PLUGIN_PATH, globals(), abtracts.Reporter
             )
         except ImportError as e:
-            print(f"Failed to import reporting plugins: {e}")
+            log.error(
+                "Failed to import reporting plugins for worker",
+                worker=self.name, error=e
+            )
             return False
 
         for plugin_class in work:
@@ -279,16 +323,18 @@ class WorkReceiver(UnixSocketServer):
                 self.work_plugins, self.reporting_plugins,
                 m.get("task_id"), m.get("binary_path")
             )
-            print(f"{self.name}: Starting work!")
-
-            w.start()
+            log.info("Starting work", worker=self.name, work=w.analysis_id)
+            try:
+                w.start()
+            finally:
+                w.cleanup()
 
             if w.errtracker.has_fatal():
                 self.update_state(States.WORK_FAIL)
             else:
                 self.update_state(States.FINISHED)
         except Exception as e:
-            print(f"Worker fail: {e}")
+            log.exception("Worker fail", worker=self.name, error=e)
             self.update_state(
                 States.WORKER_FAIL, {
                     "traceback": traceback.format_exc(),
@@ -370,9 +416,13 @@ class ProcessingWorkerHandler(threading.Thread):
             os.unlink(sockpath)
 
         log.info(f"Starting {worktype} worker.", workername=name)
-        worker = WorkReceiver(sockpath, worktype, name, cuckoocwd.root)
+        worker = WorkReceiver(
+            sockpath, worktype, name, cuckoocwd.root,
+            loglevel=get_global_loglevel()
+        )
         proc = multiprocessing.Process(target=worker.start)
         proc.daemon = True
+        proc.name = name
         proc.start()
         log.debug("Worker process started", workername=name, pid=proc.pid)
 

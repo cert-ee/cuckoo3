@@ -15,9 +15,9 @@ def find_child(archive, extraction_paths):
     for path in extraction_paths:
         temp = None
         if not current:
-            temp = get_child(archive, path.encode())
+            temp = get_child(archive, path)
         else:
-            temp = get_child(current, path.encode())
+            temp = get_child(current, path)
 
         if not temp:
             return None
@@ -44,7 +44,7 @@ def zipify(f, path):
     z = zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED)
 
     for child in f.children:
-        z.writestr(child.relapath.decode(), child.contents)
+        z.writestr(child.relapath, child.contents)
 
     z.close()
 
@@ -64,7 +64,11 @@ class CreateZip(Processor):
         if not target.extrpath:
             return
 
-        f = sflock.unpack(self.submitted_file.encode())
+        self.analysislog.debug(
+            "Finding child archive for selected file and normalizing to zip."
+        )
+
+        f = sflock.unpack(self.submitted_file)
 
         selected_file = find_child(f, target.extrpath)
         if not selected_file:

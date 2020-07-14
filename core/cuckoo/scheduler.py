@@ -12,6 +12,7 @@ from cuckoo.common.log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+from . import started
 from .machinery import acquire_available, get_available, unlock
 
 class _TaskQueue:
@@ -107,8 +108,7 @@ class Scheduler:
         self.do_run = True
 
         self._assigned_machines = {}
-        self._unlock_event = Event()
-        self._newtasks_event = Event()
+        self._change_event = Event()
 
     def start_task(self, task, machine):
         log.info(
@@ -125,9 +125,11 @@ class Scheduler:
                 result_ip=cfg("cuckoo", "resultserver", "listen_ip"),
                 result_port=cfg("cuckoo", "resultserver", "listen_port")
             )
+            started.state_controller.task_running(task_id=task.id)
         except ActionFailedError as e:
             log.error("Failed to start task.", task_id=task.id, error=e)
             self.task_ended(task.id)
+            started.state_controller.task_failed(task_id=task.id)
 
     def task_ended(self, task_id):
         machine = self._assigned_machines.pop(task_id, None)
@@ -135,36 +137,49 @@ class Scheduler:
             return
 
         unlock(machine)
-        self._unlock_event.set()
+        self._change_event.set()
 
     def newtask(self):
-        self._newtasks_event.set()
+        self._change_event.set()
 
     def start(self):
+        self._change_event.set()
         while self.do_run:
+            self._change_event.wait(timeout=60)
+
+            # Verify if we should run again as a lot can change in the
+            # timeout period.
+            if not self.do_run:
+                break
+
             if task_queue.size < 1:
-                log.debug("No new tasks")
-                self._newtasks_event.clear()
-                self._newtasks_event.wait(timeout=60)
+                log.debug("No new task(s) ")
+                self._change_event.clear()
                 continue
 
             available = get_available()
             if not available:
                 log.debug("No available machines")
-                self._unlock_event.clear()
-                self._unlock_event.wait(timeout=10)
+                self._change_event.clear()
                 continue
 
+            tasks_started = False
             for _ in range(len(available)):
                 task, machine = task_queue.find_work()
                 if not task:
                     break
 
                 self.start_task(task, machine)
+                tasks_started = True
+
+            # If no tasks were started, this means no machines that are
+            # are currently available can run any of the queued tasks. Wait
+            # until new tasks are submitted or a machine is unlocked.
+            if not tasks_started:
+                self._change_event.clear()
 
     def stop(self):
         self.do_run = False
 
         # Set events so it won't block on these when stopping
-        self._unlock_event.set()
-        self._newtasks_event.set()
+        self._change_event.set()

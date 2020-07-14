@@ -33,21 +33,21 @@ class StandardTask(TaskFlow):
                 f"No stager found for that supports {self.machine.platform}"
             )
 
-        print(f"Using stager: {stager_cls.name}")
+        self.log.debug("Using stager.", stager=stager_cls.name)
         stager = stager_cls(
             self.agent, self.task, self.analysis, self.identification,
-            self.result_ip, self.result_port
+            self.result_ip, self.result_port, self.log
         )
 
         try:
-            print(f"Task {self.task.id} -> Preparing stager")
+            self.log.debug("Preparing stager.")
             stager.prepare()
         except StagerError as e:
             stager.cleanup()
             raise TaskFlowError(f"Stager preparation failed: {e}")
 
         try:
-            print(f"Task {self.task.id} -> Delivering and executing payload")
+            self.log.debug("Delivering and executing payload.")
             stager.deliver_payload()
         except PayloadExecFailed as e:
             raise TaskFlowError(f"Failed to execute payload on guest: {e}")

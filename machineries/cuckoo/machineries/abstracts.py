@@ -4,6 +4,10 @@
 
 from . import errors, helpers
 
+from cuckoo.common.log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
+
 class Machinery:
     name = ""
 
@@ -50,14 +54,20 @@ class Machinery:
     def shutdown(self):
         for machine in self.machines:
             try:
-                print(f"Stopping {self.name} machine: {machine.name}")
+                log.info(
+                    "Stopping machine.", machinery=self.name,
+                    machine=machine.name
+                )
                 self.stop(machine)
             except errors.MachineStateReachedError:
                 # Ignore this error, as it simply means the machine already
                 # has the desired stopped state.
                 pass
             except errors.MachineryError as e:
-                print(f"Error stopping machine {machine.name}. {e}")
+                log.error(
+                    "Error while stopping machine in machinery shutdown.",
+                    machinery=self.name, machine=machine.name, error=e
+                )
 
     def version(self):
         """Return the string version of the virtualization software."""

@@ -2,6 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import json
 from threading import Lock
 
 class MachineStates:
@@ -106,6 +107,10 @@ class Machine:
         to the current machine helper instance"""
         self.reserved = machine.reserved
         self.reserved_by = machine.reserved_by
+
+    def to_file(self, path):
+        with open(path, "w") as fp:
+            json.dump(self.to_dict(), fp, indent=2)
 
     def to_dict(self):
         if isinstance(self.tags, set):

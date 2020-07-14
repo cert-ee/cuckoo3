@@ -20,10 +20,11 @@ class Processor:
     CATEGORY = ["file", "url"]
 
 
-    def __init__(self, analysis, analysis_path,
+    def __init__(self, analysis, analysis_path, logger,
                  identification=None, task_id=None, submitted_file=None):
         self.analysis_path = analysis_path
         self.analysis = analysis
+        self.analysislog = logger
 
         self.submitted_file = submitted_file
         self.identification = identification
@@ -62,10 +63,11 @@ class Reporter:
 
     ORDER = 999
 
-    def __init__(self, analysis, analysis_path,
+    def __init__(self, analysis, analysis_path, logger,
                  identification=None, task_id=None, submitted_file=None):
         self.analysis_path = analysis_path
         self.analysis = analysis
+        self.analysislog = logger
 
         self.submitted_file = submitted_file
         self.identification = identification

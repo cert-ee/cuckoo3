@@ -16,7 +16,7 @@ class TaskFlow:
     INTERVAL_CALL_WAIT = 1
 
     def __init__(self, machine, task, analysis, identification, agent,
-                 result_ip, result_port):
+                 result_ip, result_port, tasklog):
 
         self.machine = machine
         self.task = task
@@ -24,6 +24,7 @@ class TaskFlow:
         self.identification = identification
         self.result_ip = result_ip
         self.result_port = result_port
+        self.log = tasklog
 
         self.agent = agent
         self.machinery_client = MachineryManagerClient(

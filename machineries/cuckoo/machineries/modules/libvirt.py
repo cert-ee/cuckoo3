@@ -223,8 +223,14 @@ class Libvirt(Machinery):
 
         # The machine may be paused if making a memory dump. No other pausing
         # is used or handled.
-        if normalized_state == MachineStates.PAUSED and \
-                reason != libvirt.VIR_DOMAIN_PAUSED_DUMP:
+        allowed_pauses = (
+            libvirt.VIR_DOMAIN_PAUSED_DUMP,
+            libvirt.VIR_DOMAIN_PAUSED_FROM_SNAPSHOT,
+            libvirt.VIR_DOMAIN_PAUSED_STARTING_UP
+        )
+
+        if normalized_state == MachineStates.PAUSED \
+                and reason not in allowed_pauses:
             err = f"Unexpected machine paused state"
             machine.add_error(err)
             raise errors.MachineryUnhandledStateError(err)
