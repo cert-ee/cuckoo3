@@ -8,6 +8,16 @@ from copy import copy
 from logging import handlers
 from os import getenv
 from queue import Queue
+from threading import Lock
+
+from .storage import TaskPaths, AnalysisPaths
+
+# Replace WARNING with WARN to keep log line shorter,
+# aligned, and readable
+logging.addLevelName(logging.WARNING, "WARN")
+
+# Set the root level to DEBUG so we can easily use per-handler levels
+logging.getLogger().setLevel(logging.DEBUG)
 
 class ColorText:
     @staticmethod
@@ -90,11 +100,16 @@ _level = logging.INFO
 def set_level(level):
     global _level
     _level = level
-    logging.getLogger().setLevel(_level)
 
 def add_rootlogger_handler(handler):
     handler.setLevel(_level)
     logging.getLogger().addHandler(handler)
+
+def set_logger_level(loggername, level):
+    logging.getLogger(loggername).setLevel(level)
+
+def get_global_loglevel():
+    return _level
 
 # Infinite log queue size
 _log_queue = Queue(maxsize=0)
@@ -160,14 +175,26 @@ class KeyValueLogFormatter(logging.Formatter):
         if not key_vals:
             return super().format(record)
 
-        return super().format(_format_cuckoo_kvs(record))
+        # Create a copy of the record and format that. The copy is required
+        # as the LogRecord instance is shared among all log handlers.
+        console_copy = copy(record)
+        return super().format(_format_cuckoo_kvs(console_copy))
 
 class ConsoleFormatter(logging.Formatter):
+
+    EXTRA_CHAR_SIZE = len(ColorText.bold(ColorText.green("")))
+    _COLOR_TERMINAL = ColorText.terminal_supported()
 
     def format(self, record):
         # Create a copy of the record and format that. The copy is required
         # as the LogRecord instance is shared among all log handlers.
         console_copy = copy(record)
+
+        # If the terminal does not support ANSI colors, don't add them.
+        if not self._COLOR_TERMINAL:
+            return super().format(
+                _format_cuckoo_kvs(console_copy, ColorText.magenta)
+            )
 
         bold_lvlname = ColorText.bold(record.levelname)
         if record.levelno == logging.INFO:
@@ -185,42 +212,277 @@ class ConsoleFormatter(logging.Formatter):
             _format_cuckoo_kvs(console_copy, ColorText.magenta)
         )
 
+
+_DEFAULT_LOG_FMT = "%(asctime)#ASCTIME_COLSIZE#s " \
+                   "%(levelname)#LEVELNAME_COLSIZE#s " \
+                   "[%(name)#NAME_COLSIZE#s]: %(message)s"
+
+def _set_fmt_colsizes(asctime=None, levelname=None, name=None, align="left"):
+    def _align_colsize(number):
+        if align == "left" and number > 0:
+            return str(-number)
+        return str(number)
+
+    fmt = _DEFAULT_LOG_FMT
+    fmt = fmt.replace(
+        "#ASCTIME_COLSIZE#", _align_colsize(asctime) if asctime else ""
+    )
+    fmt = fmt.replace(
+        "#LEVELNAME_COLSIZE#", _align_colsize(levelname) if levelname else ""
+    )
+    fmt = fmt.replace("#NAME_COLSIZE#", _align_colsize(name) if name else "")
+    return fmt
+
+
+
+def _emit_write_once(stream, msg, terminator):
+    stream.write(f"{msg}{terminator}")
+
+class CuckooWatchedFileHandler(handlers.WatchedFileHandler):
+
+    def emit(self, record):
+        if self.stream is None:
+            self.stream = self._open()
+        else:
+            self.reopenIfNeeded()
+
+        stream = self.stream
+        try:
+            # Overwrite the default file handle logic of using 2 writes. One
+            # for the message and another for the terminator.
+            msg = self.format(record)
+            _emit_write_once(stream, msg, self.terminator)
+            self.flush()
+        except Exception:
+            self.handleError(record)
+
+class MultiLogfileHandler(logging.Handler):
+
+    def __init__(self, mapkey):
+        super().__init__()
+
+        # Map key is the key used to find an identifier in the _KV_KEY dict
+        # given on a LogRecord. The value of the key is used to find a mapped
+        # handler.
+        self._mapkey = mapkey
+
+        self._key_handler_map = {}
+        self._map_lock = Lock()
+
+    def map_handler(self, key, handler):
+        with self._map_lock:
+            if key in self._key_handler_map:
+                raise KeyError(
+                    f"Cannot add handler for key {key}. A mapped "
+                    f"handler already exists. "
+                    f"{self._key_handler_map[key]}"
+                )
+
+            self._key_handler_map[key] = handler
+
+    def unmap_handler(self, key):
+        with self._map_lock:
+            handler = self._key_handler_map.pop(key, None)
+            if handler is None:
+                raise KeyError(f"No handler is mapped for key {key}")
+
+            handler.close()
+
+    def handle(self, record):
+        map_key_val = record.__dict__.get(_KV_KEY, {}).get(self._mapkey)
+        if not map_key_val:
+            return
+            # raise KeyError(
+            #     f"Missing mapping key '{self._mapkey}'. Cannot lookup mapped "
+            #     f"receiver for LogRecord: {record}"
+            # )
+
+        handler = self._key_handler_map.get(map_key_val)
+        if not handler:
+            return
+            # raise KeyError(
+            #     f"Cannot emit to unmapped receiver: {map_key_val} for "
+            #     f"LogRecord: {record}"
+            # )
+
+        handler.handle(record)
+
+    def close(self):
+        super().close()
+        with self._map_lock:
+            for handler in list(self._key_handler_map.values()):
+                handler.close()
+
+
+# Default file and console handlers
+file_handler = CuckooWatchedFileHandler
+console_handler = logging.StreamHandler
+
+# The default file and console formatters.
+file_formatter = KeyValueLogFormatter
+console_formatter = ConsoleFormatter
+
+_DEFAULT_LEVELNAME_COLSIZE = 5
+
+# Create the default fmt strings for log formatter used to file logs and logs
+# to the console.
+logtime_fmt_str = "%Y-%m-%d %H:%M:%S"
+
+file_log_fmt_str = _set_fmt_colsizes(
+    levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
+)
+
+# Console logger use ConsoleFormatter as a default, which can add ANSI colors
+# if the terminal supports its. This adds extra characters, these need to be
+# taken into account when determining the column size.
+if ColorText.terminal_supported():
+    console_log_fmt_str = _set_fmt_colsizes(
+        levelname=ConsoleFormatter.EXTRA_CHAR_SIZE +
+                  _DEFAULT_LEVELNAME_COLSIZE, align="left"
+    )
+else:
+    console_log_fmt_str = _set_fmt_colsizes(
+        levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
+    )
+
+
 class CuckooLogger:
 
     def __init__(self, logger):
         self._logger = logger
 
-    def _log_msg(self, level, msg, extra_kvs):
+    def log_msg(self, level, msg, extra_kvs):
         self._logger.log(level, msg, extra={_KV_KEY: extra_kvs})
 
-    def _log_exception(self, msg, extra_kvs):
+    def log_exception(self, msg, extra_kvs):
         self._logger.exception(msg, extra={_KV_KEY: extra_kvs})
 
     def debug(self, msg, **kwargs):
-        self._log_msg(logging.DEBUG, msg, kwargs)
+        self.log_msg(logging.DEBUG, msg, kwargs)
 
     def info(self, msg, **kwargs):
-        self._log_msg(logging.INFO, msg, kwargs)
+        self.log_msg(logging.INFO, msg, kwargs)
 
     def warning(self, msg, **kwargs):
-        self._log_msg(logging.WARNING, msg, kwargs)
+        self.log_msg(logging.WARNING, msg, kwargs)
 
     def error(self, msg, **kwargs):
-        self._log_msg(logging.ERROR, msg, kwargs)
+        self.log_msg(logging.ERROR, msg, kwargs)
 
     def exception(self, msg, **kwargs):
-        self._log_exception(msg, kwargs)
+        self.log_exception(msg, kwargs)
 
     def fatal_error(self, msg, includetrace=True, **kwargs):
         msg = f"Exited on error: {msg}"
         if includetrace:
-            self._log_exception(msg, kwargs)
+            self.log_exception(msg, kwargs)
         else:
-            self._log_msg(logging.ERROR, msg, kwargs)
+            self.log_msg(logging.ERROR, msg, kwargs)
         sys.exit(1)
+
+    def cleanup(self):
+        pass
+
+    def close(self):
+        pass
 
 
 class CuckooGlobalLogger(CuckooLogger):
 
     def __init__(self, name):
         super().__init__(logging.getLogger(name))
+
+class _KeyBasedFileLogger(CuckooLogger):
+    """Adds a MultiLogfileHandler to the specified logger name if it has not
+     yet been added. Adds a file_handler for the given key afterwards.
+
+     All messages arriving at the MultiLogfileHandler with _MAP_KEY=self.key
+     will be logged to the given file_handler.
+
+     This logger must always be closed.
+     """
+
+    _MAP_KEY = ""
+
+    _multi_handler = None
+    _multi_handler_lock = Lock()
+
+    def __init__(self, name, key):
+        super().__init__(logging.getLogger(name))
+        self.key = key
+
+        self._filepath = self.make_logfile_path()
+        self._logfile_handler = None
+
+        self._init_multihandler()
+        self._multihandler_to_logger(self._logger)
+        self._add_to_multihandler()
+
+    @classmethod
+    def _init_multihandler(cls):
+        with cls._multi_handler_lock:
+            if cls._multi_handler:
+                return
+
+            cls._multi_handler = MultiLogfileHandler(
+                cls._MAP_KEY
+            )
+            cls._multi_handler.setLevel(logging.DEBUG)
+
+    @classmethod
+    def _multihandler_to_logger(cls, logger):
+        with cls._multi_handler_lock:
+            if cls._multi_handler in logger.handlers:
+                return
+
+            logger.addHandler(cls._multi_handler)
+
+    def make_logfile_path(self):
+        """Must create path to a file to use for logging and return it."""
+        raise NotImplementedError
+
+    def _add_to_multihandler(self):
+        # Use the module default file log handler and formatter
+        logfile_handler = file_handler(self._filepath, mode="a")
+
+        # The tasklog will always be debug for now. The debug messages
+        # for tasks will not be written to the cuckoo.log or console if
+        # the global level is higher than debug.
+        logfile_handler.setLevel(logging.DEBUG)
+        logfile_handler.setFormatter(
+            file_formatter(file_log_fmt_str, logtime_fmt_str)
+        )
+
+        self._logfile_handler = logfile_handler
+        self._multi_handler.map_handler(self.key, logfile_handler)
+
+    def log_msg(self, level, msg, extra_kvs):
+        extra_kvs[self._MAP_KEY] = self.key
+        super().log_msg(level, msg, extra_kvs)
+
+    def log_exception(self, msg, extra_kvs):
+        extra_kvs[self._MAP_KEY] = self.key
+        super().log_exception(msg, extra_kvs)
+
+    def close(self):
+        if self._logfile_handler:
+            self._logfile_handler.close()
+            self._multi_handler.unmap_handler(self.key)
+            self._logfile_handler = None
+
+    def __del__(self):
+        self.close()
+
+class TaskLogger(_KeyBasedFileLogger):
+
+    _MAP_KEY = "task_id"
+
+    def make_logfile_path(self):
+        return TaskPaths.tasklog(self.key)
+
+class AnalysisLogger(_KeyBasedFileLogger):
+
+    _MAP_KEY = "analysis_id"
+
+    def make_logfile_path(self):
+        return AnalysisPaths.analysislog(self.key)

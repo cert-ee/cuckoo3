@@ -141,6 +141,10 @@ class AnalysisPaths:
         return AnalysisPaths._path(analysis_id, "processing_errors.json")
 
     @staticmethod
+    def analysislog(analysis_id):
+        return AnalysisPaths._path(analysis_id, "analysis.log")
+
+    @staticmethod
     def analyses(*args):
         return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
 
@@ -186,6 +190,9 @@ class TaskPaths:
     def processingerr_json(task_id):
         return TaskPaths._path(task_id, "processing_errors.json")
 
+    @staticmethod
+    def tasklog(task_id):
+        return TaskPaths._path(task_id, "task.log")
 
 
 class Paths(object):
