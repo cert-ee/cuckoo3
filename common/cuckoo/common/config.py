@@ -460,7 +460,7 @@ def _dump_to_cache(loaded_values, filename, subpkg):
     else:
         _cache[filename] = values_dict
 
-def load_config(filepath, subpkg=""):
+def load_config(filepath, subpkg="", cache_config=True):
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Configuration file {filepath} not found.")
 
@@ -507,7 +507,10 @@ def load_config(filepath, subpkg=""):
         )
 
     # Assign the loaded values under the subpkg key and filename in the cache
-    _dump_to_cache(loadercopy, filename, subpkg)
+    if cache_config:
+        _dump_to_cache(loadercopy, filename, subpkg)
+
+    return loadercopy
 
 def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
     if not isinstance(conf_data_dict, dict):

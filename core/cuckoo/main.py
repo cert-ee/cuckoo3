@@ -157,6 +157,36 @@ def get_monitor(zip_path):
 
     unpack_monitor_components(zip_path, cuckoocwd.root)
 
+# @main.command("machine")
+@main.group()
+def machine():
+    """Add machines to machinery configuration files."""
+    pass
+
+@machine.command("add")
+@click.argument("machinery")
+@click.argument("name")
+@click.argument("label")
+@click.argument("ip")
+@click.argument("platform")
+@click.option("--os-version", type=str, help="The version of the platform installed on the machine")
+@click.option("--snapshot", type=str, help="A snapshot to use when restoring, other than the default snapshot.")
+@click.option("--interface", type=str, help="The network interface that should be used to create network dumps.")
+@click.option("--tags", default="", type=str, help="A comma separated list of tags that identify what dependencies/software is installed on the machine.")
+def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
+                interface, tags):
+    """Add a machine to a machinery configuration file."""
+    from cuckoo.startup import add_machine, StartupError
+    try:
+        add_machine(
+            machinery, name=name, label=label, ip=ip, platform=platform,
+            os_version=os_version, snapshot=snapshot, interface=interface,
+            tags=list(filter(None, [t.strip() for t in tags.split(",")]))
+        )
+        print_info(f"Added machine {name} to machinery {machinery}")
+    except StartupError as e:
+        exit_error(f"Failed to add machine. {e}")
+
 @main.command("submit")
 @click.argument("target", nargs=-1)
 # @click.option(

@@ -344,3 +344,64 @@ def init_global_logging(level, filepath, use_logqueue=True, warningsonly=[]):
     # Add extra handler to get logs to the console.
     # Let log to console printing be handled at by the actual caller.
     add_rootlogger_handler(consolelog_handler)
+
+def add_machine(machinery_name, name, label, ip, platform, os_version="",
+                mac_address=None, interface=None, snapshot=None, tags=[]):
+    import cuckoo.machineries
+    import shutil
+    import tempfile
+    from cuckoo.common.config import load_config, render_config, load_values
+
+    conf_name = f"{machinery_name}.yaml"
+    conf_path = Paths.config(conf_name, subpkg="machineries")
+    if not os.path.exists(conf_path):
+        raise StartupError(f"Configuration does not exist: {conf_path}")
+
+    conf_templates = get_conftemplates(cuckoo.machineries)
+
+    template_path = conf_templates.get(conf_name)
+    if not template_path:
+        raise StartupError(
+            f"Cannot render configuration. No configuration "
+            f"template for: {machinery_name}"
+        )
+
+    try:
+        loaders = load_config(
+            conf_path, subpkg="machineries", cache_config=False
+        )
+    except config.ConfigurationError as e:
+        raise StartupError(
+            f"Failed to load config file {conf_path}. {e}"
+        )
+
+    newmachine = {
+        name: {
+            "label": label,
+            "ip": ip,
+            "platform": platform,
+            "os_version": os_version,
+            "mac_address": mac_address,
+            "snapshot": snapshot,
+            "interface": interface,
+            "tags": tags
+        }
+    }
+    if name in loaders["machines"].value:
+        raise StartupError(f"Machine {name} already exists in {conf_name}.")
+
+    nested_loaders = loaders["machines"].make_typeloaders(newmachine)
+    try:
+        load_values(newmachine, nested_loaders)
+    except config.ConfigurationError as e:
+        raise StartupError(f"Configuration value error. {e}")
+
+    loaders["machines"].value.update(nested_loaders)
+
+    tmpdir = tempfile.mkdtemp()
+    tmp_path = os.path.join(tmpdir, conf_name)
+    try:
+        render_config(template_path, loaders, tmp_path)
+        shutil.move(tmp_path, conf_path)
+    finally:
+        shutil.rmtree(tmpdir)

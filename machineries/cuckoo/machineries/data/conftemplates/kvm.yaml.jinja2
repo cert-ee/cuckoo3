@@ -31,11 +31,10 @@ machines:
     # Machine tags that identify the installed software and other characteristics of the machine.
     # These are used to select the correct machine for a sample that has dependencies. *Notice*: correct tags are
     # crucial in selecting machines that can actually run a submitted sample.
-    # Tags and dependencies can be defined in X config.
+    # Existing automatic tags can be found in the conf/processing/identification.yaml config.
     tags:
     {% for tag in machine.tags %}
     - {{ tag }}
     {% endfor %}
 {% endfor %}
 
-# Wow dank leuk
