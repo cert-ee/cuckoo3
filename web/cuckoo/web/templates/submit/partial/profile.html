@@ -1,0 +1,47 @@
+<form class="form">
+  <div class="columns is-divided">
+    <div class="column">
+      <p>Select a profile to apply to the analysis of this sample:</p>
+      <label class="label">Profile:</label>
+      <ul class="list is-reset">
+        <li class="box has-background-light">
+          <div class="columns is-divided is-vcenter">
+            <div class="column is-auto">
+              <div class="control is-checkable">
+                <input type="radio" class="input" name="profile" value="ubulow" id="prubulow" />
+              </div>
+            </div>
+            <label class="column" for="prubulow">
+              <h4 class="no-margin-top has-margin-bottom">UbuLow</h4>
+              <ul class="list is-horizontal">
+                <li>Ubuntu</li>
+                <li><strong>Low</strong> priority</li>
+                <li><strong>1 minute</strong> timeout</li>
+                <li>Process memory dump</li>
+              </ul>
+            </label>
+          </div>
+        </li>
+        <li class="box has-background-light">
+          <div class="columns is-divided is-vcenter">
+            <div class="column is-auto">
+              <div class="control is-checkable">
+                <input type="radio" class="input" name="profile" value="winmed" id="prwinmed" />
+              </div>
+            </div>
+            <label class="column" for="prwinmed">
+              <h4 class="no-margin-top has-margin-bottom">WinMed</h4>
+              <ul class="list is-horizontal">
+                <li>Windows 8</li>
+                <li><strong>Medium</strong> priority</li>
+                <li><strong>30 seconds</strong> timeout</li>
+                <li>Human simulation</li>
+                <li>Full memory dump</li>
+              </ul>
+            </label>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</form>

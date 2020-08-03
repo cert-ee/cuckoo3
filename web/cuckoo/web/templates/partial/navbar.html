@@ -1,0 +1,22 @@
+<nav class="navbar">
+  <div class="navbar-logo">
+    <a class="navbar-link" href="/">
+      <img src="/static/images/cuckoo-light.svg" alt="Cuckoo Sandbox" />
+    </a>
+    <a class="navbar-toggle" title="Expand menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </a>
+  </div>
+  <div class="navbar-start">
+    <a class="navbar-link {% if page == 'index' %}is-active{% endif %}" href="/">Dashboard</a>
+    <a class="navbar-link {% if page == 'submit' %}is-active{% endif %}" href="/submit">Submit</a>
+    <a class="navbar-link {% if page == 'reports' %}is-active{% endif %}" href="/reports">Reports</a>
+    <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="/search">Search</a>
+  </div>
+  <div class="navbar-end">
+    <a class="navbar-link {% if page == 'settings' %}is-active{% endif %}" href="/settings">Settings</a>
+    <a class="navbar-link {% if page == 'overview' %}is-active{% endif %}" href="/overview">UI Overview</a>
+  </div>
+</nav>

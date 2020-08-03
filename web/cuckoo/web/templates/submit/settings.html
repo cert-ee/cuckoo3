@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block body %}
+  {% include "submit/partial/tabbar.html" %}
+  <section class="section">
+    <div class="container">
+      <div class="columns is-divided">
+        {# Sample information #}
+        <div class="column">
+          <div class="box has-shadow no-padding-x">
+            <div class="box is-medium has-background-light has-margin-x no-margin-y">
+              <div class="columns is-vcenter">
+                <div class="column no-margin">
+                  <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
+                </div>
+                <div class="column">
+                  <h3 class="no-margin-y">{{ unpacked.filename }}</h3>
+                  <ul class="list is-horizontal has-text-small no-margin">
+                    <li>{{ unpacked.finger.magic_human }}</li>
+                    <li>{{ unpacked.size | filesizeformat }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {% if unpacked.children|length > 0 %}
+              {% include "submit/partial/filetree.html" %}
+            {% endif %}
+          </div>
+        </div>
+        {# Options / profile box #}
+        <div class="column">
+          <div class="box has-shadow no-padding-x">
+            <nav class="tabbar" data-enhance>
+              <!--<a href="#profile-form" class="tabbar-link is-active">Profiles</a>-->
+              <a href="#options-form" class="tabbar-link is-active">Options</a>
+            </nav>
+            <div class="box no-padding-y">
+              <!--<div id="profile-form">{% include "submit/partial/profile.html" %}</div> -->
+              <div id="options-form">{% include "submit/partial/options.html" %}</div>
+            </div>
+          </div>
+          <div class="box has-shadow">
+            <div class="columns is-between is-vcenter">
+              <div class="column">
+                <p class="no-margin-y">
+                  <span class="icon">
+                    <i class="fas fa-check"></i>
+                  </span>
+                  Proceed to analysis
+                </p>
+              </div>
+              <div class="column">
+                <button class="button">Reset</button>
+                <button class="button is-blue">Start</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

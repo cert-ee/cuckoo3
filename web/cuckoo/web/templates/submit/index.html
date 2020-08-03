@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block body %}
+  {% include "submit/partial/tabbar.html" %}
+  <section class="section">
+    <div class="columns is-center">
+      <div class="column">
+        <form class="form box has-shadow is-big" method="post" action="/submit/" enctype="multipart/form-data">
+          {{ csrf_input }}
+          <div class="columns is-vcenter">
+            <div class="column">
+              <span class="icon">
+                <i class="fas fa-3x fa-file-upload"></i>
+              </span>
+            </div>
+            <div class="column">
+              <h3>Sample</h3>
+              <p>Upload a target sample or archive for the analyzer.</p>
+            </div>
+          </div>
+          <div class="box has-background-light has-inset-shadow">
+            <div class="field">
+              <div class="control is-file has-text-center">
+                <label class="file-trigger" for="demo_file">Select file</label>
+                <input type="file" class="input" id="demo_file" name="demo_file" data-enhance />
+              </div>
+            </div>
+          </div>
+          <div class="columns is-between is-vcenter is-gapless">
+            <div class="column">
+              <div class="field is-horizontal">
+                <div class="control is-checkable is-borderless has-addon">
+                  <span class="addon is-left">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                  <input class="input" type="checkbox" value="true" id="is-encrypted" name="is-encrypted" onclick="toggleVisibility('#encrypted-password', this.checked);" />
+                  <label class="label" for="is-encrypted">Encrypted archive</label>
+                  <div class="control">
+                    <input type="text" class="input" id="encrypted-password" name="encrypted-password" placeholder="Password" hidden />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <button type="submit" class="button is-blue">Start</button>
+            </div>
+          </div>
+          {% if error %}
+            <p class="is-error">An error occured</p>
+            <p>{{ error }}</p>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}

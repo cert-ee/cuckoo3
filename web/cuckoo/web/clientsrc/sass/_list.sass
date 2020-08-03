@@ -1,0 +1,64 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.list
+
+  // unset default list styles
+  &.is-reset
+    list-style: none
+    padding: 0
+
+  // Remove all the default list styles and apply a more tree-like styling. This
+  // variation is common use for file trees (for example).
+  &.is-tree
+    padding-left: 0
+
+    &, ul
+      list-style: none
+
+    ul
+      padding-left: $gap
+
+    li
+      & > input[type="checkbox"].list-collapse
+        display: none
+
+        &:not(:checked) + label + ul
+          @extend .hidden
+
+      & > label
+        display: block
+        border-bottom: 1px solid $border
+        padding: $gap
+        margin: 0
+        &:hover
+          background-color: $light
+        &:active
+          background-color: $light
+
+      &.is-parent
+        & > input[type="checkbox"].list-collapse
+          display: none
+        & > label:before
+          content: ""
+          display: inline-block
+          height: 0
+          width: $gap
+          border-style: solid
+          border-width: 6px 0 6px 10.4px
+          border-color: transparent transparent transparent $border
+        & > input[type="checkbox"].list-collapse:checked + label:before
+          border-width: 10.4px 6px 0 6px
+          border-color: $border transparent transparent transparent
+
+  // horizontal list modifier
+  &.is-horizontal
+    list-style: none
+    padding-left: 0
+    & > li
+      display: inline-block
+      line-height: 1.4em
+      &:not(:last-child):after
+        content: "\2022"
+        display: inline-block
+        margin: 0 $gap/2

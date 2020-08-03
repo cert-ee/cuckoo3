@@ -11,4 +11,5 @@ pip install "$tmpdir"
 pip install -e ./common
 pip install -e ./processing
 pip install -e ./machineries
+pip install -e ./web
 pip install -e ./core

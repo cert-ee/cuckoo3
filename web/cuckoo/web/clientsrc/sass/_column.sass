@@ -1,0 +1,59 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.columns
+  display: flex
+  justify-content: flex-start
+  flex-wrap: wrap
+
+  // optimize column layout when used in conjunction with box layouts
+  &.box
+    margin-left: -#{$gap/2}
+    margin-right: -#{$gap/2}
+
+  & > .column
+    margin-left: $gap
+    margin-right: $gap
+
+    &.is-full
+      flex: 0 0 100% !important
+      margin-left: 0
+      margin-right: 0
+
+    &.is-auto
+      flex: 0 !important
+
+  &.is-vertical
+    flex-direction: column
+  &.is-even
+    justify-content: space-evenly
+  &.is-between
+    justify-content: space-between
+  &.is-around
+    justify-content: space-around
+  &.is-left
+    justify-content: flex-start
+  &.is-right
+    justify-content: flex-end
+  &.is-center
+    justify-content: center
+  &.is-divided > .column
+    flex: 1
+  &.is-vcenter
+    align-items: center
+  &.is-vbottom
+    align-items: flex-end
+  &.is-vstretch
+    align-items: stretch
+  &.is-gapless
+    & > .column
+      margin-left: 0
+      margin-right: 0
+
+  @media screen and (max-width: $breakpoint-mobile)
+    flex-direction: column
+    width: 100%
+    margin-left: 0
+    margin-right: 0
+    .column
+      margin: $gap/2 0

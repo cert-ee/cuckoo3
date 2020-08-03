@@ -1,0 +1,54 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.footer
+  display: flex
+  flex-direction: column
+  font-size: .9em
+  color: $black
+
+  &,
+  &-push
+    height: $footer-height
+
+  .logo
+    margin-bottom: $gap
+
+  &-start
+    flex-basis: 100%
+
+  &-end
+    display: flex
+    justify-content: space-between
+    align-items: center
+    background-color: $white
+    border-top: 1px solid rgba($black, .15)
+    height: $gap * 4
+    padding: $gap
+
+  ul
+    list-style: none
+    margin: 0
+    padding-left: 0
+
+    li
+      margin: $gap/2 0
+
+    h4
+      margin: 0 0 $gap/2
+      text-transform: uppercase
+      opacity: .5
+      font-weight: 700
+
+  @media screen and(max-width: $breakpoint-mobile)
+
+    height: $footer-height * 1.5
+    &-push
+      height: $footer-height * 1.5
+
+    .columns
+      flex-direction: row
+      flex-wrap: wrap
+
+      .column
+        flex-basis: 40%

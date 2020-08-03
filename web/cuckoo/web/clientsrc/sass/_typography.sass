@@ -1,0 +1,64 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+
+// normalize margins for typographic elements
+h1,
+h2,
+h3,
+h4,
+h5,
+h6
+  margin: $gap*2 0
+  // preceding <p> elements get 'joined' with their assumably corresponding header
+  & + p
+    margin-top: -#{$gap * 1.5}
+
+.code,
+.is-monospace
+  font-family: $font-stack-monospace
+
+.code
+  background-color: $light
+  padding: $gap/4
+  vertical-align: middle
+
+.has-text-blue
+  color: $blue
+.has-text-red
+  color: $red
+.has-text-dark
+  color: $dark
+.has-text-black
+  color: $black
+.has-text-white
+  color: $white
+.has-text-light
+  color: $light
+
+.is-error
+  @extend .has-text-red
+  font-weight: 700
+  font-size: .9em
+  margin: $gap/2 0
+  line-height: 1.1rem
+  &:before
+    content: "!"
+    display: inline-block
+    vertical-align: middle
+    width: .9rem
+    height: .9rem
+    border-radius: 50%
+    background-color: $red
+    color: $white
+    text-align: center
+    font-size: .6em
+    line-height: 1rem
+    font-weight: 900
+    margin-right: $gap/2
+    margin-top: -0.1rem
+
+  & + p
+    @extend .has-text-red
+    margin: 0
+    font-size: .8em

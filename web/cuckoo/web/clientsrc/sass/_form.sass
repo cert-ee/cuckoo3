@@ -1,0 +1,99 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+
+// wrapper for a form control and a label
+.field
+  margin: $gap 0
+  &.is-horizontal
+    display: flex
+    align-items: center
+    flex-grow: 0
+    & > *:not(:first-child)
+        margin: 0 $gap/2
+    .control
+      flex-basis: auto
+    .label
+      flex-shrink: 0
+
+// input control wrapper
+.control
+  position: relative
+  height: 2rem
+  border-radius: 2px
+  .label
+    display: inline-block
+  // for select boxes, render an arrow
+  &.is-select
+    .input:hover
+      cursor: pointer
+      background-color: $light
+    &:after
+      pointer-events: none
+      content: ""
+      position: absolute
+      right: .75rem
+      top: 1rem
+      width: 0
+      height: 0
+      border-style: solid
+      border-width: 3px 3px 0 3px
+      border-color: $border transparent transparent transparent
+  // tweak the layout for file inputs
+  &.is-file
+    .file-trigger
+      @extend .button
+      text-align: center
+      font-size: 1em
+      font-weight: 600
+      opacity: 1
+    input[type="file"]
+      @extend .hidden
+  &.is-checkable
+    padding: $gap/2 0
+    .label
+      margin-top: 0
+      margin-bottom: 0
+  // support for addon icons
+  &.has-addon
+    display: flex
+    align-items: center
+    padding: 0 $gap/2
+    border: .10rem solid $border
+    .input, .input:focus
+      border: 0
+    // make sure to eliminate any vertical space
+    .addon
+      font-size: .8em
+      &.is-left
+        margin-right: $gap/2
+      &.is-right
+        margin-left: $gap/2
+    .label
+      padding: 0 $gap/2
+    &.is-borderless
+      border: 0
+      padding-left: 0
+      padding-right: 0
+
+// control label
+.label
+  display: block
+  font-weight: 500
+  margin-bottom: $gap/2
+  font-size: .9em
+  opacity: .75
+  white-space: nowrap
+
+// input control wrapper
+.input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
+  @extend %input-reset
+  padding: $gap/2
+  background: $white
+  border: .05rem solid $border
+  &:focus
+    border: .05rem solid shade($border, .2)
+
+.input[type="checkbox"],
+.input[type="radio"]
+  margin: 0

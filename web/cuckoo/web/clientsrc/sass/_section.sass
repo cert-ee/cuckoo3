@@ -1,0 +1,19 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.section
+  padding: $gap 0
+
+  &.is-full-page
+    padding: 0
+    height: 100vh
+    overflow-y: auto
+    &.with-navbar
+      height: calc(100vh - #{$navbar-height})
+
+  &.has-background-white
+    background-color: $white
+    color: $black
+  &.has-background-dark
+    background-color: $dark
+    color: $white

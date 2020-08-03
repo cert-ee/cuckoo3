@@ -1,0 +1,94 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.table
+  border-collapse: collapse
+
+  // shared styles for cells and column headers
+  th, td
+    text-align: left
+    padding: $gap
+    a
+      color: inherit
+      text-decoration: none
+
+  // table cell (heading) styles, including support for sorting indication
+  th
+    font-size: .9em
+    font-weight: 500
+    background-color: $white
+    box-shadow: inset 0 -1px 0 $border
+
+    // implements a sorting icon. These styles follow this html:
+    // <th class="has-sort {is-asc, is-desc}"><a>Table column</a></th>
+    // 1. use no is-* class to display indeterminate sorting state
+    // 2. use is-asc class to display ascending sorting state
+    // 3. use is-desc to display descending sorting state
+    // * in .is-dark modifier on the table head, these icons will be light instead of dark
+    &.has-sort
+      a
+        text-decoration: none
+        display: flex
+        &:after
+          content: ""
+          display: table-cell
+          border-style: solid
+          border-width: 0
+          align-self: center
+          width: .5rem
+          height: .1rem
+          background-color: $dark
+          margin-left: auto
+      &.is-asc a:after,
+      &.is-desc a:after
+        width: 0
+        height: 0
+        background-color: transparent
+      &.is-asc a:after
+        border-width: 0 3.5px 6px 3.5px
+        border-color: transparent transparent $dark transparent
+      &.is-desc a:after
+        border-width: 6px 3.5px 0 3.5px
+        border-color: $dark transparent transparent transparent
+
+  // table-cell styles
+  td
+    font-size: .8em
+
+  // thead-specific styles
+  thead
+    &.is-dark
+      color: $white
+      th
+        background-color: $dark
+        box-shadow: inset 0 -1px 0 shade($dark, .5)
+        &.has-sort
+          a:after
+            background-color: $white
+          &.is-asc a:after,
+          &.is-desc a:after
+            background-color: transparent
+          &.is-asc a:after
+            border-color: transparent transparent $white transparent
+          &.is-desc a:after
+            border-color: $white transparent transparent transparent
+
+  // tbody-specific styles
+  tbody
+    tr
+      &:nth-child(odd)
+        background-color: $row-odd
+        &:hover
+          background-color: mix($row-odd, $yellow, 95%)
+      &:nth-child(even)
+        background-color: $row-even
+        &:hover
+          background-color: mix($row-even, $yellow, 95%)
+
+  // sticky header modifier - snaps the table heading to the top of the element
+  &.has-sticky-header
+    position: relative
+    width: 100%
+    th
+      position: sticky
+      top: 0

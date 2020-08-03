@@ -1,0 +1,28 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+html
+  box-sizing: border-box
+*, *:before, *:after
+  box-sizing: inherit
+
+html,
+body
+  height: 100%
+  margin: 0
+
+body
+  font-size: 1em
+  font-family: $font-stack-default
+  -webkit-font-smoothing: antialised
+  -moz-osx-font-smoothing: antialised
+  text-rendering: optimizeLegibility
+  font-feature-settings: "kern" 1
+  -webkit-font-feature-settings: "kern"
+  -moz-font-feature-settings: "kern"
+  -moz-font-feature-settings: "kern=1"
+  font-kerning: normal
+  background-color: $light
+
+pre, code, tt
+  font-family: $font-stack-monospace

@@ -1,0 +1,46 @@
+{# Renders a file selection tree if the sample has child contents #}
+<ul class="list is-tree" data-enhance>
+  {% set uniq = namespace(value=0) %}
+  {%- for child in unpacked.children recursive %}
+    {% set uniq.value = uniq.value + 1 %}
+    <li {% if child.type in ["container", "directory"] %}class="is-parent"{% endif %}>
+      <input type="checkbox" id="{{ uniq.value }}-container" class="list-collapse" />
+
+      {% if child.type == "directory" %}
+            <label for="{{ uniq.value }}-container">
+      {% elif child.type == "container" %}
+            <label for="{{ uniq.value }}-container" title="{{ child.finger.magic_human }}">
+      {% else %}
+            <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
+      {% endif %}
+
+        {% if child.type != "directory" %}
+          <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} />
+        {% endif %}
+        <span class="icon">
+          {% if child.type == 'container' %}
+            <i class="fas fa-file-archive"></i>
+          {% elif child.type == 'directory' %}
+            <i class="fas fa-folder"></i>
+          {% else %}
+            <i class="fas fa-file"></i>
+          {% endif %}
+        </span>
+        {% if child.type in ["directory", "container"] %}
+          <strong>{{ child.filename}}</strong>
+        {% else %}
+          {{ child.filename }}
+        {% endif %}
+        {% if child.type in ["file", "container"] %}
+          {{ child.size|filesizeformat }}
+          {{ child.finger.magic_human }}
+        {% endif %}
+      </label>
+      {% if child.children|length > 0 %}
+        <ul>
+          {{ loop(child.children) }}
+        </ul>
+      {% endif %}
+    </li>
+  {%- endfor %}
+</ul>

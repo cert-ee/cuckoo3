@@ -1,0 +1,79 @@
+<form class="form">
+  <div class="columns is-divided">
+    <div class="column">
+      <div class="field">
+        <label class="label">Timeout</label>
+        <div class="control is-checkable">
+          <input type="radio" id="to-30" name="timeout" />
+          <label for="to-30">30 seconds</label>
+        </div>
+        <div class="control is-checkable">
+          <input type="radio" id="to-60" name="timeout" />
+          <label for="to-60">1 minute</label>
+        </div>
+        <div class="control is-checkable">
+          <input type="radio" id="to-120" name="timeout" />
+          <label for="to-120">2 minute</label>
+        </div>
+      </div>
+    </div>
+    <div class="column">
+      <div class="field">
+        <label class="label">Network routing</label>
+        <div class="control is-checkable">
+          <input type="radio" id="nr-none" name="network-routing" checked />
+          <label for="nr-none">None</label>
+        </div>
+        <div class="control is-checkable">
+          <input type="radio" id="internet" name="network-routing" />
+          <label for="internet">Internet</label>
+        </div>
+        <div class="control is-checkable">
+          <input type="radio" id="tor" name="network-routing" />
+          <label for="tor">Tor</label>
+        </div>
+      </div>
+    </div>
+    <div class="column">
+      <div class="field">
+        <label class="label">Priority</label>
+        <div class="control is-select">
+          <select class="input">
+            <option value="1">Low</option>
+            <option value="2">Medium</option>
+            <option value="3">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Machine</label>
+        <div class="control is-select">
+          <select class="input">
+            <option value="ubuntu">Ubuntu</option>
+            <option value="windows">Windows 8</option>
+            <option value="macos">MacOS</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="columns is-divided">
+    <div class="column">
+      <div class="field">
+        <label class="label">Other options</label>
+        <div class="control is-checkable">
+          <input class="input" type="checkbox" id="human-simulation" />
+          <label class="label" for="human-simulation">Human Simulation</label>
+        </div>
+        <div class="control is-checkable">
+          <input class="input" type="checkbox" id="full-memory-dump" />
+          <label class="label" for="full-memory-dump">Full memory dump</label>
+        </div>
+        <div class="control is-checkable">
+          <input class="input" type="checkbox" id="process-memory-dump" />
+          <label class="label" for="process-memory-dump">Process memory dump</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

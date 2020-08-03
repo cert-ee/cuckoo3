@@ -1,0 +1,54 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+button,
+input[type="submit"],
+input[type="reset"]
+  &.button
+    -webkit-appearance: none
+    border: 0
+    font-size: 100%
+    font-family: inherit
+
+.button
+  display: inline-block
+  padding: $gap/2 $gap
+  border-radius: $radius
+  font-weight: 700
+
+  &:hover
+    cursor: pointer
+  &:focus
+    border-color: $black
+    outline: none
+
+  &, &.is-light
+    background-color: tint($border, .7)
+    .has-background-light &
+      background-color: $white
+
+  &.is-blue
+    background-color: $blue
+    color: $white
+    text-shadow: 0px 1px 0px shade($blue, .3)
+    &:hover
+      background-color: shade($blue, .1)
+
+  &.is-red
+    background-color: $red
+    color: $white
+
+  &.is-dark
+    background-color: $dark
+    color: $white
+    text-shadow: 0px 1px 0px shade($dark, .3)
+    &:hover
+      background-color: shade($dark, .1)
+
+  &.is-disabled
+    pointer-events: none
+    background-color: tint($border, .7)
+    color: shade($border, .3)
+    text-shadow: none
+    &:hover
+      cursor: not-allowed

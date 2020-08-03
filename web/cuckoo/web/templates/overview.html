@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="section" id="index">
+  <div class="container">
+    <h1>Element overview</h1>
+    <p>This page is a reference to all the elements contained in the UI kit. Use the navigation below or scroll through the various sections included in the page to skip to the various sections.</p>
+    <ol class="list">
+      <li><a href="#typography">Typography</a></li>
+      <li><a href="#columns">Columns</a></li>
+      <li><a href="#buttons">Buttons</a></li>
+      <li><a href="#forms">Forms</a></li>
+      <li><a href="#boxes">Boxes</a></li>
+    </ol>
+  </div>
+</div>
+
+<div class="section" id="typography">
+  <div class="container">
+    <details class="details">
+      <summary>
+        <h1>Typography</h1>
+        <p>Listed are the various default stylings and sub-categories of typographic helpers.</p>
+      </summary>
+      <div class="box is-grouped columns is-between is-vcenter">
+        <div>
+          <h1>Almost before we knew it, we had left the ground.</h1>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h1&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <h2>Almost before we knew it, we had left the ground.</h2>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h2&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <h3>Almost before we knew it, we had left the ground.</h3>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h3&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <h4>Almost before we knew it, we had left the ground.</h4>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h4&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <h5>Almost before we knew it, we had left the ground.</h5>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h5&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <h6>Almost before we knew it, we had left the ground.</h6>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;h6&gt;</code></pre>
+        </div>
+      </div>
+      <div class="box columns is-between is-vcenter">
+        <div>
+          <p>Almost before we knew it, we had left the ground.</p>
+          <p>Almost before we knew it, we had left the ground.</p>
+        </div>
+        <div>
+          <pre><code>&lt;p&gt;</code></pre>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="section" id="columns">
+  <div class="container">
+    <details class="details">
+      <summary>
+        <h1>Columns</h1>
+        <p>Listed are the various default stylings and sub-categories of typographic helpers.</p>
+      </summary>
+      <div class="box is-big has-shadow">
+        <p class="label">Default, columns are aligned to the left; <code class="code">&lt;div class="<strong>columns</strong> <em>{horizontal-modifiers} {vertical-modifiers}</em>"&gt;</code></p>
+        <div class="columns box is-grouped has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Even distribution with gap and edge spacing equally divided; <code class="code">&lt;div class="columns <strong>is-even</strong>"&gt;</code></p>
+        <div class="columns box is-even has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Even distribution in the line from start to end; <code class="code">&lt;div class="columns <strong>is-between</strong>"&gt;</code></p>
+        <div class="columns box is-between has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Even distribution in the line with equal space; <code class="code">&lt;div class="columns <strong>is-around</strong>"&gt;</code></p>
+        <div class="columns is-around box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Columns aligned to the left; <code class="code">&lt;div class="columns <strong>is-left</strong>"&gt;</code></p>
+        <div class="columns is-left box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Columns aligned to the right; <code class="code">&lt;div class="columns <strong>is-right</strong>"&gt;</code></p>
+        <div class="columns is-right box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Columns aligned to the center; <code class="code">&lt;div class="columns <strong>is-center</strong>"&gt;</code></p>
+        <div class="columns is-center box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Maximum width consumption for columns; <code class="code">&lt;div class="columns <strong>is-divided</strong>"&gt;</code></p>
+        <div class="columns is-divided box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Vertical alignment of columns in the middle; <code class="code">&lt;div class="columns <strong>is-vcenter</strong>"&gt;</code></p>
+        <div class="columns is-vcenter box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B<br />Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Vertical alignment of columns on the bottom; <code class="code">&lt;div class="columns <strong>is-vbottom</strong>"&gt;</code></p>
+        <div class="columns is-vbottom box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B<br />Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">'Stretch' column heights so all the columns have an equal height; <code class="code">&lt;div class="columns <strong>is-vstretch</strong>"&gt;</code></p>
+        <div class="columns is-vstretch box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B<br />Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+        <p class="label">Force columns to render vertically; <code class="code">&lt;div class="columns <strong>is-vertical</strong>"&gt;</code></p>
+        <div class="columns is-vertical box has-background-light">
+          <div class="column box">Col A</div>
+          <div class="column box">Col B</div>
+          <div class="column box">Col C</div>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="section" id="buttons">
+  <div class="container">
+    <details class="details">
+      <summary>
+        <h1>Buttons</h1>
+        <p>Add interactivity, click actions and form submissions to the UI.</p>
+      </summary>
+      <div class="box has-shadow">
+        <h2>Styles overview</h2>
+        <div class="column box">
+          <button class="button">Default (Light)</button>
+          <button class="button is-dark">Dark</button>
+          <button class="button is-blue">Blue</button>
+          <button class="button is-red">Red</button>
+          <button class="button is-disabled">Disabled</button>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="section" id="forms">
+  <div class="container">
+    <details class="details">
+      <summary>
+        <h1>Forms</h1>
+        <p>Interactive forms for probing data from the user.</p>
+      </summary>
+      <form class="form columns is-divided box has-shadow">
+        <div class="column">
+          <div class="field">
+            <label class="label" for="text-field">Text field</label>
+            <div class="control">
+              <input class="input" id="text-field" placeholder="This is a regular text input" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="text-field">Text field</label>
+            <div class="control">
+              <input class="input" id="text-field" placeholder="This is a regular text input" />
+            </div>
+          </div>
+        </div>
+        <div>&nbsp;</div>
+      </form>
+    </details>
+  </div>
+</div>
+
+<div class="section" id="boxes">
+  <div class="container">
+    <details class="details" open>
+      <summary>
+        <h1>Boxes</h1>
+        <p>Groups content together within their own themed context.</p>
+      </summary>
+      <div class="box is-grouped columns is-divided">
+        <div class="column is-full">
+          <p class="label no-margin-bottom">
+            Regular
+            <code class="code">&lt;div class="<strong>box</strong> <em>[has-background-{light|dark|blue|red|black}]</em>"&gt;</code>
+          </p>
+        </div>
+        <div class="column box">Box (default/white)</div>
+        <div class="column box has-background-light">Box (light)</div>
+        <div class="column box has-background-dark">Box (dark)</div>
+        <div class="column box has-background-blue">Box (blue)</div>
+        <div class="column box has-background-red">Box (red)</div>
+        <div class="column box has-background-black">Box (black)</div>
+        <div class="column is-full">
+          <p class="label no-margin-bottom">
+            Big
+            <code class="code">&lt;div class="box <strong>is-big</strong> <em>[has-background-{light|dark|blue|red|black}]"</em>&gt;</code>
+          </p>
+        </div>
+        <div class="column box is-big">Box</div>
+        <div class="column box is-big has-background-light">Box</div>
+        <div class="column box is-big has-background-dark">Box</div>
+        <div class="column box is-big has-background-blue">Box</div>
+        <div class="column box is-big has-background-red">Box</div>
+        <div class="column box is-big has-background-black">Box</div>
+        <div class="column is-full">
+          <p class="label no-margin-bottom">
+            Shadows
+            <code class="code">&lt;div class="box <strong>has-shadow</strong> <em>[has-background-{light|dark|blue|red|black}]"</em>&gt;</code>
+          </p>
+        </div>
+        <div class="column box has-shadow">Box</div>
+        <div class="column box has-background-light has-shadow">Box</div>
+        <div class="column box has-background-dark has-shadow">Box</div>
+        <div class="column box has-background-blue has-shadow">Box</div>
+        <div class="column box has-background-red has-shadow">Box</div>
+        <div class="column box has-background-black has-shadow">Box</div>
+        <div class="column is-full">
+          <p class="label no-margin-bottom">
+            Inset Shadows
+            <code class="code">&lt;div class="box <strong>has-inset-shadow</strong> <em>[has-background-{light|dark|blue|red|black}]"</em>&gt;</code>
+          </p>
+        </div>
+        <div class="column box has-inset-shadow">Box</div>
+        <div class="column box has-background-light has-inset-shadow">Box</div>
+        <div class="column box has-background-dark has-inset-shadow">Box</div>
+        <div class="column box has-background-blue has-inset-shadow">Box</div>
+        <div class="column box has-background-red has-inset-shadow">Box</div>
+        <div class="column box has-background-black has-inset-shadow">Box</div>
+        <div class="column is-full">
+          <p class="label">Grouped boxes <code class="code">&lt;div class="box <strong>is-grouped</strong>"&gt;</code></p>
+          <div class="box is-big has-background-light">
+            <p>Join preceding boxes together by applying the <code>is-grouped</code> class to the first occuring box element.</p>
+            <div class="box is-big is-grouped">Box</div>
+            <div class="box is-big is-grouped has-background-light">Box</div>
+            <div class="box is-big is-grouped has-background-blue">Box</div>
+            <div class="box is-big is-grouped has-background-dark">Box</div>
+            <div class="box is-big is-grouped has-background-red">Box</div>
+            <div class="box is-big is-grouped has-background-black">Box</div>
+          </div>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+{% endblock %}

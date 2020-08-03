@@ -1,0 +1,95 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.navbar
+  display: flex
+  padding-left: 0.5rem
+  padding-right: 0.5rem
+  height: $navbar-height
+  background-color: $dark
+  color: $white
+
+  &-logo,
+  &-start,
+  &-end
+    display: flex
+    align-items: center
+    flex-basis: 100%
+
+  &-start
+    justify-content: flex-start
+  &-end
+    justify-content: flex-end
+
+  &-start,
+  &-end
+    .is-expanded &
+      display: flex
+
+  &-logo
+    flex-basis: auto
+    img
+      width: 6.5rem
+
+  &-toggle
+    display: none
+    position: relative
+    width: 1.25rem
+    height: 1.25rem
+    span
+      display: block
+      position: absolute
+      background-color: $white
+      height: 1px
+      width: 16px
+      &:nth-child(1)
+        top: calc(50% - 6px)
+      &:nth-child(2)
+        top: calc(50% - 1px)
+      &:nth-child(3)
+        top: calc(50% + 4px)
+    &:hover
+      cursor: pointer
+
+  &-link
+    color: inherit
+    font-weight: 400
+    padding: .67rem 0.5rem
+    text-decoration: none
+    font-size: 1em
+    font-weight: 300
+    &.is-active
+      font-weight: 600
+
+  @media screen and (max-width: $breakpoint-mobile)
+    flex-direction: column
+    align-items: stretch
+    height: auto
+
+    .navbar-start,
+    .navbar-end
+      display: none
+      justify-content: flex-start
+
+    &.is-expanded
+      .navbar-start,
+      .navbar-end
+        display: flex
+
+      .navbar-toggle
+        span:nth-child(3)
+          display: none
+        span:nth-child(1)
+          transform: rotate(45deg) translate(5px, 3px)
+        span:nth-child(2)
+          transform: rotate(-45deg) translate(1px, 2px)
+
+      .navbar-end
+        padding-bottom: 1rem
+
+    .navbar-logo
+      display: flex
+      justify-content: space-between
+      align-items: center
+      .navbar-toggle
+        display: block
