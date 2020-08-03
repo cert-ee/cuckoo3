@@ -2,12 +2,12 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
 import datetime
-import dateutil.parser
 import json
-from shutil import move
-from tempfile import mkstemp
+
+import dateutil.parser
+
+from .storage import safe_json_dump
 
 def deserialize_disk_json(obj):
     if "__isodt__" in obj:
@@ -38,11 +38,29 @@ class StrictContainer:
     PARENT_KEYVAL = ("", "")
 
     def __init__(self, **kwargs):
-        if kwargs:
-            self._loaded = kwargs
-            self._load()
-        else:
-            self._loaded = {}
+        self._loaded = kwargs
+
+        self._parent = None
+
+        self._load()
+        self._updated = False
+
+    @property
+    def was_updated(self):
+        return self._updated
+
+    def set_updated(self):
+        self._updated = True
+        if self._parent:
+            self._parent.set_updated()
+
+    def clear_updated(self):
+        self._updated = False
+        if self._parent:
+            self._parent.clear_updated()
+
+    def set_parent(self, parent):
+        self._parent = parent
 
     def _verify_keys(self):
         missing = []
@@ -103,6 +121,7 @@ class StrictContainer:
     def _create_child_type(self, child_type, key):
         try:
             self._loaded[key] = child_type(**self._loaded[key])
+            self._loaded[key].set_parent(self)
         except KeyError as e:
             raise KeyError(
                 f"Key '{key}' is missing subkeys: {e}"
@@ -183,12 +202,13 @@ class StrictContainer:
         with open(path, "w") as fp:
             json.dump(self.to_dict(), fp, default=serialize_disk_json)
 
-    def to_file_safe(self, path):
-        fd, tmppath = mkstemp()
-        with os.fdopen(fd, "w") as fp:
-            json.dump(self.to_dict(), fp, default=serialize_disk_json)
+        self.clear_updated()
 
-        move(tmppath, path)
+    def to_file_safe(self, path):
+        safe_json_dump(
+            path, self.to_dict(), overwrite=True, default=serialize_disk_json
+        )
+        self.clear_updated()
 
     def update(self, values):
         if not isinstance(values, dict):
@@ -211,6 +231,7 @@ class StrictContainer:
         # TODO add type checking
         if key in self.__dict__.get("_loaded", {}):
             self._loaded[key] = value
+            self.set_updated()
         else:
             super().__setattr__(key, value)
 
@@ -226,8 +247,10 @@ class Settings(StrictContainer):
         "machine_tags": list,
         "platforms": list,
         "machines": list,
+        "extrpath": list,
         "manual": bool
     }
+    ALLOW_EMPTY = ("extrpath",)
 
 class Errors(StrictContainer):
 
@@ -237,8 +260,9 @@ class Errors(StrictContainer):
     }
 
     def merge_errors(self, errors_container):
-        self._loaded["errors"].extend(errors_container.errors)
-        self._loaded["fatal"].extend(errors_container.fatal)
+        self.errors.extend(errors_container.errors)
+        self.fatal.extend(errors_container.fatal)
+        self.set_updated()
 
 class SubmittedFile(StrictContainer):
 
@@ -266,19 +290,6 @@ class SubmittedURL(StrictContainer):
         "category": str
     }
 
-class Analysis(StrictContainer):
-
-    FIELDS = {
-        "id": str,
-        "kind": str,
-        "settings": Settings,
-        "created_on": datetime.datetime,
-        "category": str,
-        "submitted": (SubmittedFile, SubmittedURL),
-        "errors": Errors,
-    }
-    ALLOW_EMPTY = ("errors",)
-
 class Task(StrictContainer):
 
     FIELDS = {
@@ -299,12 +310,15 @@ class TargetFile(StrictContainer):
     PARENT_KEYVAL = ("category", "file")
     FIELDS = {
         "filename": str,
+        "orig_filename": str,
         "platforms": list,
         "machine_tags": list,
         "size": int,
         "filetype": str,
         "media_type": str,
         "sha256": str,
+        "sha1": str,
+        "md5": str,
         "extrpath": list,
         "container": bool
     }
@@ -322,7 +336,7 @@ class TargetURL(StrictContainer):
         "platforms": list,
         "machine_tags": list
     }
-    ALLOW_EMPTY = ("machine_tags",)
+    ALLOW_EMPTY = ("machine_tags", "platforms")
 
     @property
     def target(self):
@@ -335,13 +349,28 @@ class Identification(StrictContainer):
         "target": (TargetFile, TargetURL),
         "category": str,
         "ignored": list,
-        "parent": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("target", "parent", "ignored", "errors")
+    ALLOW_EMPTY = ("ignored", "errors")
 
 class Pre(StrictContainer):
     FIELDS = {
+        "target": (TargetFile, TargetURL),
+        "category": str,
         "errors": Errors
     }
     ALLOW_EMPTY = ("errors",)
+
+class Analysis(StrictContainer):
+
+    FIELDS = {
+        "id": str,
+        "kind": str,
+        "settings": Settings,
+        "created_on": datetime.datetime,
+        "category": str,
+        "submitted": (SubmittedFile, SubmittedURL),
+        "target": (TargetFile, TargetURL),
+        "errors": Errors,
+    }
+    ALLOW_EMPTY = ("errors", "target")

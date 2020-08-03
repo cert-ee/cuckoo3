@@ -30,6 +30,7 @@ class Ignore(Processor):
                         "reason": reason
                     })
 
+                    f.unselectable()
                     selection.remove(f)
 
         return ignored

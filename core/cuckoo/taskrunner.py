@@ -5,7 +5,6 @@
 import logging
 import socket
 import time
-import traceback
 from threading import Thread
 
 from cuckoo.common.clients import ResultServerClient, ActionFailedError
@@ -15,10 +14,10 @@ from cuckoo.common.ipc import (
     UnixSocketServer, ReaderWriter, message_unix_socket, IPCError
 )
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
+from cuckoo.common.machines import Machine
 from cuckoo.common.storage import AnalysisPaths, TaskPaths, Paths, cuckoocwd
-from cuckoo.common.strictcontainer import Task, Analysis, Identification
+from cuckoo.common.strictcontainer import Task, Analysis
 from cuckoo.common.taskflow import TaskFlowError
-from cuckoo.machineries.helpers import Machine
 
 from .shutdown import register_shutdown
 from .startup import init_global_logging
@@ -44,7 +43,6 @@ class _FlowRunner(Thread):
         self.agent = Agent(self.machine.ip)
         self.taskflow = taskflow_cls(
             self.machine, self.task, self.analysis,
-            Identification.from_file(AnalysisPaths.identjson(analysis_id)),
             self.agent, result_ip, result_port, TaskLogger(__name__, task_id)
         )
         self.do_run = True
@@ -129,7 +127,7 @@ class _FlowRunner(Thread):
     def run(self):
         log.info(
             "Task starting.", task_id=self.task.id, machine=self.machine.name,
-            target=self.taskflow.identification.target.target
+            target=repr(self.taskflow.analysis.target.target)
         )
 
         # Dump the received machine to the task root directory to be read if

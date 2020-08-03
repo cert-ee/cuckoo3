@@ -3,6 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import hashlib
+import json
 import os
 import pathlib
 import random
@@ -131,6 +132,14 @@ class AnalysisPaths:
     @staticmethod
     def submitted_file(analysis_id):
         return os.path.realpath(AnalysisPaths._path(analysis_id, "binary"))
+
+    @staticmethod
+    def filetree(analysis_id):
+        return AnalysisPaths._path(analysis_id, "filetree.json")
+
+    @staticmethod
+    def filemap(analysis_id):
+        return AnalysisPaths._path(analysis_id, "filemap.json")
 
     @staticmethod
     def zipified_file(analysis_id):
@@ -322,8 +331,29 @@ def safe_copyfile(source, destination):
 
     try:
         open(destination, "x").close()
-        shutil.move(tmp_path, destination)
+        os.replace(tmp_path, destination)
     except (OSError, FileExistsError):
+        os.unlink(tmp_path)
+        raise
+
+def safe_json_dump(destination, data, overwrite=False, **kwargs):
+    """json.dump the given data to a temporary file in the same directory as
+    the destination and replace the given destination afterwards.
+
+    If overwrite is True, overwrites the destination if it exists."""
+    if not overwrite and os.path.exists(destination):
+        raise FileExistsError(f"Destination file exists: {destination}")
+
+    dst_dir = os.path.dirname(destination)
+    tmp_path = os.path.join(dst_dir, f".{uuid.uuid4()}")
+
+    with open(tmp_path, "w") as fp:
+        json.dump(data, fp, **kwargs)
+
+    # TODO use Windows API directly to make replace atomic on Windows.
+    try:
+        os.replace(tmp_path, destination)
+    except OSError:
         os.unlink(tmp_path)
         raise
 
@@ -357,14 +387,14 @@ class Binaries(object):
         try:
             file_helper.copy_to(path)
         except FileExistsError:
-            return path
+            return File(path)
 
-        return path
+        return File(path)
 
 class File(object):
 
     def __init__(self, file_path):
-        self.file_path = file_path
+        self._path = pathlib.Path(file_path)
 
         if not self.valid():
             raise FileNotFoundError("File does not exist or is not a file")
@@ -374,46 +404,20 @@ class File(object):
         self._sha256 = None
         self._sha512 = None
 
-    def valid(self):
-        return self.file_path and os.path.isfile(self.file_path)
+    @property
+    def path(self):
+        return str(self._path)
 
-    def empty(self):
-        return os.path.getsize(self.file_path) != 0
-
-    def get_chunks(self, size=16 * 1024 * 1024):
-        """Read file contents in chunks (generator)."""
-        with open(self.file_path, "rb") as fd:
-            while True:
-                chunk = fd.read(size)
-                if not chunk:
-                    break
-
-                yield chunk
-
-    def _calc_hashes(self):
-        """Calculate all possible hashes for this file."""
-        md5 = hashlib.md5()
-        sha1 = hashlib.sha1()
-        sha256 = hashlib.sha256()
-        sha512 = hashlib.sha512()
-
-        for chunk in self.get_chunks():
-            md5.update(chunk)
-            sha1.update(chunk)
-            sha256.update(chunk)
-            sha512.update(chunk)
-
-        self._md5 = md5.hexdigest()
-        self._sha1 = sha1.hexdigest()
-        self._sha256 = sha256.hexdigest()
-        self._sha512 = sha512.hexdigest()
+    @property
+    def name(self):
+        return self._path.name
 
     @property
     def size(self):
         """Get file size.
         @return: file size.
         """
-        return os.path.getsize(self.file_path)
+        return os.path.getsize(self._path)
 
     @property
     def md5(self):
@@ -458,7 +462,7 @@ class File(object):
         @return: file type.
         """
         return sflock.magic.from_file(
-            os.path.realpath(self.file_path)
+            os.path.realpath(self._path)
         )
 
     @property
@@ -467,11 +471,48 @@ class File(object):
         @return: file content type.
         """
         return sflock.magic.from_file(
-            os.path.realpath(self.file_path), mime=True
+            os.path.realpath(self._path), mime=True
         )
 
+    def valid(self):
+        return self._path and self._path.is_file()
+
+    def empty(self):
+        return self._path.stat().st_size != 0
+
+    def get_chunks(self, size=16 * 1024 * 1024):
+        """Read file contents in chunks (generator)."""
+        with open(self._path, "rb") as fd:
+            while True:
+                chunk = fd.read(size)
+                if not chunk:
+                    break
+
+                yield chunk
+
+    def _calc_hashes(self):
+        """Calculate all possible hashes for this file."""
+        md5 = hashlib.md5()
+        sha1 = hashlib.sha1()
+        sha256 = hashlib.sha256()
+        sha512 = hashlib.sha512()
+
+        for chunk in self.get_chunks():
+            md5.update(chunk)
+            sha1.update(chunk)
+            sha256.update(chunk)
+            sha512.update(chunk)
+
+        self._md5 = md5.hexdigest()
+        self._sha1 = sha1.hexdigest()
+        self._sha256 = sha256.hexdigest()
+        self._sha512 = sha512.hexdigest()
+
     def copy_to(self, path):
-        safe_copyfile(self.file_path, path)
+        safe_copyfile(self._path, path)
+
+    def symlink(self, link_path):
+        os.symlink(str(self._path), link_path)
 
     def to_dict(self):
         """Get all information available.

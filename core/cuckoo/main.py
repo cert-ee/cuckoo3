@@ -157,7 +157,6 @@ def get_monitor(zip_path):
 
     unpack_monitor_components(zip_path, cuckoocwd.root)
 
-# @main.command("machine")
 @main.group()
 def machine():
     """Add machines to machinery configuration files."""
@@ -203,43 +202,35 @@ def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
 @click.option("--priority", type=int, default=1, help="The priority of this analysis")
 def submission(target, platform, timeout, priority):
     """Create a new file analysis"""
-    from . import submit, analyses
-    from cuckoo.common.ipc import IPCError
-    from cuckoo.common.storage import File, enumerate_files, Paths
-    from .machinery import read_machines_dump, set_machines_dump
-
-    if not os.path.exists(Paths.machinestates()):
-        exit_error(
-            "No machines have ever been loaded. "
-            "Start Cuckoo to load these from the machine configurations."
-        )
-
-    # Change platform,version to dict with those keys
-    platforms = []
-    for p_v in platform:
-        platform_version = p_v.split(",", 1)
-
-        if len(platform_version) == 2:
-            platforms.append({
-                "platform": platform_version[0],
-                "os_version": platform_version[1]
-            })
-        else:
-            platforms.append({
-                "platform": platform_version[0],
-                "os_version": ""
-            })
-
-    set_machines_dump(read_machines_dump(Paths.machinestates()))
+    from cuckoo.common import submit
+    from cuckoo.common.storage import  enumerate_files
 
     try:
-        s = analyses.Settings(
-            timeout=timeout, priority=priority, enforce_timeout=True,
-            dump_memory=False, options={}, machine_tags=[],
-            platforms=platforms, machines=[], manual=False
-        )
-    except (ValueError, TypeError, analyses.AnalysisError) as e:
-        exit_error(f"Failed to submit: {e}")
+        submit.load_machines_dump()
+    except submit.SubmissionError as e:
+        exit_error(f"Submission failed: {e}")
+
+    try:
+        s_maker = submit.SettingsMaker()
+        s_maker.set_timeout(timeout)
+        s_maker.set_priority(priority)
+        s_maker.set_manual(False)
+
+        for p_v in platform:
+            # Split platform,version into usable values
+            platform_version = p_v.split(",", 1)
+
+            if len(platform_version) == 2:
+                s_maker.add_platform(
+                    platform=platform_version[0],
+                    os_version=platform_version[1]
+                )
+            else:
+                s_maker.add_platform(platform=platform_version[0])
+
+        settings = s_maker.make_settings()
+    except submit.SubmissionError as e:
+        exit_error(f"Submission failed: {e}")
 
     files = []
     for path in target:
@@ -247,16 +238,15 @@ def submission(target, platform, timeout, priority):
 
     try:
         for path in files:
-            filename = os.path.basename(path)
             try:
-                analysis_id = submit.file(File(path), s, file_name=filename)
+                analysis_id = submit.file(
+                    path, settings, file_name=os.path.basename(path)
+                )
                 print_info(f"Submitted. {analysis_id} -> {path}")
             except submit.SubmissionError as e:
                 print_error(f"Failed to submit {path}. {e}")
     finally:
         try:
             submit.notify()
-        except IPCError as e:
-            print_warning(
-                f"Could not notify Cuckoo process. Is Cuckoo running? {e}"
-            )
+        except submit.SubmissionError as e:
+            print_warning(e)

@@ -2,9 +2,10 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from . import errors, helpers
-
+from cuckoo.common import machines
 from cuckoo.common.log import CuckooGlobalLogger
+
+from . import errors
 
 log = CuckooGlobalLogger(__name__)
 
@@ -20,7 +21,7 @@ class Machinery:
 
     def load_machines(self):
         for name, values in self.cfg["machines"].items():
-            machine = helpers.Machine(
+            machine = machines.Machine(
                 name=name, label=values["label"], ip=values["ip"],
                 platform=values["platform"], os_version=values["os_version"],
                 tags=values["tags"], snapshot=values["snapshot"],

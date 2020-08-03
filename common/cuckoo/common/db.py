@@ -5,43 +5,27 @@
 import sqlalchemy
 
 from datetime import datetime
-from sqlalchemy.ext import declarative
+from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import sessionmaker
 
-Base = declarative.declarative_base()
-
-class AnalysisStates:
-
-    PENDING_IDENTIFICATION = "pending_identification"
-    NO_SELECTED = "no_selected"
-    FATAL_ERROR = "fatal_error"
-    WAITING_MANUAL = "waiting_manual"
-    PENDING_PRE = "pending_pre"
-    COMPLETED_PRE = "completed_pre"
-
-class AnalysisKinds:
-    STANDARD = "standard"
-
-class TaskStates:
-    PENDING = "pending"
-    RUNNING = "running"
-    FATAL_ERROR = "fatal_error"
-    PENDING_POST = "pending_post"
-    REPORTED = "reported"
+@as_declarative()
+class Base:
+    def to_dict(self):
+        return {
+            c.name: getattr(self, c.name) for c in self.__table__.columns
+        }
 
 class Analysis(Base):
 
     __tablename__ = "analyses"
 
     id = sqlalchemy.Column(sqlalchemy.String(15), primary_key=True)
-    kind = sqlalchemy.Column(
-        sqlalchemy.String(32), default=AnalysisKinds.STANDARD
-    )
+    kind = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     created_on = sqlalchemy.Column(
         sqlalchemy.DateTime, nullable=False, default=datetime.utcnow()
     )
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
-    priority = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+    priority = sqlalchemy.Column(sqlalchemy.Integer, default=1, nullable=False)
 
     def __repr__(self):
         return f"<Analysis(id='{self.id})', state='{self.state}'>"
@@ -51,15 +35,11 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = sqlalchemy.Column(sqlalchemy.String(32), primary_key=True)
-    kind = sqlalchemy.Column(
-        sqlalchemy.String(32), default=AnalysisKinds.STANDARD
-    )
-    number = sqlalchemy.Column(
-        sqlalchemy.Integer, autoincrement=False, nullable=False
-    )
+    kind = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
+    number = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     created_on = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     analysis_id = sqlalchemy.Column(sqlalchemy.String(15), nullable=False)
-    priority = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+    priority = sqlalchemy.Column(sqlalchemy.Integer, default=1, nullable=False)
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     machine = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     machine_tags = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
@@ -78,11 +58,11 @@ class _DBMS(object):
         self.engine = None
         self.connection_string = ""
 
-    def initialize(self, db_path):
+    def initialize(self, dsn):
         if self.initialized:
             self.cleanup()
 
-        engine = sqlalchemy.create_engine(f"sqlite:///{db_path}")
+        engine = sqlalchemy.create_engine(dsn)
         Base.metadata.create_all(engine)
 
         self.engine = engine

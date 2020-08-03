@@ -354,30 +354,30 @@ class CuckooLogger:
     def log_msg(self, level, msg, extra_kvs):
         self._logger.log(level, msg, extra={_KV_KEY: extra_kvs})
 
-    def log_exception(self, msg, extra_kvs):
-        self._logger.exception(msg, extra={_KV_KEY: extra_kvs})
+    def log_exception(self, m, extra_kvs):
+        self._logger.exception(m, extra={_KV_KEY: extra_kvs})
 
-    def debug(self, msg, **kwargs):
-        self.log_msg(logging.DEBUG, msg, kwargs)
+    def debug(self, m, **kwargs):
+        self.log_msg(logging.DEBUG, m, kwargs)
 
-    def info(self, msg, **kwargs):
-        self.log_msg(logging.INFO, msg, kwargs)
+    def info(self, m, **kwargs):
+        self.log_msg(logging.INFO, m, kwargs)
 
-    def warning(self, msg, **kwargs):
-        self.log_msg(logging.WARNING, msg, kwargs)
+    def warning(self, m, **kwargs):
+        self.log_msg(logging.WARNING, m, kwargs)
 
-    def error(self, msg, **kwargs):
-        self.log_msg(logging.ERROR, msg, kwargs)
+    def error(self, m, **kwargs):
+        self.log_msg(logging.ERROR, m, kwargs)
 
-    def exception(self, msg, **kwargs):
-        self.log_exception(msg, kwargs)
+    def exception(self, m, **kwargs):
+        self.log_exception(m, kwargs)
 
-    def fatal_error(self, msg, includetrace=True, **kwargs):
-        msg = f"Exited on error: {msg}"
+    def fatal_error(self, m, includetrace=True, **kwargs):
+        m = f"Exited on error: {m}"
         if includetrace:
-            self.log_exception(msg, kwargs)
+            self.log_exception(m, kwargs)
         else:
-            self.log_msg(logging.ERROR, msg, kwargs)
+            self.log_msg(logging.ERROR, m, kwargs)
         sys.exit(1)
 
     def cleanup(self):
@@ -456,13 +456,13 @@ class _KeyBasedFileLogger(CuckooLogger):
         self._logfile_handler = logfile_handler
         self._multi_handler.map_handler(self.key, logfile_handler)
 
-    def log_msg(self, level, msg, extra_kvs):
+    def log_msg(self, level, m, extra_kvs):
         extra_kvs[self._MAP_KEY] = self.key
-        super().log_msg(level, msg, extra_kvs)
+        super().log_msg(level, m, extra_kvs)
 
-    def log_exception(self, msg, extra_kvs):
+    def log_exception(self, m, extra_kvs):
         extra_kvs[self._MAP_KEY] = self.key
-        super().log_exception(msg, extra_kvs)
+        super().log_exception(m, extra_kvs)
 
     def close(self):
         if self._logfile_handler:

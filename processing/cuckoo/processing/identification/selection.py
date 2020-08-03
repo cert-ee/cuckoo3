@@ -29,6 +29,16 @@ def _write_filetree(dir_path, tree):
     with open(filetree_path, "w") as fp:
         json.dump(tree, fp, default=_bytes_to_str, indent=2)
 
+def _write_filemap(dir_path, filemap):
+    filemap_path = os.path.join(dir_path, "filemap.json")
+    with open(filemap_path, "w") as fp:
+        json.dump(filemap, fp)
+
+
+def _make_ident_filename(f):
+    if f.extension and not f.filename.endswith(f.extension):
+        return f"{f.filename}.{f.extension}"
+    return f.filename
 
 class Identify(Processor):
 
@@ -63,33 +73,17 @@ class Identify(Processor):
 
 
         if f.error:
-            self.errtracker.add_error(f.error, self)
-
-        if f.children:
-            # Move tree writing to selection module. All 'selected' files
-            # in the sflock tree should be set to False first, except the
-            # actual chosen candidate for analysis.
-            tree = f.astree(sanitize=True, finger=True)
-            _write_filetree(self.analysis_path, tree)
+            self.errtracker.add_error(f"Sflock unpack error: {f.error}.", self)
 
         selected = []
         find_selected(f, selected)
 
-        platforms = []
-        if f.platforms:
-            # TODO replace later when strictcontainer can handle lists of
-            # strictcontainers
-            for platform in f.platforms:
-                platforms.append({
-                    "platform": platform,
-                    "os_version": ""
-                })
-
         return {
+            "unpacked": f,
             "selection": selected,
             "submitted": {
                 "filename": f.filename,
-                "platforms": platforms,
+                "platforms": f.platforms,
                 "size": f.filesize,
                 "filetype": f.magic,
                 "media_type": f.mime,
@@ -99,7 +93,6 @@ class Identify(Processor):
                 "container": len(f.children) > 0
             }
         }
-
 
 
 class SelectFile(Processor):
@@ -121,7 +114,9 @@ class SelectFile(Processor):
     }
 
     def init(self):
+        self.file_counter = 0
         self.tag_deps = cfg("identification", "tags", subpkg="processing")
+        self.file_map = {}
 
     def _get_tags_dep(self, dep):
         tags = []
@@ -131,14 +126,24 @@ class SelectFile(Processor):
 
         return tags
 
+    def _sflock_child_cb(self, f, ret):
+        self.file_counter += 1
+        file_id = str(self.file_counter)
+        ret["machine_tags"] = self._get_tags_dep(f.dependency)
+        ret["orig_filename"] = f.filename
+        ret["filename"] = _make_ident_filename(f)
+        ret["id"] = file_id
+        self.file_map[file_id] = ret["extrpath"]
+
     def start(self):
         if self.analysis.category != "file":
             return
 
         submitted = self.results.get("identify", {}).get("submitted", {})
         selection = self.results.get("identify", {}).get("selection", [])
+        unpackedfile = self.results["identify"]["unpacked"]
 
-        selected = None
+        target = None
         type_priority = []
 
         # Determine the type of container, as the order of prioritized files
@@ -159,50 +164,66 @@ class SelectFile(Processor):
         for ext in type_priority:
             for f in selection:
                 if f.filename.endswith(ext):
-                    selected = f
+                    target = f
                     break
 
-            if selected:
+            if target:
                 break
 
         # If no file was selected of the prioritized file types. Select the
         # first file marked as selected by Sflock.
-        if not selected:
-            if selection:
-                selected = selection[0]
-            else:
-                return {}
+        if not target and selection:
+            target = selection[0]
 
-        platforms = []
-        if selected.platforms:
-            # TODO replace later when strictcontainer can handle lists of
-            # strictcontainers
-            for platform in selected.platforms:
-                platforms.append({
-                    "platform": platform,
-                    "os_version": ""
-                })
+        # Deselect all files, except the chosen file.
+        for f in selection:
+            if f is not target:
+                f.deselect()
 
-        self.analysislog.debug("File selected.", file=repr(selected.filename))
-        ident_filename = selected.filename
-        ident_ext = selected.extension
-        if ident_ext and not ident_filename.endswith(ident_ext):
-            ident_filename = f"{ident_filename}.{ident_ext}"
+        # Write a filetree of the unpacked submitted file to disk. Used during
+        # "manual" selection and in the pre-stage to retrieve information
+        # about a manually selected file.
+        _write_filetree(
+            self.analysis_path, unpackedfile.astree(
+                sanitize=True, finger=True, child_cb=self._sflock_child_cb
+            )
+        )
+
+        _write_filemap(self.analysis_path, self.file_map)
+
+        if target:
+            self.analysislog.debug(
+                "File selected.", file=repr(target.filename)
+            )
+        else:
+            # If no file was selected, set the target as the submitted file. A
+            # manual analysis or one that ignores identify still needs the
+            # information such as the file extension.
+            target = unpackedfile
+
+        ident_filename = _make_ident_filename(target)
+        if ident_filename != target.filename:
             self.analysislog.debug(
                 "Identify detected a different file type than extension "
-                "indicates.", detected=ident_ext, filename=repr(ident_filename)
+                "indicates.", detected=target.extension,
+                filename=repr(ident_filename)
             )
 
         return {
-            "filename": ident_filename,
-            "orig_name": selected.filename,
-            "platforms": platforms,
-            "size": selected.filesize,
-            "filetype": selected.magic,
-            "media_type": selected.mime,
-            "sha256": selected.sha256,
-            "extrpath": selected.extrpath,
-            "password": selected.password or "",
-            "machine_tags": self._get_tags_dep(selected.dependency),
-            "container": len(selected.children) > 0
+            "selected": target.selected,
+            "target": {
+                "filename": ident_filename,
+                "orig_filename": target.filename,
+                "platforms": target.platforms,
+                "size": target.filesize,
+                "filetype": target.magic,
+                "media_type": target.mime,
+                "extrpath": target.extrpath,
+                "password": target.password or "",
+                "machine_tags": self._get_tags_dep(target.dependency),
+                "container": len(target.children) > 0,
+                "sha256": target.sha256,
+                "sha1": target.sha1,
+                "md5": target.md5,
+            }
         }

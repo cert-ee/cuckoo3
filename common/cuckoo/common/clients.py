@@ -38,7 +38,11 @@ class ResultServerClient:
     def remove(unix_sock_path, ip, task_id):
         try:
             msg = request_unix_socket(
-                unix_sock_path, {"ip": ip, "task_id": task_id, "action": "remove"}
+                unix_sock_path, {
+                    "ip": ip,
+                    "task_id": task_id,
+                    "action": "remove"
+                }
             )
         except IPCError as e:
             raise ActionFailedError(
@@ -142,4 +146,30 @@ class TaskRunnerClient:
             raise ActionFailedError(
                 f"Task runner could not start task. "
                 f"Error: {resp.get('reason')}"
+            )
+
+class StateControllerClient:
+
+    @staticmethod
+    def notify(sockpath):
+        """Send a ping to the state controller at the end of the given sock
+        path to ask it to track all untracked analyses. Newly submitted
+        analyses will not be tracked until the state controller receives a
+        notify message."""
+        try:
+            message_unix_socket(sockpath, {"subject": "tracknew"})
+        except IPCError as e:
+            raise ActionFailedError(f"Failed to notify state controller. {e}")
+
+    @staticmethod
+    def manual_set_settings(sockpath, analysis_id, settings_dict):
+        try:
+            message_unix_socket(sockpath, {
+                "subject": "manualsetsettings",
+                "analysis_id": analysis_id,
+                "settings_dict": settings_dict
+            })
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send settings to state controller. {e}"
             )

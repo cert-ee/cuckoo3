@@ -4,10 +4,10 @@
 
 import os
 
-from . import db, machinery
-from cuckoo.common.storage import TaskPaths, make_task_id
-from cuckoo.common.strictcontainer import Task, Errors
-from cuckoo.common.log import CuckooGlobalLogger
+from .storage import TaskPaths, make_task_id
+from .strictcontainer import Task, Errors
+from .log import CuckooGlobalLogger
+from . import db, machines
 
 log = CuckooGlobalLogger(__name__)
 
@@ -25,12 +25,19 @@ class NoTasksCreatedError(TaskCreationError):
 class NotAllTasksCreatedError(TaskCreationError):
     pass
 
+class States:
+    PENDING = "pending"
+    RUNNING = "running"
+    PENDING_POST = "pending_post"
+    REPORTED = "reported"
+    FATAL_ERROR = "fatal_error"
 
-def _create_task(analysis_id, task_number, platform="", machine_tags=set(),
+
+def _create_task(analysis, task_number, platform="", machine_tags=set(),
                  os_version="", machine_name=None):
 
     if machine_name:
-        if not machinery.get_by_name(machine_name):
+        if not machines.get_by_name(machine_name):
             raise MissingResourceError(
                 f"Machine {machine_name} does not exist"
             )
@@ -39,7 +46,7 @@ def _create_task(analysis_id, task_number, platform="", machine_tags=set(),
         if machine_tags and not isinstance(machine_tags, set):
             machine_tags = set(machine_tags)
 
-        machine = machinery.find(platform, os_version, machine_tags)
+        machine = machines.find(platform, os_version, machine_tags)
         if not machine:
             raise MissingResourceError(
                 f"No machine with platform: '{platform}'. "
@@ -47,7 +54,7 @@ def _create_task(analysis_id, task_number, platform="", machine_tags=set(),
                 f"Tags: '{' ,'.join(tag for tag in machine_tags)}'."
             )
 
-    task_id = make_task_id(analysis_id, task_number)
+    task_id = make_task_id(analysis.id, task_number)
     log.debug("Creating task.", task_id=task_id)
     task_path = TaskPaths.path(task_id)
     try:
@@ -62,10 +69,10 @@ def _create_task(analysis_id, task_number, platform="", machine_tags=set(),
         os.mkdir(os.path.join(task_path, dirname))
 
     task_values = {
-        "kind": db.AnalysisKinds.STANDARD,
+        "kind": analysis.kind,
         "number": task_number,
         "id": task_id,
-        "analysis_id": analysis_id,
+        "analysis_id": analysis.id,
         "platform": platform,
         "os_version": os_version,
         "machine_tags": machine_tags,
@@ -85,7 +92,7 @@ def create_all(analysis):
         for machine_name in analysis.settings.machines:
             try:
                 tasks.append(_create_task(
-                    analysis_id=analysis.id, task_number=tasknum,
+                    analysis, task_number=tasknum,
                     machine_name=machine_name
                 ))
                 tasknum += 1
@@ -95,7 +102,7 @@ def create_all(analysis):
         for platform in analysis.settings.platforms:
             try:
                 tasks.append(_create_task(
-                    analysis_id=analysis.id, task_number=tasknum,
+                    analysis, task_number=tasknum,
                     platform=platform["platform"],
                     os_version=platform["os_version"],
                     machine_tags=analysis.settings.machine_tags
@@ -112,7 +119,7 @@ def create_all(analysis):
 
     # Set the default state for each task dict
     for task_dict in tasks:
-        task_dict["state"] = db.TaskStates.PENDING
+        task_dict["state"] = States.PENDING
         task_dict["machine_tags"] = ",".join(task_dict["machine_tags"])
         task_dict["created_on"] = analysis.created_on
         task_dict["priority"] = analysis.settings.priority
@@ -134,23 +141,27 @@ def set_db_state(task_id, state):
     finally:
         ses.close()
 
-def merge_task_errors(task_id, errors_container):
-    taskjson_path = TaskPaths.taskjson(task_id)
-    task = Task.from_file(taskjson_path)
-
+def merge_errors(task, errors_container):
     if task.errors:
         task.errors.merge_errors(errors_container)
     else:
         task.errors = errors_container
 
-    task.to_file_safe(taskjson_path)
-
-def merge_run_errors(task_id):
-    errpath = TaskPaths.runerr_json(task_id)
+def merge_run_errors(task):
+    errpath = TaskPaths.runerr_json(task.id)
     if not os.path.exists(errpath):
         return
 
-    errors_container = Errors.from_file(errpath)
-    merge_task_errors(task_id, errors_container)
+    merge_errors(task, Errors.from_file(errpath))
 
     os.remove(errpath)
+
+def db_find_state(state):
+    ses = db.dbms.session()
+    try:
+        return ses.query(db.Task).filter_by(state=state)
+    finally:
+        ses.close()
+
+def exists(task_id):
+    return os.path.isfile(TaskPaths.taskjson(task_id))

@@ -3,25 +3,67 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import os
+import json
 
-from cuckoo.common.config import cfg
-from cuckoo.common.log import CuckooGlobalLogger
-from cuckoo.common.storage import AnalysisPaths
-from cuckoo.common.strictcontainer import (
-    Settings, Analysis, Identification, Pre, Errors
+from . import db, machines
+from .config import cfg
+from .log import CuckooGlobalLogger
+from .storage import AnalysisPaths
+from .strictcontainer import (
+    Settings as _Settings, Analysis, Identification, Pre, Errors
 )
-
-from . import db, machinery
 
 log = CuckooGlobalLogger(__name__)
 
 class AnalysisError(Exception):
     pass
 
+class HumanStates:
+    PENDING_IDENTIFICATION = "Pending identification"
+    WAITING_MANUAL = "Waiting manual"
+    PENDING_PRE = "Pending pre"
+    COMPLETED_PRE = "Completed pre"
+    NO_SELECTED = "No selected target"
+    FATAL_ERROR = "Fatal error"
 
-class Settings(Settings):
+class States:
+    PENDING_IDENTIFICATION = "pending_identification"
+    WAITING_MANUAL = "waiting_manual"
+    PENDING_PRE = "pending_pre"
+    COMPLETED_PRE = "completed_pre"
+    NO_SELECTED = "no_selected"
+    FATAL_ERROR = "fatal_error"
+
+    _HUMAN = {
+        PENDING_IDENTIFICATION: HumanStates.PENDING_IDENTIFICATION,
+        WAITING_MANUAL: HumanStates.WAITING_MANUAL,
+        PENDING_PRE: HumanStates.PENDING_PRE,
+        COMPLETED_PRE: HumanStates.COMPLETED_PRE,
+        NO_SELECTED: HumanStates.NO_SELECTED,
+        FATAL_ERROR: HumanStates.FATAL_ERROR
+    }
+
+    @classmethod
+    def to_human(cls, state):
+        try:
+            return cls._HUMAN[state]
+        except KeyError as e:
+            raise AnalysisError(
+                f"No human readable version for state {state!r} exists"
+            )
+
+class Kinds:
+    STANDARD = "standard"
+
+
+class Settings(_Settings):
 
     def check_constraints(self):
+        if not machines.machines_loaded():
+            raise AnalysisError(
+                "Cannot verify any machine settings. No machines are loaded."
+            )
+
         errors = []
         if self.priority < 1:
             errors.append("Priority must be 1 at least")
@@ -32,15 +74,15 @@ class Settings(Settings):
             )
         for machine in self.machines:
             try:
-                machinery.get_by_name(machine)
-            except machinery.MachineDoesNotExistError:
+                machines.get_by_name(machine)
+            except KeyError:
                 errors.append(f"Machine with name '{machine}' does not exist")
 
         if self.platforms:
             for platform in self.platforms:
                 os_name = platform.get("platform")
                 os_version = platform.get("os_version")
-                found = machinery.find(
+                found = machines.find(
                     platform=os_name, os_version=os_version,
                     tags=set(self.machine_tags)
                 )
@@ -52,7 +94,7 @@ class Settings(Settings):
                     errors.append(err)
 
         elif self.machine_tags:
-            if not machinery.find(tags=set(self.machine_tags)):
+            if not machines.find(tags=set(self.machine_tags)):
                 errors.append(f"No machine with tags: {self.machine_tags}")
 
         if errors:
@@ -61,24 +103,32 @@ class Settings(Settings):
                 f"{'. '.join(errors)}"
             )
 
+def exists(analysis_id):
+    return os.path.isfile(AnalysisPaths.analysisjson(analysis_id))
+
 def track_analyses(analysis_ids):
 
     untracked_analyses = []
+    tracked = []
     for analysis_id in analysis_ids:
         info_path = AnalysisPaths.analysisjson(analysis_id)
 
         try:
             analysis = Analysis.from_file(info_path)
-        except (ValueError, TypeError) as e:
-            raise AnalysisError(f"Failed to load analysis.json: {e}")
+        except (ValueError, TypeError, FileNotFoundError) as e:
+            log.error(
+                "Failed to track analysis", analysis_id=analysis_id, error=e
+            )
+            continue
 
         untracked_analyses.append({
             "id": analysis_id,
-            "kind": db.AnalysisKinds.STANDARD,
+            "kind": analysis.kind,
             "created_on": analysis.created_on,
             "priority": analysis.settings.priority,
-            "state": db.AnalysisStates.PENDING_IDENTIFICATION
+            "state": States.PENDING_IDENTIFICATION
         })
+        tracked.append(analysis_id)
 
     ses = db.dbms.session()
     try:
@@ -87,7 +137,10 @@ def track_analyses(analysis_ids):
     finally:
         ses.close()
 
-    return True
+    return tracked
+
+def overwrite_settings(analysis, settings):
+    analysis.settings = settings
 
 def update_settings(analysis, **kwargs):
     analysis.settings.update(kwargs)
@@ -140,46 +193,75 @@ def merge_settings_ident(analysis, identification):
 
     return was_updated
 
-def merge_analysis_errors(analysis_id, error_container):
-    analysisjson_path = AnalysisPaths.analysisjson(analysis_id)
-    analysis = Analysis.from_file(analysisjson_path)
+def merge_errors(analysis, error_container):
     if analysis.errors:
         analysis.errors.merge_errors(error_container)
     else:
         analysis.errors = error_container
 
-    analysis.to_file_safe(analysisjson_path)
-
-def merge_ident_errors(analysis_id):
-    errpath = AnalysisPaths.processingerr_json(analysis_id)
+def merge_processing_errors(analysis):
+    errpath = AnalysisPaths.processingerr_json(analysis.id)
     if not os.path.exists(errpath):
         return
 
-    identpath = AnalysisPaths.identjson(analysis_id)
-    ident = Identification.from_file(identpath)
-    errs = Errors.from_file(errpath)
-    if ident.errors:
-        ident.errors.merge_errors(errs)
-    else:
-        ident.errors = errs
+    merge_errors(analysis, Errors.from_file(errpath))
 
-    # Update the identification json file
-    ident.to_file_safe(identpath)
     os.remove(errpath)
 
-def merge_pre_errors(analysis_id):
-    errpath = AnalysisPaths.processingerr_json(analysis_id)
-    if not os.path.exists(errpath):
-        return
+def set_final_target(analysis, target):
+    analysis.target = target
 
-    prepath = AnalysisPaths.prejson(analysis_id)
-    pre = Pre.from_file(prepath)
-    errs = Errors.from_file(errpath)
-    if pre.errors:
-        pre.errors.merge_errors(errs)
-    else:
-        pre.errors = errs
+def get_state(analysis_id):
+    ses = db.dbms.session()
+    try:
+        analysis = ses.query(
+            db.Analysis.state
+        ).filter_by(id=analysis_id).first()
 
-    # Update the pre json file
-    pre.to_file_safe(prepath)
-    os.remove(errpath)
+        if not analysis:
+            return None
+
+        return analysis.state
+    finally:
+        ses.close()
+
+def get_analysis(analysis_id):
+    if not exists(analysis_id):
+        raise AnalysisError(
+            f"Analysis JSON file for {analysis_id} does not exist."
+        )
+
+    try:
+        return Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
+    except ValueError as e:
+        raise AnalysisError(f"Failed to read analysis JSON file. {e}")
+
+def get_filetree_fp(analysis_id):
+    treepath = AnalysisPaths.filetree(analysis_id)
+    if not os.path.isfile(treepath):
+        raise AnalysisError("Filetree JSON file does not exist")
+
+    return open(treepath, "r")
+
+def get_filetree_dict(analysis_id):
+    fp = get_filetree_fp(analysis_id)
+    try:
+        return json.load(fp)
+    except json.JSONDecodeError as e:
+        raise AnalysisError(
+            f"Failed to read filetree JSON. JSON decoding error: {e}"
+        )
+    finally:
+        fp.close()
+
+def list(limit=None):
+    ses = db.dbms.session()
+    try:
+        return ses.query(db.Analysis).limit(limit).order_by(
+            db.Analysis.created_on
+        ).all()
+    finally:
+        ses.close()
+
+def dictlist(limit=None):
+    return [a.to_dict() for a in list(limit)]

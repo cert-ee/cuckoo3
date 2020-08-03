@@ -531,11 +531,17 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
 
             # Stop reading the configuration if the missing key is
             # marked as required
-            if isinstance(loader, (TypeLoader, NestedDictionary)) \
-                    and loader.required:
+            if isinstance(loader, (TypeLoader, NestedDictionary)):
+                if not loader.required:
+                    continue
+
                 raise ConfigurationIncompleteError(
                     f"Missing required key {key}"
                 )
+
+            raise ConfigurationIncompleteError(
+                f"Missing configuration section: {key}"
+            )
 
         confval = conf_data_dict[key]
 

@@ -306,12 +306,10 @@ class StagerHelper:
     STAGER_BINARY = ""
     MONITOR_BINARY = ""
 
-    def __init__(self, agent, task, analysis, identification, result_ip,
-                 result_port, logger):
+    def __init__(self, agent, task, analysis, result_ip, result_port, logger):
         self.agent = agent
         self.task = task
         self.analysis = analysis
-        self.identification = identification
         self.result_ip = result_ip
         self.result_port = result_port
 
@@ -392,12 +390,12 @@ class TmStage(StagerHelper):
         })
 
     def prepare(self):
-        if self.identification.target.extrpath:
+        if self.analysis.category == "file" and self.analysis.target.extrpath:
             is_archive = True
-            target = self.identification.target.extrpath[-1]
+            target = self.analysis.target.extrpath[-1]
         else:
             is_archive = False
-            target = self.identification.target.filename
+            target = self.analysis.target.filename
 
         options = self.analysis.settings.options
         settings = self._build_settings(

@@ -2,21 +2,17 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import json
-import os
 import queue
-import shutil
 import socket
-import tempfile
 import threading
 import time
 
+from cuckoo.common import machines
 from cuckoo.common.config import cfg
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import TaskPaths, Paths
 from cuckoo.machineries import errors
-from cuckoo.machineries.helpers import MachineStates, Machine
 
 class MachineryManagerError(Exception):
     pass
@@ -25,10 +21,6 @@ class MachineDoesNotExistError(MachineryManagerError):
     pass
 
 log = CuckooGlobalLogger(__name__)
-
-# Machine object instances mapping to their machine name. 'machine tracker'
-# Is used to track if a machine is available.
-_machines = {}
 
 # This lock must be acquired when making any changes to the machines tracker
 # or any of its members.
@@ -49,21 +41,6 @@ def _clear_machines_updated():
     global _machines_updated
     _machines_updated = False
 
-def read_machines_dump(path):
-    loaded = {}
-    with open(path, "r") as fp:
-        machines = json.load(fp)
-
-    for name, machine_dict in machines.items():
-        machine = Machine.from_dict(machine_dict)
-        loaded[name] = machine
-
-    return loaded
-
-def set_machines_dump(dump):
-    global _machines
-    _machines = dump
-
 def load_machineries(machinery_classes, machine_states={}):
     """Creates instances of each given machinery class, initializes the
     instances, and loads their machines from their configuration files.
@@ -71,7 +48,7 @@ def load_machineries(machinery_classes, machine_states={}):
     machinery_classes: a list of imported machinery classes
     machine_states: (Optional) a name:machine_obj dict returned by
     read_machines_dump. Used to restore machine states from previous runs
-    to machines that are still used. See cuckoo.machineries.helpers.Machine
+    to machines that are still used. See cuckoo.common.machines.Machine
     for information about what states are restored.
     """
     for machinery_class in machinery_classes:
@@ -93,12 +70,15 @@ def load_machineries(machinery_classes, machine_states={}):
             )
 
         for machine in machinery.list_machines():
-            if machine.name in _machines:
+            try:
+                existing_machine = machines.get_by_name(machine.name)
                 raise MachineryManagerError(
                     f"Machine name {machine.name} of {machinery_class.name} "
                     f"is not unique. It already exists "
-                    f"in {_machines[machine.name].machinery.name}"
+                    f"in {existing_machine.machinery.name}"
                 )
+            except KeyError:
+                pass
 
             # Load state information from a machine obj loaded from a
             # machinestates dump of a previous run.
@@ -106,7 +86,7 @@ def load_machineries(machinery_classes, machine_states={}):
             if dumped_machine:
                 machine.load_stored_states(dumped_machine)
 
-            _machines[machine.name] = machine
+            machines.add_machine(machine)
             log.debug(
                 "Machinery loaded machine.",
                 machinery=machinery.name, machine=machine.name
@@ -114,127 +94,14 @@ def load_machineries(machinery_classes, machine_states={}):
 
         _machineries[machinery.name] = machinery
 
-    log.info(f"Loaded analysis machines", amount=len(_machines) )
+    log.info(f"Loaded analysis machines", amount=machines.count())
 
-def _dump_machines_info(path):
-    """Dump the json version of each loaded machine (_machines) to the given
-    path"""
-    dump = {}
-    for name, machine in _machines.items():
-        dump[name] = machine.to_dict()
-
-    # First write to a tmp file and after that perform a move to ensure the
-    # operation of replacing the machines json is atomic. This is required
-    # to prevent the machine info dump from ever being empty.
-    fd, tmppath = tempfile.mkstemp()
-    with os.fdopen(fd, "w") as fp:
-        json.dump(dump, fp)
-
-    shutil.move(tmppath, path)
-
-def find(platform="", os_version="", tags=set()):
-    """Find any machine that matches the given platform, version and
-    has the given tags."""
-    machines = list(_machines.values())
-    if not machines:
-        return None
-
-    if platform:
-        machines = find_platform(
-            machines, platform, os_version
-        )
-        if not machines:
-            return None
-
-    if tags:
-        machines = find_tags(machines, tags)
-        if not machines:
-            return None
-
-    return machines[0]
-
-def find_available(name="", platform="", os_version="", tags=set()):
-    """Find an available machine by name or platform, os_version, and tags.
-    return None if no available machine is found."""
-    if name:
-        machine = get_by_name(name)
-        if not machine.available:
-            return None
-
-        return machine
-
-    machines = get_available()
-    if not machines:
-        return None
-
-    if platform:
-        machines = find_platform(
-            machines, platform, os_version
-        )
-        if not machines:
-            return None
-
-    if tags:
-        machines = find_tags(machines, tags)
-        if not machines:
-            return None
-
-    return machines[0]
-
-def get_available():
-    """Return a list of all machines that are available for analysis tasks"""
-    available = []
-    for machine in _machines.values():
-        if machine.available:
-            available.append(machine)
-
-    return available
-
-def get_by_name(name):
-    """Return the machine that matches the machine name.
-    Raises MachineDoesNotExistError if the machine is not found."""
-    try:
-        return _machines[name]
-    except KeyError:
-        raise MachineDoesNotExistError(
-            f"Machine with name {name} does not exist."
-        )
-
-def find_platform(find_in, platform, os_version=""):
-    """Find all machines with the specified platform and version in the
-     list of machines given."""
-    matches = []
-    for machine in find_in:
-        if machine.platform == platform:
-            if os_version and machine.os_version != os_version:
-                continue
-
-            matches.append(machine)
-
-    return matches
-
-def find_tags(find_in, tags):
-    """Find all machines that have the specified tags in the list
-    of machines given. Tags must be a set."""
-    if not isinstance(tags, set):
-        if isinstance(tags, (list, tuple)):
-            tags = set(tags)
-
-        raise TypeError(f"tags must be a set of strings. Not {type(tags)}")
-
-    matches = []
-    for machine in find_in:
-        if tags.issubset(machine.tags):
-            matches.append(machine)
-
-    return matches
-
-def acquire_available(task_id, name="", platform="",
-                      os_version="", tags=set()):
+def acquire_available(task_id, name="", platform="", os_version="",
+                      tags=set()):
     """Find and lock a machine for task_id that matches the given name or
     platform, os_version, and has the given tags."""
     with _machines_lock:
-        machine = find_available(
+        machine = machines.find_available(
             name, platform, os_version, tags
         )
 
@@ -273,7 +140,7 @@ def _mark_disabled(machine, reason):
     """Mark the machine as disabled. Causing it to no longer be available.
     Should be used if machines reach an unexpected state."""
     machine.disable(reason)
-    _set_state(machine, MachineStates.ERROR)
+    _set_state(machine, machines.States.ERROR)
     _set_machines_updated()
 
 def _set_state(machine, state):
@@ -288,7 +155,7 @@ def _set_state(machine, state):
 def stop(machine):
     """Stop the given machine"""
     machine.machinery.stop(machine)
-    return MachineStates.POWEROFF, 60, None
+    return machines.States.POWEROFF, 60, None
 
 def acpi_stop(machine):
     """Stop the machine using an ACPI signal. Normal stop is called when the
@@ -296,17 +163,17 @@ def acpi_stop(machine):
     """
     machine.machinery.acpi_stop(machine)
     # Call the stop function if stop takes longer than the timeout.
-    return MachineStates.POWEROFF, 120, stop
+    return machines.States.POWEROFF, 120, stop
 
 def restore_start(machine):
     """Restore the machine to its configured snapshot and start the machine"""
     machine.machinery.restore_start(machine)
-    return MachineStates.RUNNING, 60, None
+    return machines.States.RUNNING, 60, None
 
 def norestore_start(machine):
     """Start the machine without restoring a snapshot"""
     machine.machinery.norestore_start(machine)
-    return MachineStates.RUNNING, 60, None
+    return machines.States.RUNNING, 60, None
 
 def dump_memory(machine):
     """Create a memory dump for the given running machine in the task folder
@@ -314,7 +181,7 @@ def dump_memory(machine):
     machine.machinery.dump_memory(
         machine, TaskPaths.memory_dump(machine.task_id)
     )
-    return MachineStates.RUNNING, 60, None
+    return machines.States.RUNNING, 60, None
 
 def machine_state(machine):
     """Return a normalized machine state of the given machine."""
@@ -405,7 +272,7 @@ class MachineryWorker(threading.Thread):
 
                     _set_state(work.machine, work.expected_state)
                     work.work_success()
-                elif state == MachineStates.ERROR:
+                elif state == machines.States.ERROR:
                     log.error(
                         "Machinery returned error state for machine. "
                         "Disabling machine.", machine=work.machine.name
@@ -728,7 +595,7 @@ class MachineryManager(UnixSocketServer):
 
         # If any machines were updated, make a json dump to disk.
         if _machines_updated:
-            _dump_machines_info(Paths.machinestates())
+            machines.dump_machines_info(Paths.machinestates())
             _clear_machines_updated()
 
     def handle_message(self, sock, msg):
@@ -748,12 +615,12 @@ class MachineryManager(UnixSocketServer):
             return
 
         try:
-            machine = get_by_name(machine_name)
-        except MachineDoesNotExistError:
+            machine = machines.get_by_name(machine_name)
+        except KeyError as e:
             # Send error if the machine does not exist.
             self.queue_response(
                 readerwriter,
-                _MachineryMessages.invalid_msg(reason="No such machine")
+                _MachineryMessages.invalid_msg(reason=str(e))
             )
             return
 

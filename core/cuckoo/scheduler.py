@@ -12,8 +12,10 @@ from cuckoo.common.log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+from cuckoo.common.machines import get_available
+
 from . import started
-from .machinery import acquire_available, get_available, unlock
+from .machinery import acquire_available, unlock
 
 class _TaskQueue:
     """Dummy-ish queue. Will be exchange later for a more fitting future-proof

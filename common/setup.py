@@ -40,6 +40,7 @@ setuptools.setup(
         "pyyaml",
         "jinja2",
         "requests",
-        "python-dateutil"
+        "python-dateutil",
+        "sflock"
     ]
 )

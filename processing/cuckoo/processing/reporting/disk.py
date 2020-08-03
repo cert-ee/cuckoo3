@@ -2,12 +2,11 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import json
 import os
 
 from ..abtracts import Reporter
 
-from cuckoo.common.strictcontainer import Identification
+from cuckoo.common.strictcontainer import Identification, Pre
 
 class JSONDump(Reporter):
 
@@ -16,7 +15,6 @@ class JSONDump(Reporter):
     def report_identification(self):
         dump_path = os.path.join(self.analysis_path, "identification.json")
         ident = self.results.get("identify", {})
-        target = self.results.get("selected", {})
         submitted = ident.get("submitted", {})
 
         info = {
@@ -38,34 +36,19 @@ class JSONDump(Reporter):
             Identification(**info).to_file(dump_path)
             return
 
-        if target:
-            selected = True
-        else:
-            selected = False
-            target = submitted
-
-        # If the submitted file is a container and the current target is not
-        # that most outer container. Set the hash of the submitted outer
-        # parent so it can be easily found in other stages.
-        parent = ""
-        if submitted["container"] and target["sha256"] != submitted["sha256"]:
-            parent = submitted["sha256"]
-
-        # Byte decoding until the new Sflock is finished. TODO
-        fname = target["filename"]
-        if isinstance(fname, bytes):
-            target["filename"] = fname.decode()
-
+        target = self.results.get("selected", {}).get("target", {})
+        selected = self.results.get("selected", {}).get("selected")
         info.update({
             "selected": selected,
             "target": target,
-            "ignored": self.results.get("ignored"),
-            "parent": parent
+            "ignored": self.results.get("ignored")
         })
 
         Identification(**info).to_file(dump_path)
 
     def report_pre_analysis(self):
         dump_path = os.path.join(self.analysis_path, "pre.json")
-        with open(dump_path, "w") as fp:
-            json.dump({"errors": self.errtracker.to_dict()}, fp, indent=1)
+        Pre(
+            target=self.results.get("target", {}),
+            category=self.analysis.category
+        ).to_file(dump_path)

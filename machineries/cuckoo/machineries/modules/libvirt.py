@@ -4,11 +4,11 @@
 
 import threading
 
+from cuckoo.common import machines
 from cuckoo.common.config import cfg
 
-from ..abstracts import Machinery
-from ..helpers import MachineStates
 from .. import errors
+from ..abstracts import Machinery
 
 try:
     import libvirt
@@ -76,13 +76,13 @@ statemapping = {
     # verify_dependencies method will cause it to notify about the missing
     # depenencies properly.
     # libvirt.VIR_DOMAIN_RUNNING
-    1: MachineStates.RUNNING,
+    1: machines.States.RUNNING,
     # libvirt.VIR_DOMAIN_PAUSED
-    3: MachineStates.PAUSED,
+    3: machines.States.PAUSED,
     # libvirt.VIR_DOMAIN_SHUTDOWN
-    4: MachineStates.STOPPING,
+    4: machines.States.STOPPING,
     # libvirt.VIR_DOMAIN_SHUTOFF
-    5: MachineStates.POWEROFF,
+    5: machines.States.POWEROFF,
 }
 
 class Libvirt(Machinery):
@@ -145,7 +145,7 @@ class Libvirt(Machinery):
     @LibvirtConn.inject_connection
     def restore_start(self, machine, conn):
         state = self.state(machine)
-        if state != MachineStates.POWEROFF:
+        if state != machines.States.POWEROFF:
             raise errors.MachineUnexpectedStateError(
                 f"Failed to start machine. Expected state 'poweroff'. "
                 f"Actual state: {state}"
@@ -168,7 +168,7 @@ class Libvirt(Machinery):
     @LibvirtConn.inject_connection
     def stop(self, machine, conn):
         state = self.state(machine)
-        if state == MachineStates.POWEROFF:
+        if state == machines.States.POWEROFF:
             raise errors.MachineStateReachedError(
                 f"Failed to stop machine. Machine already stopped. "
                 f"state: {state}"
@@ -186,7 +186,7 @@ class Libvirt(Machinery):
     @LibvirtConn.inject_connection
     def acpi_stop(self, machine, conn):
         state = self.state(machine)
-        if state == MachineStates.POWEROFF:
+        if state == machines.States.POWEROFF:
             raise errors.MachineStateReachedError(
                 f"Failed to send ACPI stop to machine. Machine already "
                 f"stopped. State: {state}"
@@ -229,7 +229,7 @@ class Libvirt(Machinery):
             libvirt.VIR_DOMAIN_PAUSED_STARTING_UP
         )
 
-        if normalized_state == MachineStates.PAUSED \
+        if normalized_state == machines.States.PAUSED \
                 and reason not in allowed_pauses:
             err = f"Unexpected machine paused state"
             machine.add_error(err)

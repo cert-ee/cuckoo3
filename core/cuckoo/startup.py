@@ -122,11 +122,11 @@ def create_configurations():
             config.render_config(template_path, typeloaders, config_path)
 
 def start_machinerymanager():
-    from .machinery import (
-        MachineryManager, load_machineries, read_machines_dump,
-        MachineryManagerError, shutdown_all
-    )
+    from cuckoo.common.machines import read_machines_dump
     from cuckoo.machineries.abstracts import Machinery
+    from .machinery import (
+        MachineryManager, load_machineries, MachineryManagerError, shutdown_all
+    )
 
     all_machineries = enumerate_plugins(
         "cuckoo.machineries.modules", globals(), Machinery
@@ -171,8 +171,8 @@ def start_machinerymanager():
     manager_th.start()
 
 def init_database():
-    from .db import dbms
-    dbms.initialize(Paths.dbfile())
+    from cuckoo.common.db import dbms
+    dbms.initialize(f"sqlite:///{Paths.dbfile()}")
     shutdown.register_shutdown(dbms.cleanup, order=998)
 
 def start_processing_handler():
@@ -283,14 +283,10 @@ def start_taskrunner():
         time.sleep(0.5)
 
 def start_scheduler():
+    from cuckoo.common import task
     from .scheduler import task_queue, Scheduler
-    from .db import dbms, Task, TaskStates
 
-    ses = dbms.session()
-    try:
-        pending = ses.query(Task).filter_by(state=TaskStates.PENDING)
-    finally:
-        ses.close()
+    pending = task.db_find_state(task.States.PENDING)
 
     if pending:
         task_queue.queue_many(pending)

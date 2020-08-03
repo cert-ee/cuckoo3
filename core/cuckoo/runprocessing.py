@@ -102,17 +102,18 @@ class PluginWorker(object):
             results = self.run_work_plugins(processing_instances)
         except CancelProcessing as e:
             self.analysislog.error("Processing cancelled", error=e)
-            results = {}
-
-        self.run_cleanup(processing_instances)
+            return
+        finally:
+            self.run_cleanup(processing_instances)
 
         reporting_instances = self.get_plugin_instances(self.reporting_plugins)
         try:
             self.run_reporting_plugins(reporting_instances, results)
         except CancelReporting as e:
             self.analysislog.error("Reporting cancelled", error=e)
-
-        self.run_cleanup(reporting_instances)
+            return
+        finally:
+            self.run_cleanup(reporting_instances)
 
     def start(self):
         try:
@@ -152,6 +153,7 @@ class PluginWorker(object):
 
             except Exception as e:
                 err = f"Failed to run plugin {plugin_instance}. Error: {e}"
+                self.analysislog.exception(err)
                 self.errtracker.fatal_exception(err)
                 raise CancelProcessing(err).with_traceback(e.__traceback__)
 
