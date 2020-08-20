@@ -10,7 +10,7 @@ from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import AnalysisPaths
 from .strictcontainer import (
-    Settings as _Settings, Analysis, Identification, Pre, Errors
+    Settings as _Settings, Analysis, Errors
 )
 
 log = CuckooGlobalLogger(__name__)
@@ -265,3 +265,14 @@ def list(limit=None):
 
 def dictlist(limit=None):
     return [a.to_dict() for a in list(limit)]
+
+def get_fatal_errors(analysis_id):
+    analysis = get_analysis(analysis_id)
+    if not analysis.errors:
+        return []
+
+    fatalerrs = []
+    for entry in analysis.errors.fatal:
+        fatalerrs.append(entry["error"])
+
+    return fatalerrs
