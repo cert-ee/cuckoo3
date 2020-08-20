@@ -13,8 +13,13 @@ register_converter(converters.AnalysisId, "analysis_id")
 
 urlpatterns = [
     path(
-        "<analysis_id:analysis_id>/settings", csrf_exempt(views.Settings.as_view()),
+        "<analysis_id:analysis_id>/settings",
+        csrf_exempt(views.Settings.as_view()),
         name="Analyses/settings",
     ),
-    path("<analysis_id:analysis_id>", views.Analysis.as_view())
+    path("<analysis_id:analysis_id>", views.Analysis.as_view()),
+    path(
+        "<analysis_id:analysis_id>/manualstatus",
+        views.ReadyForManual.as_view()
+    )
 ]
