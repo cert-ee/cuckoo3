@@ -126,6 +126,10 @@ h6 + p {
   font-size: 0.8em;
 }
 
+.has-text-wrapped {
+  word-break: break-word;
+}
+
 .view {
   min-height: 100%;
   margin-bottom: -14rem;
@@ -326,6 +330,10 @@ h6 + p {
 .columns.is-gapless > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tabbar > .column, .is-gapless.tabbar > .tabbar-link {
   margin-left: 0;
   margin-right: 0;
+}
+.columns.has-tiny-gaps > .column, .columns.has-tiny-gaps > .tabbar-link, .has-tiny-gaps.tabbar > .column, .has-tiny-gaps.tabbar > .tabbar-link {
+  margin-left: 0.375rem;
+  margin-right: 0.375rem;
 }
 @media screen and (max-width: 40rem) {
   .columns, .tabbar {
@@ -651,6 +659,9 @@ input[type=reset].button,
 }
 .list.is-tree li.is-parent > input[type=checkbox].list-collapse {
   display: none;
+}
+.list.is-tree li.is-parent > label > .columns, .list.is-tree li.is-parent > label > .tabbar {
+  display: inline-flex;
 }
 .list.is-tree li.is-parent > label:before {
   content: "";
@@ -982,6 +993,20 @@ input[type=reset].button,
 
 .has-text-small {
   font-size: 0.8em;
+}
+
+.is-disabled,
+input[disabled],
+select[disabled],
+textarea[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.is-disabled:hover,
+input[disabled]:hover,
+select[disabled]:hover,
+textarea[disabled]:hover {
+  cursor: not-allowed;
 }
 
 /*# sourceMappingURL=ui.css.map */

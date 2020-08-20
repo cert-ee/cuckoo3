@@ -2,39 +2,51 @@
 <ul class="list is-tree" data-enhance>
   {% set uniq = namespace(value=0) %}
   {%- for child in unpacked.children recursive %}
+
     {% set uniq.value = uniq.value + 1 %}
-    <li {% if child.type in ["container", "directory"] %}class="is-parent"{% endif %}>
+    {% set selectable = child.selectable %}
+    {% set selected = child.selected %}
+    {% set isParent = child.type in ["container", "directory"] %}
+    {% set isFile = child.type in ["file", "container"] %}
+
+    <li {% if isParent  %}class="is-parent"{% endif %}>
       <input type="checkbox" id="{{ uniq.value }}-container" class="list-collapse" />
-
       {% if child.type == "directory" %}
-            <label for="{{ uniq.value }}-container">
+        <label for="{{ uniq.value }}-container">
       {% elif child.type == "container" %}
-            <label for="{{ uniq.value }}-container" title="{{ child.finger.magic_human }}">
+        <label for="{{ uniq.value }}-container" title="{{ child.finger.magic_human }}">
       {% else %}
-            <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
+        <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
       {% endif %}
-
-        {% if child.type != "directory" %}
-          <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} />
-        {% endif %}
-        <span class="icon">
-          {% if child.type == 'container' %}
-            <i class="fas fa-file-archive"></i>
-          {% elif child.type == 'directory' %}
-            <i class="fas fa-folder"></i>
-          {% else %}
-            <i class="fas fa-file"></i>
+        <div class="columns is-divided has-tiny-gaps">
+          {% if child.type != "directory" %}
+            <div class="column is-auto">
+              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if selected %}checked{% endif %} {% if not selectable %}disabled{% endif %} />
+            </div>
           {% endif %}
-        </span>
-        {% if child.type in ["directory", "container"] %}
-          <strong>{{ child.filename}}</strong>
-        {% else %}
-          {{ child.filename }}
-        {% endif %}
-        {% if child.type in ["file", "container"] %}
-          {{ child.size|filesizeformat }}
-          {{ child.finger.magic_human }}
-        {% endif %}
+          <div class="column is-auto">
+            {% if child.type == 'container' %}
+              <i class="fas fa-file-archive"></i>
+            {% elif child.type == 'directory' %}
+              <i class="fas fa-folder"></i>
+            {% else %}
+              <i class="fas fa-file"></i>
+            {% endif %}
+          </div>
+          <div class="column">
+            {% if isParent %}
+              <strong class="has-text-wrapped">{{ child.filename}}</strong>
+            {% else %}
+              <span class="has-text-wrapped">{{ child.filename }}</span>
+            {% endif %}
+            {% if isFile %}
+              <ul class="list is-horizontal has-text-small has-margin-top no-margin-left no-padding-left">
+                <li>{{ child.size|filesizeformat }}</li>
+                <li>{{ child.finger.magic_human }}</li>
+              </ul>
+            {% endif %}
+          </div>
+        </div>
       </label>
       {% if child.children|length > 0 %}
         <ul>
@@ -42,5 +54,6 @@
         </ul>
       {% endif %}
     </li>
+
   {%- endfor %}
 </ul>

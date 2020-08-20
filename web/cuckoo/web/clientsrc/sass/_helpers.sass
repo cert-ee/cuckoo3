@@ -88,3 +88,12 @@
 
 .has-text-small
   font-size: .8em
+
+.is-disabled,
+input[disabled],
+select[disabled],
+textarea[disabled]
+  opacity: .5
+  pointer-events: none
+  &:hover
+    cursor: not-allowed
