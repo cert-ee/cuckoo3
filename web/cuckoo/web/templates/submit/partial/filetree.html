@@ -9,7 +9,7 @@
     {% set isParent = child.type in ["container", "directory"] %}
     {% set isFile = child.type in ["file", "container"] %}
 
-    <li {% if isParent  %}class="is-parent"{% endif %}>
+    <li class="{% if isParent  %}is-parent{% endif %}">
       <input type="checkbox" id="{{ uniq.value }}-container" class="list-collapse" />
       {% if child.type == "directory" %}
         <label for="{{ uniq.value }}-container">
@@ -18,7 +18,7 @@
       {% else %}
         <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
       {% endif %}
-        <div class="columns is-divided has-tiny-gaps">
+        <div class="columns is-divided has-tiny-gaps {% if not selectable and not isParent %}is-disabled{% endif %}">
           {% if child.type != "directory" %}
             <div class="column is-auto">
               <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if selected %}checked{% endif %} {% if not selectable %}disabled{% endif %} />
