@@ -22,7 +22,7 @@ class SubmitFile(View):
         return render(request, template_name="submit/index.html")
 
     def post(self, request):
-        uploaded = request.FILES.get("demo_file")
+        uploaded = request.FILES.get("file")
         if not uploaded:
             return HttpResponseBadRequest()
 
