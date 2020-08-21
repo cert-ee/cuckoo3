@@ -216,3 +216,37 @@ def submission(target, platform, timeout, priority):
             submit.notify()
         except submit.SubmissionError as e:
             print_warning(e)
+
+
+@main.group(invoke_without_command=True)
+@click.option("-h", "--host", default="localhost", help="Host to bind the development web interface server on")
+@click.option("-p", "--port", default=8000, help="Port to bind the development web interface server on")
+@click.pass_context
+def web(ctx, host, port):
+    if ctx.invoked_subcommand:
+        return
+
+    from cuckoo.web.web.startup import init_web, start_web
+    init_web(
+        ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("web.log")
+    )
+    start_web(host, port)
+
+@web.command("djangocommand")
+@click.argument("django_args", nargs=-1)
+@click.pass_context
+def djangocommand(ctx, django_args):
+    """Arguments for this command are passed to Django."""
+    from cuckoo.web.web.startup import(
+        djangocommands, set_path_settings, init_web
+    )
+
+    if "runserver" in django_args:
+        init_web(
+            ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
+            logfile=Paths.log("web.log")
+        )
+    else:
+        set_path_settings()
+
+    djangocommands(*django_args)

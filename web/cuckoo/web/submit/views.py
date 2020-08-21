@@ -3,19 +3,12 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 from cuckoo.common import submit, analyses
-from cuckoo.common.db import dbms
-from cuckoo.common.storage import cuckoocwd, Paths
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
     HttpResponseNotFound
 )
 from django.shortcuts import render, redirect
 from django.views import View
-
-cuckoocwd.set(cuckoocwd.DEFAULT)
-
-submit.load_machines_dump()
-dbms.initialize(f"sqlite:///{Paths.dbfile()}")
 
 class SubmitFile(View):
     def get(self, request):
