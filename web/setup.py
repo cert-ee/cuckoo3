@@ -38,6 +38,7 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         "Cuckoo-common==0.1.0",
-        "django"
+        "django",
+        "django-rest-framework"
     ],
 )
