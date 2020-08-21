@@ -7,3 +7,9 @@ class CancelProcessing(Exception):
 
 class CancelReporting(Exception):
     pass
+
+class PluginError(Exception):
+    pass
+
+class PluginWorkerError(Exception):
+    pass

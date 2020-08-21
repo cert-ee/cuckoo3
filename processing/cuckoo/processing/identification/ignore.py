@@ -18,7 +18,7 @@ class Ignore(Processor):
         matchers = [self.match_exts, self.match_sha256]
         ignored = []
 
-        selection = self.results.get("identify", {}).get("selection", [])
+        selection = self.ctx.result.get("identify", {}).get("selection", [])
         for f in selection[:]:
             for matcher in matchers:
                 match, reason = matcher(f)

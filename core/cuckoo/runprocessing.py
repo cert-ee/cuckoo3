@@ -2,29 +2,30 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import logging
 import multiprocessing
 import os
 import select
 import threading
 import traceback
-import logging
 
+from cuckoo.common.config import MissingConfigurationFileError
 from cuckoo.common.ipc import (
     UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
 )
-from cuckoo.common.packages import enumerate_plugins
-from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, cuckoocwd
-from cuckoo.common.strictcontainer import Analysis, Identification
-from cuckoo.common.config import MissingConfigurationFileError
-from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.log import (
-    CuckooGlobalLogger, AnalysisLogger, get_global_loglevel
+    CuckooGlobalLogger, get_global_loglevel
 )
+from cuckoo.common.packages import enumerate_plugins
+from cuckoo.common.startup import init_global_logging, load_configurations
+from cuckoo.common.storage import Paths, cuckoocwd
+from cuckoo.common import shutdown
 from cuckoo.processing import abtracts
-from cuckoo.processing.errors import CancelProcessing, CancelReporting
+from cuckoo.processing.worker import (
+    PreProcessingRunner, AnalysisContext, TaskContext, PostProcessingRunner
+)
 
-from . import started, shutdown
-from .startup import init_global_logging, load_configurations
+from . import started
 
 log = CuckooGlobalLogger(__name__)
 
@@ -42,183 +43,31 @@ class States(object):
     WORKER_FAIL = "worker_failed"
     SETUP_FAIL = "setup_failed"
 
-class PluginWorker(object):
-
-    def __init__(self, worktype, analysis_id, analysis_path, work_plugins,
-                 reporting_plugins, taskid=None, binary_path=None):
-        self.worktype = worktype
-        self.analysis_id = analysis_id
-        self.analysis_path = analysis_path
-        self.work_plugins = work_plugins
-        self.reporting_plugins = reporting_plugins
-        self.taskid = taskid
-        self.binary_path = binary_path
-
-        self.errtracker = ErrorTracker()
-        self.analysislog = AnalysisLogger(__name__, self.analysis_id)
-
-    def get_plugin_instances(self, classes):
-        # TODO: add configurations and only load enabled plugins
-        # The plugin system should probably have its own structure from
-        # which we can generate configuration files. This ends the requirement
-        # for Cuckoo core to ship *all* config templates.
-        # TODO the ability to not run or run a module depending on the target
-        # category.
-
-        analysis_info = Analysis.from_file(
-            os.path.join(self.analysis_path, "analysis.json")
-        )
-
-        identification = {}
-        ident_path = os.path.join(self.analysis_path, "identification.json")
-        if os.path.exists(ident_path):
-            identification = Identification.from_file(ident_path)
-
-        instances = []
-        for plugin_class in classes:
-            try:
-                instance = plugin_class(
-                    analysis=analysis_info, analysis_path=self.analysis_path,
-                    logger=self.analysislog,
-                    identification=identification, task_id=self.taskid,
-                    submitted_file=self.binary_path
-                )
-                instance.init()
-            except Exception as e:
-                log.exception(
-                    "Failed to initialize plugin.", plugin=plugin_class,
-                    error=e
-                )
-                continue
-
-            instances.append(instance)
-
-        instances.sort(key=lambda plugin: plugin.ORDER)
-        return instances
-
-    def _start_steps(self):
-        processing_instances = self.get_plugin_instances(self.work_plugins)
-        try:
-            results = self.run_work_plugins(processing_instances)
-        except CancelProcessing as e:
-            self.analysislog.error("Processing cancelled", error=e)
-            return
-        finally:
-            self.run_cleanup(processing_instances)
-
-        reporting_instances = self.get_plugin_instances(self.reporting_plugins)
-        try:
-            self.run_reporting_plugins(reporting_instances, results)
-        except CancelReporting as e:
-            self.analysislog.error("Reporting cancelled", error=e)
-            return
-        finally:
-            self.run_cleanup(reporting_instances)
-
-    def start(self):
-        try:
-            self._start_steps()
-        finally:
-            if not self.errtracker.has_errors():
-                return
-
-            if self.taskid:
-                path = TaskPaths.processingerr_json(self.taskid)
-            else:
-                path = AnalysisPaths.processingerr_json(self.analysis_id)
-
-            self.errtracker.to_file(path)
-
-    def run_work_plugins(self, instances):
-        results = {}
-
-        # Run all plugin instances.
-        for plugin_instance in instances:
-            name = plugin_instance.__class__.__name__
-
-            plugin_instance.set_errortracker(self.errtracker)
-            plugin_instance.set_results(results)
-
-            self.analysislog.debug(
-                "Running processing plugin", plugin=name, stage=self.worktype
-            )
-            try:
-                data = plugin_instance.start()
-            except CancelProcessing as e:
-                raise CancelProcessing(
-                    f"Plugin '{name}' cancelled processing for "
-                    f"{'task' if self.taskid else 'analysis'} "
-                    f"{self.taskid if self.taskid else self.analysis_id}. {e}"
-                )
-
-            except Exception as e:
-                err = f"Failed to run plugin {plugin_instance}. Error: {e}"
-                self.analysislog.exception(err)
-                self.errtracker.fatal_exception(err)
-                raise CancelProcessing(err).with_traceback(e.__traceback__)
-
-            if data is not None and plugin_instance.KEY:
-                if plugin_instance.KEY in results:
-                    raise PluginWorkerError(
-                        f"Duplicate results key {plugin_instance.KEY} used by "
-                        f"plugin {name}"
-                    )
-
-                results[plugin_instance.KEY] = data
-
-        return results
-
-    def run_cleanup(self, plugin_instances):
-        # Give plugins the chance to perform cleanup
-        for plugin_instance in plugin_instances:
-            try:
-                plugin_instance.cleanup()
-            except Exception as e:
-                self.analysislog.exception(
-                    "Cleanup failure for plugin.", plugin=plugin_instance,
-                    error=e
-                )
-
-    def run_reporting_plugins(self, instances, results):
-        # Run all plugin instances.
-        for plugin_instance in instances:
-            plugin_instance.set_errortracker(self.errtracker)
-            plugin_instance.set_results(results)
-            self.run_reporting_plugin(plugin_instance)
-
-    def run_reporting_plugin(self, plugin_instance):
-        report_stage_handler = plugin_instance.handlers.get(self.worktype)
-        if not report_stage_handler:
-            return
-
-        self.analysislog.debug(
-            "Running reporting plugin.",
-            plugin=plugin_instance.__class__.__name__, stage=self.worktype
-        )
-        try:
-            report_stage_handler()
-        except Exception as e:
-            err = f"Failure in reporting {self.worktype} " \
-                  f"stage {report_stage_handler}. Error: {e}"
-            log.exception(
-                "Reporting plugin failure.", plugin=plugin_instance,
-                stage=self.worktype, error=e
-            )
-            self.errtracker.fatal_exception(err)
-            raise CancelReporting(err).with_traceback(e.__traceback__)
-
-    def cleanup(self):
-        if self.analysislog:
-            self.analysislog.close()
-
-    def __del__(self):
-        self.cleanup()
-
 
 class WorkReceiver(UnixSocketServer):
 
     PLUGIN_BASEPATH = "cuckoo.processing"
     REPORTING_PLUGIN_PATH = "cuckoo.processing.reporting"
+
+    PLUGINS = {
+        "identification": {
+            "processing": (
+                "cuckoo.processing.identification", abtracts.Processor
+            ),
+            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+        },
+        "pre": {
+            "processing": ("cuckoo.processing.pre", abtracts.Processor),
+            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+        },
+        "post": {
+            "eventconsuming": (
+                "cuckoo.processing.post.eventconsumer", abtracts.EventConsumer
+            ),
+            "processing": ("cuckoo.processing.post", abtracts.Processor),
+            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+        }
+    }
 
     def __init__(self, sockpath, worktype, name, cuckoocwd,
                  loglevel=logging.DEBUG):
@@ -231,6 +80,8 @@ class WorkReceiver(UnixSocketServer):
         self.work_plugins = []
         self.reporting_plugins = []
         self.state = ""
+
+        self.plugin_classes = {}
 
         super().__init__(sockpath)
 
@@ -248,7 +99,8 @@ class WorkReceiver(UnixSocketServer):
 
         cuckoocwd.set(self.cuckoocwd)
         init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
+            warningsonly=["elasticsearch"]
         )
 
         log.debug("Loading configuration files", worker=self.name)
@@ -259,7 +111,6 @@ class WorkReceiver(UnixSocketServer):
                 f"Missing configuration file.", error=e, includetrace=False
             )
 
-        self.initialize_plugins()
         self.create_socket(backlog=1)
         self.start_accepting()
 
@@ -267,37 +118,36 @@ class WorkReceiver(UnixSocketServer):
         self.reader.send_json_message(message_dict)
 
     def initialize_plugins(self):
-        try:
-            work = enumerate_plugins(
-                f"{self.PLUGIN_BASEPATH}.{self.worktype}", globals(),
-                abtracts.Processor
-            )
-        except ImportError as e:
-            log.error(
-                "Failed to import processing plugins for worker",
-                worker=self.name, error=e
-            )
-            return False
+        plugins = self.PLUGINS.get(self.worktype)
 
-        try:
-            reporting = enumerate_plugins(
-                self.REPORTING_PLUGIN_PATH, globals(), abtracts.Reporter
-            )
-        except ImportError as e:
-            log.error(
-                "Failed to import reporting plugins for worker",
-                worker=self.name, error=e
-            )
-            return False
+        for plugintype, path_abstract in plugins.items():
+            # Import plugins for the stage from path set in PLUGINS. The value
+            # for each key in a stage must be a
+            # tuple(path.to.import, Abstract class of classes to import)
 
-        for plugin_class in work:
-            plugin_class.init_once()
+            path, abstract = path_abstract
+            try:
+                plugin_classes = enumerate_plugins(path, globals(), abstract)
+            except ImportError as e:
+                log.error(
+                    "Failed to import plugins for worker", worker=self.name,
+                    importpath=path, abstractclass=abstract, error=e
+                )
+                return False
 
-        for plugin_class in reporting:
-            plugin_class.init_once()
+            for plugin_class in plugin_classes:
+                try:
+                    plugin_class.init_once()
+                except Exception as e:
+                    log.exception(
+                        "Failed to initialize plugin class",
+                        plugin_class=plugin_class, error=e
+                    )
+                    return False
 
-        self.work_plugins = work
-        self.reporting_plugins = reporting
+            stage_classes = self.plugin_classes.setdefault(self.worktype, {})
+            plugintype_classes = stage_classes.setdefault(plugintype, [])
+            plugintype_classes.extend(plugin_classes)
 
         return True
 
@@ -318,23 +168,58 @@ class WorkReceiver(UnixSocketServer):
         else:
             self.update_state(States.SETUP_FAIL)
 
+    def _make_task_processor(self, analysis_id, task_id):
+        taskctx = TaskContext(analysis_id, task_id)
+
+        event_consumers = self.plugin_classes[self.worktype]["eventconsuming"]
+        processing_classes = self.plugin_classes[self.worktype]["processing"]
+        reporting_classes = self.plugin_classes[self.worktype]["reporting"]
+        runner = PostProcessingRunner(
+            taskctx, event_consumer_classes=event_consumers,
+            processing_classes=processing_classes,
+            reporting_classes=reporting_classes
+        )
+        return taskctx, runner
+
+    def _make_analysis_processor(self, analysis_id):
+        analysisctx = AnalysisContext(self.worktype, analysis_id)
+
+        processing_classes = self.plugin_classes[self.worktype]["processing"]
+        reporting_classes = self.plugin_classes[self.worktype]["reporting"]
+        runner = PreProcessingRunner(
+            analysisctx, processing_classes=processing_classes,
+            reporting_classes=reporting_classes
+         )
+        return analysisctx, runner
+
     def handle_message(self, sock, m):
         try:
-            w = PluginWorker(
-                self.worktype, m["analysis"], m["analysis_path"],
-                self.work_plugins, self.reporting_plugins,
-                m.get("task_id"), m.get("binary_path")
-            )
-            log.info("Starting work", worker=self.name, work=w.analysis_id)
-            try:
-                w.start()
-            finally:
-                w.cleanup()
-
-            if w.errtracker.has_fatal():
-                self.update_state(States.WORK_FAIL)
+            if "analysis_id" in m:
+                if "task_id" in m:
+                    processing_ctx, runner = self._make_task_processor(
+                        m["analysis_id"], m["task_id"]
+                    )
+                else:
+                    processing_ctx, runner = self._make_analysis_processor(
+                        m["analysis_id"]
+                    )
             else:
+                self.send_msg(
+                    {"error": "Missing key 'analysis_id' or 'task_id'"}
+                )
+                self.untrack(sock)
+                return
+        except (ValueError, FileNotFoundError) as e:
+            self.update_state(States.WORK_FAIL)
+            return
+
+        try:
+            runner.start()
+
+            if processing_ctx.completed:
                 self.update_state(States.FINISHED)
+            else:
+                self.update_state(States.WORK_FAIL)
         except Exception as e:
             log.exception("Worker fail", worker=self.name, error=e)
             self.update_state(
@@ -343,15 +228,43 @@ class WorkReceiver(UnixSocketServer):
                     "error": str(e)
                 }
             )
+        finally:
+            processing_ctx.close()
+            del runner
+            del processing_ctx
 
-        del w
+class _ProcessingJob:
+
+    def __init__(self, worktype, analysis_id, task_id=None):
+        self.worktype = worktype
+        self.analysis_id = analysis_id
+        self.task_id = task_id
+
+    def __repr__(self):
+        s = f"<Worktype={self.worktype}, analysis_id={self.analysis_id}"
+        if self.task_id:
+            s += f", task_id={self.task_id}"
+        return s + ">"
+
+    def to_dict(self):
+        d = {
+            "analysis_id": self.analysis_id,
+            "worktype": self.worktype,
+        }
+
+        if self.task_id:
+            d.update({
+                "task_id": self.task_id
+            })
+
+        return d
 
 class ProcessingWorkerHandler(threading.Thread):
 
     MAX_WORKERS = {
         "identification": 2,
         "pre": 2,
-        "behavior": 0
+        "post": 2
     }
 
     def __init__(self):
@@ -364,19 +277,23 @@ class ProcessingWorkerHandler(threading.Thread):
         self.queues = {
             "identification": [],
             "pre": [],
-            "behavior": []
+            "post": []
         }
 
     def identify(self, analysis_id):
-        self.queues["identification"].append(analysis_id)
+        self.queues["identification"].append(_ProcessingJob(
+            "identification", analysis_id
+        ))
 
     def pre_analysis(self, analysis_id):
-        self.queues["pre"].append(analysis_id)
+        self.queues["pre"].append(_ProcessingJob(
+            "pre", analysis_id
+        ))
 
-    def behavioral_analysis(self, analysis_id):
-        # TODO supply task id, not analysis id. Do when we start performing
-        # post analysis processing
-        self.queues["behavior"].append(analysis_id)
+    def post_analysis(self, analysis_id, task_id):
+        self.queues["post"].append(_ProcessingJob(
+            "post", analysis_id, task_id
+        ))
 
     def run(self):
         log.debug("Starting processing workers")
@@ -555,22 +472,22 @@ class ProcessingWorkerHandler(threading.Thread):
             # TODO: Depending on what the fail is, we might want to kill and
             # restart the worker?
             log.error(
-                "Unhandled exception in worker.", workername=worker["name"],
+                "Unhandled exception in worker", workername=worker["name"],
                 error=msg.get("error", ""), traceback=msg.get("traceback", "")
             )
 
     def controller_workdone(self, worker):
         started.state_controller.work_done(
             worktype=worker["worktype"],
-            analysis_id=worker["job"]["analysis_id"],
-            task_id=worker["job"].get("task_id")
+            analysis_id=worker["job"].analysis_id,
+            task_id=worker["job"].task_id
         )
 
     def controller_workfail(self, worker):
         started.state_controller.work_failed(
             worktype=worker["worktype"],
-            analysis_id=worker["job"]["analysis_id"],
-            task_id=worker["job"].get("task_id")
+            analysis_id=worker["job"].analysis_id,
+            task_id=worker["job"].task_id
         )
 
     def available_workers(self):
@@ -587,22 +504,18 @@ class ProcessingWorkerHandler(threading.Thread):
             if not queue:
                 continue
 
-            analysis_id = queue.pop(0)
-            self.assign_worker(worker, analysis_id)
+            processing_job = queue.pop(0)
+            self.assign_worker(worker, processing_job)
 
-    def assign_worker(self, worker, analysis_id):
+    def assign_worker(self, worker, job):
         log.debug(
             "Assigning job to worker", workername=worker["name"],
-            job=analysis_id
+            job=job
         )
 
-        worker["comm"].send_json_message({
-            "analysis": analysis_id,
-            "analysis_path": Paths.analysis(analysis_id),
-            "binary_path": AnalysisPaths.submitted_file(analysis_id)
-        })
+        worker["comm"].send_json_message(job.to_dict())
 
-        worker["job"] = {"analysis_id": analysis_id}
+        worker["job"] = job
         self.set_worker_state(States.WORKING, worker)
 
     def handle_workers(self):
