@@ -16,8 +16,8 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path("", include("dashboard.urls")),
-    path("reports/", include("reports.urls")),
-    path("submit/", include("submit.urls")),
-    path("api/", include("uiapi.urls")),
+    path("", include("cuckoo.web.dashboard.urls")),
+    path("reports/", include("cuckoo.web.reports.urls")),
+    path("submit/", include("cuckoo.web.submit.urls")),
+    path("api/", include("cuckoo.web.uiapi.urls")),
 ]

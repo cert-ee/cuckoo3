@@ -9,7 +9,7 @@ import logging
 
 from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common.log import (
-    exit_error, print_info, print_error, print_warning, CuckooGlobalLogger
+    exit_error, print_info, print_error, print_warning
 )
 
 @click.group(invoke_without_command=True)
@@ -49,76 +49,42 @@ def main(ctx, cwd, debug, quiet):
             "and stagers from a Cuckoo monitor zip."
         )
 
+    if quiet:
+        ctx.loglevel = logging.WARNING
+    elif debug:
+        ctx.loglevel = logging.DEBUG
+    else:
+        ctx.loglevel = logging.INFO
+
     if ctx.invoked_subcommand:
         return
 
-    from .startup import StartupError, init_global_logging
-    from .shutdown import register_shutdown, call_registered_shutdowns
+    from cuckoo.common.startup import StartupError
+    from cuckoo.common.shutdown import (
+        register_shutdown, call_registered_shutdowns
+    )
+    from .startup import start_cuckoo
+
 
     def _stopmsg():
         print("Stopping Cuckoo..")
 
     register_shutdown(_stopmsg, order=1)
 
-
-    if quiet:
-        level = logging.WARNING
-    elif debug:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
-
-    # Initialize globing logging to cuckoo.log
-    init_global_logging(level, Paths.log("cuckoo.log"))
-
     try:
-        start_cuckoo()
+        start_cuckoo(ctx.loglevel)
     except StartupError as e:
         exit_error(f"Failure during Cuckoo startup: {e}")
     finally:
         call_registered_shutdowns()
-
-def start_cuckoo():
-    from multiprocessing import set_start_method
-    set_start_method("spawn")
-
-    from cuckoo.common.config import MissingConfigurationFileError
-    from .startup import (
-        load_configurations, start_machinerymanager, init_database,
-        start_processing_handler, start_statecontroller, start_resultserver,
-        start_taskrunner, start_scheduler
-    )
-
-    log = CuckooGlobalLogger(__name__)
-
-    log.info(f"Starting Cuckoo.", cwd=cuckoocwd.root)
-    log.info("Loading configurations")
-    try:
-        load_configurations()
-    except MissingConfigurationFileError as e:
-        log.fatal_error(f"Missing configuration file: {e}", includetrace=False)
-
-    log.info("Starting resultserver")
-    start_resultserver()
-    log.info("Loading machineries and starting machinery manager")
-    start_machinerymanager()
-    log.info("Initializing database")
-    init_database()
-    log.info("Starting processing handler and workers")
-    start_processing_handler()
-    log.info("Starting task runner")
-    start_taskrunner()
-    log.info("Starting state controller")
-    start_statecontroller()
-    log.info("Starting scheduler")
-    start_scheduler()
 
 @main.command("createcwd")
 @click.option("--regen-configs", is_flag=True)
 @click.pass_context
 def create_cwd(ctx, regen_configs):
     """Create the specified Cuckoo CWD"""
-    from .startup import create_configurations, StartupError
+    from cuckoo.common.startup import StartupError
+    from cuckoo.common.startup import create_configurations
 
     cwd_path = ctx.parent.cwd_path
     if os.path.isdir(ctx.parent.cwd_path):
@@ -175,7 +141,7 @@ def machine():
 def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
                 interface, tags):
     """Add a machine to a machinery configuration file."""
-    from cuckoo.startup import add_machine, StartupError
+    from .startup import add_machine, StartupError
     try:
         add_machine(
             machinery, name=name, label=label, ip=ip, platform=platform,
@@ -250,3 +216,37 @@ def submission(target, platform, timeout, priority):
             submit.notify()
         except submit.SubmissionError as e:
             print_warning(e)
+
+
+@main.group(invoke_without_command=True)
+@click.option("-h", "--host", default="localhost", help="Host to bind the development web interface server on")
+@click.option("-p", "--port", default=8000, help="Port to bind the development web interface server on")
+@click.pass_context
+def web(ctx, host, port):
+    if ctx.invoked_subcommand:
+        return
+
+    from cuckoo.web.web.startup import init_web, start_web
+    init_web(
+        ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("web.log")
+    )
+    start_web(host, port)
+
+@web.command("djangocommand")
+@click.argument("django_args", nargs=-1)
+@click.pass_context
+def djangocommand(ctx, django_args):
+    """Arguments for this command are passed to Django."""
+    from cuckoo.web.web.startup import(
+        djangocommands, set_path_settings, init_web
+    )
+
+    if "runserver" in django_args:
+        init_web(
+            ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
+            logfile=Paths.log("web.log")
+        )
+    else:
+        set_path_settings()
+
+    djangocommands(*django_args)

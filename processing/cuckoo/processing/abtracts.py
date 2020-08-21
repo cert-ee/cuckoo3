@@ -17,28 +17,14 @@ class Processor:
     # TODO Plugins that are only useful for specific platforms. Do the same
     # for file types/tags?
     PLATFORMS = []
-    CATEGORY = ["file", "url"]
+    CATEGORY = []
 
+    def __init__(self, processingctx):
+        self.ctx = processingctx
 
-    def __init__(self, analysis, analysis_path, logger,
-                 identification=None, task_id=None, submitted_file=None):
-        self.analysis_path = analysis_path
-        self.analysis = analysis
-        self.analysislog = logger
-
-        self.submitted_file = submitted_file
-        self.identification = identification
-        self.task_id = task_id
-
-        self.results = {}
-
-        self.errtracker = None
-
-    def set_results(self, results):
-        self.results = results
-
-    def set_errortracker(self, tracker):
-        self.errtracker = tracker
+    @classmethod
+    def enabled(cls):
+        return True
 
     @classmethod
     def init_once(cls):
@@ -62,32 +48,20 @@ class Reporter:
     """
 
     ORDER = 999
+    CATEGORY = []
 
-    def __init__(self, analysis, analysis_path, logger,
-                 identification=None, task_id=None, submitted_file=None):
-        self.analysis_path = analysis_path
-        self.analysis = analysis
-        self.analysislog = logger
-
-        self.submitted_file = submitted_file
-        self.identification = identification
-        self.task_id = task_id
-
-        self.results = {}
-
-        self.errtracker = None
+    def __init__(self, processingctx):
+        self.ctx = processingctx
 
         self.handlers = {
             "identification": self.report_identification,
             "pre": self.report_pre_analysis,
-            "behavior": self.report_post_analysis
+            "post": self.report_post_analysis
         }
 
-    def set_results(self, results):
-        self.results = results
-
-    def set_errortracker(self, tracker):
-        self.errtracker = tracker
+    @classmethod
+    def enabled(cls):
+        return True
 
     @classmethod
     def init_once(cls):
@@ -104,6 +78,78 @@ class Reporter:
 
     def report_post_analysis(self):
         pass
+
+    def cleanup(self):
+        pass
+
+class LogFileTranslator:
+    """The abstract class each logfile (logs/) reader must implement"""
+
+    name = ""
+    supports = ("",)
+
+    def __init__(self, log_path):
+        self.log_path = log_path
+        self._fp = None
+
+    @classmethod
+    def handles(cls, filename):
+        if filename.lower() in cls.supports:
+            return True
+        return False
+
+    def read_events(self):
+        """Yields normalized events from the logfile"""
+        raise NotImplementedError
+
+    def _open_log(self):
+        self._fp = open(self.log_path, "rb")
+
+    def _close_log(self):
+        if self._fp:
+            self._fp.close()
+
+    def __enter__(self):
+        self._open_log()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close_log()
+
+class Safelist:
+
+    event_types = ()
+
+    @classmethod
+    def init(cls):
+        pass
+
+    @classmethod
+    def check_safelist(cls, event):
+        raise NotImplementedError
+
+class EventConsumer:
+
+    ORDER = 999
+    event_types = ()
+    CATEGORY = []
+
+    def __init__(self, task_context):
+        self.taskctx = task_context
+
+    @classmethod
+    def enabled(cls):
+        return True
+
+    @classmethod
+    def init_once(cls):
+        pass
+
+    def init(self):
+        pass
+
+    def use_event(self, event):
+        raise NotImplementedError
 
     def cleanup(self):
         pass

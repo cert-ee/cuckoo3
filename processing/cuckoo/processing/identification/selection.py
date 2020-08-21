@@ -7,6 +7,7 @@ import os
 
 import sflock
 
+from cuckoo.common.storage import AnalysisPaths
 from cuckoo.common.config import cfg
 
 from ..abtracts import Processor
@@ -24,14 +25,12 @@ def _bytes_to_str(b):
     if isinstance(b, bytes):
         return b.decode()
 
-def _write_filetree(dir_path, tree):
-    filetree_path = os.path.join(dir_path, "filetree.json")
-    with open(filetree_path, "w") as fp:
+def _write_filetree(analysis_id, tree):
+    with open(AnalysisPaths.filetree(analysis_id), "w") as fp:
         json.dump(tree, fp, default=_bytes_to_str, indent=2)
 
-def _write_filemap(dir_path, filemap):
-    filemap_path = os.path.join(dir_path, "filemap.json")
-    with open(filemap_path, "w") as fp:
+def _write_filemap(analysis_id, filemap):
+    with open(AnalysisPaths.filemap(analysis_id), "w") as fp:
         json.dump(filemap, fp)
 
 
@@ -47,33 +46,30 @@ class Identify(Processor):
     CATEGORY = ["file"]
 
     def start(self):
-        if self.analysis.category !="file" or not self.submitted_file:
-            return
 
-        if not os.path.isfile(self.submitted_file):
-            err = f"Submitted file for analysis: {self.analysis.id} " \
+        submitted_file = AnalysisPaths.submitted_file(self.ctx.analysis.id)
+        if not os.path.isfile(submitted_file):
+            err = f"Submitted file for analysis: {self.ctx.analysis.id} " \
                   f"does not exist"
-            self.errtracker.fatal_error(err)
             raise CancelProcessing(err)
 
         # Retain the original file name. Instead of the hash that
         # originates from the filepath being a path to the binaries
         # folder.
-        original_filename = self.analysis.submitted.filename
+        original_filename = self.ctx.analysis.submitted.filename
 
         # TODO properly handle and propagate as Sflock errors in Sflock.
         try:
-            f = sflock.unpack(
-                self.submitted_file, filename=original_filename
-            )
+            f = sflock.unpack(submitted_file, filename=original_filename)
         except Exception as e:
             err = f"Sflock unpacking failure. {e}"
-            self.errtracker.fatal_exception(err)
             raise CancelProcessing(err)
 
 
         if f.error:
-            self.errtracker.add_error(f"Sflock unpack error: {f.error}.", self)
+            self.ctx.errtracker.add_error(
+                f"Sflock unpack error: {f.error}.", self
+            )
 
         selected = []
         find_selected(f, selected)
@@ -136,12 +132,9 @@ class SelectFile(Processor):
         self.file_map[file_id] = ret["extrpath"]
 
     def start(self):
-        if self.analysis.category != "file":
-            return
-
-        submitted = self.results.get("identify", {}).get("submitted", {})
-        selection = self.results.get("identify", {}).get("selection", [])
-        unpackedfile = self.results["identify"]["unpacked"]
+        submitted = self.ctx.result.get("identify", {}).get("submitted", {})
+        selection = self.ctx.result.get("identify", {}).get("selection", [])
+        unpackedfile = self.ctx.result.get("identify").get("unpacked")
 
         target = None
         type_priority = []
@@ -184,17 +177,15 @@ class SelectFile(Processor):
         # "manual" selection and in the pre-stage to retrieve information
         # about a manually selected file.
         _write_filetree(
-            self.analysis_path, unpackedfile.astree(
+            self.ctx.analysis.id, unpackedfile.astree(
                 sanitize=True, finger=True, child_cb=self._sflock_child_cb
             )
         )
 
-        _write_filemap(self.analysis_path, self.file_map)
+        _write_filemap(self.ctx.analysis.id, self.file_map)
 
         if target:
-            self.analysislog.debug(
-                "File selected.", file=repr(target.filename)
-            )
+            self.ctx.log.debug("File selected.", file=repr(target.filename))
         else:
             # If no file was selected, set the target as the submitted file. A
             # manual analysis or one that ignores identify still needs the
@@ -203,7 +194,7 @@ class SelectFile(Processor):
 
         ident_filename = _make_ident_filename(target)
         if ident_filename != target.filename:
-            self.analysislog.debug(
+            self.ctx.log.debug(
                 "Identify detected a different file type than extension "
                 "indicates.", detected=target.extension,
                 filename=repr(ident_filename)

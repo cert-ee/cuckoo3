@@ -156,6 +156,15 @@ def merge_run_errors(task):
 
     os.remove(errpath)
 
+def merge_processing_errors(task):
+    errpath = TaskPaths.processingerr_json(task.id)
+    if not os.path.exists(errpath):
+        return
+
+    merge_errors(task, Errors.from_file(errpath))
+
+    os.remove(errpath)
+
 def db_find_state(state):
     ses = db.dbms.session()
     try:

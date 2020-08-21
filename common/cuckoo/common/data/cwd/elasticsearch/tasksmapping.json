@@ -1,0 +1,25 @@
+{
+  "mappings": {
+    "properties": {
+      "task_id": {
+        "type": "keyword"
+      },
+      "analysis_id": {
+        "type": "keyword"
+      },
+      "machine": {
+        "properties": {
+          "platform": {
+            "type": "keyword"
+          },
+          "os_version": {
+            "type": "keyword"
+          },
+          "tags": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  }
+}

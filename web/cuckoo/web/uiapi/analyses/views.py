@@ -3,19 +3,12 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 from cuckoo.common import submit, analyses
-from cuckoo.common.db import dbms
-from cuckoo.common.storage import cuckoocwd, Paths
 
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 
 from cuckoo.web.decorators import accepts_json
-
-cuckoocwd.set(cuckoocwd.DEFAULT)
-
-submit.load_machines_dump()
-dbms.initialize(f"sqlite:///{Paths.dbfile()}")
 
 class Analysis(View):
     def get(self, request, analysis_id):

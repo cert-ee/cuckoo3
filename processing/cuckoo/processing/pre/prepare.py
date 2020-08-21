@@ -9,6 +9,7 @@ import json
 import sflock
 
 from cuckoo.common.strictcontainer import TargetFile
+from cuckoo.common.storage import AnalysisPaths
 
 from ..abtracts import Processor
 from ..errors import CancelProcessing
@@ -85,33 +86,29 @@ class DetermineTarget(Processor):
     ORDER = 1
     KEY = "target"
 
-    CATEGORY = ["file"]
+    CATEGORY = ["file", "url"]
 
     def start(self):
-        if self.analysis.category == "url":
-            return self.identification.target
+        if self.ctx.analysis.category == "url":
+            return self.ctx.identification.target
 
-        if self.analysis.category != "file":
-            return
-
-        if not self.analysis.settings.extrpath:
-            return self.identification.target
-
-        extrpath = self.analysis.settings.extrpath
+        extrpath = self.ctx.analysis.settings.extrpath
+        if not extrpath:
+            return self.ctx.identification.target
 
         # Find file info in filetree.json
-        treepath = os.path.join(self.analysis_path, "filetree.json")
+        treepath = AnalysisPaths.filetree(self.ctx.analysis.id)
         if not os.path.isfile(treepath):
-            err = f"Filetree.json not found. Cannot continue."
-            self.errtracker.fatal_error(err)
-            raise CancelProcessing(err)
+            raise CancelProcessing(
+                f"Filetree.json not found. Cannot continue."
+            )
 
         with open(treepath, "r") as fp:
             target = find_child_in_tree(json.load(fp), extrpath)
             if not target:
-                err = f"Path: {extrpath} not found in file tree. "
-                self.errtracker.fatal_error(err)
-                raise CancelProcessing(err)
+                raise CancelProcessing(
+                    f"Path: {extrpath} not found in file tree."
+                )
 
         return TargetFile(
             filename=target["filename"],
@@ -131,34 +128,33 @@ class CreateZip(Processor):
     CATEGORY = ["file"]
 
     def start(self):
-        if self.analysis.category != "file":
-            return
-
-        target = self.results.get("target")
+        target = self.ctx.result.get("target")
         if not target.extrpath:
             return
 
-        self.analysislog.debug(
+        self.ctx.log.debug(
             "Finding child archive for selected file and normalizing to zip."
         )
 
         try:
-            f = sflock.unpack(self.submitted_file)
+            f = sflock.unpack(
+                AnalysisPaths.submitted_file(self.ctx.analysis.id)
+            )
         except Exception as e:
             err = f"Sflock unpacking failure. {e}"
-            self.errtracker.fatal_exception(err)
+            self.ctx.errtracker.fatal_exception(err)
             raise CancelProcessing(err)
 
         selected_file = find_target_in_archive(f, target.extrpath)
         if not selected_file:
-            err = f"Path: {target.extrpath} not found in container. " \
-                  f"No file to unpack"
-            self.errtracker.fatal_error(err)
-            raise CancelProcessing(err)
+            raise CancelProcessing(
+                f"Path: {target.extrpath} not found in container. No file to "
+                f"unpack"
+            )
 
         # Normalize the lowest parent of the target to a zipfile. This
         # is the zipfile that will be uploaded to the analysis machine.
         zipify(
             selected_file.parent,
-            os.path.join(self.analysis_path, "target.zip")
+            AnalysisPaths.zipified_file(self.ctx.analysis.id)
         )

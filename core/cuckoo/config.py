@@ -43,5 +43,20 @@ typeloaders = {
             "autotag": config.Boolean(default_val=False)
         }
 
+    },
+    "reporting.yaml": {
+        "elasticsearch": {
+            "enabled": config.Boolean(default_val=False),
+            "indices": {
+                "names": {
+                    "analyses": config.String(default_val="analyses"),
+                    "tasks": config.String(default_val="tasks"),
+                    "events": config.String(default_val="events")
+                },
+            },
+            "timeout": config.Int(default_val=300),
+            "max_result_window": config.Int(default_val=10000),
+            "hosts": config.List(config.String, ["http://127.0.0.1:9200"])
+        }
     }
 }
