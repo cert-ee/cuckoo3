@@ -12,6 +12,8 @@ import string
 import uuid
 from datetime import datetime
 
+from .packages import find_cuckoo_packages, get_cwdfiles_dir
+
 import sflock
 
 class CWDNotSetError(Exception):
@@ -45,14 +47,25 @@ class _CuckooCWD:
     def is_valid(path):
         return os.path.isfile(os.path.join(path, ".cuckoocwd"))
 
+    @staticmethod
+    def have_permission(path):
+        return os.access(path, os.R_OK | os.W_OK | os.X_OK)
+
     def set(self, path):
         if not _CuckooCWD.exists(path):
-            raise InvalidCWDError(f"Cuckoo CWD {path} does not exist")
+            raise InvalidCWDError(f"Cuckoo CWD {path} does not exist.")
 
         if not _CuckooCWD.is_valid(path):
-            raise InvalidCWDError(f"{path} is not a Cuckoo CWD")
+            raise InvalidCWDError(f"{path} is not a Cuckoo CWD.")
+
+        if not _CuckooCWD.have_permission(path):
+            raise InvalidCWDError(
+                f"Read, write, and execute access to the Cuckoo CWD is "
+                f"required. One or more permissions is missing on {path}."
+            )
 
         self._dir = path
+        os.environ["CUCKOO_CWD"] = str(path)
 
     @staticmethod
     def create(path):
@@ -69,7 +82,29 @@ class _CuckooCWD:
         for dirname in ("sockets", "generated"):
             os.mkdir(os.path.join(path, "operational", dirname))
 
+        _CuckooCWD._add_package_cwdfiles(path)
         pathlib.Path(path).joinpath(".cuckoocwd").touch()
+
+    @staticmethod
+    def _add_package_cwdfiles(path):
+        for fullname, name, package in find_cuckoo_packages():
+            pkg_cwd_files = get_cwdfiles_dir(package)
+            if not pkg_cwd_files:
+                continue
+
+
+            for entry in os.listdir(pkg_cwd_files):
+
+                entry_path = os.path.join(pkg_cwd_files, entry)
+                cwd_entry = os.path.join(path, entry)
+                if os.path.exists(cwd_entry):
+                    continue
+
+                if os.path.isfile(entry_path):
+                    shutil.copyfile(entry_path, cwd_entry)
+
+                elif os.path.isdir(entry_path):
+                    shutil.copytree(entry_path, cwd_entry)
 
 cuckoocwd = _CuckooCWD()
 
@@ -180,8 +215,8 @@ class TaskPaths:
         return TaskPaths._path(task_id, "memory.dmp")
 
     @staticmethod
-    def logfile(task_id, filename):
-        return TaskPaths._path(task_id, "logs", filename)
+    def logfile(task_id, *args):
+        return TaskPaths._path(task_id, "logs", *args)
 
     @staticmethod
     def payloadlog(task_id):
@@ -202,6 +237,11 @@ class TaskPaths:
     @staticmethod
     def tasklog(task_id):
         return TaskPaths._path(task_id, "task.log")
+
+    @staticmethod
+    def eventlog(task_id, *args):
+        return TaskPaths._path(task_id, "events", *args)
+
 
 
 class Paths(object):
@@ -256,6 +296,10 @@ class Paths(object):
     @staticmethod
     def log(filename):
         return os.path.join(cuckoocwd.root, "log", filename)
+
+    @staticmethod
+    def elastic_templates():
+        return os.path.join(cuckoocwd.root, "elasticsearch")
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):

@@ -169,6 +169,9 @@ def read_machines_dump(path):
     return loaded
 
 def set_machines_dump(dump):
+    if not isinstance(dump, dict):
+        raise TypeError("Dump must be a dictionary")
+
     global _machines
     _machines = dump
 

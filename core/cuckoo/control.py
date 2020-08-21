@@ -201,6 +201,11 @@ def set_next_state(worktracker, worktype):
         analyses.merge_processing_errors(worktracker.analysis)
         handle_pre_done(worktracker)
 
+    elif worktype == "post":
+        worktracker.log.info("Setting task to reported.")
+        task.merge_processing_errors(worktracker.task)
+        task.set_db_state(worktracker.task.id, task.States.REPORTED)
+
     else:
         raise ValueError(
             f"Unknown work type {worktype} for analysis:"
@@ -222,17 +227,26 @@ def set_failed(worktracker, worktype):
             worktracker.analysis_id, analyses.States.FATAL_ERROR
         )
 
+    elif worktype == "post":
+        worktracker.log.error("Task post stage failed")
+        task.merge_processing_errors(worktracker.task)
+        task.set_db_state(worktracker.task.id, task.States.FATAL_ERROR)
+
     else:
         raise ValueError(
-            f"Unknown work type {worktype} for analysis:"
+            f"Unknown work type '{worktype}' for analysis:"
             f" {worktracker.analysis_id}"
         )
 
 def handle_task_done(worktracker):
-    worktracker.log.info("Setting task to state reported")
     started.scheduler.task_ended(worktracker.task_id)
     task.merge_run_errors(worktracker.task)
-    task.set_db_state(worktracker.task_id, task.States.REPORTED)
+
+    worktracker.log.debug("Queueing task for post analysis processing.")
+    task.set_db_state(worktracker.task_id, task.States.PENDING_POST)
+    started.processing_handler.post_analysis(
+        worktracker.analysis_id, worktracker.task_id
+    )
 
 def set_task_failed(worktracker):
     worktracker.log.info("Setting task to state failed")
@@ -328,7 +342,7 @@ class StateControllerWorker(threading.Thread):
                 worktracker.run_work()
             except Exception as e:
                 worktracker.log.exception(
-                    "Failed to run handler function.",
+                    "Failed to run handler function",
                     function=worktracker._func, args=worktracker._func_kwargs,
                     error=e
                 )
@@ -389,6 +403,7 @@ class StateController(UnixSocketServer):
     def task_done(self, **kwargs):
         self.queue_call(
             handle_task_done, {
+                "analysis_id": kwargs["analysis_id"],
                 "task_id": kwargs["task_id"]
             }
         )
@@ -403,6 +418,7 @@ class StateController(UnixSocketServer):
     def task_failed(self, **kwargs):
         self.queue_call(
             set_task_failed, {
+                "analysis_id": kwargs["analysis_id"],
                 "task_id": kwargs["task_id"]
             }
         )

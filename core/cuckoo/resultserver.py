@@ -11,11 +11,10 @@ import threading
 
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
+from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
+from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import cuckoocwd, TaskPaths, Paths, split_task_id
 from cuckoo.common.utils import bytes_to_human
-from cuckoo.shutdown import register_shutdown, call_registered_shutdowns
-
-from .startup import init_global_logging
 
 log = CuckooGlobalLogger(__name__)
 

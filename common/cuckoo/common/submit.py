@@ -50,12 +50,16 @@ _DEFAULT_SETTINGS = {
     "enforce_timeout": True
 }
 
-def load_machines_dump():
+def load_machines_dump(default=None):
     """Loads and sets a machines dump made by the MachineryManager. Must be
     loaded before machine information can be verified and thus is required
     before being able to create new submissions."""
     dump_path = Path(Paths.machinestates())
     if not dump_path.is_file():
+        if default:
+            set_machines_dump(default)
+            return
+
         raise SubmissionError(
             "Machine dump does not exist. No machines have ever been loaded. "
             "Start Cuckoo to load these from the machine configurations and "

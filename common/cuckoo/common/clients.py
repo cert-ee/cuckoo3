@@ -124,7 +124,7 @@ class MachineryManagerClient:
 class TaskRunnerClient:
 
     @staticmethod
-    def start_start(sockpath, kind, task_id, analysis_id, machine,
+    def start_task(sockpath, kind, task_id, analysis_id, machine,
                     result_ip, result_port):
         try:
             resp = request_unix_socket(sockpath, {

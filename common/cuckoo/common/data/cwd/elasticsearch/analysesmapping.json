@@ -1,0 +1,76 @@
+{
+  "mappings": {
+    "properties": {
+      "ts": {"type": "long"},
+      "analysis_id": {
+        "type": "keyword"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "submitted": {
+        "properties": {
+          "url": {
+            "type": "text"
+          },
+          "filename": {
+            "type": "text"
+          },
+          "size": {
+            "type": "text"
+          },
+          "md5": {
+            "type": "keyword"
+          },
+          "sha1": {
+            "type": "keyword"
+          },
+          "sha256": {
+            "type": "keyword"
+          },
+          "magic": {
+            "type": "text"
+          },
+          "media_type": {
+            "type": "text"
+          }
+        }
+      },
+      "target": {
+        "properties": {
+          "url": {
+            "type": "text"
+          },
+          "filename": {
+            "type": "text"
+          },
+          "size": {
+            "type": "text"
+          },
+          "md5": {
+            "type": "keyword"
+          },
+          "sha1": {
+            "type": "keyword"
+          },
+          "sha256": {
+            "type": "keyword"
+          },
+          "magic": {
+            "type": "text"
+          },
+          "media_type": {
+            "type": "text"
+          }
+        }
+      },
+      "settings": {
+        "properties": {
+          "timeout": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

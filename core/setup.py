@@ -55,7 +55,6 @@ setuptools.setup(
         "Cuckoo-common==0.1.0",
         "Cuckoo-processing==0.1.0",
         "Cuckoo-machineries==0.1.0",
-        "sqlalchemy>=1.3.13, <1.4",
-        "sflock>=0.3.10, <0.4",
+        "sflock>=0.3.10, <0.4"
     ]
 )

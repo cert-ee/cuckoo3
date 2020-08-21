@@ -15,12 +15,12 @@ from cuckoo.common.ipc import (
 )
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.machines import Machine
+from cuckoo.common.shutdown import register_shutdown
+from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import AnalysisPaths, TaskPaths, Paths, cuckoocwd
 from cuckoo.common.strictcontainer import Task, Analysis
 from cuckoo.common.taskflow import TaskFlowError
 
-from .shutdown import register_shutdown
-from .startup import init_global_logging
 from .taskflow import StandardTask
 
 log = CuckooGlobalLogger(__name__)
@@ -58,7 +58,11 @@ class _FlowRunner(Thread):
         try:
             message_unix_socket(
                 Paths.unix_socket("statecontroller.sock"),
-                {"subject": "taskrundone", "task_id": self.task.id}
+                {
+                    "subject": "taskrundone",
+                    "analysis_id": self.analysis.id,
+                    "task_id": self.task.id
+                }
             )
             self.taskflow.log.info("Task completed.")
         except IPCError as e:
@@ -71,7 +75,11 @@ class _FlowRunner(Thread):
         try:
             message_unix_socket(
                 Paths.unix_socket("statecontroller.sock"),
-                {"subject": "taskrunfailed", "task_id": self.task.id}
+                {
+                    "subject": "taskrunfailed",
+                    "analysis_id": self.analysis.id,
+                    "task_id": self.task.id
+                }
             )
             self.taskflow.log.info("Task failed.")
         except IPCError as e:

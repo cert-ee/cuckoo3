@@ -5,9 +5,28 @@
 import os
 
 from importlib import import_module
+from pkgutil import iter_modules
 
 class NotACuckooPackageError(Exception):
     pass
+
+def find_cuckoo_packages(do_import=True):
+    """Returns a list of tuples containing the full package name,
+    a subpackage name, and imported module (optional) of all
+     packages part of the cuckoo namespace"""
+    import cuckoo
+    found = [("cuckoo", "", cuckoo)]
+
+    module_iter = iter_modules(cuckoo.__path__)
+    for _, name, is_package in module_iter:
+        if is_package:
+            fullname = f"cuckoo.{name}"
+            if not do_import:
+                found.append((fullname, name, None))
+            else:
+                found.append((fullname, name, import_module(fullname)))
+
+    return found
 
 def is_cuckoo_package(cuckoo_package):
     if not hasattr(cuckoo_package, "__path__"):
@@ -26,6 +45,13 @@ def get_data_dir(cuckoo_package):
 
 def get_conftemplate_dir(cuckoo_package):
     return os.path.join(get_data_dir(cuckoo_package), "conftemplates")
+
+def get_cwdfiles_dir(cuckoo_package):
+    cwddata = os.path.join(get_data_dir(cuckoo_package), "cwd")
+    if os.path.isdir(cwddata):
+        return cwddata
+
+    return ""
 
 def has_conftemplates(cuckoo_package):
     return os.path.isdir(get_conftemplate_dir(cuckoo_package))

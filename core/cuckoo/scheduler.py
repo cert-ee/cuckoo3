@@ -120,7 +120,7 @@ class Scheduler:
 
         self._assigned_machines[task.id] = machine
         try:
-            TaskRunnerClient.start_start(
+            TaskRunnerClient.start_task(
                 Paths.unix_socket("taskrunner.sock"), kind=task.kind,
                 task_id=task.id, analysis_id=task.analysis_id,
                 machine=machine,
@@ -131,7 +131,9 @@ class Scheduler:
         except ActionFailedError as e:
             log.error("Failed to start task.", task_id=task.id, error=e)
             self.task_ended(task.id)
-            started.state_controller.task_failed(task_id=task.id)
+            started.state_controller.task_failed(
+                task_id=task.id, analysis_id=task.analysis_id
+            )
 
     def task_ended(self, task_id):
         machine = self._assigned_machines.pop(task_id, None)

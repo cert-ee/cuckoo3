@@ -1,0 +1,25 @@
+{
+  "mappings": {
+    "properties": {
+      "ts": {
+        "type": "long"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "subtype": {
+        "type": "keyword"
+      },
+      "analysis_id": {
+        "type": "keyword"
+      },
+      "task_id": {
+        "type": "keyword"
+      },
+      "values": {
+        "type": "text",
+        "index_options": "offsets"
+      }
+    }
+  }
+}
