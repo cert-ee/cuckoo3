@@ -8,6 +8,6 @@ from cuckoo.common import analyses
 
 def index(request):
     return render(
-        request, template_name="reports/index.html",
+        request, template_name="reports/index.html.jinja2",
         context={"analyses": analyses.dictlist()}
     )

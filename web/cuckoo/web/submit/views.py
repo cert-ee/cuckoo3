@@ -21,7 +21,7 @@ _available_platforms = [
 
 class SubmitFile(View):
     def get(self, request):
-        return render(request, template_name="submit/index.html")
+        return render(request, template_name="submit/index.html.jinja2")
 
     def post(self, request):
         uploaded = request.FILES.get("file")
@@ -37,7 +37,7 @@ class SubmitFile(View):
             )
         except submit.SubmissionError as e:
             return render(
-                request, template_name="submit/index.html",
+                request, template_name="submit/index.html.jinja2",
                 status=400, context={"error": str(e)}
             )
 
@@ -67,7 +67,7 @@ class Settings(View):
             )
 
         return render(
-            request, template_name="submit/settings.html",
+            request, template_name="submit/settings.html.jinja2",
             context={
                 "unpacked": filetree,
                 "possible_settings": {"platforms" :_available_platforms}
