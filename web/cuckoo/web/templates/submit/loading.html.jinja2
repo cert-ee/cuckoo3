@@ -1,0 +1,18 @@
+{% extends "base.html.jinja2" %}
+{% set active_page = "submit" %}
+{% set title = "Preparing submission" %}
+
+{# sets a (for now) fake redirect timer #}
+{% block page_script %}
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.location = "/submit/settings/{{ id }}";
+      }, 5000);
+    });
+  </script>
+{% endblock %}
+
+{% block body %}
+  <p>This is a fake redirect page! in 5 seconds you'll be taken to the settings page.</p>
+{% endblock %}
