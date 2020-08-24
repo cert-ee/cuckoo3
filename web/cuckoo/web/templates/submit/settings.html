@@ -1,4 +1,24 @@
 {% extends "base.html" %}
+
+{# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
+{% block page_script %}
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+      const filetree = document.querySelector('#filetree');
+      const toggleDisabled = document.querySelector('#toggle-disabled');
+      if(filetree && toggleDisabled)
+        toggleDisabled.addEventListener('click', ev => {
+          let isHidden = false;
+          [...filetree.querySelectorAll('input[disabled]')].forEach(s => {
+            let item = lib.parent('li', s);
+            toggleVisibility(item, !!s.hidden);
+            isHidden = item.hidden;
+          });
+        });
+    });
+  </script>
+{% endblock %}
+
 {% block body %}
   {% include "submit/partial/tabbar.html" %}
   <section class="section">
@@ -6,6 +26,15 @@
       <div class="columns is-divided">
         {# Sample information #}
         <div class="column">
+          <div>
+            <!-- <button class="button is-white has-border is-small">Only show selectable</button> -->
+            <div class="box">
+              <div class="control is-checkable">
+                <input type="checkbox" id="toggle-disabled" />
+                <label class="label" for="toggle-disabled">Hide disabled items</label>
+              </div>
+            </div>
+          </div>
           <div class="box has-shadow no-padding-x">
             <div class="box is-medium has-background-light has-margin-x no-margin-y">
               <div class="columns is-vcenter">
@@ -30,11 +59,11 @@
         <div class="column">
           <div class="box has-shadow no-padding-x">
             <nav class="tabbar" data-enhance>
-              <!--<a href="#profile-form" class="tabbar-link is-active">Profiles</a>-->
+              {# <a href="#profile-form" class="tabbar-link is-active">Profiles</a>--> #}
               <a href="#options-form" class="tabbar-link is-active">Options</a>
             </nav>
             <div class="box no-padding-y">
-              <!--<div id="profile-form">{% include "submit/partial/profile.html" %}</div> -->
+              {# <div id="profile-form">{% include "submit/partial/profile.html" %}</div> --> #}
               <div id="options-form">{% include "submit/partial/options.html" %}</div>
             </div>
           </div>

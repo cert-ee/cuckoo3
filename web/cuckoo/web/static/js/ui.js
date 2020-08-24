@@ -7,16 +7,34 @@ const lib = {
   url(url) {
     return url.split('/');
   },
-  // returns a parent of a child node matching a certain class name
+  // returns a parent of a child node matching a certain property
   // ex: lib.parent('parent', document.querySelector('.test'))
+  // when ref starts with a '.', a match is looked up by class name
+  // when ref starts with a '#', a match is looked up by its id
+  // by default, it will try to match a node name (e.g <p>, <li>, etc.)
   parent(sel, ref) {
     if((!ref instanceof HTMLElement) || (!sel instanceof String)) return null;
     let node = ref;
     let result;
     while(node.tagName.toLowerCase() !== 'body') {
-      if(node.classList.contains(sel)) {
-        result = node;
-        break;
+      if(sel[0] == '.') {
+        // search in class name if first char is '.'
+        if(node.classList.contains(sel)) {
+          result = node;
+          break;
+        }
+      } else if(sel[0] == '#') {
+        // search in id if first char is '#'
+        if(node.id == sel) {
+          result = node;
+          break;
+        }
+      } else {
+        // by default, search for a matching node name
+        if(node.tagName.toLowerCase() == sel) {
+          result = node;
+          break;
+        }
       }
       node = node.parentNode;
     }

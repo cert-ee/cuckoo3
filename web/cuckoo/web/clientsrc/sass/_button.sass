@@ -14,7 +14,7 @@ input[type="reset"]
   display: inline-block
   padding: $gap/2 $gap
   border-radius: $radius
-  font-weight: 700
+  font-weight: 600
 
   &:hover
     cursor: pointer
@@ -45,6 +45,13 @@ input[type="reset"]
     &:hover
       background-color: shade($dark, .1)
 
+  &.is-white
+    background-color: $white
+    color: rgba($black, .7)
+    &:hover
+      background-color: shade($white, .1)
+      color: rgba($black, .9)
+
   &.is-disabled
     pointer-events: none
     background-color: tint($border, .7)
@@ -52,3 +59,11 @@ input[type="reset"]
     text-shadow: none
     &:hover
       cursor: not-allowed
+
+  &.has-border
+    border: 1px solid $border
+
+  &.is-small
+    padding: $gap/4 $gap/2
+    font-size: .8em
+    font-weight: 500

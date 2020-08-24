@@ -21,5 +21,6 @@
     <script type="text/javascript" src="/static/js/ui.js">
       window.csrf_token = "{{ csrf_token }}";
     </script>
+    {% block page_script %}{% endblock %}
   </body>
 </html>
