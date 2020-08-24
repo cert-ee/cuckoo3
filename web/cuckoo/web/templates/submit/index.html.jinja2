@@ -30,7 +30,7 @@
           </div>
           <div class="columns is-between is-vcenter is-gapless">
             <div class="column">
-              <div class="field is-horizontal">
+              {# <div class="field is-horizontal">
                 <div class="control is-checkable is-borderless has-addon">
                   <span class="addon is-left">
                     <i class="fas fa-lock"></i>
@@ -41,16 +41,17 @@
                     <input type="text" class="input" id="encrypted-password" name="encrypted-password" placeholder="Password" hidden />
                   </div>
                 </div>
-              </div>
+              </div> #}
+              <p class="no-margin has-text-small">Cuckoo supports most executables and archives.</p>
+              {% if error %}
+                <p class="is-error">An error occured: {{ error }}</p>
+                <p>{{ error }}</p>
+              {% endif %}
             </div>
             <div class="column">
               <button type="submit" class="button is-blue">Start</button>
             </div>
           </div>
-          {% if error %}
-            <p class="is-error">An error occured</p>
-            <p>{{ error }}</p>
-          {% endif %}
         </form>
       </div>
     </div>

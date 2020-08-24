@@ -130,6 +130,22 @@ h6 + p {
   word-break: break-word;
 }
 
+.has-text-left {
+  text-align: left;
+}
+
+.has-text-center {
+  text-align: center;
+}
+
+.has-text-right {
+  text-align: right;
+}
+
+.has-text-small {
+  font-size: 0.8em;
+}
+
 .view {
   min-height: 100%;
   margin-bottom: -14rem;
@@ -996,28 +1012,11 @@ input[type=reset].button,
   border: 0;
 }
 
-.has-text-left {
-  text-align: left;
-}
-
-.has-text-center {
-  text-align: center;
-}
-
-.has-text-right {
-  text-align: right;
-}
-
-.has-text-small {
-  font-size: 0.8em;
-}
-
 .is-disabled,
 input[disabled],
 select[disabled],
 textarea[disabled] {
   opacity: 0.5;
-  pointer-events: none;
 }
 .is-disabled:hover,
 input[disabled]:hover,
