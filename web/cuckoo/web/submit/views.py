@@ -3,6 +3,8 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 from cuckoo.common import submit, analyses
+from cuckoo.common.machines import get_platforms_versions
+
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
     HttpResponseNotFound
@@ -10,9 +12,16 @@ from django.http import (
 from django.shortcuts import render, redirect
 from django.views import View
 
+_available_platforms = [
+    {
+        "platform": platform,
+        "os_version": [os_version for os_version in os_versions]
+     } for platform, os_versions in get_platforms_versions().items()
+]
+
 class SubmitFile(View):
     def get(self, request):
-        return render(request, template_name="submit/index.html")
+        return render(request, template_name="submit/index.html.jinja2")
 
     def post(self, request):
         uploaded = request.FILES.get("file")
@@ -28,7 +37,7 @@ class SubmitFile(View):
             )
         except submit.SubmissionError as e:
             return render(
-                request, template_name="submit/index.html",
+                request, template_name="submit/index.html.jinja2",
                 status=400, context={"error": str(e)}
             )
 
@@ -58,6 +67,9 @@ class Settings(View):
             )
 
         return render(
-            request, template_name="submit/settings.html",
-            context={"unpacked": filetree}
+            request, template_name="submit/settings.html.jinja2",
+            context={
+                "unpacked": filetree,
+                "possible_settings": {"platforms" :_available_platforms}
+            }
         )

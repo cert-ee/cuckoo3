@@ -13,10 +13,12 @@ import elasticsearch_dsl
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException, TransportError
 
-from .log import set_logger_level
+from .log import set_logger_level, CuckooGlobalLogger
 
 set_logger_level("elasticsearch", logging.WARNING)
 set_logger_level("urllib3.connectionpool", logging.WARNING)
+
+log = CuckooGlobalLogger(__name__)
 
 class ElasticSearchError(Exception):
     pass
@@ -140,6 +142,7 @@ class _ESManager:
     def _create_index(self, name, index_mapping):
         try:
             self.client.indices.create(name, body=index_mapping)
+            log.debug("Created index", index_name=name)
         except ElasticsearchException as e:
             if isinstance(e, TransportError):
                 # If the index already exists, ignore the error. This case
@@ -501,8 +504,11 @@ class _SearchQueryRunner:
         self._query = searchquery
         self.limit = limit
 
-        if offset < 0 or limit < 0:
-            raise SearchError("Offset and limit cannot be negative")
+        if limit < 1:
+            raise SearchError("Limit cannot be less than 1")
+
+        if offset < 0:
+            raise SearchError("Offset cannot be negative")
 
         self.original_offset = offset
 
@@ -574,7 +580,7 @@ class _SearchQueryRunner:
     def _execute_query(self, query, limit=5, offset=0):
         query = query[offset:offset + limit]
         query = query.sort("ts")
-        print(query.to_dict())
+        log.debug("Generated query.", query=query.to_dict())
         try:
             response = query.execute()
         except ElasticsearchException as e:
@@ -682,8 +688,9 @@ class _SearchQueryRunner:
             # If no secondary queries have been given. Return the matches
             # for the initial query.
             if not self._secondaries:
-                response_offset = len(hits)
-                self._resulttracker.store_results(hits)
+                limited = hits[0:self.limit]
+                response_offset = len(limited)
+                self._resulttracker.store_results(limited)
                 break
 
             if not initialized_secondaries:
