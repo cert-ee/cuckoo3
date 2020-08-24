@@ -6,13 +6,16 @@
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
 {% block page_script %}
   <script type="text/javascript">
+
+    window.data = {{ unpacked|tojson }};
+
     document.addEventListener('DOMContentLoaded', () => {
       const filetree = document.querySelector('#filetree');
       const toggleDisabled = document.querySelector('#toggle-disabled');
       if(filetree && toggleDisabled) {
         toggleDisabled.addEventListener('click', ev => {
           let isHidden = false;
-          [...filetree.querySelectorAll('input[disabled]')].forEach(s => {
+          [...filetree.querySelectorAll('input[data-interesting]')].forEach(s => {
             let item = lib.parent('li', s);
             toggleVisibility(item, !!s.hidden);
             isHidden = item.hidden;
@@ -30,17 +33,23 @@
       <div class="columns is-divided">
         {# Sample information #}
         <div class="column">
-          <div>
+          {% if unpacked.children|length > 0 %}
             <div class="box has-shadow">
               <div class="control is-checkable">
-                <input type="checkbox" id="toggle-disabled" />
-                <label class="label" for="toggle-disabled">Hide non-supported files</label>
+                <input type="checkbox" id="toggle-disabled" checked />
+                <label class="label" for="toggle-disabled">Only show interesting files</label>
               </div>
             </div>
-          </div>
+          {% endif %}
           <div class="box has-shadow no-padding-x">
             <div class="box is-medium has-background-light has-margin-x no-margin-y">
-              <div class="columns is-vcenter">
+              <div class="columns is-vcenter {% if not unpacked.selectable %}is-disabled{% endif %}">
+                <div class="column no-margin-x">
+                  <div class="control is-checkable">
+                    <input type="radio" id="toggle-disabled" name="selected-file" value="{{ unpacked.id }}" {% if unpacked.selected %}checked{% endif %} />
+                    <label class="label" for="toggle-disabled"></label>
+                  </div>
+                </div>
                 <div class="column no-margin">
                   <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
                 </div>

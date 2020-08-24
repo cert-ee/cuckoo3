@@ -146,7 +146,7 @@ function toggleVisibility(element, force=null) {
     element = document.querySelector(element);
   if(!element) return;
   if(force !== null && force instanceof Boolean)
-    element.toggleAttribute('');
+    element.toggleAttribute('hidden', force);
   else
     element.toggleAttribute('hidden');
 }
