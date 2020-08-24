@@ -1,3 +1,5 @@
+{# adjustable properties: 'title' #}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/fontawesome.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/ui.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/theme.css" />
-    <title>{{ title }}</title>
+    <title>Cuckoo{% if title %}- {{ title }}{% endif %}</title>
   </head>
   <body>
     <div class="view">
