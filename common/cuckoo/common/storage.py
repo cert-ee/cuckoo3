@@ -301,6 +301,10 @@ class Paths(object):
     def elastic_templates():
         return os.path.join(cuckoocwd.root, "elasticsearch")
 
+    @staticmethod
+    def web(*args):
+        return os.path.join(cuckoocwd.root, "web", *args)
+
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):
         try:

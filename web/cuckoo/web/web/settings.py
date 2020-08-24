@@ -1,5 +1,7 @@
 import os
 
+from cuckoo.common.storage import Paths
+
 from django.utils.crypto import get_random_string
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -20,7 +22,7 @@ SECRET_KEY = get_random_string(
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -121,3 +123,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(os.getcwd(), "static"),
 )
+
+cwd_local_settings = Paths.web("local_settings.py")
+if os.path.isfile(cwd_local_settings):
+    with open(cwd_local_settings, "r") as fp:
+        exec(fp.read(), globals(), locals())

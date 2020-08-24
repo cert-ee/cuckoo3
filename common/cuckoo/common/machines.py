@@ -292,5 +292,15 @@ def find_tags(find_in, tags):
 
     return matches
 
+def get_platforms_versions():
+    platforms_versions = {}
+
+    for machine in _machines.values():
+        versions = platforms_versions.setdefault(machine.platform, set())
+        if machine.os_version:
+            versions.add(machine.os_version)
+
+    return platforms_versions
+
 def count():
     return len(_machines)
