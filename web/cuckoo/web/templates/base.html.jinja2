@@ -1,5 +1,3 @@
-{# adjustable properties: 'title' #}
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -13,13 +11,13 @@
   </head>
   <body>
     <div class="view">
-      {% include "partial/navbar.html" %}
+      {% include "partial/navbar.html.jinja2" %}
       <main>
         {% block body %}{% endblock %}
       </main>
       <div class="footer-push"></div>
     </div>
-    {% include "partial/footer.html" %}
+    {% include "partial/footer.html.jinja2" %}
     <script type="text/javascript" src="/static/js/ui.js">
       window.csrf_token = "{{ csrf_token }}";
     </script>

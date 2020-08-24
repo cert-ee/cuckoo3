@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja2" %}
 {% set active_page = "submit" %}
 {% set title = "Configure submission" %}
 
@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block body %}
-  {% include "submit/partial/tabbar.html" %}
+  {% include "submit/partial/tabbar.html.jinja2" %}
   <section class="section">
     <div class="container">
       <div class="columns is-divided">
