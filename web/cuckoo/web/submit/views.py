@@ -48,7 +48,10 @@ class SubmitFile(View):
                 f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
             )
 
-        return redirect("Submit/settings", analysis_id=analysis_id)
+        return render(
+            request, template_name="submit/loading.html.jinja2",
+            context={"analysis_id": analysis_id}
+        )
 
 class Settings(View):
 
