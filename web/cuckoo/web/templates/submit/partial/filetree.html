@@ -1,15 +1,11 @@
 {# Renders a file selection tree if the sample has child contents #}
-<ul class="list is-tree" data-enhance>
+<ul class="list is-tree" id="filetree" data-enhance>
   {% set uniq = namespace(value=0) %}
   {%- for child in unpacked.children recursive %}
 
     {% set uniq.value = uniq.value + 1 %}
-    {% set selectable = child.selectable %}
-    {% set selected = child.selected %}
-    {% set isParent = child.type in ["container", "directory"] %}
-    {% set isFile = child.type in ["file", "container"] %}
 
-    <li class="{% if isParent  %}is-parent{% endif %}">
+    <li class="{% if child.type in ["container", "directory"]  %}is-parent{% endif %}">
       <input type="checkbox" id="{{ uniq.value }}-container" class="list-collapse" />
       {% if child.type == "directory" %}
         <label for="{{ uniq.value }}-container">
@@ -18,10 +14,10 @@
       {% else %}
         <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
       {% endif %}
-        <div class="columns is-divided has-tiny-gaps {% if not selectable and not isParent %}is-disabled{% endif %}">
+        <div class="columns is-divided has-tiny-gaps {% if not child.selectable and not child.type in ["container", "directory"] %}is-disabled{% endif %}">
           {% if child.type != "directory" %}
             <div class="column is-auto">
-              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if selected %}checked{% endif %} {% if not selectable %}disabled{% endif %} />
+              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} {% if not child.selectable %}disabled{% endif %} />
             </div>
           {% endif %}
           <div class="column is-auto">
@@ -34,12 +30,12 @@
             {% endif %}
           </div>
           <div class="column">
-            {% if isParent %}
+            {% if child.type in ["container", "directory"] %}
               <strong class="has-text-wrapped">{{ child.filename}}</strong>
             {% else %}
               <span class="has-text-wrapped">{{ child.filename }}</span>
             {% endif %}
-            {% if isFile %}
+            {% if child.type in ["file", "container"] %}
               <ul class="list is-horizontal has-text-small has-margin-top no-margin-left no-padding-left">
                 <li>{{ child.size|filesizeformat }}</li>
                 <li>{{ child.finger.magic_human }}</li>
