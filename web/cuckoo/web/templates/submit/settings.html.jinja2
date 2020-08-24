@@ -6,9 +6,6 @@
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
 {% block page_script %}
   <script type="text/javascript">
-
-    window.data = {{ unpacked|tojson }};
-
     document.addEventListener('DOMContentLoaded', () => {
       const filetree = document.querySelector('#filetree');
       const toggleDisabled = document.querySelector('#toggle-disabled');
