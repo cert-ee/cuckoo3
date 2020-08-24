@@ -1,5 +1,6 @@
 {% extends "base.html.jinja2" %}
 {% set active_page = "submit" %}
+{% set active_level = 'settings' %}
 {% set title = "Configure submission" %}
 
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
@@ -53,7 +54,7 @@
               </div>
             </div>
             {% if unpacked.children|length > 0 %}
-              {% include "submit/partial/filetree.html" %}
+              {% include "submit/partial/filetree.html.jinja2" %}
             {% endif %}
           </div>
         </div>
@@ -66,7 +67,7 @@
             </nav>
             <div class="box no-padding-y">
               {# <div id="profile-form">{% include "submit/partial/profile.html" %}</div> --> #}
-              <div id="options-form">{% include "submit/partial/options.html" %}</div>
+              <div id="options-form">{% include "submit/partial/options.html.jinja2" %}</div>
             </div>
           </div>
           <div class="box has-shadow">

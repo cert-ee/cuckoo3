@@ -812,6 +812,7 @@ input[type=reset].button,
 .tabbar-link {
   margin-left: 0;
   margin-right: 0;
+  margin-bottom: 0;
   padding: 0.75rem;
   color: #000000;
   text-decoration: none;

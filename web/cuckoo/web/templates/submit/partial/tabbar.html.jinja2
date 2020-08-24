@@ -1,11 +1,21 @@
+{% set submit_levels = [
+  ('submit', 'Submit'),
+  ('settings', 'Settings'),
+  ('analysis', 'Analysis')
+] -%}
+{% set active_level = active_level|default('submit') %}
+
 <section class="section is-small has-background-white no-padding-bottom">
   <div class="container">
     <h1>Submit file for analysis</h1>
     <p>Upload a sample and start analysis by following each step in this form.</p>
     <nav class="tabbar">
-      <a href="/submit" class="tabbar-link {% if step == 'sample' %}is-active{% endif %}">Sample</a>
+      {% for name, caption in submit_levels %}
+        <p class="tabbar-link {% if active_level == name %}is-active{% endif %}">{{ caption|e }}</p>
+      {% endfor %}
+      {# <a href="/submit" class="tabbar-link {% if step == 'sample' %}is-active{% endif %}">Sample</a>
       <a href="/submit/settings" class="tabbar-link {% if step == 'prepare' %}is-active{% endif %}">Configure</a>
-      <a href="/submit/processing" class="tabbar-link {% if step == 'processing' %}is-active{% endif %}">Analysis</a>
+      <a href="/submit/processing" class="tabbar-link {% if step == 'processing' %}is-active{% endif %}">Analysis</a> #}
     </nav>
   </div>
 </section>
