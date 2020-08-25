@@ -64,6 +64,10 @@ h6 + p {
   margin-top: -1.125rem;
 }
 
+p {
+  line-height: 1.4em;
+}
+
 .code,
 .is-monospace {
   font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;

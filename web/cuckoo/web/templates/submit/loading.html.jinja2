@@ -5,14 +5,95 @@
 {# sets a (for now) fake redirect timer #}
 {% block page_script %}
   <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        window.location = "/submit/settings/{{ id }}";
-      }, 5000);
-    });
+    (function() {
+
+      const apiState          = document.querySelector('#state');
+      const stateMessage      = apiState.querySelector('.api-state-message');
+      const stateDescription  = apiState.querySelector('.api-state-description');
+      const stateIcon         = apiState.querySelector('.api-state-icon');
+
+      // resolve the polling api as a promise to await ready status after which
+      // a redirect to the settings page has to occur.
+      function manualStatus(id) {
+        return new Promise((resolve, reject) => {
+
+          // if(!window.csrf_token)
+          //   return reject({
+          //     state_desc: "Client error",
+          //     error: "No CSRF token available."
+          //   });
+
+          fetch(`/api/analyses/${id}/manualstatus`, {
+            headers: {
+              'X-CSRF-Token': window.csrf_token
+            }
+          }).then(response => response.json())
+            .then(data => {
+              const { error, state_desc, ready } = data;
+              if(error != undefined) {
+                return reject({state_desc, error});
+              } else if (ready === false) {
+                return reject({state_desc});
+              } else {
+                return resolve({state_desc});
+              }
+            })
+            .catch(reject);
+        });
+      }
+
+      // polls the API for its ready status.
+      // - if ready, it redirects to the setting page
+      // - if not ready, it timeouts a new poll call to check again.
+      // - if an error occured, it displays the message in read
+      // - it logs its current state_desc as it progresses
+      function poll() {
+        manualStatus("{{ analysis_id }}").then(res => {
+            const { state_desc }     = res;
+            stateMessage.textContent = state_desc;
+            window.location = '/submit/settings/{{ analysis_id }}';
+          }).catch(res => {
+            const { state_desc, error } = res;
+            stateMessage.classList.toggle('has-text-red', error != undefined);
+            if(error) {
+              // do not start a new poll as we received a fatal error.
+              stateMessage.textContent = state_desc;
+              stateDescription.textContent = error;
+              stateIcon.classList.remove('fa-spinner');
+              stateIcon.classList.remove('fa-spin');
+              stateIcon.classList.add('fa-ban');
+              stateIcon.classList.add('is-red')
+            } else {
+              // display the current state description and time a new poll.
+              stateMessage.textContent = state_desc;
+              setTimeout(poll, 5000);
+            }
+          });
+      }
+
+      setTimeout(poll(), 5000);
+
+    }());
   </script>
 {% endblock %}
 
 {% block body %}
-  <p>This is a fake redirect page! in 5 seconds you'll be taken to the settings page.</p>
+  <div class="container">
+    <section class="section">
+      <div class="columns is-center">
+        <div class="column">
+          <div class="box has-shadow is-big" id="state" style="width: 500px;">
+            <div class="columns is-vcenter is-gapless">
+              <div class="column">
+                <i class="fas fa-1x fa-spinner fa-spin api-state-icon"></i>
+              </div>
+              <h1 class="api-state-message no-margin-y has-margin-x">Initializing</h1/>
+            </div>
+            <h1 class="api-state-message"></h1>
+            <p class="api-state-description no-margin-bottom">One moment while your submission is identied and processed. You'll be redirected once it finishes. </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 {% endblock %}
