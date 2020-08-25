@@ -6,8 +6,6 @@ from django.urls import path
 
 from . import views
 
-from django.views.decorators.csrf import csrf_exempt
-
 urlpatterns = [
-    path("", csrf_exempt(views.Search.as_view())),
+    path("", views.Search.as_view(), name="Search/index"),
 ]
