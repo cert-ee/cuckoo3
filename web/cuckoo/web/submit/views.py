@@ -48,6 +48,11 @@ class SubmitFile(View):
                 f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
             )
 
+        return redirect("Submit/waitidentify", analysis_id=analysis_id)
+
+class WaitIdentify(View):
+
+    def get(self, request, analysis_id):
         return render(
             request, template_name="submit/loading.html.jinja2",
             context={"analysis_id": analysis_id}
@@ -73,6 +78,7 @@ class Settings(View):
             request, template_name="submit/settings.html.jinja2",
             context={
                 "unpacked": filetree,
-                "possible_settings": {"platforms" :_available_platforms}
+                "possible_settings": {"platforms" :_available_platforms},
+                "analysis_id": analysis_id
             }
         )
