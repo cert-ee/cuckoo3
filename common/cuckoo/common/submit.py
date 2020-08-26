@@ -92,10 +92,11 @@ def find_extrpath_fileid(analysis_id, fileid):
             f"Invalid filemap file. JSON decoding error: {e}"
         )
 
-    extrpath = filemap.get(str(fileid))
-    if not extrpath:
+    fileid = str(fileid)
+    if fileid not in filemap:
         raise SubmissionError("Given file id does not exist in filemap file")
 
+    extrpath = filemap[fileid]
     if not _is_correct_extrpath(extrpath):
         raise SubmissionError(
             "Read filemap file entry is not a valid extrpath"
