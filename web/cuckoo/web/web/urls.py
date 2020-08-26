@@ -19,5 +19,6 @@ urlpatterns = [
     path("", include("cuckoo.web.dashboard.urls")),
     path("reports/", include("cuckoo.web.reports.urls")),
     path("submit/", include("cuckoo.web.submit.urls")),
-    path("api/", include("cuckoo.web.uiapi.urls")),
+    path("search/", include("cuckoo.web.search.urls")),
+    path("api/", include("cuckoo.web.uiapi.urls"))
 ]
