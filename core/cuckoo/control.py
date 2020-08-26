@@ -156,7 +156,7 @@ def handle_pre_done(worktracker):
         worktracker.log.warning("Task creation failed.", error=err)
 
     db.set_analysis_state(
-        worktracker.analysis_id, analyses.States.COMPLETED_PRE
+        worktracker.analysis_id, analyses.States.TASKS_PENDING
     )
     task_queue.queue_many(tasks)
     started.scheduler.newtask()
@@ -192,6 +192,12 @@ def handle_manual_done(worktracker, settings_dict):
     db.set_analysis_state(worktracker.analysis_id, analyses.States.PENDING_PRE)
     started.processing_handler.pre_analysis(worktracker.analysis_id)
 
+def update_final_analysis_state(worktracker):
+    if not task.has_unfinished_tasks(worktracker.analysis_id):
+        db.set_analysis_state(
+            worktracker.analysis_id, analyses.States.FINISHED
+        )
+
 def set_next_state(worktracker, worktype):
     if worktype == "identification":
         analyses.merge_processing_errors(worktracker.analysis)
@@ -205,6 +211,7 @@ def set_next_state(worktracker, worktype):
         worktracker.log.info("Setting task to reported.")
         task.merge_processing_errors(worktracker.task)
         task.set_db_state(worktracker.task.id, task.States.REPORTED)
+        update_final_analysis_state(worktracker)
 
     else:
         raise ValueError(
@@ -231,6 +238,7 @@ def set_failed(worktracker, worktype):
         worktracker.log.error("Task post stage failed")
         task.merge_processing_errors(worktracker.task)
         task.set_db_state(worktracker.task.id, task.States.FATAL_ERROR)
+        update_final_analysis_state(worktracker)
 
     else:
         raise ValueError(
