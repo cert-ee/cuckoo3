@@ -174,3 +174,16 @@ def db_find_state(state):
 
 def exists(task_id):
     return os.path.isfile(TaskPaths.taskjson(task_id))
+
+def has_unfinished_tasks(analysis_id):
+    ses = db.dbms.session()
+    try:
+        count = ses.query(db.Task).filter(
+            db.Task.analysis_id==analysis_id,
+            db.Task.state.in_(
+                [States.PENDING, States.RUNNING, States.PENDING_POST]
+            )
+        ).count()
+        return count > 0
+    finally:
+        ses.close()

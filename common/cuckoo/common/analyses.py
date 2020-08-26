@@ -23,25 +23,28 @@ class HumanStates:
     PENDING_IDENTIFICATION = "Pending identification"
     WAITING_MANUAL = "Waiting manual"
     PENDING_PRE = "Pending pre"
-    COMPLETED_PRE = "Completed pre"
+    TASKS_PENDING = "Task(s) pending"
     NO_SELECTED = "No selected target"
     FATAL_ERROR = "Fatal error"
+    FINISHED = "Finished"
 
 class States:
     PENDING_IDENTIFICATION = "pending_identification"
     WAITING_MANUAL = "waiting_manual"
     PENDING_PRE = "pending_pre"
-    COMPLETED_PRE = "completed_pre"
+    TASKS_PENDING = "tasks_pending"
     NO_SELECTED = "no_selected"
     FATAL_ERROR = "fatal_error"
+    FINISHED = "finished"
 
     _HUMAN = {
         PENDING_IDENTIFICATION: HumanStates.PENDING_IDENTIFICATION,
         WAITING_MANUAL: HumanStates.WAITING_MANUAL,
         PENDING_PRE: HumanStates.PENDING_PRE,
-        COMPLETED_PRE: HumanStates.COMPLETED_PRE,
         NO_SELECTED: HumanStates.NO_SELECTED,
-        FATAL_ERROR: HumanStates.FATAL_ERROR
+        FATAL_ERROR: HumanStates.FATAL_ERROR,
+        TASKS_PENDING: HumanStates.TASKS_PENDING,
+        FINISHED: HumanStates.FINISHED
     }
 
     @classmethod
