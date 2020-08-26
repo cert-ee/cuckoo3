@@ -18,9 +18,8 @@
       <div class="footer-push"></div>
     </div>
     {% include "partial/footer.html.jinja2" %}
-    <script type="text/javascript" src="/static/js/ui.js">
-      window.csrf_token = "{{ csrf_token }}";
-    </script>
+    <script>window.csrf_token = "{{ csrf_token }}";</script>
+    <script type="text/javascript" src="/static/js/ui.js"></script>
     {% block page_script %}{% endblock %}
   </body>
 </html>

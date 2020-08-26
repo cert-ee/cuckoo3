@@ -5,8 +5,7 @@
 {# sets a (for now) fake redirect timer #}
 {% block page_script %}
   <script type="text/javascript">
-    (function() {
-
+    document.addEventListener('DOMContentLoaded', () => {
       const apiState          = document.querySelector('#state');
       const stateMessage      = apiState.querySelector('.api-state-message');
       const stateDescription  = apiState.querySelector('.api-state-description');
@@ -72,8 +71,7 @@
       }
 
       setTimeout(poll(), 5000);
-
-    }());
+    });
   </script>
 {% endblock %}
 
