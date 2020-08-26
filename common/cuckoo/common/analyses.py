@@ -2,8 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
 import json
+import os
 
 from . import db, machines
 from .config import cfg
@@ -12,6 +12,7 @@ from .storage import AnalysisPaths
 from .strictcontainer import (
     Settings as _Settings, Analysis, Errors
 )
+from .utils import parse_bool
 
 log = CuckooGlobalLogger(__name__)
 
@@ -254,17 +255,44 @@ def get_filetree_dict(analysis_id):
     finally:
         fp.close()
 
-def list(limit=None):
+def list(limit=None, offset=None, desc=True):
     ses = db.dbms.session()
     try:
-        return ses.query(db.Analysis).limit(limit).order_by(
-            db.Analysis.created_on
-        ).all()
+        query = ses.query(db.Analysis)
+
+        if desc:
+            query = query.order_by(db.Analysis.created_on.desc())
+        else:
+            query = query.order_by(db.Analysis.created_on.asc())
+
+        return query.limit(limit).offset(offset).all()
     finally:
         ses.close()
 
-def dictlist(limit=None):
-    return [a.to_dict() for a in list(limit)]
+def dictlist(limit=None, offset=None, desc=True):
+    if limit is not None and not isinstance(limit, int):
+        try:
+            limit = int(limit)
+        except ValueError:
+            raise TypeError("Limit must be an integer")
+
+    if offset is not None and not isinstance(offset, int):
+        try:
+            offset = int(offset)
+        except ValueError:
+            raise TypeError("Offset must be an integer")
+
+    if not isinstance(desc, bool):
+        try:
+            desc = parse_bool(desc)
+        except (TypeError, ValueError):
+            raise TypeError("Desc must be a boolean")
+
+    return [
+        a.to_dict() for a in list(
+            limit=limit, offset=offset, desc=desc
+        )
+    ]
 
 def get_fatal_errors(analysis_id):
     analysis = get_analysis(analysis_id)
