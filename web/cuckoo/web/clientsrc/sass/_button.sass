@@ -1,14 +1,17 @@
 // Copyright (C) 2016-2020 Cuckoo Foundation.
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
-button,
-input[type="submit"],
-input[type="reset"]
-  &.button
-    -webkit-appearance: none
-    border: 0
-    font-size: 100%
-    font-family: inherit
+button.button,
+input[type="submit"].button,
+input[type="reset"].button
+  border: none
+  font-size: 100%
+  font-family: inherit
+  background-color: inherit
+  line-height: 1
+  // cursor: pointer
+  -webkit-appearance: none
+  -moz-appearance: none
 
 .button
   display: inline-block

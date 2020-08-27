@@ -372,10 +372,13 @@ input[type=submit].button,
 .control.is-file input[type=submit].file-trigger,
 input[type=reset].button,
 .control.is-file input[type=reset].file-trigger {
-  -webkit-appearance: none;
-  border: 0;
+  border: none;
   font-size: 100%;
   font-family: inherit;
+  background-color: inherit;
+  line-height: 1;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .button, .control.is-file .file-trigger {
