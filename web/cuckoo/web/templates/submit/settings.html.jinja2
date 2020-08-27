@@ -7,6 +7,8 @@
 {% block page_script %}
   <script type="text/javascript">
 
+    window.opts = {{ possible_settings|tojson }}
+
     const conclude = document.querySelector('#conclude-analysis');
     const finish = conclude.querySelector('#start-analysis');
 
@@ -62,7 +64,7 @@
 
     // sends a PUT request to the settings api to conclude and finalize the
     // submission and proceed to analysis
-    function finishSubmission(options) {
+    function finishSubmission() {
 
       options = {
         timeout: parseInt(document.querySelector('input[name="timeout"]').value),

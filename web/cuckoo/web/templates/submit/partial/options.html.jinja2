@@ -49,9 +49,9 @@
         <label class="label" for="platform">Platform</label>
         <div class="control is-select">
           <select class="input" name="platform" id="platform">
-              <option value="" selected>Default</option>
+              <!-- <option value="" selected>Default</option> -->
             {% for p in possible_settings.platforms %}
-              <option value="{{ p.platform }}">{{ p.platform|e }}</option>
+              <option value="{{ p.platform }}" {% if p.default %}selected{% endif %}>{{ p.platform|e }} {% if p.default %}(Default){% endif %}</option>
             {% endfor %}
           </select>
         </div>
