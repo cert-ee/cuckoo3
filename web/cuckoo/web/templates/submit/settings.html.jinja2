@@ -16,14 +16,8 @@
 
       const html = parseDOM(`
         <div class="box has-background-red no-margin-top" id="error">
-          <div class="columns is-gapless is-between">
-            <div class="column">
-              <p class="no-margin-y"><strong>${msg}</strong></p>
-            </div>
-            <div class="column">
-              <button class="button is-white is-small">&times;</button>
-            </div>
-          </div>
+          <p class="no-margin-top"><strong>${msg}</strong></p>
+          <button class="button is-red has-text-small">Dismiss</button>
         </div>
       `);
 
@@ -90,8 +84,14 @@
           'X-CSRFToken': window.csrf_token
         }
       }).then(response => response.json())
-        .catch(err => handleError(err.error))
-        .then(() => window.location = '/reports');
+        .then(response => {
+          const { error } = response;
+          if(error) {
+            handleError(error);
+          } else {
+            window.location = '/reports';
+          }
+        });
 
     }
 
