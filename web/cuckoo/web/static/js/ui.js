@@ -151,6 +151,15 @@ function toggleVisibility(element, force=null) {
     element.toggleAttribute('hidden');
 }
 /**
+ * Parses a string to DOM object to be injected into the page.
+ * @param {string} str - HTML as a string
+ * @param {string} type - DOM format, should be 'text/html' or 'text/svg'
+ * @return {HTMLElement}
+ */
+function parseDOM(str="", type="text/html") {
+  return new DOMParser().parseFromString(str, type).body.firstChild;
+}
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)

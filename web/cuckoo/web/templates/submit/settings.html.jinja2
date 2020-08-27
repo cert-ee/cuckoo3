@@ -7,10 +7,28 @@
 {% block page_script %}
   <script type="text/javascript">
 
-    const finish = document.querySelector('#start-analysis');
+    const conclude = document.querySelector('#conclude-analysis');
+    const finish = conclude.querySelector('#start-analysis');
 
-    function handleError() {
+    function handleError(msg) {
+      const err = conclude.querySelector('#error');
+      if(err) err.remove();
 
+      const html = parseDOM(`
+        <div class="box has-background-red no-margin-top" id="error">
+          <div class="columns is-gapless is-between">
+            <div class="column">
+              <p class="no-margin-y"><strong>${msg}</strong></p>
+            </div>
+            <div class="column">
+              <button class="button is-white is-small">&times;</button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      conclude.insertBefore(html, conclude.children[0]);
+      html.querySelector('button').onclick = () => html.remove();
     }
 
     // binds ux handlers to the file tree
@@ -37,9 +55,15 @@
 
       platform.addEventListener('change', ev => {
         const val = ev.currentTarget.value;
-        versions.querySelectorAll('option').forEach(o => o.hidden = true);
-        versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.hidden = true);
+        versions.querySelectorAll('option').forEach(o => o.setAttribute('hidden', true));
+        if(val.length) {
+          versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
+          versions.value = versions.querySelector(`option[data-platform="${platform.value}"]`).value;
+        } else {
+          versions.value = "";
+        }
       });
+      platform.dispatchEvent(new Event('change'));
     }
 
     // sends a PUT request to the settings api to conclude and finalize the
@@ -66,21 +90,20 @@
           'X-CSRFToken': window.csrf_token
         }
       }).then(response => response.json())
-        .catch(err => handleError)
+        .catch(err => handleError(err.error))
         .then(() => window.location = '/reports');
 
     }
 
+    // apply all the handlers
     document.addEventListener('DOMContentLoaded', () => {
-
       fileTreeHandler();
       platformHandler();
-
       finish.addEventListener('click', ev => {
         finishSubmission();
       });
-
     });
+
   </script>
 {% endblock %}
 
@@ -137,7 +160,8 @@
               <div id="options-form">{% include "submit/partial/options.html.jinja2" %}</div>
             </div>
           </div>
-          <div class="box has-shadow">
+          <div class="box has-shadow" id="conclude-analysis">
+            <!-- inject any messages here -->
             <div class="columns is-between is-vcenter">
               <div class="column">
                 <p class="no-margin-y">
