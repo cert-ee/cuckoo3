@@ -51,13 +51,11 @@
 
       platform.addEventListener('change', ev => {
         const val = ev.currentTarget.value;
-        versions.querySelectorAll('option').forEach(o => o.setAttribute('hidden', true));
+        versions.querySelectorAll('option[data-platform]').forEach(o => o.setAttribute('hidden', true));
         if(val.length) {
           versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
-          versions.value = versions.querySelector(`option[data-platform="${platform.value}"]`).value;
-        } else {
-          versions.value = "";
         }
+        versions.value = "";
       });
       platform.dispatchEvent(new Event('change'));
     }

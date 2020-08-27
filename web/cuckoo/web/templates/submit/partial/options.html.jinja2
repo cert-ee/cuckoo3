@@ -49,7 +49,6 @@
         <label class="label" for="platform">Platform</label>
         <div class="control is-select">
           <select class="input" name="platform" id="platform">
-              <!-- <option value="" selected>Default</option> -->
             {% for p in possible_settings.platforms %}
               <option value="{{ p.platform }}" {% if p.default %}selected{% endif %}>{{ p.platform|e }} {% if p.default %}(Default){% endif %}</option>
             {% endfor %}
@@ -60,6 +59,7 @@
         <label class="label" for="version">Platform version</label>
         <div class="control is-select">
           <select class="input" name="version" id="version">
+            <option value="">Any</option>
             {% for p in possible_settings.platforms %}
               {% for version in p.os_version %}
                 <option data-platform="{{ p.platform }}" value="{{ version }}">{{ version|e }}</option>
