@@ -3,8 +3,8 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 from cuckoo.common import submit, analyses
+from cuckoo.common.config import cfg
 from cuckoo.common.machines import get_platforms_versions
-
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
     HttpResponseNotFound
@@ -13,7 +13,9 @@ from django.shortcuts import render, redirect
 from django.views import View
 
 _available_platforms = [
-    {
+    {   "default": platform == cfg(
+            "cuckoo", "platform", "default_platform", "platform"
+        ),
         "platform": platform,
         "os_version": [os_version for os_version in os_versions]
      } for platform, os_versions in get_platforms_versions().items()
