@@ -17,7 +17,7 @@
         <div class="columns is-divided has-tiny-gaps {% if not child.selectable and not child.type in ["container", "directory"] %}is-disabled{% endif %}">
           {% if child.type != "directory" %}
             <div class="column is-auto">
-              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} {% if not child.selectable %}data-interesting{% endif %} />
+              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} {% if not child.selectable %}data-uninteresting{% endif %} />
             </div>
           {% endif %}
           <div class="column is-auto">

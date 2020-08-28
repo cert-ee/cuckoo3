@@ -6,104 +6,111 @@
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
 {% block page_script %}
   <script type="text/javascript">
+    (function() {
 
-    window.opts = {{ possible_settings|tojson }}
+      const conclude = document.querySelector('#conclude-analysis');
+      const finish = conclude.querySelector('#start-analysis');
 
-    const conclude = document.querySelector('#conclude-analysis');
-    const finish = conclude.querySelector('#start-analysis');
+      // prints error in the conclusive block
+      function handleError(msg) {
+        const err = conclude.querySelector('#error');
+        if(err) err.remove();
 
-    function handleError(msg) {
-      const err = conclude.querySelector('#error');
-      if(err) err.remove();
+        const html = parseDOM(`
+          <div class="box has-background-red no-margin-top" id="error">
+            <p class="no-margin-top"><strong>${msg}</strong></p>
+            <button class="button is-red has-text-small">Dismiss</button>
+          </div>
+        `);
 
-      const html = parseDOM(`
-        <div class="box has-background-red no-margin-top" id="error">
-          <p class="no-margin-top"><strong>${msg}</strong></p>
-          <button class="button is-red has-text-small">Dismiss</button>
-        </div>
-      `);
-
-      conclude.insertBefore(html, conclude.children[0]);
-      html.querySelector('button').onclick = () => html.remove();
-    }
-
-    // binds ux handlers to the file tree
-    function fileTreeHandler() {
-      const filetree = document.querySelector('#filetree');
-      const toggleDisabled = document.querySelector('#toggle-disabled');
-      if(filetree && toggleDisabled) {
-        toggleDisabled.addEventListener('click', ev => {
-          let isHidden = false;
-          [...filetree.querySelectorAll('input[data-interesting]')].forEach(s => {
-            let item = lib.parent('li', s);
-            toggleVisibility(item, !!s.hidden);
-            isHidden = item.hidden;
-          });
-        });
+        conclude.insertBefore(html, conclude.children[0]);
+        html.querySelector('button').onclick = () => html.remove();
       }
-    }
 
-    // when an OS is picked in the OS dropdown, display only the supported version
-    // in the version dropdown
-    function platformHandler() {
-      const platform = document.querySelector('select[name="platform"]');
-      const versions = document.querySelector('select[name="version"]');
+      // binds ux handlers to the file tree
+      function fileTreeHandler() {
+        const filetree = document.querySelector('#filetree');
+        const toggleDisabled = document.querySelector('#toggle-disabled');
+        const count = document.querySelector('#count');
 
-      platform.addEventListener('change', ev => {
-        const val = ev.currentTarget.value;
-        versions.querySelectorAll('option[data-platform]').forEach(o => o.setAttribute('hidden', true));
-        if(val.length) {
-          versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
+        let countHidden   = () => filetree.querySelectorAll('input[data-uninteresting]').length;
+        let setCount      = () => count.querySelector('span').textContent = countHidden();
+
+        if(filetree && toggleDisabled) {
+          toggleDisabled.addEventListener('click', ev => {
+            let isHidden = false;
+            let f = [...filetree.querySelectorAll('input[data-uninteresting]')].forEach(s => {
+              let item = lib.parent('li', s);
+              toggleVisibility(item, !!s.hidden);
+              isHidden = item.hidden;
+            });
+            toggleVisibility(count, !!isHidden);
+          });
+          setCount();
         }
-        versions.value = "";
-      });
-      platform.dispatchEvent(new Event('change'));
-    }
+      }
 
-    // sends a PUT request to the settings api to conclude and finalize the
-    // submission and proceed to analysis
-    function finishSubmission() {
+      // when an OS is picked in the OS dropdown, display only the supported version
+      // in the version dropdown
+      function platformHandler() {
+        const platform = document.querySelector('select[name="platform"]');
+        const versions = document.querySelector('select[name="version"]');
 
-      options = {
-        timeout: parseInt(document.querySelector('input[name="timeout"]').value),
-        priority: parseInt(document.querySelector('select[name="priority"]').value),
-        platforms: [
-          {
-            platform: document.querySelector('select[name="platform"]').value,
-            os_version: document.querySelector('select[name="version"]').value
+        platform.addEventListener('change', ev => {
+          const val = ev.currentTarget.value;
+          versions.querySelectorAll('option[data-platform]').forEach(o => o.setAttribute('hidden', true));
+          if(val.length) {
+            versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
           }
-        ],
-        fileid: document.querySelector('input[name="selected-file"]:checked').value
-      };
-
-      fetch('/api/analyses/{{analysis_id}}/settings', {
-        method: 'PUT',
-        body: JSON.stringify(options),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': window.csrf_token
-        }
-      }).then(response => response.json())
-        .then(response => {
-          const { error } = response;
-          if(error) {
-            handleError(error);
-          } else {
-            window.location = '/reports';
-          }
+          versions.value = "";
         });
+        platform.dispatchEvent(new Event('change'));
+      }
 
-    }
+      // sends a PUT request to the settings api to conclude and finalize the
+      // submission and proceed to analysis
+      function finishSubmission() {
 
-    // apply all the handlers
-    document.addEventListener('DOMContentLoaded', () => {
-      fileTreeHandler();
-      platformHandler();
-      finish.addEventListener('click', ev => {
-        finishSubmission();
+        options = {
+          timeout: parseInt(document.querySelector('input[name="timeout"]').value),
+          priority: parseInt(document.querySelector('select[name="priority"]').value),
+          platforms: [
+            {
+              platform: document.querySelector('select[name="platform"]').value,
+              os_version: document.querySelector('select[name="version"]').value
+            }
+          ],
+          fileid: document.querySelector('input[name="selected-file"]:checked').value
+        };
+
+        fetch('/api/analyses/{{analysis_id}}/settings', {
+          method: 'PUT',
+          body: JSON.stringify(options),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.csrf_token
+          }
+        }).then(response => response.json())
+          .then(response => {
+            const { error } = response;
+            if(error) {
+              handleError(error);
+            } else {
+              window.location = '/reports';
+            }
+          });
+      }
+
+      // apply all the handlers
+      document.addEventListener('DOMContentLoaded', () => {
+        fileTreeHandler();
+        platformHandler();
+        finish.addEventListener('click', ev => {
+          finishSubmission();
+        });
       });
-    });
 
+    }());
   </script>
 {% endblock %}
 
@@ -118,7 +125,7 @@
             <div class="box has-shadow">
               <div class="control is-checkable">
                 <input type="checkbox" id="toggle-disabled" checked />
-                <label class="label" for="toggle-disabled">Only show interesting files</label>
+                <label class="label" for="toggle-disabled">Only show interesting files <span id="count">(<span>0</span> hidden from view)</span></label>
               </div>
             </div>
           {% endif %}
