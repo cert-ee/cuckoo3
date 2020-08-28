@@ -7,5 +7,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.Search.as_view(), name="Search/index"),
+    path("", views.Search.as_view(), name="api/search"),
 ]
