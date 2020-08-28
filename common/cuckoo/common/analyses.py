@@ -188,7 +188,7 @@ def merge_settings_ident(analysis, identification):
         )
         default = {
             "platform": platform,
-            "os_version": os_version
+            "os_version": os_version or ""
         }
         update_settings(
             analysis, platforms=[default]

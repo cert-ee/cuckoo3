@@ -7,14 +7,15 @@ import queue
 import threading
 
 from cuckoo.common import db, analyses, task
-from cuckoo.common.submit import SettingsMaker, SubmissionError
+from cuckoo.common.config import cfg
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths
 from cuckoo.common.strictcontainer import (
-    Analysis, Task, Identification, Pre, Settings
+    Analysis, Task, Identification, Pre
 )
+from cuckoo.common.submit import SettingsMaker, SubmissionError
 
 from . import started
 from .scheduler import task_queue
@@ -67,19 +68,26 @@ def handle_identification_done(worktracker):
 
         ident = Identification.from_file(ident_path)
 
-        if ident.selected:
+        allow_pre_analysis = False
+        if not ident.selected:
+            cancel = cfg("cuckoo", "state_control", "cancel_unidentified")
+            if not ident.identified and not cancel:
+                allow_pre_analysis = True
+            else:
+                newstate = analyses.States.NO_SELECTED
+                worktracker.log.debug(
+                    "Updating analysis state.", newstate=newstate
+                )
+                db.set_analysis_state(worktracker.analysis_id, newstate)
+
+        if ident.selected or allow_pre_analysis:
             newstate = analyses.States.PENDING_PRE
             worktracker.log.debug(
                 "Updating analysis state.", newstate=newstate
             )
             db.set_analysis_state(worktracker.analysis_id, newstate)
             started.processing_handler.pre_analysis(worktracker.analysis_id)
-        else:
-            newstate = analyses.States.NO_SELECTED
-            worktracker.log.debug(
-                "Updating analysis state.", newstate=newstate
-            )
-            db.set_analysis_state(worktracker.analysis_id, newstate)
+
 
 def handle_pre_done(worktracker):
     analysis = worktracker.analysis

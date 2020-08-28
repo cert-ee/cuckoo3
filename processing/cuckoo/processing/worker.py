@@ -172,7 +172,7 @@ def _handle_processing(processing_classes, ctx):
     except CancelProcessing as e:
         ctx.set_failed()
         ctx.log.error("Processing cancelled", error=e)
-        ctx.errtracker.fatal_error(e)
+        ctx.errtracker.fatal_exception(e)
         return False
     except Exception as e:
         ctx.set_failed()

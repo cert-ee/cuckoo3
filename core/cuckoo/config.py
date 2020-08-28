@@ -41,6 +41,9 @@ typeloaders = {
             },
             "multi_platform": config.List(config.String, ["windows"]),
             "autotag": config.Boolean(default_val=False)
+        },
+        "state_control": {
+            "cancel_unidentified": config.Boolean(default_val=False)
         }
 
     },
