@@ -1,9 +1,9 @@
 {% set topleft_nav = [
   ('Dashboard', 'dashboard', 'Dashboard'),
-  ('Submit/submitfile', 'submit', 'Submit'),
   ('Reports/index', 'reports', 'Reports'),
+  ('Submit/submitfile', 'submit', 'Submit'),
+  ('Search/index', 'search', 'Search')
 ] -%}
-{# search: ('/search', 'search', 'Search') } #}
 {% set active_page = active_page|default('Dashboard') -%}
 
 <nav class="navbar">
