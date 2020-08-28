@@ -1,10 +1,10 @@
 {% set topleft_nav = [
-  ('/', 'dashboard', 'Dashboard'),
-  ('/submit', 'submit', 'Submit'),
-  ('/reports', 'reports', 'Reports'),
-  ('/search', 'search', 'Search')
+  ('Dashboard', 'dashboard', 'Dashboard'),
+  ('Submit/submitfile', 'submit', 'Submit'),
+  ('Reports/index', 'reports', 'Reports'),
 ] -%}
-{% set active_page = active_page|default('dashboard') -%}
+{# search: ('/search', 'search', 'Search') } #}
+{% set active_page = active_page|default('Dashboard') -%}
 
 <nav class="navbar">
   <div class="navbar-logo">
@@ -19,7 +19,7 @@
   </div>
   <div class="navbar-start">
     {% for href, id, caption in topleft_nav %}
-      <a href="{{ href|e }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
+      <a href="{{ url(href) }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
     {% endfor %}
   </div>
   {# <div class="navbar-end">

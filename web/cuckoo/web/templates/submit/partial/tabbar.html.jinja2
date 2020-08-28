@@ -13,9 +13,6 @@
       {% for name, caption in submit_levels %}
         <p class="tabbar-link {% if active_level == name %}is-active{% endif %}">{{ caption|e }}</p>
       {% endfor %}
-      {# <a href="/submit" class="tabbar-link {% if step == 'sample' %}is-active{% endif %}">Sample</a>
-      <a href="/submit/settings" class="tabbar-link {% if step == 'prepare' %}is-active{% endif %}">Configure</a>
-      <a href="/submit/processing" class="tabbar-link {% if step == 'processing' %}is-active{% endif %}">Analysis</a> #}
     </nav>
   </div>
 </section>

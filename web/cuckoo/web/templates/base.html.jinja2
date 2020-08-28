@@ -4,9 +4,9 @@
     <meta name="robots" content="noindex,nofollow" />
     <meta name="charset" content="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="stylesheet" type="text/css" href="/static/css/fontawesome.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/ui.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/theme.css" />
+    <link rel="stylesheet" type="text/css" href="{{ static('/css/fontawesome.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static('/css/ui.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static('/css/theme.css') }}" />
     <title>Cuckoo{% if title %}- {{ title }}{% endif %}</title>
   </head>
   <body>
@@ -19,7 +19,7 @@
     </div>
     {% include "partial/footer.html.jinja2" %}
     <script>window.csrf_token = "{{ csrf_token }}";</script>
-    <script type="text/javascript" src="/static/js/ui.js"></script>
+    <script type="text/javascript" src="{{ static('js/ui.js') }}"></script>
     {% block page_script %}{% endblock %}
   </body>
 </html>
