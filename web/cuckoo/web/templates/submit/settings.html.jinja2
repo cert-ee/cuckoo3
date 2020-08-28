@@ -29,9 +29,9 @@
 
       // binds ux handlers to the file tree
       function fileTreeHandler() {
-        const filetree = document.querySelector('#filetree');
+        const filetree       = document.querySelector('#filetree');
         const toggleDisabled = document.querySelector('#toggle-disabled');
-        const count = document.querySelector('#count');
+        const count          = document.querySelector('#count');
 
         let countHidden   = () => filetree.querySelectorAll('input[data-uninteresting]').length;
         let setCount      = () => count.querySelector('span').textContent = countHidden();
@@ -43,6 +43,7 @@
               let item = lib.parent('li', s);
               toggleVisibility(item, !!s.hidden);
               isHidden = item.hidden;
+              if(!isHidden) blink(item);
             });
             toggleVisibility(count, !!isHidden);
           });
@@ -61,6 +62,7 @@
           versions.querySelectorAll('option[data-platform]').forEach(o => o.setAttribute('hidden', true));
           if(val.length) {
             versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
+            blink(versions);
           }
           versions.value = "";
         });

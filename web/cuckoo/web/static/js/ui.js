@@ -1,7 +1,6 @@
 // Copyright (C) 2016-2020 Cuckoo Foundation.
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
-
 const lib = {
   // splits url in its counterparts
   url(url) {
@@ -41,6 +40,7 @@ const lib = {
     return result;
   }
 }
+
 /**
  * handles navbar interaction (small-screen exclusive enhancement)
  * @param {HTMLElement} toggle - element target
@@ -57,6 +57,7 @@ function handleNavbar(toggle) {
   });
   return null;
 }
+
 /**
  * enhances default file input experience
  * @param {HTMLElement} input - element target
@@ -79,6 +80,7 @@ function handleFileInput(input) {
   // @TODO: handle multiple files
   return null;
 }
+
 /**
  * Enhances list-tree variations.
  * @param {HTMLElement} list - list target
@@ -102,8 +104,9 @@ function handleListTree(list) {
     }
   });
 }
+
 /**
- * Initializes in-page tab behavior. Clicking tab links will hide or show the
+ * Enhances in-page tab behavior. Clicking tab links will hide or show the
  * referenced elements
  * @param {HTMLElement} tabContext
  */
@@ -129,8 +132,10 @@ function handlePageTabs(tabContext) {
         link.classList.add('is-active');
       }
     })
-  })
+  });
+
 }
+
 /**
  * Toggles [hidden] attribute on html element. Can be called inline for simplicity
  * of performing this routine.
@@ -150,6 +155,7 @@ function toggleVisibility(element, force=null) {
   else
     element.toggleAttribute('hidden');
 }
+
 /**
  * Parses a string to DOM object to be injected into the page.
  * @param {string} str - HTML as a string
@@ -159,6 +165,32 @@ function toggleVisibility(element, force=null) {
 function parseDOM(str="", type="text/html") {
   return new DOMParser().parseFromString(str, type).body.firstChild;
 }
+
+/**
+ * Lets an element blink for a moment to indicate a change caused by another
+ * action.
+ * @param {HTMLElement} el - the element to apply the effect on
+ * @param {blinkColor} string - a HEX value of the color that the element blinks into
+ */
+function blink(el, blinkColor = '#fffae8', speed = 100) {
+  const background = getComputedStyle(el).getPropertyValue('background-color');
+  el.style.transition = `background-color ${speed}ms linear`;
+  let mode = 1;
+  let step = 0;
+  const iv = setInterval(() => {
+    if(mode)
+      el.style.backgroundColor = blinkColor;
+    else
+      el.style.backgroundColor = background;
+    mode = mode ? 0 : 1;
+    step++;
+    if(step == 4) {
+      clearInterval(iv);
+      el.style.transition = null;
+    }
+  }, speed * 2);
+}
+
 /**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
@@ -169,6 +201,7 @@ function applyHandler(sel=null, fn=null) {
   if(sel && fn) [...document.querySelectorAll(sel)].forEach(fn);
   return null;
 }
+
 /**
  * document ready state initializer
  */
