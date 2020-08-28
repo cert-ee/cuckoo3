@@ -26,6 +26,7 @@ class JSONDump(Reporter):
         if self.ctx.analysis.category == "url":
             info.update({
                 "selected": True,
+                "identified": True,
                 "target": submitted
             })
             Identification(**info).to_file(dump_path)
@@ -33,8 +34,10 @@ class JSONDump(Reporter):
 
         target = self.ctx.result.get("selected", {}).get("target", {})
         selected = self.ctx.result.get("selected", {}).get("selected")
+        identified = self.ctx.result.get("selected", {}).get("identified")
         info.update({
             "selected": selected,
+            "identified": identified,
             "target": target,
             "ignored": self.ctx.result.get("ignored")
         })

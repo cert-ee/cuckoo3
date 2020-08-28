@@ -24,6 +24,7 @@ typeloaders = {
                 "arc": ["arc"],
                 "unarchive": ["unarchive"]
             }
-        )
+        ),
+        "log_unidentified": config.Boolean(default_val=False)
     }
 }

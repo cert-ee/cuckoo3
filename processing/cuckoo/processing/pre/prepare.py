@@ -2,17 +2,20 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import json
+import logging
 import os
 import zipfile
-import json
-
 import sflock
 
-from cuckoo.common.strictcontainer import TargetFile
+from cuckoo.common.log import set_logger_level
 from cuckoo.common.storage import AnalysisPaths
+from cuckoo.common.strictcontainer import TargetFile
 
 from ..abtracts import Processor
 from ..errors import CancelProcessing
+
+set_logger_level("PIL.Image", logging.WARNING)
 
 def find_target_in_archive(archive, extraction_paths):
     current = None
@@ -141,9 +144,8 @@ class CreateZip(Processor):
                 AnalysisPaths.submitted_file(self.ctx.analysis.id)
             )
         except Exception as e:
-            err = f"Sflock unpacking failure. {e}"
-            self.ctx.errtracker.fatal_exception(err)
-            raise CancelProcessing(err)
+            self.ctx.log.exception("Sflock unpacking failure.", error=e)
+            raise CancelProcessing(f"Sflock unpacking failure. {e}")
 
         selected_file = find_target_in_archive(f, target.extrpath)
         if not selected_file:

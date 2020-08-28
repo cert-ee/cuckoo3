@@ -26,7 +26,10 @@ class ElasticSearch(Reporter):
         init_elasticsearch(create_missing_indices=True)
 
     def report_pre_analysis(self):
-        index_analysis(self.ctx.analysis, self.ctx.result.get("target"))
+        try:
+            index_analysis(self.ctx.analysis, self.ctx.result.get("target"))
+        except ElasticSearchError as e:
+            self.ctx.log.warning("Failed to index analysis.", error=e)
 
     def _make_subtype_values(self, eventfile, values_key, checkfunc):
         subtype_values = {}

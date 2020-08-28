@@ -348,6 +348,7 @@ class Identification(StrictContainer):
         "selected": bool,
         "target": (TargetFile, TargetURL),
         "category": str,
+        "identified": bool,
         "ignored": list,
         "errors": Errors
     }

@@ -3,15 +3,19 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import json
+import logging
 import os
 
 import sflock
 
-from cuckoo.common.storage import AnalysisPaths
 from cuckoo.common.config import cfg
+from cuckoo.common.log import set_logger_level
+from cuckoo.common.storage import AnalysisPaths
 
 from ..abtracts import Processor
 from ..errors import CancelProcessing
+
+set_logger_level("PIL.Image", logging.WARNING)
 
 def find_selected(f, tracklist):
     if f.selected:
@@ -20,6 +24,14 @@ def find_selected(f, tracklist):
     if f.children:
         for child in f.children:
             find_selected(child, tracklist)
+
+def find_unidentified(f, tracklist):
+    if not f.identified:
+        tracklist.append(f)
+
+    if f.children:
+        for child in f.children:
+            find_unidentified(child, tracklist)
 
 def _bytes_to_str(b):
     if isinstance(b, bytes):
@@ -32,7 +44,6 @@ def _write_filetree(analysis_id, tree):
 def _write_filemap(analysis_id, filemap):
     with open(AnalysisPaths.filemap(analysis_id), "w") as fp:
         json.dump(filemap, fp)
-
 
 def _make_ident_filename(f):
     if f.extension and not f.filename.endswith(f.extension):
@@ -62,8 +73,8 @@ class Identify(Processor):
         try:
             f = sflock.unpack(submitted_file, filename=original_filename)
         except Exception as e:
-            err = f"Sflock unpacking failure. {e}"
-            raise CancelProcessing(err)
+            self.ctx.log.exception("Sflock unpacking failure", error=e)
+            raise CancelProcessing(f"Sflock unpacking failure. {e}")
 
 
         if f.error:
@@ -113,6 +124,9 @@ class SelectFile(Processor):
         self.file_counter = 0
         self.tag_deps = cfg("identification", "tags", subpkg="processing")
         self.file_map = {}
+        self.log_unidentified = cfg(
+            "identification", "log_unidentified", subpkg="processing"
+        )
 
     def _get_tags_dep(self, dep):
         tags = []
@@ -200,7 +214,18 @@ class SelectFile(Processor):
                 filename=repr(ident_filename)
             )
 
+        if self.log_unidentified:
+            unidentified = []
+            find_unidentified(unpackedfile, unidentified)
+            if unidentified:
+                self.ctx.log.warning(
+                    "Sflock did not identify all files.",
+                    count=len(unidentified),
+                    files=", ".join(f.filename for f in unidentified)
+                )
+
         return {
+            "identified": target.identified,
             "selected": target.selected,
             "target": {
                 "filename": ident_filename,

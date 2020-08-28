@@ -39,3 +39,7 @@ platform:
   # Enabling this means your analyis machines have been configured with the tags
   # listed in conf/processing/identification.yaml
   autotag: {{ platform.autotag }}
+
+state_control:
+  # Cancel an analysis if the file was not identified during the identification stage.
+  cancel_unidentified: {{ state_control.cancel_unidentified }}

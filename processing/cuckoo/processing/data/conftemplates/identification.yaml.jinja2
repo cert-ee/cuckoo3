@@ -8,3 +8,7 @@ tags:
     - {{ dep }}
     {% endfor %}
 {% endfor %}
+
+# Log the filenames of files that have not been identified during identification. This can help to find
+# interesting files that are not supported yet. This can be noisy.
+log_unidentified: {{ log_unidentified }}
