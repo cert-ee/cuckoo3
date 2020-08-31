@@ -6,6 +6,7 @@ from cuckoo.common.strictcontainer import Task, Analysis, Identification
 from cuckoo.common.storage import TaskPaths, AnalysisPaths
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.log import AnalysisLogger, TaskLogger
+from cuckoo.common.machines import Machine
 
 from .errors import (
     PluginError, PluginWorkerError, CancelProcessing, CancelReporting
@@ -81,6 +82,7 @@ class TaskContext(ProcessingContext):
 
         self.stage = "post"
         self.task = Task.from_file(TaskPaths.taskjson(task_id))
+        self.machine = Machine.from_file(TaskPaths.machinejson(self.task.id))
 
     def _errtracker_to_file(self):
         self.errtracker.to_file(

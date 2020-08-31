@@ -142,6 +142,16 @@ class Machine:
         }
 
     @classmethod
+    def from_file(cls, filepath):
+        try:
+            with open(filepath, "r") as fp:
+                d = json.load(fp)
+        except json.decoder.JSONDecodeError as e:
+            raise ValueError(f"JSON decoding error: {e}")
+
+        return cls.from_dict(d)
+
+    @classmethod
     def from_dict(cls, d):
         return cls(
             name=d["name"], label=d["label"], ip=d["ip"],

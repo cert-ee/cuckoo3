@@ -57,8 +57,7 @@ class ElasticSearch(Reporter):
 
         return subtype_values
 
-    def report_post_analysis(self):
-
+    def _store_behavioral_events(self):
         eventype_key_checkfunc = {
             Kinds.FILE: ("srcpath", None),
             Kinds.REGISTRY: ("path", None),
@@ -91,3 +90,25 @@ class ElasticSearch(Reporter):
                         "Failed to index events.", error=e, type=eventtype,
                         subtype=subtype
                     )
+
+    def _store_network_events(self):
+
+        for subtype, requests in self.ctx.result.get("network", {}).items():
+            if not requests:
+                continue
+
+            try:
+                index_events(
+                    analysis_id=self.ctx.analysis.id, eventtype="network",
+                    subtype=subtype, values=requests,
+                    task_id=self.ctx.task.id
+                )
+            except ElasticSearchError as e:
+                self.ctx.log.warning(
+                    "Failed to index events.", error=e, type="network",
+                    subtype=subtype
+                )
+
+    def report_post_analysis(self):
+        self._store_behavioral_events()
+        self._store_network_events()
