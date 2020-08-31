@@ -150,6 +150,10 @@ p {
   font-size: 0.8em;
 }
 
+.is-half-opacity {
+  opacity: 0.5;
+}
+
 .view {
   min-height: 100%;
   margin-bottom: -14rem;
