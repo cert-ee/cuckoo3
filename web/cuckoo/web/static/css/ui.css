@@ -449,6 +449,17 @@ input[type=reset].button,
   font-weight: 500;
 }
 
+.buttons-conjoined > .button, .control.is-file .buttons-conjoined > .file-trigger {
+  border-radius: 0;
+  margin-right: -4px;
+}
+.buttons-conjoined > .button:first-child, .control.is-file .buttons-conjoined > .file-trigger:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.buttons-conjoined > .button:last-child, .control.is-file .buttons-conjoined > .file-trigger:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -68,3 +68,12 @@ input[type="reset"].button
     padding: $gap/4 $gap/2
     font-size: .8em
     font-weight: 500
+
+.buttons-conjoined
+  & > .button
+    border-radius: 0
+    margin-right: -4px
+    &:first-child
+      border-radius: $gap/2 0 0 $gap/2
+    &:last-child
+      border-radius: 0 $gap/2 $gap/2 0
