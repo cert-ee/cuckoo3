@@ -37,16 +37,26 @@
       const currentError = results.querySelector('tr#search-error');
       if(currentError) currentError.remove();
 
-      const dom = parseDOM(`
-        <table>
-          <tbody>
-            <tr class="has-background-red" id="search-error">
-              <td>${data.error}</td>
-            </tr>
-          </tbody>
-        </table>
-      `).querySelector('tbody tr');
-      results.insertBefore(dom, results.querySelector('tbody tr:first-child'));
+      results.innerHTML = `
+        <tr class="has-background-red" id="search-error">
+          <td colspan="4">
+            <p class="has-text-center">${data.error}</p>
+          </td>
+        </tr>
+      `;
+    }
+
+    // a single row with a message to display for idle and empty states
+    function messageRow(rowText) {
+      if(!rowText)
+        rowText = 'Type a query in the search bar above to display results.';
+      results.innerHTML = `
+        <tr>
+          <td colspan="4">
+            <p class="is-half-opacity has-text-center">${rowText}</p>
+          </td>
+        </tr>
+      `;
     }
 
     // request serializer
@@ -77,19 +87,27 @@
     }
 
     // renders rows with results
-    function displayResults(data) {
+    function displayResults(data, rowText) {
       const { count, matches, offset, possible } = data;
       results.innerHTML = '';
-      results.innerHTML = matches.map(match => `
-        <tr>
-          <td>${match.analysis_id}</td>
-          <td>${match.task_id}</td>
-          ${match.matches.map(m => `
-            <td>${m.field}</td>
-            <td>${m.matches.join('<br />')}</td>
-          `).join('')}
-        </tr>
-      `).join('');
+
+      if(results.querySelector('#search-error'))
+        results.querySelector('#search-error').remove();
+
+      if(matches.length) {
+        results.innerHTML = matches.map(match => `
+          <tr>
+            <td>${match.analysis_id}</td>
+            <td>${match.task_id}</td>
+            ${match.matches.map(m => `
+              <td>${m.field}</td>
+              <td>${m.matches.join('<br />')}</td>
+            `).join('')}
+          </tr>
+        `).join('');
+      } else {
+        messageRow('No results returned.');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -105,6 +123,9 @@
           .then(displayResults)
           .catch(handleError);
       });
+
+      // display idle message on startup
+      messageRow();
 
     });
 
@@ -144,13 +165,7 @@
             <th>Matches</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td colspan="4">
-              <p class="is-half-opacity has-text-center">Add a query in the search bar above to display matching results.</p>
-            </td>
-          </tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
   </section>
