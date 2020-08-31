@@ -21,5 +21,10 @@ def index(request):
 
     return render(
         request, template_name="reports/index.html.jinja2",
-        context={"analyses": analyses_list }
+        context={
+            "analyses": analyses_list,
+            "offset": offset,
+            "limit": limit,
+            "desc": desc
+        }
     )
