@@ -2,6 +2,7 @@
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
 .table
+  width: 100%
   border-collapse: collapse
 
   // shared styles for cells and column headers
@@ -84,6 +85,11 @@
         background-color: $row-even
         &:hover
           background-color: mix($row-even, $yellow, 95%)
+      &.has-background-red
+        background-color: $red
+        color: $white
+        &:hover
+          background-color: shade($red, .1)
 
   // sticky header modifier - snaps the table heading to the top of the element
   &.has-sticky-header

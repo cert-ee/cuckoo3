@@ -375,7 +375,6 @@ input[type=reset].button,
   border: none;
   font-size: 100%;
   font-family: inherit;
-  background-color: inherit;
   line-height: 1;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -447,6 +446,7 @@ input[type=reset].button,
 }
 
 .table {
+  width: 100%;
   border-collapse: collapse;
 }
 .table th, .table td {
@@ -524,6 +524,13 @@ input[type=reset].button,
 }
 .table tbody tr:nth-child(even):hover {
   background-color: #e9eee5;
+}
+.table tbody tr.has-background-red {
+  background-color: #FF0000;
+  color: #FFFFFF;
+}
+.table tbody tr.has-background-red:hover {
+  background-color: #e60000;
 }
 .table.has-sticky-header {
   position: relative;

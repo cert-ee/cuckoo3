@@ -1,7 +1,155 @@
 {% extends "base.html.jinja2" %}
+{% set active_page = "search" %}
+{% set title = "Search" %}
+
+{% block page_script %}
+<script type="text/javascript">
+  (function() {
+
+    // dom references
+    const searchForm = document.querySelector('#search-form');
+    const submit     = searchForm.querySelector('input[type="submit"]');
+    const results    = document.querySelector('#results tbody');
+
+    // indicates something running in the background inside a button
+    // - the button disabled when the spinner is loading
+    function buttonLoader(btn) {
+      if(!btn instanceof HTMLElement) return;
+      const originalContent = btn.textContent;
+      return {
+        start: () => {
+          btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+          btn.disabled = true;
+        },
+        stop: () => {
+          btn.textContent = originalContent;
+          btn.disabled = false;
+        }
+      }
+    }
+
+    // prints a message in the table with a formatted error.
+    function handleError(data) {
+
+      if(data instanceof Error)
+        data = { error: data.name + ': ' + data.message + ' (javascript error)' };
+
+      const currentError = results.querySelector('tr#search-error');
+      if(currentError) currentError.remove();
+
+      const dom = parseDOM(`
+        <table>
+          <tbody>
+            <tr class="has-background-red" id="search-error">
+              <td>${data.error}</td>
+            </tr>
+          </tbody>
+        </table>
+      `).querySelector('tbody tr');
+      results.insertBefore(dom, results.querySelector('tbody tr:first-child'));
+    }
+
+    // request serializer
+    function search(data) {
+
+      if(!window.csrf_token) return Promise.reject({error: 'No CSRF token present.'});
+      if(!data.query.length) return Promise.reject({error: 'No query inserted.'});
+      delete data.csrfmiddlewaretoken;
+
+      return new Promise((resolve, reject) => {
+
+        const btn = buttonLoader(submit);
+        btn.start();
+
+        fetch('/api/search', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': window.csrf_token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...data })
+        }).then(res => res.json())
+          .then(res => resolve(res))
+          .catch(err => reject(err))
+          .finally(() => btn.stop());
+      });
+
+    }
+
+    // renders rows with results
+    function displayResults(data) {
+      const { count, matches, offset, possible } = data;
+      results.innerHTML = '';
+      results.innerHTML = matches.map(match => `
+        <tr>
+          <td>${match.analysis_id}</td>
+          <td>${match.task_id}</td>
+          ${match.matches.map(m => `
+            <td>${m.field}</td>
+            <td>${m.matches.join('<br />')}</td>
+          `).join('')}
+        </tr>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // engage async search by submitting the search form (enter or click)
+      searchForm.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const values = new FormData(searchForm);
+        const data = {};
+        for(let key of values.keys())
+          data[key] = values.get(key);
+        search(data)
+          .then(displayResults)
+          .catch(handleError);
+      });
+
+    });
+
+  }());
+</script>
+{% endblock %}
 
 {% block body %}
-  <div class="container">
-    <p>Search</p>
-  </div>
+  <section class="section has-background-white">
+    <div class="container">
+      <h1>Search</h1>
+      <form class="form" method="POST" id="search-form">
+        <div class="field columns is-divided is-vcenter">
+          <div class="column is-auto">
+            <label class="label" for="search">Search query</label>
+          </div>
+          <div class="column">
+            <div class="control">
+              <input class="input" id="search" name="query" value="event.file.file_read:system32" />
+            </div>
+          </div>
+          <div class="column is-auto">
+            <input type="submit" class="button is-blue" value="Search" />
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+  <section class="section with-navbar">
+    <div class="container">
+      <table class="table" id="results">
+        <thead>
+          <tr>
+            <th>Analysis id</th>
+            <th>Task id</th>
+            <th>Field</th>
+            <th>Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Row</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 {% endblock %}
