@@ -154,32 +154,92 @@ def _set_state(machine, state):
 # potential handler function that can be called if the timeout expires.
 def stop(machine):
     """Stop the given machine"""
-    machine.machinery.stop(machine)
+    try:
+        machine.machinery.stop(machine)
+    finally:
+        try:
+            stop_netcapture(machine)
+        except errors.MachineNetCaptureError as e:
+            log.error(e)
+
     return machines.States.POWEROFF, 60, None
 
 def acpi_stop(machine):
     """Stop the machine using an ACPI signal. Normal stop is called when the
      timeout of 120 seconds expires.
     """
-    machine.machinery.acpi_stop(machine)
+    try:
+        machine.machinery.acpi_stop(machine)
+    finally:
+        try:
+            stop_netcapture(machine)
+        except errors.MachineNetCaptureError as e:
+            log.error(e)
     # Call the stop function if stop takes longer than the timeout.
     return machines.States.POWEROFF, 120, stop
 
 def restore_start(machine):
     """Restore the machine to its configured snapshot and start the machine"""
-    machine.machinery.restore_start(machine)
-    return machines.States.RUNNING, 60, None
+    try:
+        start_netcapture(machine)
+    except errors.MachineNetCaptureError as e:
+        log.error(e)
+
+    try:
+        machine.machinery.restore_start(machine)
+    except errors.MachineryError:
+        try:
+            stop_netcapture(machine)
+        except errors.MachineNetCaptureError as e:
+            log.error(e)
+        raise
+
+    return machines.States.RUNNING, 60, stop_netcapture
 
 def norestore_start(machine):
     """Start the machine without restoring a snapshot"""
-    machine.machinery.norestore_start(machine)
-    return machines.States.RUNNING, 60, None
+    try:
+        start_netcapture(machine)
+    except errors.MachineNetCaptureError as e:
+        log.error(e)
+
+    try:
+        machine.machinery.norestore_start(machine)
+    except errors.MachineryError:
+        try:
+            stop_netcapture(machine)
+        except errors.MachineNetCaptureError as e:
+            log.error(e)
+        raise
+
+    return machines.States.RUNNING, 60, stop_netcapture
+
+def start_netcapture(machine):
+    """Ask the machinery to start network capture for the given machine"""
+    if not machine.locked_by:
+        return 
+
+    ignore_ip_ports = [
+        (cfg("cuckoo", "resultserver", "listen_ip"),
+         cfg("cuckoo", "resultserver", "listen_port")),
+        (machine.ip, 8000)
+    ]
+    machine.machinery.start_netcapture(
+        machine, TaskPaths.pcap(machine.locked_by),
+        ignore_ip_ports=ignore_ip_ports
+    )
+    return None, 60, None
+
+def stop_netcapture(machine):
+    """Stop the network capture for a machine"""
+    machine.machinery.stop_netcapture(machine)
+    return None, 60, None
 
 def dump_memory(machine):
     """Create a memory dump for the given running machine in the task folder
     of the task that has currently locked the machine."""
     machine.machinery.dump_memory(
-        machine, TaskPaths.memory_dump(machine.task_id)
+        machine, TaskPaths.memory_dump(machine.locked_by)
     )
     return machines.States.RUNNING, 60, None
 
@@ -318,7 +378,11 @@ class MachineryWorker(threading.Thread):
 
             try:
                 work.run_work()
-                work.start_wait()
+
+                if work.expects_state_change():
+                    work.start_wait()
+                else:
+                    work.work_success()
             except NotImplementedError as e:
                 log.error(
                     "Machinery does not support work type.",
@@ -403,6 +467,11 @@ class WorkTracker:
         actions for this machine can run until this action has released
         the lock"""
         return self.machine.action_lock.acquire(blocking=False)
+
+    def expects_state_change(self):
+        if self.expected_state:
+            return True
+        return False
 
     def unlock_work(self):
         """Release the action lock so that other queued work can acquire it

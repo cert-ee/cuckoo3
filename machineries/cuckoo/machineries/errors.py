@@ -22,3 +22,6 @@ class MachineUnexpectedStateError(MachineryError):
 
 class MachineStateReachedError(MachineryError):
     pass
+
+class MachineNetCaptureError(MachineryError):
+    pass

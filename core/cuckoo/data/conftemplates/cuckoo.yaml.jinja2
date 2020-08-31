@@ -20,6 +20,11 @@ resultserver:
   listen_ip: {{ resultserver.listen_ip }}
   listen_port: {{ resultserver.listen_port }}
 
+# Settings used by Cuckoo to find the tcpdump binary to use for network capture of machine traffic.
+tcpdump:
+  enabled: {{ tcpdump.enabled }}
+  path: {{ tcpdump.path }}
+
 platform:
   # The default platform to use when no platforms are supplied on submission and no required platform is
   # identified during the identification stage.

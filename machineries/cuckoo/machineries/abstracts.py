@@ -2,7 +2,9 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from cuckoo.common.config import cfg
 from cuckoo.common import machines
+from cuckoo.common.netcapture import TCPDump, NetworkCaptureError
 from cuckoo.common.log import CuckooGlobalLogger
 
 from . import errors
@@ -15,6 +17,7 @@ class Machinery:
     def __init__(self, cfg):
         self.cfg = cfg
         self.machines = []
+        self.netcaptures = {}
 
     def init(self):
         pass
@@ -52,6 +55,45 @@ class Machinery:
     def dump_memory(self, machine, path):
         raise NotImplementedError
 
+    def start_netcapture(self, machine, pcap_path, ignore_ip_ports=[]):
+        if machine.interface:
+            capture_interface = machine.interface
+        elif self.cfg["interface"]:
+            capture_interface = self.cfg["interface"]
+        else:
+            raise errors.MachineNetCaptureError(
+                f"Cannot start network capture for machine: {machine.name}. "
+                f"No machine or machinery ({machine.machinery_name}) "
+                f"interface has been configured."
+            )
+
+        tcpdump_path = cfg("cuckoo", "tcpdump", "path")
+        netcapture = TCPDump(pcap_path, capture_interface, tcpdump_path)
+        netcapture.capture_host(machine.ip)
+
+        for ip, port in ignore_ip_ports:
+            netcapture.ignore_ip_port(ip, port)
+
+        try:
+            netcapture.start()
+        except NetworkCaptureError as e:
+            raise errors.MachineNetCaptureError(
+                f"Failed to start network capture for machine {machine.name}: "
+                f"{e}"
+            )
+
+        self.netcaptures[machine.name] = netcapture
+
+    def stop_netcapture(self, machine):
+        netcapture = self.netcaptures.get(machine.name)
+        if not netcapture:
+            return
+
+        try:
+            netcapture.stop()
+        except NetworkCaptureError as e:
+            raise errors.MachineNetCaptureError(str(e))
+
     def shutdown(self):
         for machine in self.machines:
             try:
@@ -69,6 +111,12 @@ class Machinery:
                     "Error while stopping machine in machinery shutdown.",
                     machinery=self.name, machine=machine.name, error=e
                 )
+
+        for netcapture in self.netcaptures.values():
+            try:
+                netcapture.stop()
+            except Exception as e:
+                log.error("Error while stopping network capture", error=e)
 
     def version(self):
         """Return the string version of the virtualization software."""
