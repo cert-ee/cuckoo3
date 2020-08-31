@@ -34,6 +34,12 @@ typeloaders = {
             "listen_ip": config.String(default_val="192.168.122.1"),
             "listen_port": config.Int(default_val=2042, min_value=1024)
         },
+        "tcpdump": {
+            "enabled": config.Boolean(default_val=True),
+            "path": config.FilePath(
+                default_val="/usr/sbin/tcpdump", must_exist=True
+            )
+        },
         "platform": {
             "default_platform": {
                 "platform": config.String(default_val="windows"),

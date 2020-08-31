@@ -242,6 +242,9 @@ class TaskPaths:
     def eventlog(task_id, *args):
         return TaskPaths._path(task_id, "events", *args)
 
+    @staticmethod
+    def pcap(task_id):
+        return TaskPaths._path(task_id, "dump.pcap")
 
 
 class Paths(object):
@@ -304,6 +307,11 @@ class Paths(object):
     @staticmethod
     def web(*args):
         return os.path.join(cuckoocwd.root, "web", *args)
+
+    @staticmethod
+    def safelistfile(*args):
+        return os.path.join(cuckoocwd.root, "safelists", *args)
+
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):
