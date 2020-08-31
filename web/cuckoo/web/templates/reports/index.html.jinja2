@@ -5,7 +5,7 @@
 {# Ideally, this page should feature a full-page table with a sticky header. #}
 {% block body %}
   <section class="section is-full-page with-navbar">
-    <table class="table has-sticky-header">
+    <table class="table has-sticky-header has-sticky-footer">
       <thead class="is-dark">
         <tr>
           <th class="has-sort is-asc"><a href="#">Analysis ID</a></th>
@@ -28,6 +28,11 @@
         </tr>
       {% endfor %}
       </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6">bla</td>
+        </tr>
+      </tfoot>
     </table>
   </section>
 {% endblock %}

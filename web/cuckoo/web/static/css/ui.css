@@ -461,17 +461,20 @@ input[type=reset].button,
   color: inherit;
   text-decoration: none;
 }
-.table th {
+.table thead th,
+.table tfoot td {
   font-size: 0.9em;
   font-weight: 500;
   background-color: #FFFFFF;
   box-shadow: inset 0 -1px 0 #CCCCCC;
 }
-.table th.has-sort a {
+.table thead th.has-sort a,
+.table tfoot td.has-sort a {
   text-decoration: none;
   display: flex;
 }
-.table th.has-sort a:after {
+.table thead th.has-sort a:after,
+.table tfoot td.has-sort a:after {
   content: "";
   display: table-cell;
   border-style: solid;
@@ -482,40 +485,58 @@ input[type=reset].button,
   background-color: #0F485A;
   margin-left: auto;
 }
-.table th.has-sort.is-asc a:after, .table th.has-sort.is-desc a:after {
+.table thead th.has-sort.is-asc a:after, .table thead th.has-sort.is-desc a:after,
+.table tfoot td.has-sort.is-asc a:after,
+.table tfoot td.has-sort.is-desc a:after {
   width: 0;
   height: 0;
   background-color: transparent;
 }
-.table th.has-sort.is-asc a:after {
+.table thead th.has-sort.is-asc a:after,
+.table tfoot td.has-sort.is-asc a:after {
   border-width: 0 3.5px 6px 3.5px;
   border-color: transparent transparent #0F485A transparent;
 }
-.table th.has-sort.is-desc a:after {
+.table thead th.has-sort.is-desc a:after,
+.table tfoot td.has-sort.is-desc a:after {
   border-width: 6px 3.5px 0 3.5px;
   border-color: #0F485A transparent transparent transparent;
 }
 .table td {
   font-size: 0.8em;
 }
-.table thead.is-dark {
+.table thead tr {
+  background-color: #FFFFFF;
+  color: #0F485A;
+}
+.table thead.is-dark tr {
   color: #FFFFFF;
 }
-.table thead.is-dark th {
+.table thead.is-dark th,
+.table thead.is-dark td {
   background-color: #0F485A;
   box-shadow: inset 0 -1px 0 #08242d;
 }
-.table thead.is-dark th.has-sort a:after {
+.table thead.is-dark th.has-sort a:after,
+.table thead.is-dark td.has-sort a:after {
   background-color: #FFFFFF;
 }
-.table thead.is-dark th.has-sort.is-asc a:after, .table thead.is-dark th.has-sort.is-desc a:after {
+.table thead.is-dark th.has-sort.is-asc a:after, .table thead.is-dark th.has-sort.is-desc a:after,
+.table thead.is-dark td.has-sort.is-asc a:after,
+.table thead.is-dark td.has-sort.is-desc a:after {
   background-color: transparent;
 }
-.table thead.is-dark th.has-sort.is-asc a:after {
+.table thead.is-dark th.has-sort.is-asc a:after,
+.table thead.is-dark td.has-sort.is-asc a:after {
   border-color: transparent transparent #FFFFFF transparent;
 }
-.table thead.is-dark th.has-sort.is-desc a:after {
+.table thead.is-dark th.has-sort.is-desc a:after,
+.table thead.is-dark td.has-sort.is-desc a:after {
   border-color: #FFFFFF transparent transparent transparent;
+}
+.table tfoot tr td {
+  box-shadow: inset 0 1px 0 #CCCCCC;
+  background-color: #f2f2f2;
 }
 .table tbody tr:nth-child(odd) {
   background-color: #FFFFFF;
@@ -536,13 +557,17 @@ input[type=reset].button,
 .table tbody tr.has-background-red:hover {
   background-color: #e60000;
 }
-.table.has-sticky-header {
+.table.has-sticky-header, .table.has-sticky-footer {
   position: relative;
   width: 100%;
 }
-.table.has-sticky-header th {
+.table.has-sticky-header thead th {
   position: sticky;
   top: 0;
+}
+.table.has-sticky-footer tfoot td {
+  position: sticky;
+  bottom: 0;
 }
 
 .details > summary {
