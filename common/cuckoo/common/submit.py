@@ -121,6 +121,12 @@ class SettingsMaker:
         self._settings["priority"] = priority
 
     def set_manual(self, manual):
+        if manual is None:
+            return
+
+        if not isinstance(manual, bool):
+            raise SubmissionError("Manual must be a boolean")
+
         self._settings["manual"] = manual
 
     def set_extraction_path(self, extrpath):

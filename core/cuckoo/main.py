@@ -221,8 +221,10 @@ def submission(target, platform, timeout, priority):
 @main.group(invoke_without_command=True)
 @click.option("-h", "--host", default="localhost", help="Host to bind the development web interface server on")
 @click.option("-p", "--port", default=8000, help="Port to bind the development web interface server on")
+@click.option("--autoreload", is_flag=True, help="Automatically reload modified Python files")
 @click.pass_context
-def web(ctx, host, port):
+def web(ctx, host, port, autoreload):
+    """Start the Cuckoo web interface (development server)"""
     if ctx.invoked_subcommand:
         return
 
@@ -230,7 +232,7 @@ def web(ctx, host, port):
     init_web(
         ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("web.log")
     )
-    start_web(host, port)
+    start_web(host, port, autoreload=autoreload)
 
 @web.command("djangocommand")
 @click.argument("django_args", nargs=-1)
@@ -245,6 +247,41 @@ def djangocommand(ctx, django_args):
         init_web(
             ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
             logfile=Paths.log("web.log")
+        )
+    else:
+        set_path_settings()
+
+    djangocommands(*django_args)
+
+@main.group(invoke_without_command=True)
+@click.option("-h", "--host", default="localhost", help="Host to bind the development web API server on")
+@click.option("-p", "--port", default=8090, help="Port to bind the development web API server on")
+@click.option("--autoreload", is_flag=True, help="Automatically reload modified Python files")
+@click.pass_context
+def api(ctx, host, port, autoreload):
+    """Start the Cuckoo web API (development server)"""
+    if ctx.invoked_subcommand:
+        return
+
+    from cuckoo.web.api.startup import init_api, start_api
+    init_api(
+        ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("api.log")
+    )
+    start_api(host, port, autoreload=autoreload)
+
+@web.command("djangocommand")
+@click.argument("django_args", nargs=-1)
+@click.pass_context
+def djangocommand(ctx, django_args):
+    """Arguments for this command are passed to Django."""
+    from cuckoo.web.api.startup import(
+        djangocommands, set_path_settings, init_api
+    )
+
+    if "runserver" in django_args:
+        init_api(
+            ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
+            logfile=Paths.log("api.log")
         )
     else:
         set_path_settings()

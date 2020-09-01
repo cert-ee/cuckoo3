@@ -16,14 +16,14 @@ from cuckoo.common.startup import (
 from cuckoo.common.storage import cuckoocwd
 from cuckoo.common.submit import load_machines_dump
 
-import cuckoo.web
+import cuckoo.web.api
 
 def set_path_settings():
-    os.chdir(cuckoo.web.__path__[0])
-    sys.path.insert(0, cuckoo.web.__path__[0])
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.web.settings")
+    os.chdir(cuckoo.web.api.__path__[0])
+    sys.path.insert(0, cuckoo.web.api.__path__[0])
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.api.settings")
 
-def init_web(cuckoo_cwd, loglevel, logfile=""):
+def init_api(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
         exit_error(
             f"Cuckoo CWD {cuckoo_cwd} does not yet exist. Run "
@@ -43,11 +43,11 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
         init_database()
         init_elasticsearch(create_missing_indices=False)
     except StartupError as e:
-        exit_error(f"Failed to initialize Cuckoo web. {e}")
+        exit_error(f"Failed to initialize Cuckoo API. {e}")
 
     set_path_settings()
 
-def start_web(host="127.0.0.1", port=8000, autoreload=False):
+def start_api(host="127.0.0.1", port=8000, autoreload=False):
     args = ("cuckoo", "runserver", f"{host}:{port}")
     if not autoreload:
         args += ("--noreload",)
