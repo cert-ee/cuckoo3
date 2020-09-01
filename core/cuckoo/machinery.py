@@ -217,7 +217,7 @@ def norestore_start(machine):
 def start_netcapture(machine):
     """Ask the machinery to start network capture for the given machine"""
     if not machine.locked_by:
-        return 
+        return
 
     ignore_ip_ports = [
         (cfg("cuckoo", "resultserver", "listen_ip"),
@@ -228,12 +228,10 @@ def start_netcapture(machine):
         machine, TaskPaths.pcap(machine.locked_by),
         ignore_ip_ports=ignore_ip_ports
     )
-    return None, 60, None
 
 def stop_netcapture(machine):
     """Stop the network capture for a machine"""
     machine.machinery.stop_netcapture(machine)
-    return None, 60, None
 
 def dump_memory(machine):
     """Create a memory dump for the given running machine in the task folder
