@@ -13,6 +13,17 @@ def index(request):
     desc = request.GET.get("desc", True)
 
     try:
+        limit = int(limit)
+        offset = int(offset)
+    except (ValueError, TypeError):
+        return HttpResponseBadRequest("Offset and limit must be integers")
+
+    if offset < 0:
+        offset = 0
+    if limit < 0:
+        limit = 20
+
+    try:
         analyses_list = analyses.dictlist(
             limit=limit, offset=offset, desc=desc
         )

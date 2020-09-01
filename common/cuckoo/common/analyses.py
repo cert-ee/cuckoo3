@@ -269,6 +269,11 @@ def list(limit=None, offset=None, desc=True):
             query = query.order_by(db.Analysis.created_on.asc())
 
         return query.limit(limit).offset(offset).all()
+
+    # If a too large offset or limit is provided, some DBMSs (Such as SQLite),
+    # can throw an overflow error because they cannot convert it.
+    except OverflowError:
+        return []
     finally:
         ses.close()
 
