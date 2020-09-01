@@ -53,7 +53,7 @@
       results.innerHTML = `
         <tr>
           <td colspan="4">
-            <p class="is-half-opacity has-text-center">${rowText}</p>
+            <p class="has-half-opacity has-text-center">${rowText}</p>
           </td>
         </tr>
       `;
@@ -138,11 +138,11 @@
     <div class="container">
       <h1>Search</h1>
       <form class="form" method="POST" id="search-form">
-        <div class="field columns is-divided is-vcenter">
+        <div class="field columns is-divided is-vcenter is-gapless">
           <div class="column is-auto">
             <label class="label" for="search">Search query</label>
           </div>
-          <div class="column">
+          <div class="column has-padding-x">
             <div class="control">
               <input class="input" id="search" name="query" value="event.file.file_read:system32" />
             </div>
@@ -154,19 +154,37 @@
       </form>
     </div>
   </section>
-  <section class="section with-navbar">
-    <div class="container">
-      <table class="table has-sticky-header" id="results">
-        <thead>
-          <tr>
-            <th>Analysis id</th>
-            <th>Task id</th>
-            <th>Field</th>
-            <th>Matches</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <section class="section no-padding-y">
+    <table class="table has-sticky-header has-sticky-footer" id="results">
+      <thead>
+        <tr>
+          <th>Analysis id</th>
+          <th>Task id</th>
+          <th>Field</th>
+          <th>Matches</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4">
+            <div class="columns is-between is-vcenter">
+              <div class="column">&nbsp;</div>
+              <div class="column">
+                <div class="buttons-conjoined">
+                  <a href="#" class="button is-white">1</a>
+                  <a href="#" class="button is-blue">2</a>
+                  <a href="#" class="button is-white">3</a>
+                  <a href="#" class="button is-white">...</a>
+                  <a href="#" class="button is-white">8</a>
+                  <a href="#" class="button is-white">9</a>
+                  <a href="#" class="button is-white">10</a>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
   </section>
 {% endblock %}

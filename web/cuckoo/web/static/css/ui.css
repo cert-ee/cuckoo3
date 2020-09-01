@@ -150,8 +150,13 @@ p {
   font-size: 0.8em;
 }
 
-.is-half-opacity {
+.has-half-opacity {
   opacity: 0.5;
+}
+
+.is-link {
+  color: #2E94F1 !important;
+  text-decoration: underline !important;
 }
 
 .view {
@@ -449,6 +454,9 @@ input[type=reset].button,
   font-weight: 500;
 }
 
+.buttons-conjoined {
+  display: inline-block;
+}
 .buttons-conjoined > .button, .control.is-file .buttons-conjoined > .file-trigger {
   border-radius: 0;
   margin-right: -4px;

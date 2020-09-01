@@ -2,25 +2,46 @@
 {% set active_page = "reports" %}
 {% set title = "Reports" %}
 
+{% block page_script %}
+<script type="text/javascript">
+  (function() {
+
+    // window.props = {
+    //   limit: "{{ limit }}",
+    //   offset: "{{ offset }}",
+    //   desc: "{{ desc }}"
+    // }
+
+    // const paginate = document.querySelector('#paginate');
+    // paginate.querySelector('.button.is-blue').addEventListener('click', ev => {
+    //   const elem = ev.currentTarget.cloneNode();
+    // });
+
+  }());
+</script>
+{% endblock %}
+
 {# Ideally, this page should feature a full-page table with a sticky header. #}
 {% block body %}
   <section class="section is-full-page with-navbar">
     <table class="table has-sticky-header has-sticky-footer">
       <thead class="is-dark">
         <tr>
-          <th class="has-sort is-asc"><a href="#">Analysis ID</a></th>
-          <th class="has-sort is-desc"><a href="#">Created on</a></th>
-          <th class="has-sort"><a href="#">Target</a></th>
-          <th class="has-sort"><a href="#">Media type</a></th>
-          <th class="has-sort"><a href="#">State</a></th>
-          <th class="has-sort"><a href="#">Score</a></th>
+          <th class="has-sort {% if desc == "True" %}is-desc{% else %}is-asc{% endif %}">
+            <a href="?desc={% if desc == "True" %}False{% else %}True{% endif %}&limit={{limit}}&offset={{offset}}">Created on</a>
+          </th>
+          <th>Analysis ID</th>
+          <th>Target</th>
+          <th>Media type</th>
+          <th>State</th>
+          <th>Score</th>
         </tr>
       </thead>
       <tbody>
       {% for analysis in analyses %}
         <tr>
-          <td class="is-monospace">{{ analysis.id }}</td>
           <td>{{ analysis.created_on | formatdatetime }}</td>
+          <td class="is-monospace">{{ analysis.id }}</td>
           <td></td>
           <td></td>
           <td>{{ analysis.state | humanstate }}</td>
@@ -32,15 +53,33 @@
         <tr>
           <td colspan="6">
             <div class="columns is-between is-vcenter">
-              <div class="column">Showing x from x and l to o bla bla bla gezeik</div>
               <div class="column">
-                <div class="buttons-conjoined">
-                  <a href="#" class="button is-blue">1</a>
-                  <a href="#" class="button is-white">2</a>
-                  <a href="#" class="button is-white">...</a>
-                  <a href="#" class="button is-white">8</a>
-                  <a href="#" class="button is-white">9</a>
-                  <a href="#" class="button is-white">10</a>
+                <ul class="list is-horizontal no-margin-y">
+                  <li>Up to <a class="is-link" href="#">{{ limit }} <i class="fas fa-caret-down"></i></a> results per page</li>
+                  <li>Showing page {{ (offset|int / limit|int)|int }}</li>
+                </ul>
+              </div>
+              <div class="column">
+                <div class="buttons-conjoined has-margin-x">
+                  <a title="Go back {{ limit|int * 10 }} pages" href="?desc={{desc}}&offset={{ offset|int - (limit|int * 10) }}&limit={{limit}}" class="button is-white {% if (offset|int - (limit|int * 10)) < 0 %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 10
+                  </a>
+                  <a title="Go back {{ limit|int * 5 }} pages" href="?desc={{desc}}&offset={{ offset|int - (limit|int * 5) }}&limit={{limit}}" class="button is-white {% if (offset|int - (limit|int * 5)) < 0 %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 5
+                  </a>
+                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset|int - limit|int }}&limit={{limit}}" class="button is-white {% if offset|int <= 0 %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 1
+                  </a>
+                  <a title="{{ limit }} results per page" href="#" class="button is-blue">{{ offset }} - {{ offset|int + limit|int }}</a>
+                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset|int + limit|int }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 1
+                  </a>
+                  <a title="Skip {{ limit|int * 5 }} pages" href="?desc={{desc}}&offset={{ offset|int + (limit|int * 5) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 5
+                  </a>
+                  <a title="Go back {{ limit|int * 10 }} pages" href="?desc={{desc}}&offset={{ offset|int + (limit|int * 10) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 10
+                  </a>
                 </div>
               </div>
             </div>
