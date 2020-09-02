@@ -19,10 +19,12 @@
   border-radius: $radius
   padding: $gap/2 $gap
   box-shadow: 0px 2px 4px rgba($black, .1)
+  transition: opacity 100ms linear, transform 100ms linear
 
   &:not(.in)
     opacity: 0
     pointer-events: none
+    transform: translateY($gap)
 
   &:after,
   &:before

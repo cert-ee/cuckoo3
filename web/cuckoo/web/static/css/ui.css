@@ -929,10 +929,12 @@ input[type=reset].button,
   border-radius: 0.2rem;
   padding: 0.375rem 0.75rem;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: opacity 100ms linear, transform 100ms linear;
 }
 .popover:not(.in) {
   opacity: 0;
   pointer-events: none;
+  transform: translateY(0.75rem);
 }
 .popover:after, .popover:before {
   content: "";
