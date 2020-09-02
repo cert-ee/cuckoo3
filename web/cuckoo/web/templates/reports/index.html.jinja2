@@ -96,7 +96,7 @@
                   <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset - limit }}&limit={{limit}}" class="button is-white {% if offset <= 0 %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 1
                   </a>
-                  <a title="{{ limit }} results per page" href="#" class="button is-blue">Rows {{ offset }} - {{ offset + limit }}</a>
+                  <a title="{{ limit }} results per page" href="#" class="button is-blue">Rows {{ offset }} - {{ offset + analyses|length }}</a>
                   <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset + limit }}&limit={{limit}}" class="button is-white {% if analyses|length < limit %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 1
                   </a>

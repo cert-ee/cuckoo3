@@ -15,12 +15,14 @@
     const selectLimit   = document.querySelector('#select-limit select');
     const selectedLimit = document.querySelector('#selected-limit');
     const currentPage   = document.querySelector('#current-page');
+    const possiblePages = document.querySelector('#possible-pages');
 
     const props = window.props = {
       offset: 0,
       query: searchForm.elements[0].value,
-      limit: 10,
-      count: 0
+      limit: 1,
+      count: 0,
+      possible: 0
     };
 
     // indicates something running in the background inside a button
@@ -78,9 +80,11 @@
       if(query) props.query = query;
       const data = {...props};
       if(data.count) delete data.count;
+      if(data.possible) delete data.possible;
       if(reset) {
-        props.offset = 0
-        props.count  = 0
+        props.offset = 0;
+        props.count  = 0;
+        props.possible = 0;
       };
 
       return new Promise((resolve, reject) => {
@@ -108,6 +112,7 @@
     function displayResults(data, rowText) {
       const { count, matches, offset, possible } = data;
       props.count = count;
+      props.possible = possible;
 
       results.innerHTML = '';
 
@@ -135,23 +140,38 @@
     // when this function is called, the props state will be used to reflect the
     // offset, limit and pagination models into the UI.
     function updatePagination() {
-      const { offset, limit, count } = props;
+      const { offset, limit, count, possible } = props;
+      const navigational = [currentPage, possiblePages, pages];
+      const maxPages = possible / limit;
 
-      if(offset <= 0) {
-        [skip[0], skip[1], skip[2]].forEach(p => p.classList.add('is-disabled'));
-      } else {
-        [skip[0], skip[1], skip[2]].forEach(p => p.classList.remove('is-disabled'));
-      }
+      // set up 'disabled' features to indicate possibilities
+      let disableElement = el => el.classList.add('is-disabled');
+      skip.forEach(s => s.classList.remove('is-disabled'));
+      navigational.forEach(s => s.parentNode.classList.remove('is-disabled'));
 
-      if(count !== limit) {
-        [skip[3], skip[4], skip[5]].forEach(p => p.classList.add('is-disabled'));
-      } else {
-        [skip[3], skip[4], skip[5]].forEach(p => p.classList.remove('is-disabled'));
-      }
+      // if the offset is zero or less, disable previous buttons
+      if(offset <= 0)
+        [skip[0], skip[1], skip[2]].forEach(disableElement);
 
-      pages.textContent = `Rows ${offset} - ${offset + limit}`;
+      // if the count of results is smaller than the limit, disable 'next' buttons
+      if((count !== limit) || (offset / limit >= maxPages))
+        [skip[3], skip[4], skip[5]].forEach(disableElement);
+
+      // disable the buttons that point to 'impossible' pages
+      if(offset + (limit * 10) > maxPages) disableElement(skip[5])
+      if(offset + (limit * 5) > maxPages) disableElement(skip[4])
+      if(offset / limit >= maxPages) disableElement(skip[3]);
+      if(offset - (limit * 10) < 0) disableElement(skip[0]);
+      if(offset - (limit * 5) < 0) disableElement(skip[1]);
+      if(offset - limit < 0) disableElement(skip[2]);
+
+      // 'disable' navigational elements when there are no records
+      if(count == 0) navigational.forEach(s => disableElement(s.parentNode));
+
+      pages.textContent = `Rows ${offset} - ${offset + count}`;
       selectedLimit.textContent = props.limit;
       currentPage.textContent = offset / limit;
+      possiblePages.textContent = possible;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -241,6 +261,8 @@
                       <label class="label">Rows per page:</label>
                       <div class="control is-select">
                         <select class="input">
+                          <option value="1" selected>1</option>
+                          <option value="2">2</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
                           <option value="50">50</option>
@@ -251,10 +273,11 @@
 
                   </li>
                   <li>Page <span id="current-page"></span></li>
+                  <li><span id="possible-pages"></span> pages</li>
                 </ul>
               </div>
               <div class="column">
-                <div class="buttons-conjoined has-margin-x" id="pagination">
+                <div class="buttons-conjoined has-margin-x is-disabled" id="pagination">
                   <a class="button is-white" data-skip href="-10">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 10
                   </a>
