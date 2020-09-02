@@ -289,6 +289,8 @@ class _WorkTracker:
 
         self.errtracker = ErrorTracker()
         self._load_strictdicts()
+
+    def init(self):
         self._make_logger()
 
     def _make_logger(self):
@@ -355,6 +357,7 @@ class StateControllerWorker(threading.Thread):
                 continue
 
             try:
+                worktracker.init()
                 worktracker.run_work()
             except Exception as e:
                 worktracker.log.exception(
