@@ -7,9 +7,21 @@
   (function() {
 
     // dom references
-    const searchForm = document.querySelector('#search-form');
-    const submit     = searchForm.querySelector('input[type="submit"]');
-    const results    = document.querySelector('#results tbody');
+    const searchForm    = document.querySelector('#search-form');
+    const submit        = searchForm.querySelector('input[type="submit"]');
+    const results       = document.querySelector('#results tbody');
+    const skip          = document.querySelectorAll('#pagination [data-skip]');
+    const pages         = document.querySelector('#pagination .current-page');
+    const selectLimit   = document.querySelector('#select-limit select');
+    const selectedLimit = document.querySelector('#selected-limit');
+    const currentPage   = document.querySelector('#current-page');
+
+    const props = window.props = {
+      offset: 0,
+      query: searchForm.elements[0].value,
+      limit: 10,
+      count: 0
+    };
 
     // indicates something running in the background inside a button
     // - the button disabled when the spinner is loading
@@ -60,11 +72,10 @@
     }
 
     // request serializer
-    function search(data) {
+    function search(query) {
 
       if(!window.csrf_token) return Promise.reject({error: 'No CSRF token present.'});
-      if(!data.query.length) return Promise.reject({error: 'No query inserted.'});
-      delete data.csrfmiddlewaretoken;
+      if(query) props.query = query;
 
       return new Promise((resolve, reject) => {
 
@@ -77,11 +88,12 @@
             'X-CSRFToken': window.csrf_token,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ ...data })
+          body: JSON.stringify(props)
         }).then(res => res.json())
           .then(res => resolve(res))
           .catch(err => reject(err))
           .finally(() => btn.stop());
+
       });
 
     }
@@ -89,12 +101,14 @@
     // renders rows with results
     function displayResults(data, rowText) {
       const { count, matches, offset, possible } = data;
+      props.count = count;
+
       results.innerHTML = '';
 
       if(results.querySelector('#search-error'))
         results.querySelector('#search-error').remove();
 
-      if(matches.length) {
+      if(matches && matches.length) {
         results.innerHTML = matches.map(match => `
           <tr>
             <td>${match.analysis_id}</td>
@@ -108,6 +122,31 @@
       } else {
         messageRow('No results returned.');
       }
+
+      updatePagination();
+    }
+
+    // when this function is called, the props state will be used to reflect the
+    // offset, limit and pagination models into the UI.
+    function updatePagination() {
+
+      const { offset, limit, count } = props;
+
+      if(offset <= 0) {
+        [skip[0], skip[1], skip[2]].forEach(p => p.classList.add('is-disabled'));
+      } else {
+        [skip[0], skip[1], skip[2]].forEach(p => p.classList.remove('is-disabled'));
+      }
+
+      if(count !== limit) {
+        [skip[3], skip[4], skip[5]].forEach(p => p.classList.add('is-disabled'));
+      } else {
+        [skip[3], skip[4], skip[5]].forEach(p => p.classList.remove('is-disabled'));
+      }
+
+      pages.textContent = `${offset} - ${offset + limit}`;
+      selectedLimit.textContent = props.limit;
+      currentPage.textContent = offset / limit;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -116,16 +155,32 @@
       searchForm.addEventListener('submit', ev => {
         ev.preventDefault();
         const values = new FormData(searchForm);
-        const data = {};
-        for(let key of values.keys())
-          data[key] = values.get(key);
-        search(data)
+        search(values.get('query'))
+          .then(displayResults)
+          .catch(handleError);
+      });
+
+      // bind pagination buttons
+      skip.forEach(s => s.addEventListener('click', ev => {
+        ev.preventDefault();
+        props.offset += parseInt(s.getAttribute('href')) * props.limit;
+        if(props.offset <= 0) props.offset = 0;
+        search(props.query)
+          .then(displayResults)
+          .catch(handleError);
+      }));
+
+      // limit selector
+      selectLimit.addEventListener('change', ev => {
+        props.limit = parseInt(selectLimit.value);
+        search(props.query)
           .then(displayResults)
           .catch(handleError);
       });
 
       // display idle message on startup
       messageRow();
+      updatePagination();
 
     });
 
@@ -169,16 +224,53 @@
         <tr>
           <td colspan="4">
             <div class="columns is-between is-vcenter">
-              <div class="column">&nbsp;</div>
               <div class="column">
-                <div class="buttons-conjoined">
-                  <a href="#" class="button is-white">1</a>
-                  <a href="#" class="button is-blue">2</a>
-                  <a href="#" class="button is-white">3</a>
-                  <a href="#" class="button is-white">...</a>
-                  <a href="#" class="button is-white">8</a>
-                  <a href="#" class="button is-white">9</a>
-                  <a href="#" class="button is-white">10</a>
+                <ul class="list is-horizontal no-margin-y">
+                  <li class="has-popover">
+
+                    Up to <a class="is-link" href="#" data-popover="#select-limit">
+                      <span id="selected-limit"></span> <i class="fas fa-caret-down"></i>
+                    </a> results per page
+
+                    <div class="popover is-top" id="select-limit">
+                      <label class="label">Results per page:</label>
+                      <div class="control is-select">
+                        <select class="input">
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                        </select>
+                      </div>
+                    </div>
+
+                  </li>
+                  <li>Showing page <span id="current-page"></span></li>
+                </ul>
+              </div>
+              <div class="column">
+                <div class="buttons-conjoined has-margin-x" id="pagination">
+                  <a class="button is-white" data-skip href="-10">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 10
+                  </a>
+                  <a class="button is-white" data-skip href="-5">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 5
+                  </a>
+                  <a class="button is-white" data-skip href="-1">
+                    <i class="fas has-half-opacity fa-chevron-left"></i> 1
+                  </a>
+
+                  <a class="button is-blue current-page">0</a>
+
+                  <a class="button is-white" data-skip href="1">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 1
+                  </a>
+                  <a class="button is-white" data-skip href="5">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 5
+                  </a>
+                  <a class="button is-white" data-skip href="10">
+                    <i class="fas has-half-opacity fa-chevron-right"></i> 10
+                  </a>
                 </div>
               </div>
             </div>

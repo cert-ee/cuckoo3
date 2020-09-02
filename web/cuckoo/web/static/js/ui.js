@@ -8,8 +8,8 @@ const lib = {
   },
   // returns a parent of a child node matching a certain property
   // ex: lib.parent('parent', document.querySelector('.test'))
-  // when ref starts with a '.', a match is looked up by class name
-  // when ref starts with a '#', a match is looked up by its id
+  // when sel(ector) starts with a '.', a match is looked up by class name
+  // when sel(ector) starts with a '#', a match is looked up by its id
   // by default, it will try to match a node name (e.g <p>, <li>, etc.)
   parent(sel, ref) {
     if((!ref instanceof HTMLElement) || (!sel instanceof String)) return null;
@@ -18,7 +18,7 @@ const lib = {
     while(node.tagName.toLowerCase() !== 'body') {
       if(sel[0] == '.') {
         // search in class name if first char is '.'
-        if(node.classList.contains(sel)) {
+        if(node.classList.contains(sel.replace('.',''))) {
           result = node;
           break;
         }
@@ -196,10 +196,25 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
  */
 function handlePopover(trigger) {
   const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
+
+  function onBodyClick(e) {
+    const inPopover = !(lib.parent('.popover', e.target));
+    if(inPopover) {
+      elem.classList.remove('in');
+      document.body.removeEventListener('click', onBodyClick);
+    }
+  }
+
   trigger.addEventListener('click', ev => {
+
     ev.preventDefault();
     elem.classList.toggle('in');
+
+    // register body click
+    setTimeout(() => document.body.addEventListener('click', onBodyClick), 100);
+
   });
+
 }
 
 /**
