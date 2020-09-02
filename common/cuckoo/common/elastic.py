@@ -519,7 +519,11 @@ class _SearchQueryRunner:
         self._resulttracker = _SearchResultTracker()
 
         self._init_query_offset = offset
-        self._init_query_limit = 10
+
+        if self.limit <= 10:
+            self._init_query_limit = 10
+        else:
+            self._init_query_limit = limit
 
     def _execute_initial(self):
         return self._execute_query(
@@ -680,7 +684,7 @@ class _SearchQueryRunner:
             if not hits:
                 break
 
-            # No matches are found for the inital search. Stop.
+            # No matches are found for the initial search. Stop.
             if not initial_hitcount or self.original_offset >=\
                     initial_hitcount:
                 break
