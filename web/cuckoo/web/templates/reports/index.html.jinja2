@@ -68,10 +68,10 @@
               <div class="column">
                 <ul class="list is-horizontal no-margin-y">
                   <li class="has-popover">
-                    Up to <a class="is-link" href="#" data-popover="#select-limit"><span id="selectedLimit">{{ limit }}</span> <i class="fas fa-caret-down"></i></a> results per page
+                    Show <a class="is-link has-margin-x" href="#" data-popover="#select-limit"><span id="selectedLimit">{{ limit }}</span> <i class="fas fa-caret-down"></i></a> rows per page
                     <div class="popover is-top" id="select-limit">
                       <!-- I am a popover! -->
-                      <label class="label">Results per page:</label>
+                      <label class="label">Rows per page:</label>
                       <div class="control is-select">
                         <select class="input">
                           <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
@@ -82,7 +82,7 @@
                       </div>
                     </div>
                   </li>
-                  <li>Showing page {{ (offset / limit)|int }}</li>
+                  <li>Page {{ (offset / limit)|int }}</li>
                 </ul>
               </div>
               <div class="column">
@@ -96,7 +96,7 @@
                   <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset - limit }}&limit={{limit}}" class="button is-white {% if offset <= 0 %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 1
                   </a>
-                  <a title="{{ limit }} results per page" href="#" class="button is-blue">{{ offset }} - {{ offset + limit }}</a>
+                  <a title="{{ limit }} results per page" href="#" class="button is-blue">Rows {{ offset }} - {{ offset + limit }}</a>
                   <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset + limit }}&limit={{limit}}" class="button is-white {% if analyses|length < limit %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 1
                   </a>

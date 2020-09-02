@@ -81,7 +81,7 @@
       if(reset) {
         props.offset = 0
         props.count  = 0
-      }
+      };
 
       return new Promise((resolve, reject) => {
 
@@ -135,7 +135,6 @@
     // when this function is called, the props state will be used to reflect the
     // offset, limit and pagination models into the UI.
     function updatePagination() {
-
       const { offset, limit, count } = props;
 
       if(offset <= 0) {
@@ -150,7 +149,7 @@
         [skip[3], skip[4], skip[5]].forEach(p => p.classList.remove('is-disabled'));
       }
 
-      pages.textContent = `${offset} - ${offset + limit}`;
+      pages.textContent = `Rows ${offset} - ${offset + limit}`;
       selectedLimit.textContent = props.limit;
       currentPage.textContent = offset / limit;
     }
@@ -234,12 +233,12 @@
                 <ul class="list is-horizontal no-margin-y">
                   <li class="has-popover">
 
-                    Up to <a class="is-link" href="#" data-popover="#select-limit">
+                    Show <a class="is-link has-margin-x" href="#" data-popover="#select-limit">
                       <span id="selected-limit"></span> <i class="fas fa-caret-down"></i>
-                    </a> results per page
+                    </a> rows per page
 
                     <div class="popover is-top" id="select-limit">
-                      <label class="label">Results per page:</label>
+                      <label class="label">Rows per page:</label>
                       <div class="control is-select">
                         <select class="input">
                           <option value="10">10</option>
@@ -251,7 +250,7 @@
                     </div>
 
                   </li>
-                  <li>Showing page <span id="current-page"></span></li>
+                  <li>Page <span id="current-page"></span></li>
                 </ul>
               </div>
               <div class="column">
@@ -266,7 +265,7 @@
                     <i class="fas has-half-opacity fa-chevron-left"></i> 1
                   </a>
 
-                  <a class="button is-blue current-page">0</a>
+                  <a class="button is-blue current-page">&nbsp;</a>
 
                   <a class="button is-white" data-skip href="1">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 1
