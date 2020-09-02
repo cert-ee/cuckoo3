@@ -392,6 +392,9 @@ class CuckooGlobalLogger(CuckooLogger):
     def __init__(self, name):
         super().__init__(logging.getLogger(name))
 
+
+# TODO make thread safe. It currently as it is only used once per process per
+# task/analysis id.
 class _KeyBasedFileLogger(CuckooLogger):
     """Adds a MultiLogfileHandler to the specified logger name if it has not
      yet been added. Adds a file_handler for the given key afterwards.
