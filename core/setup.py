@@ -55,6 +55,7 @@ setuptools.setup(
         "Cuckoo-common==0.1.0",
         "Cuckoo-processing==0.1.0",
         "Cuckoo-machineries==0.1.0",
+        "Cuckoo-web==0.1.0",
         "sflock>=0.3.10, <0.4"
     ]
 )
