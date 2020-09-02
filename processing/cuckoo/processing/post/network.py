@@ -2,13 +2,17 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
 import ipaddress
+import logging
+import os
 
+from cuckoo.common.log import set_logger_level
 from cuckoo.common.storage import TaskPaths, Paths
 from httpreplay import reader, protohandlers, udpprotoparsers, transport
 
 from ..abtracts import Processor
+
+set_logger_level("httpreplay.transport", logging.ERROR)
 
 # TODO move this to a standardized safelist format when there are more things
 # to safelist. Leave it here for now until we create a
