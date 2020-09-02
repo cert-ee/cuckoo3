@@ -76,6 +76,8 @@
 
       if(!window.csrf_token) return Promise.reject({error: 'No CSRF token present.'});
       if(query) props.query = query;
+      const data = {...props};
+      if(data.count) delete data.count;
 
       return new Promise((resolve, reject) => {
 
@@ -88,7 +90,7 @@
             'X-CSRFToken': window.csrf_token,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(props)
+          body: JSON.stringify(data)
         }).then(res => res.json())
           .then(res => resolve(res))
           .catch(err => reject(err))

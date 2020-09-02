@@ -193,6 +193,7 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
 
 /**
  * Creates a popover that will toggle on click
+ * @param {HTMLElement} trigger - the button that holds the popover
  */
 function handlePopover(trigger) {
   const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
