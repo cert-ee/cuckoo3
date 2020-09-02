@@ -6,16 +6,28 @@
 <script type="text/javascript">
   (function() {
 
-    // window.props = {
-    //   limit: "{{ limit }}",
-    //   offset: "{{ offset }}",
-    //   desc: "{{ desc }}"
-    // }
+    window.props =  {
+      desc: "{{ desc }}",
+      limit: {{ limit }},
+      offset: {{ offset }}
+    }
 
-    // const paginate = document.querySelector('#paginate');
-    // paginate.querySelector('.button.is-blue').addEventListener('click', ev => {
-    //   const elem = ev.currentTarget.cloneNode();
-    // });
+    function URLQuery(props={}) {
+      const properties = { ...window.props, ...props };
+      return '?'+Object.keys(properties).map(key => key + '=' + properties[key]).join('&');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const selectLimit = document.querySelector('.popover#select-limit select');
+      const selectedLimit = document.querySelector('#selected-limit');
+
+      selectLimit.addEventListener('change', ev => {
+        const value = selectLimit.value;
+        window.location = window.location.origin + window.location.pathname + URLQuery({ limit: selectLimit.value });
+      });
+
+    });
 
   }());
 </script>
@@ -55,29 +67,43 @@
             <div class="columns is-between is-vcenter">
               <div class="column">
                 <ul class="list is-horizontal no-margin-y">
-                  <li>Up to <a class="is-link" href="#">{{ limit }} <i class="fas fa-caret-down"></i></a> results per page</li>
-                  <li>Showing page {{ (offset|int / limit|int)|int }}</li>
+                  <li class="has-popover">
+                    Up to <a class="is-link" href="#" data-popover="#select-limit"><span id="selectedLimit">{{ limit }}</span> <i class="fas fa-caret-down"></i></a> results per page
+                    <div class="popover is-top" id="select-limit">
+                      <!-- I am a popover! -->
+                      <label class="label">Results per page:</label>
+                      <div class="control is-select">
+                        <select class="input">
+                          <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                          <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                          <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                          <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                        </select>
+                      </div>
+                    </div>
+                  </li>
+                  <li>Showing page {{ (offset / limit)|int }}</li>
                 </ul>
               </div>
               <div class="column">
                 <div class="buttons-conjoined has-margin-x">
-                  <a title="Go back {{ limit|int * 10 }} pages" href="?desc={{desc}}&offset={{ offset|int - (limit|int * 10) }}&limit={{limit}}" class="button is-white {% if (offset|int - (limit|int * 10)) < 0 %}is-disabled{% endif %}">
+                  <a title="Go back {{ limit * 10 }} pages" href="?desc={{desc}}&offset={{ offset - (limit * 10) }}&limit={{limit}}" class="button is-white {% if (offset - (limit * 10)) < 0 %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 10
                   </a>
-                  <a title="Go back {{ limit|int * 5 }} pages" href="?desc={{desc}}&offset={{ offset|int - (limit|int * 5) }}&limit={{limit}}" class="button is-white {% if (offset|int - (limit|int * 5)) < 0 %}is-disabled{% endif %}">
+                  <a title="Go back {{ limit * 5 }} pages" href="?desc={{desc}}&offset={{ offset - (limit * 5) }}&limit={{limit}}" class="button is-white {% if (offset - (limit * 5)) < 0 %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 5
                   </a>
-                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset|int - limit|int }}&limit={{limit}}" class="button is-white {% if offset|int <= 0 %}is-disabled{% endif %}">
+                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset - limit }}&limit={{limit}}" class="button is-white {% if offset <= 0 %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-left"></i> 1
                   </a>
-                  <a title="{{ limit }} results per page" href="#" class="button is-blue">{{ offset }} - {{ offset|int + limit|int }}</a>
-                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset|int + limit|int }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                  <a title="{{ limit }} results per page" href="#" class="button is-blue">{{ offset }} - {{ offset + limit }}</a>
+                  <a title="Go back {{ limit }} pages" href="?desc={{desc}}&offset={{ offset + limit }}&limit={{limit}}" class="button is-white {% if analyses|length < limit %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 1
                   </a>
-                  <a title="Skip {{ limit|int * 5 }} pages" href="?desc={{desc}}&offset={{ offset|int + (limit|int * 5) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                  <a title="Skip {{ limit * 5 }} pages" href="?desc={{desc}}&offset={{ offset + (limit * 5) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 5
                   </a>
-                  <a title="Go back {{ limit|int * 10 }} pages" href="?desc={{desc}}&offset={{ offset|int + (limit|int * 10) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit|int %}is-disabled{% endif %}">
+                  <a title="Go back {{ limit * 10 }} pages" href="?desc={{desc}}&offset={{ offset + (limit * 10) }}&limit={{limit}}" class="button is-white {% if analyses|length < limit %}is-disabled{% endif %}">
                     <i class="fas has-half-opacity fa-chevron-right"></i> 10
                   </a>
                 </div>

@@ -192,6 +192,17 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
 }
 
 /**
+ * Creates a popover that will toggle on click
+ */
+function handlePopover(trigger) {
+  const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
+  trigger.addEventListener('click', ev => {
+    ev.preventDefault();
+    elem.classList.toggle('in');
+  });
+}
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -210,4 +221,5 @@ document.addEventListener("DOMContentLoaded", () => {
   applyHandler(".input[type='file'][data-enhance]", handleFileInput);
   applyHandler(".list.is-tree[data-enhance]", handleListTree);
   applyHandler(".tabbar[data-enhance]", handlePageTabs);
+  applyHandler("[data-popover]", handlePopover);
 });
