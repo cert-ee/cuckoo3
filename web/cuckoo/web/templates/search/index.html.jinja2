@@ -72,12 +72,16 @@
     }
 
     // request serializer
-    function search(query) {
+    function search(query, reset = false) {
 
       if(!window.csrf_token) return Promise.reject({error: 'No CSRF token present.'});
       if(query) props.query = query;
       const data = {...props};
       if(data.count) delete data.count;
+      if(reset) {
+        props.offset = 0
+        props.count  = 0
+      }
 
       return new Promise((resolve, reject) => {
 
@@ -157,7 +161,7 @@
       searchForm.addEventListener('submit', ev => {
         ev.preventDefault();
         const values = new FormData(searchForm);
-        search(values.get('query'))
+        search(values.get('query'), true)
           .then(displayResults)
           .catch(handleError);
       });
