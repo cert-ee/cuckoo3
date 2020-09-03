@@ -69,12 +69,23 @@
         platform.dispatchEvent(new Event('change'));
       }
 
+      // enables a few usablity features for the custom timeout field
+      function customTimeoutHandler() {
+        const cr = document.querySelector('#to-custom');
+        const ci = document.querySelector('#to-custom-value');
+        cr.addEventListener('click', ev => ci.focus());
+        ci.addEventListener('click', ev => cr.checked = true);
+        ci.addEventListener('change', ev => {
+          if(cr.checked) cr.value = ev.currentTarget.value;
+        })
+      }
+
       // sends a PUT request to the settings api to conclude and finalize the
       // submission and proceed to analysis
       function finishSubmission() {
 
         options = {
-          timeout: parseInt(document.querySelector('input[name="timeout"]').value),
+          timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
           priority: parseInt(document.querySelector('select[name="priority"]').value),
           platforms: [
             {
@@ -84,6 +95,9 @@
           ],
           fileid: document.querySelector('input[name="selected-file"]:checked').value
         };
+
+        console.log(options);
+        debugger;
 
         fetch('/api/analyses/{{analysis_id}}/settings', {
           method: 'PUT',
@@ -107,6 +121,7 @@
       document.addEventListener('DOMContentLoaded', () => {
         fileTreeHandler();
         platformHandler();
+        customTimeoutHandler();
         finish.addEventListener('click', ev => {
           finishSubmission();
         });
