@@ -77,7 +77,7 @@
         ci.addEventListener('click', ev => cr.checked = true);
         ci.addEventListener('change', ev => {
           if(cr.checked) cr.value = ev.currentTarget.value;
-        })
+        });
       }
 
       // sends a PUT request to the settings api to conclude and finalize the
@@ -95,9 +95,6 @@
           ],
           fileid: document.querySelector('input[name="selected-file"]:checked').value
         };
-
-        console.log(options);
-        debugger;
 
         fetch('/api/analyses/{{analysis_id}}/settings', {
           method: 'PUT',
