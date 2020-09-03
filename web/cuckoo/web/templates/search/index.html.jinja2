@@ -22,7 +22,8 @@
       query: searchForm.elements[0].value,
       limit: 20,
       count: 0,
-      possible: 0
+      possible: 0,
+      max: 0
     };
 
     // indicates something running in the background inside a button
@@ -83,11 +84,13 @@
         props.offset = 0;
         props.count  = 0;
         props.possible = 0;
+        props.max = 0;
       };
-      
+
       const data = {...props};
       if(data.count) delete data.count;
       if(data.possible) delete data.possible;
+      if(data.max) delete data.max;
 
       return new Promise((resolve, reject) => {
 
@@ -112,14 +115,15 @@
 
     // renders rows with results
     function displayResults(data, rowText) {
-      const { count, matches, offset, possible } = data;
+
+      const { count, matches, offset, possible, max } = data;
+      const { limit } = props;
+
       props.count = count;
       props.possible = possible;
+      props.max = Math.floor(possible / limit);
 
       results.innerHTML = '';
-
-      if(results.querySelector('#search-error'))
-        results.querySelector('#search-error').remove();
 
       if(matches && matches.length) {
         results.innerHTML = matches.map(match => `
@@ -142,9 +146,8 @@
     // when this function is called, the props state will be used to reflect the
     // offset, limit and pagination models into the UI.
     function updatePagination() {
-      const { offset, limit, count, possible } = props;
+      const { offset, limit, count, possible, max } = props;
       const navigational = [currentPage, possiblePages, pages];
-      const maxPages = Math.floor(possible / limit);
 
       // set up 'disabled' features to indicate possibilities
       let disableElement = el => el.classList.add('is-disabled');
@@ -156,7 +159,7 @@
         [skip[0], skip[1], skip[2]].forEach(disableElement);
 
       // if the count of results is smaller than the limit, disable 'next' buttons
-      if((count !== limit) || (offset / limit >= maxPages))
+      if((count !== limit) || (offset / limit >= max))
         [skip[3], skip[4], skip[5]].forEach(disableElement);
 
       // disable the buttons that point to 'impossible' pages
@@ -175,7 +178,7 @@
       pages.textContent = `Rows ${offset} - ${offset + count}`;
       selectedLimit.textContent = props.limit;
       currentPage.textContent = offset / limit;
-      possiblePages.textContent = maxPages;
+      possiblePages.textContent = max;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
