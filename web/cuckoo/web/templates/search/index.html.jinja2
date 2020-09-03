@@ -20,7 +20,7 @@
     const props = window.props = {
       offset: 0,
       query: searchForm.elements[0].value,
-      limit: 1,
+      limit: 20,
       count: 0,
       possible: 0
     };
@@ -142,7 +142,7 @@
     function updatePagination() {
       const { offset, limit, count, possible } = props;
       const navigational = [currentPage, possiblePages, pages];
-      const maxPages = possible / limit;
+      const maxPages = Math.floor(possible / limit);
 
       // set up 'disabled' features to indicate possibilities
       let disableElement = el => el.classList.add('is-disabled');
@@ -158,9 +158,10 @@
         [skip[3], skip[4], skip[5]].forEach(disableElement);
 
       // disable the buttons that point to 'impossible' pages
-      if(offset + (limit * 10) > maxPages) disableElement(skip[5])
-      if(offset + (limit * 5) > maxPages) disableElement(skip[4])
-      if(offset / limit >= maxPages) disableElement(skip[3]);
+      if(offset + (limit * 10) >= possible) disableElement(skip[5])
+      if(offset + (limit * 5) >= possible) disableElement(skip[4])
+      if(offset + limit >= possible) disableElement(skip[3]);
+
       if(offset - (limit * 10) < 0) disableElement(skip[0]);
       if(offset - (limit * 5) < 0) disableElement(skip[1]);
       if(offset - limit < 0) disableElement(skip[2]);
@@ -168,10 +169,11 @@
       // 'disable' navigational elements when there are no records
       if(count == 0) navigational.forEach(s => disableElement(s.parentNode));
 
+      // update text values to reflect the current search state
       pages.textContent = `Rows ${offset} - ${offset + count}`;
       selectedLimit.textContent = props.limit;
       currentPage.textContent = offset / limit;
-      possiblePages.textContent = possible;
+      possiblePages.textContent = maxPages;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -224,7 +226,8 @@
           </div>
           <div class="column has-padding-x">
             <div class="control">
-              <input class="input" id="search" name="query" value="event.file.file_read:system32" />
+              <!-- event.file.file_read:system32 -->
+              <input class="input" id="search" name="query" value="event.network.host:192.168.122.255" />
             </div>
           </div>
           <div class="column is-auto">
@@ -252,25 +255,22 @@
               <div class="column">
                 <ul class="list is-horizontal no-margin-y">
                   <li class="has-popover">
-
                     Show <a class="is-link has-margin-x" href="#" data-popover="#select-limit">
                       <span id="selected-limit"></span> <i class="fas fa-caret-down"></i>
                     </a> rows per page
-
                     <div class="popover is-top" id="select-limit">
                       <label class="label">Rows per page:</label>
                       <div class="control is-select">
                         <select class="input">
-                          <option value="1" selected>1</option>
+                          <option value="1">1</option>
                           <option value="2">2</option>
                           <option value="10">10</option>
-                          <option value="20">20</option>
+                          <option value="20" selected>20</option>
                           <option value="50">50</option>
                           <option value="100">100</option>
                         </select>
                       </div>
                     </div>
-
                   </li>
                   <li>Page <span id="current-page"></span></li>
                   <li><span id="possible-pages"></span> pages</li>
