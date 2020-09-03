@@ -78,14 +78,16 @@
 
       if(!window.csrf_token) return Promise.reject({error: 'No CSRF token present.'});
       if(query) props.query = query;
-      const data = {...props};
-      if(data.count) delete data.count;
-      if(data.possible) delete data.possible;
+
       if(reset) {
         props.offset = 0;
         props.count  = 0;
         props.possible = 0;
       };
+      
+      const data = {...props};
+      if(data.count) delete data.count;
+      if(data.possible) delete data.possible;
 
       return new Promise((resolve, reject) => {
 
