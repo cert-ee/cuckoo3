@@ -4,20 +4,26 @@
       <div class="field">
         <label class="label">Timeout</label>
         <div class="control is-checkable">
-          <input type="radio" id="to-30" name="timeout" />
+          <input type="radio" value="30" id="to-30" name="timeout" />
           <label for="to-30">30 seconds</label>
         </div>
         <div class="control is-checkable">
-          <input type="radio" id="to-60" name="timeout" />
+          <input type="radio" value="60" id="to-60" name="timeout" checked />
           <label for="to-60">1 minute</label>
         </div>
         <div class="control is-checkable">
-          <input type="radio" id="to-120" name="timeout" />
-          <label for="to-120">2 minute</label>
+          <input type="radio" value="120" id="to-120" name="timeout" />
+          <label for="to-120">2 minutes</label>
+        </div>
+        <div class="control is-checkable">
+          <input type="radio" value="" id="to-custom" name="timeout" />
+          <label class="label" for="to-custom">
+            <input type="number" placeholder="Custom (in seconds)" class="input" id="to-custom-value" />
+          </label>
         </div>
       </div>
     </div>
-    <div class="column">
+    {# <div class="column">
       <div class="field">
         <label class="label">Network routing</label>
         <div class="control is-checkable">
@@ -33,32 +39,43 @@
           <label for="tor">Tor</label>
         </div>
       </div>
-    </div>
+    </div> #}
     <div class="column">
       <div class="field">
-        <label class="label">Priority</label>
+        <label class="label" for="priority">Priority</label>
         <div class="control is-select">
-          <select class="input">
-            <option value="1">Low</option>
+          <select name="priority" class="input" id="priority">
+            <option value="1" selected>Low</option>
             <option value="2">Medium</option>
             <option value="3">High</option>
           </select>
         </div>
       </div>
       <div class="field">
-        <label class="label">Machine</label>
+        <label class="label" for="platform">Platform</label>
         <div class="control is-select">
-          <select class="input">
-            <option value="ubuntu">Ubuntu</option>
-            <option value="windows">Windows 8</option>
-            <option value="macos">MacOS</option>
+          <select class="input" name="platform" id="platform">
+            {% for p in possible_settings.platforms %}
+              <option value="{{ p.platform }}" {% if p.default %}selected{% endif %}>{{ p.platform|e }} {% if p.default %}(Default){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="version">Platform version</label>
+        <div class="control is-select">
+          <select class="input" name="version" id="version">
+            <option value="">Any</option>
+            {% for p in possible_settings.platforms %}
+              {% for version in p.os_version %}
+                <option data-platform="{{ p.platform }}" value="{{ version }}">{{ version|e }}</option>
+              {% endfor %}
+            {% endfor %}
           </select>
         </div>
       </div>
     </div>
-  </div>
-  <div class="columns is-divided">
-    <div class="column">
+    {# <div class="column">
       <div class="field">
         <label class="label">Other options</label>
         <div class="control is-checkable">
@@ -74,6 +91,6 @@
           <label class="label" for="process-memory-dump">Process memory dump</label>
         </div>
       </div>
-    </div>
+    </div> #}
   </div>
 </form>

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "sass": "sass sass:static/css --style=expanded",
-    "sass-watch": "sass sass:static/css --style=expanded --watch"
+    "sass": "sass sass:../static/css --style=expanded",
+    "sass-watch": "sass sass:../static/css --style=expanded --watch"
   },
   "author": "",
   "license": "ISC",

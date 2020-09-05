@@ -14,6 +14,9 @@ h6
   & + p
     margin-top: -#{$gap * 1.5}
 
+p
+  line-height: 1.4em
+
 .code,
 .is-monospace
   font-family: $font-stack-monospace
@@ -62,3 +65,25 @@ h6
     @extend .has-text-red
     margin: 0
     font-size: .8em
+
+.has-text-wrapped
+  word-break: break-word
+
+.has-text-left
+  text-align: left
+.has-text-center
+  text-align: center
+.has-text-right
+  text-align: right
+
+.has-text-small
+  font-size: .8em
+
+.has-half-opacity
+  opacity: 0.5
+
+// use this selector only if parent elements override the default
+// link styles.
+.is-link
+  color: $blue !important
+  text-decoration: underline !important

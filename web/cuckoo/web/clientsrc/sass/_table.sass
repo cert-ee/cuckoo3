@@ -2,6 +2,7 @@
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
 .table
+  width: 100%
   border-collapse: collapse
 
   // shared styles for cells and column headers
@@ -13,7 +14,8 @@
       text-decoration: none
 
   // table cell (heading) styles, including support for sorting indication
-  th
+  thead th,
+  tfoot td
     font-size: .9em
     font-weight: 500
     background-color: $white
@@ -55,11 +57,16 @@
   td
     font-size: .8em
 
-  // thead-specific styles
+  // table header styles
   thead
+    tr
+      background-color: $white
+      color: $dark
     &.is-dark
-      color: $white
-      th
+      tr
+        color: $white
+      th,
+      td
         background-color: $dark
         box-shadow: inset 0 -1px 0 shade($dark, .5)
         &.has-sort
@@ -73,6 +80,11 @@
           &.is-desc a:after
             border-color: $white transparent transparent transparent
 
+  tfoot
+    tr td
+      box-shadow: inset 0 1px 0 $border
+      background-color: $light-matte
+
   // tbody-specific styles
   tbody
     tr
@@ -84,11 +96,24 @@
         background-color: $row-even
         &:hover
           background-color: mix($row-even, $yellow, 95%)
+      &.has-background-red
+        background-color: $red
+        color: $white
+        &:hover
+          background-color: shade($red, .1)
 
-  // sticky header modifier - snaps the table heading to the top of the element
-  &.has-sticky-header
+  // sticky header/footer modifier - snaps the table heading to the top of the element
+  &.has-sticky-header,
+  &.has-sticky-footer
     position: relative
     width: 100%
-    th
+
+  &.has-sticky-header
+    thead th
       position: sticky
       top: 0
+
+  &.has-sticky-footer
+    tfoot td
+      position: sticky
+      bottom: 0

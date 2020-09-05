@@ -1,3 +1,11 @@
+{% set topleft_nav = [
+  ('Dashboard', 'dashboard', 'Dashboard'),
+  ('Reports/index', 'reports', 'Reports'),
+  ('Submit/submitfile', 'submit', 'Submit'),
+  ('Search/index', 'search', 'Search')
+] -%}
+{% set active_page = active_page|default('Dashboard') -%}
+
 <nav class="navbar">
   <div class="navbar-logo">
     <a class="navbar-link" href="/">
@@ -10,13 +18,12 @@
     </a>
   </div>
   <div class="navbar-start">
-    <a class="navbar-link {% if page == 'index' %}is-active{% endif %}" href="/">Dashboard</a>
-    <a class="navbar-link {% if page == 'submit' %}is-active{% endif %}" href="/submit">Submit</a>
-    <a class="navbar-link {% if page == 'reports' %}is-active{% endif %}" href="/reports">Reports</a>
-    <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="/search">Search</a>
+    {% for href, id, caption in topleft_nav %}
+      <a href="{{ url(href) }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
+    {% endfor %}
   </div>
-  <div class="navbar-end">
+  {# <div class="navbar-end">
     <a class="navbar-link {% if page == 'settings' %}is-active{% endif %}" href="/settings">Settings</a>
     <a class="navbar-link {% if page == 'overview' %}is-active{% endif %}" href="/overview">UI Overview</a>
-  </div>
+  </div> #}
 </nav>

@@ -1,0 +1,205 @@
+{% extends "base.html.jinja2" %}
+{% set active_page = "submit" %}
+{% set active_level = 'settings' %}
+{% set title = "Configure submission" %}
+
+{# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
+{% block page_script %}
+  <script type="text/javascript">
+    (function() {
+
+      const conclude = document.querySelector('#conclude-analysis');
+      const finish = conclude.querySelector('#start-analysis');
+
+      // prints error in the conclusive block
+      function handleError(msg) {
+        const err = conclude.querySelector('#error');
+        if(err) err.remove();
+
+        const html = parseDOM(`
+          <div class="box has-background-red no-margin-top" id="error">
+            <p class="no-margin-top"><strong>${msg}</strong></p>
+            <button class="button is-red has-text-small">Dismiss</button>
+          </div>
+        `);
+
+        conclude.insertBefore(html, conclude.children[0]);
+        html.querySelector('button').onclick = () => html.remove();
+      }
+
+      // binds ux handlers to the file tree
+      function fileTreeHandler() {
+        const filetree       = document.querySelector('#filetree');
+        const toggleDisabled = document.querySelector('#toggle-disabled');
+        const count          = document.querySelector('#count');
+
+        let countHidden   = () => filetree.querySelectorAll('input[data-uninteresting]').length;
+        let setCount      = () => count.querySelector('span').textContent = countHidden();
+
+        if(filetree && toggleDisabled) {
+          toggleDisabled.addEventListener('click', ev => {
+            let isHidden = false;
+            let f = [...filetree.querySelectorAll('input[data-uninteresting]')].forEach(s => {
+              let item = lib.parent('li', s);
+              toggleVisibility(item, !!s.hidden);
+              isHidden = item.hidden;
+              if(!isHidden) blink(item);
+            });
+            toggleVisibility(count, !!isHidden);
+          });
+          setCount();
+        }
+      }
+
+      // when an OS is picked in the OS dropdown, display only the supported version
+      // in the version dropdown
+      function platformHandler() {
+        const platform = document.querySelector('select[name="platform"]');
+        const versions = document.querySelector('select[name="version"]');
+
+        platform.addEventListener('change', ev => {
+          const val = ev.currentTarget.value;
+          versions.querySelectorAll('option[data-platform]').forEach(o => o.setAttribute('hidden', true));
+          if(val.length) {
+            versions.querySelectorAll('option[data-platform='+val+']').forEach(o => o.removeAttribute('hidden'));
+            blink(versions);
+          }
+          versions.value = "";
+        });
+        platform.dispatchEvent(new Event('change'));
+      }
+
+      // enables a few usablity features for the custom timeout field
+      function customTimeoutHandler() {
+        const cr = document.querySelector('#to-custom');
+        const ci = document.querySelector('#to-custom-value');
+        cr.addEventListener('click', ev => ci.focus());
+        ci.addEventListener('click', ev => cr.checked = true);
+        ci.addEventListener('change', ev => {
+          if(cr.checked) cr.value = ev.currentTarget.value;
+        });
+      }
+
+      // sends a PUT request to the settings api to conclude and finalize the
+      // submission and proceed to analysis
+      function finishSubmission() {
+
+        options = {
+          timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
+          priority: parseInt(document.querySelector('select[name="priority"]').value),
+          platforms: [
+            {
+              platform: document.querySelector('select[name="platform"]').value,
+              os_version: document.querySelector('select[name="version"]').value
+            }
+          ],
+          fileid: document.querySelector('input[name="selected-file"]:checked').value
+        };
+
+        fetch('/api/analyses/{{analysis_id}}/settings', {
+          method: 'PUT',
+          body: JSON.stringify(options),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.csrf_token
+          }
+        }).then(response => response.json())
+          .then(response => {
+            const { error } = response;
+            if(error) {
+              handleError(error);
+            } else {
+              window.location = '/reports';
+            }
+          });
+      }
+
+      // apply all the handlers
+      document.addEventListener('DOMContentLoaded', () => {
+        fileTreeHandler();
+        platformHandler();
+        customTimeoutHandler();
+        finish.addEventListener('click', ev => {
+          finishSubmission();
+        });
+      });
+
+    }());
+  </script>
+{% endblock %}
+
+{% block body %}
+  {% include "submit/partial/tabbar.html.jinja2" %}
+  <section class="section">
+    <div class="container">
+      <div class="columns is-divided">
+        {# Sample information #}
+        <div class="column">
+          {% if unpacked.children|length > 0 %}
+            <div class="box has-shadow">
+              <div class="control is-checkable">
+                <input type="checkbox" id="toggle-disabled" checked />
+                <label class="label" for="toggle-disabled">Only show interesting files <span id="count">(<span>0</span> hidden from view)</span></label>
+              </div>
+            </div>
+          {% endif %}
+          <div class="box has-shadow no-padding-x">
+            <div class="box is-medium has-background-light has-margin-x no-margin-y">
+              <div class="columns is-vcenter {% if not unpacked.selectable %}is-disabled{% endif %}">
+                <div class="column no-margin-x">
+                  <div class="control is-checkable">
+                    <input type="radio" id="toggle-disabled" name="selected-file" value="{{ unpacked.id }}" {% if unpacked.selected %}checked{% endif %} />
+                    <label class="label" for="toggle-disabled"></label>
+                  </div>
+                </div>
+                <div class="column no-margin">
+                  <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
+                </div>
+                <div class="column">
+                  <h3 class="no-margin-y">{{ unpacked.filename }}</h3>
+                  <ul class="list is-horizontal has-text-small no-margin">
+                    <li>{{ unpacked.finger.magic_human }}</li>
+                    <li>{{ unpacked.size | filesizeformat }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {% if unpacked.children|length > 0 %}
+              {% include "submit/partial/filetree.html.jinja2" %}
+            {% endif %}
+          </div>
+        </div>
+        {# Options / profile box #}
+        <div class="column">
+          <div class="box has-shadow no-padding-x">
+            <nav class="tabbar" data-enhance>
+              {# <a href="#profile-form" class="tabbar-link is-active">Profiles</a>--> #}
+              <a href="#options-form" class="tabbar-link is-active">Options</a>
+            </nav>
+            <div class="box no-padding-y">
+              {# <div id="profile-form">{% include "submit/partial/profile.html" %}</div> --> #}
+              <div id="options-form">{% include "submit/partial/options.html.jinja2" %}</div>
+            </div>
+          </div>
+          <div class="box has-shadow" id="conclude-analysis">
+            <!-- inject any messages here -->
+            <div class="columns is-between is-vcenter">
+              <div class="column">
+                <p class="no-margin-y">
+                  <span class="icon">
+                    <i class="fas fa-check"></i>
+                  </span>
+                  Proceed to analysis
+                </p>
+              </div>
+              <div class="column">
+                <button class="button"id="reset-analysis">Reset</button>
+                <button class="button is-blue" id="start-analysis">Start</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

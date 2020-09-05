@@ -49,6 +49,10 @@
     & > .column
       margin-left: 0
       margin-right: 0
+  &.has-tiny-gaps
+    & > .column
+      margin-left: $gap/2
+      margin-right: $gap/2
 
   @media screen and (max-width: $breakpoint-mobile)
     flex-direction: column

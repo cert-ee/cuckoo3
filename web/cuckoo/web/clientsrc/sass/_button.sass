@@ -1,20 +1,21 @@
 // Copyright (C) 2016-2020 Cuckoo Foundation.
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
-button,
-input[type="submit"],
-input[type="reset"]
-  &.button
-    -webkit-appearance: none
-    border: 0
-    font-size: 100%
-    font-family: inherit
+button.button,
+input[type="submit"].button,
+input[type="reset"].button
+  border: none
+  font-size: 100%
+  font-family: inherit
+  line-height: 1
+  -webkit-appearance: none
+  -moz-appearance: none
 
 .button
   display: inline-block
   padding: $gap/2 $gap
   border-radius: $radius
-  font-weight: 700
+  font-weight: 600
 
   &:hover
     cursor: pointer
@@ -45,6 +46,13 @@ input[type="reset"]
     &:hover
       background-color: shade($dark, .1)
 
+  &.is-white
+    background-color: $white
+    color: rgba($black, .7)
+    &:hover
+      background-color: shade($white, .1)
+      color: rgba($black, .9)
+
   &.is-disabled
     pointer-events: none
     background-color: tint($border, .7)
@@ -52,3 +60,21 @@ input[type="reset"]
     text-shadow: none
     &:hover
       cursor: not-allowed
+
+  &.has-border
+    border: 1px solid $border
+
+  &.is-small
+    padding: $gap/4 $gap/2
+    font-size: .8em
+    font-weight: 500
+
+.buttons-conjoined
+  display: inline-block
+  & > .button
+    border-radius: 0
+    margin-right: -4px
+    &:first-child
+      border-radius: $gap/2 0 0 $gap/2
+    &:last-child
+      border-radius: 0 $gap/2 $gap/2 0
