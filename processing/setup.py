@@ -39,6 +39,7 @@ setuptools.setup(
     install_requires=[
         "Cuckoo-common==0.1.0",
         "sflock>=0.3.10, <0.4",
-        "protobuf>=3.12.2, <3.13.0"
+        "protobuf>=3.12.2, <3.13.0",
+        "httpreplay>=0.3, <0.4"
     ],
 )
