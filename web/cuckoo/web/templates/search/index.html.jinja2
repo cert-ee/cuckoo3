@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Search</title>
-</head>
-<body>
-
-</body>
-</html>
-=======
 {% extends "base.html.jinja2" %}
 {% set active_page = "search" %}
 {% set title = "Search" %}
@@ -242,8 +231,7 @@
           </div>
           <div class="column has-padding-x">
             <div class="control">
-              <!-- event.file.file_read:system32 -->
-              <input class="input" id="search" name="query" value="event.network.host:192.168.122.255" />
+              <input class="input" id="search" name="query" placeholder="Example: event.file.file_created:somefile" />
             </div>
           </div>
           <div class="column is-auto">
