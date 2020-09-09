@@ -53,15 +53,16 @@ h3,
 h4,
 h5,
 h6 {
-  margin: 1.5rem 0;
+  margin: 0.75rem 0;
 }
-h1 + p,
-h2 + p,
-h3 + p,
-h4 + p,
-h5 + p,
-h6 + p {
-  margin-top: -1.125rem;
+h1.has-border-bottom,
+h2.has-border-bottom,
+h3.has-border-bottom,
+h4.has-border-bottom,
+h5.has-border-bottom,
+h6.has-border-bottom {
+  border-bottom: 0.0625rem solid #CCCCCC;
+  padding-bottom: 0.75rem;
 }
 
 p {
@@ -344,8 +345,14 @@ p {
 .columns.is-center, .is-center.tabbar {
   justify-content: center;
 }
+.columns.is-divided, .is-divided.tabbar {
+  flex-wrap: nowrap;
+}
 .columns.is-divided > .column, .columns.is-divided > .tabbar-link, .is-divided.tabbar > .column, .is-divided.tabbar > .tabbar-link {
   flex: 1;
+}
+.columns.is-divided > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link {
+  white-space: nowrap;
 }
 .columns.is-vcenter, .is-vcenter.tabbar {
   align-items: center;
@@ -391,9 +398,10 @@ input[type=reset].button,
 
 .button, .control.is-file .file-trigger {
   display: inline-block;
+  vertical-align: text-bottom;
   padding: 0.375rem 0.75rem;
   border-radius: 0.2rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .button:hover, .control.is-file .file-trigger:hover {
   cursor: pointer;
@@ -402,11 +410,11 @@ input[type=reset].button,
   border-color: #000000;
   outline: none;
 }
-.button, .control.is-file .file-trigger, .button.is-light {
-  background-color: #f0f0f0;
+.button, .control.is-file .file-trigger, .button.is-gray {
+  background-color: #CCCCCC;
 }
-.has-background-light .button, .has-background-light .control.is-file .file-trigger, .control.is-file .has-background-light .file-trigger, .has-background-light .button.is-light {
-  background-color: #FFFFFF;
+.button:hover, .control.is-file .file-trigger:hover, .button.is-gray:hover {
+  background-color: #b8b8b8;
 }
 .button.is-blue, .control.is-file .is-blue.file-trigger {
   background-color: #2E94F1;
@@ -419,6 +427,9 @@ input[type=reset].button,
 .button.is-red, .control.is-file .is-red.file-trigger {
   background-color: #FF0000;
   color: #FFFFFF;
+}
+.button.is-red:hover, .control.is-file .is-red.file-trigger:hover {
+  background-color: #e60000;
 }
 .button.is-dark, .control.is-file .is-dark.file-trigger {
   background-color: #0F485A;
@@ -436,10 +447,24 @@ input[type=reset].button,
   background-color: #e6e6e6;
   color: rgba(0, 0, 0, 0.9);
 }
+.button.is-yellow, .control.is-file .is-yellow.file-trigger {
+  background-color: #FCC200;
+  color: rgba(0, 0, 0, 0.9);
+}
+.button.is-yellow:hover, .control.is-file .is-yellow.file-trigger:hover {
+  background-color: #e3af00;
+}
+.button.is-green, .control.is-file .is-green.file-trigger {
+  background-color: #82DB7A;
+  color: rgba(0, 0, 0, 0.9);
+}
+.button.is-green:hover, .control.is-file .is-green.file-trigger:hover {
+  background-color: #75c56e;
+}
 .button.is-disabled, .control.is-file .is-disabled.file-trigger {
   pointer-events: none;
-  background-color: #f0f0f0;
-  color: #8f8f8f;
+  background-color: #CCCCCC;
+  color: rgba(0, 0, 0, 0.75);
   text-shadow: none;
 }
 .button.is-disabled:hover, .control.is-file .is-disabled.file-trigger:hover {
@@ -451,7 +476,8 @@ input[type=reset].button,
 .button.is-small, .control.is-file .is-small.file-trigger {
   padding: 0.1875rem 0.375rem;
   font-size: 0.8em;
-  font-weight: 500;
+  font-weight: 600;
+  border-radius: 0.1rem;
 }
 
 .buttons-conjoined {
