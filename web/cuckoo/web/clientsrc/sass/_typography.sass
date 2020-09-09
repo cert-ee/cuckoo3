@@ -10,9 +10,9 @@ h4,
 h5,
 h6
   margin: $gap 0
-  // preceding <p> elements get 'joined' with their assumably corresponding header
-  // & + p
-  //   margin-top: -#{$gap * 1.5}
+  &.has-border-bottom
+    border-bottom: 0.0625rem solid $border
+    padding-bottom: $gap
 
 p
   line-height: 1.4em
