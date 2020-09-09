@@ -7,6 +7,7 @@ import sqlalchemy
 from datetime import datetime
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 @as_declarative()
 class Base:
@@ -62,7 +63,7 @@ class _DBMS(object):
         if self.initialized:
             self.cleanup()
 
-        engine = sqlalchemy.create_engine(dsn)
+        engine = sqlalchemy.create_engine(dsn, poolclass=NullPool)
         Base.metadata.create_all(engine)
 
         self.engine = engine
@@ -82,5 +83,6 @@ def set_analysis_state(analysis_id, state):
     try:
         ses.query(Analysis).filter_by(id=analysis_id).update({"state": state})
         ses.commit()
+
     finally:
         ses.close()

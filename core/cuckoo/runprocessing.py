@@ -209,7 +209,11 @@ class WorkReceiver(UnixSocketServer):
                 )
                 self.untrack(sock)
                 return
-        except (ValueError, FileNotFoundError) as e:
+        except (ValueError, FileNotFoundError, KeyError) as e:
+            log.error(
+                "Error while creating processing context",
+                worker=self.name, error=e
+            )
             self.update_state(States.WORK_FAIL)
             return
 

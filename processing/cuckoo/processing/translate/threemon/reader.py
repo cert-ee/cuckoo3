@@ -182,7 +182,7 @@ def _translate_injection_event(threemon_injection):
 
     return ProcessInjection(
         ts=threemon_injection.ts, action=normalized_action,
-        pid=threemon_injection.pid, procid=threemon_injection.procid,
+        pid=threemon_injection.srcpid, procid=threemon_injection.srcprocid,
         dstpid=threemon_injection.dstpid,
         dstprocid=threemon_injection.dstprocid
     )

@@ -312,3 +312,10 @@ def get_fatal_errors(analysis_id):
         fatalerrs.append(entry["error"])
 
     return fatalerrs
+
+def db_find_state(state):
+    ses = db.dbms.session()
+    try:
+        return ses.query(db.Analysis).filter_by(state=state)
+    finally:
+        ses.close()

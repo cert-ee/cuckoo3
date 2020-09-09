@@ -517,18 +517,16 @@ class File(object):
         """Get the file type.
         @return: file type.
         """
-        return sflock.magic.from_file(
-            os.path.realpath(self._path)
-        )
+        return str(sflock.magic.from_file(os.path.realpath(self._path)))
 
     @property
     def media_type(self):
         """Get MIME content file type (example: image/jpeg).
         @return: file content type.
         """
-        return sflock.magic.from_file(
+        return str(sflock.magic.from_file(
             os.path.realpath(self._path), mime=True
-        )
+        ))
 
     def valid(self):
         return self._path and self._path.is_file()

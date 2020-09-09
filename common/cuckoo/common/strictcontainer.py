@@ -82,7 +82,7 @@ class StrictContainer:
                         self._loaded[key]= self.FIELDS[key]()
 
         if missing:
-            raise KeyError(f"{', '.join(missing)}")
+            raise KeyError(f"Missing one ore more keys: {', '.join(missing)}")
 
     def _verify_key_types(self):
         errors = []
