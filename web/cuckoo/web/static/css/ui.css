@@ -330,79 +330,79 @@ p {
   color: #FFFFFF;
 }
 
-.columns, .tabbar {
+.columns, .tabbar, .tabbar > .container, .tabbar > .container > .container {
   display: flex;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
-.columns.box, .box.tabbar {
+.columns.box, .box.tabbar, .tabbar > .box.container, .tabbar > .container > .box.container {
   margin-left: -0.375rem;
   margin-right: -0.375rem;
 }
-.columns > .column, .columns > .tabbar-link, .tabbar > .column, .tabbar > .tabbar-link {
+.columns > .column, .columns > .tabbar-link, .tabbar > .column, .tabbar > .container > .column, .tabbar > .container > .container > .column, .tabbar > .tabbar-link, .tabbar > .container > .tabbar-link, .tabbar > .container > .container > .tabbar-link {
   margin-left: 0.75rem;
   margin-right: 0.75rem;
 }
-.columns > .column.is-full, .columns > .is-full.tabbar-link, .tabbar > .column.is-full, .tabbar > .is-full.tabbar-link {
+.columns > .column.is-full, .columns > .is-full.tabbar-link, .tabbar > .column.is-full, .tabbar > .container > .column.is-full, .tabbar > .container > .container > .column.is-full, .tabbar > .is-full.tabbar-link, .tabbar > .container > .is-full.tabbar-link, .tabbar > .container > .container > .is-full.tabbar-link {
   flex: 0 0 100% !important;
   margin-left: 0;
   margin-right: 0;
 }
-.columns > .column.is-auto, .columns > .is-auto.tabbar-link, .tabbar > .column.is-auto, .tabbar > .is-auto.tabbar-link {
+.columns > .column.is-auto, .columns > .is-auto.tabbar-link, .tabbar > .column.is-auto, .tabbar > .container > .column.is-auto, .tabbar > .container > .container > .column.is-auto, .tabbar > .is-auto.tabbar-link, .tabbar > .container > .is-auto.tabbar-link, .tabbar > .container > .container > .is-auto.tabbar-link {
   flex: 0 !important;
 }
-.columns.is-vertical, .is-vertical.tabbar {
+.columns.is-vertical, .is-vertical.tabbar, .tabbar > .is-vertical.container, .tabbar > .container > .is-vertical.container {
   flex-direction: column;
 }
-.columns.is-even, .is-even.tabbar {
+.columns.is-even, .is-even.tabbar, .tabbar > .is-even.container, .tabbar > .container > .is-even.container {
   justify-content: space-evenly;
 }
-.columns.is-between, .is-between.tabbar {
+.columns.is-between, .is-between.tabbar, .tabbar > .is-between.container, .tabbar > .container > .is-between.container {
   justify-content: space-between;
 }
-.columns.is-around, .is-around.tabbar {
+.columns.is-around, .is-around.tabbar, .tabbar > .is-around.container, .tabbar > .container > .is-around.container {
   justify-content: space-around;
 }
-.columns.is-left, .is-left.tabbar {
+.columns.is-left, .is-left.tabbar, .tabbar > .is-left.container, .tabbar > .container > .is-left.container {
   justify-content: flex-start;
 }
-.columns.is-right, .is-right.tabbar {
+.columns.is-right, .is-right.tabbar, .tabbar > .is-right.container, .tabbar > .container > .is-right.container {
   justify-content: flex-end;
 }
-.columns.is-center, .is-center.tabbar {
+.columns.is-center, .is-center.tabbar, .tabbar > .is-center.container, .tabbar > .container > .is-center.container {
   justify-content: center;
 }
-.columns.is-divided, .is-divided.tabbar {
+.columns.is-divided, .is-divided.tabbar, .tabbar > .is-divided.container, .tabbar > .container > .is-divided.container {
   flex-wrap: nowrap;
 }
-.columns.is-divided > .column, .columns.is-divided > .tabbar-link, .is-divided.tabbar > .column, .is-divided.tabbar > .tabbar-link {
+.columns.is-divided > .column, .columns.is-divided > .tabbar-link, .is-divided.tabbar > .column, .tabbar > .is-divided.container > .column, .tabbar > .container > .is-divided.container > .column, .is-divided.tabbar > .tabbar-link, .tabbar > .is-divided.container > .tabbar-link, .tabbar > .container > .is-divided.container > .tabbar-link {
   flex: 1;
 }
-.columns.is-divided > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link {
+.columns.is-divided > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .tabbar > .is-divided.container > .column.is-auto, .tabbar > .container > .is-divided.container > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link, .tabbar > .is-divided.container > .is-auto.tabbar-link, .tabbar > .container > .is-divided.container > .is-auto.tabbar-link {
   white-space: nowrap;
 }
-.columns.is-vcenter, .is-vcenter.tabbar {
+.columns.is-vcenter, .is-vcenter.tabbar, .tabbar > .is-vcenter.container, .tabbar > .container > .is-vcenter.container {
   align-items: center;
 }
-.columns.is-vtop, .is-vtop.tabbar {
+.columns.is-vtop, .is-vtop.tabbar, .tabbar > .is-vtop.container, .tabbar > .container > .is-vtop.container {
   align-items: flex-start;
 }
-.columns.is-vbottom, .is-vbottom.tabbar {
+.columns.is-vbottom, .is-vbottom.tabbar, .tabbar > .is-vbottom.container, .tabbar > .container > .is-vbottom.container {
   align-items: flex-end;
 }
-.columns.is-vstretch, .is-vstretch.tabbar {
+.columns.is-vstretch, .is-vstretch.tabbar, .tabbar > .is-vstretch.container, .tabbar > .container > .is-vstretch.container {
   align-items: stretch;
 }
-.columns.is-gapless > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tabbar > .column, .is-gapless.tabbar > .tabbar-link {
+.columns.is-gapless > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tabbar > .column, .tabbar > .is-gapless.container > .column, .tabbar > .container > .is-gapless.container > .column, .is-gapless.tabbar > .tabbar-link, .tabbar > .is-gapless.container > .tabbar-link, .tabbar > .container > .is-gapless.container > .tabbar-link {
   margin-left: 0;
   margin-right: 0;
 }
-.columns.has-tiny-gaps > .column, .columns.has-tiny-gaps > .tabbar-link, .has-tiny-gaps.tabbar > .column, .has-tiny-gaps.tabbar > .tabbar-link {
+.columns.has-tiny-gaps > .column, .columns.has-tiny-gaps > .tabbar-link, .has-tiny-gaps.tabbar > .column, .tabbar > .has-tiny-gaps.container > .column, .tabbar > .container > .has-tiny-gaps.container > .column, .has-tiny-gaps.tabbar > .tabbar-link, .tabbar > .has-tiny-gaps.container > .tabbar-link, .tabbar > .container > .has-tiny-gaps.container > .tabbar-link {
   margin-left: 0.375rem;
   margin-right: 0.375rem;
 }
 @media screen and (max-width: 40rem) {
-  .columns, .tabbar {
+  .columns, .tabbar, .tabbar > .container, .tabbar > .container > .container {
     flex-direction: column;
     width: 100%;
     margin-left: 0;
@@ -818,7 +818,7 @@ a.button, .control.is-file a.file-trigger {
 .list.is-tree li.is-parent > input[type=checkbox].list-collapse {
   display: none;
 }
-.list.is-tree li.is-parent > label > .columns, .list.is-tree li.is-parent > label > .tabbar {
+.list.is-tree li.is-parent > label > .columns, .list.is-tree li.is-parent > label > .tabbar, .list.is-tree li.is-parent > label.tabbar > .container, .list.is-tree li.tabbar.is-parent > label.container > .container {
   display: inline-flex;
 }
 .list.is-tree li.is-parent > label:before {
@@ -955,9 +955,8 @@ a.button, .control.is-file a.file-trigger {
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.tabbar {
+.tabbar, .tabbar > .container, .tabbar > .container > .container {
   margin: 0.75rem 0;
-  width: 100%;
   border-bottom: 0.15rem solid #CCCCCC;
   background-color: #FFFFFF;
 }
@@ -985,6 +984,16 @@ a.button, .control.is-file a.file-trigger {
   background-color: #2E94F1;
   bottom: -0.15rem;
   left: 0;
+}
+.tabbar > .container.is-fixed, .tabbar > .container > .container.is-fixed, .tabbar > .container > .container > .container.is-fixed {
+  margin-left: auto;
+  margin-right: auto;
+}
+.tabbar > .container.is-fixed .tabbar-link:first-child {
+  margin-left: 0;
+}
+.tabbar > .container.is-fixed .tabbar-link:last-child {
+  margin-right: 0;
 }
 
 [data-popover]:hover {
@@ -1081,7 +1090,7 @@ a.button, .control.is-file a.file-trigger {
   .footer-push {
     height: 21rem;
   }
-  .footer .columns, .footer .tabbar {
+  .footer .columns, .footer .tabbar, .footer .tabbar > .container {
     flex-direction: row;
     flex-wrap: wrap;
   }
@@ -1114,10 +1123,10 @@ a.button, .control.is-file a.file-trigger {
 .no-margin-right, .no-margin-x {
   margin-right: 0 !important;
 }
-.no-margin-top, .no-margin-y {
+.no-margin-top, .no-margin-y, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
   margin-top: 0 !important;
 }
-.no-margin-bottom, .no-margin-y {
+.no-margin-bottom, .no-margin-y, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
   margin-bottom: 0 !important;
 }
 .has-padding {
@@ -1164,6 +1173,21 @@ a.button, .control.is-file a.file-trigger {
 }
 .has-border-right, .has-border-x {
   border-right: 0.0625rem solid #CCCCCC;
+}
+.no-border {
+  border: 0;
+}
+.no-border-top, .no-border-y {
+  border-top: 0;
+}
+.no-border-bottom, .no-border-y, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
+  border-bottom: 0;
+}
+.no-border-left, .no-border-x {
+  border-left: 0;
+}
+.no-border-right, .no-border-x {
+  border-right: 0;
 }
 .hidden, .control.is-file input[type=file], .list.is-tree li > input[type=checkbox].list-collapse:not(:checked) + label + ul {
   position: absolute;

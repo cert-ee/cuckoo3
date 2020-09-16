@@ -4,7 +4,6 @@
 .tabbar
   @extend .columns
   margin: $gap 0
-  width: 100%
   border-bottom: .15rem solid $border
   background-color: $white
 
@@ -32,3 +31,18 @@
         background-color: $blue
         bottom: -.15rem
         left: 0
+
+  // when a container is used to wrap the links, make sure it's
+  // an extension of the initial tab bar.
+  & > .container
+    @extend .tabbar
+    @extend .no-margin-y
+    @extend .no-border-bottom
+    &.is-fixed
+      margin-left: auto
+      margin-right: auto
+
+      .tabbar-link:first-child
+        margin-left: 0
+      .tabbar-link:last-child
+        margin-right: 0

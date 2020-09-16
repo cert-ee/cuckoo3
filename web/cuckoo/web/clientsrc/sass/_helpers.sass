@@ -86,6 +86,23 @@
     @extend .has-border-top
     @extend .has-border-bottom
 
+.no-border
+  border: 0
+  &-top
+    border-top: 0
+  &-bottom
+    border-bottom: 0
+  &-left
+    border-left: 0
+  &-right
+    border-right: 0
+  &-x
+    @extend .no-border-left
+    @extend .no-border-right
+  &-y
+    @extend .no-border-top
+    @extend .no-border-bottom
+
 .hidden
   position: absolute
   overflow: hidden
