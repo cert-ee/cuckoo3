@@ -5,7 +5,17 @@
   width: calc(100vw - #{$gap * 3})
   margin: 0 auto
 
+  &.is-fixed
+    @media screen and (min-width: $breakpoint-large)
+      width: calc(#{$breakpoint-large} - #{$gap * 3})
+    @media screen and (max-width: $breakpoint-large)
+      width: calc(#{$breakpoint-medium} - #{$gap * 3})
+    @media screen and (max-width: $breakpoint-medium)
+      width: calc(#{$breakpoint-small} - #{$gap * 3})
+    @media screen and (max-width: $breakpoint-small)
+      width: calc(#{$breakpoint-mobile} - #{$gap * 3})
+
   @media screen and (max-width: $breakpoint-mobile)
-    width: 100vw
+    width: 100vw !important
     padding-left: $gap
     padding-right: $gap

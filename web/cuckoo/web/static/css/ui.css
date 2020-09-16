@@ -282,9 +282,29 @@ p {
   width: calc(100vw - 2.25rem);
   margin: 0 auto;
 }
+@media screen and (min-width: 90rem) {
+  .container.is-fixed {
+    width: calc(90rem - 2.25rem);
+  }
+}
+@media screen and (max-width: 90rem) {
+  .container.is-fixed {
+    width: calc(70rem - 2.25rem);
+  }
+}
+@media screen and (max-width: 70rem) {
+  .container.is-fixed {
+    width: calc(60rem - 2.25rem);
+  }
+}
+@media screen and (max-width: 60rem) {
+  .container.is-fixed {
+    width: calc(40rem - 2.25rem);
+  }
+}
 @media screen and (max-width: 40rem) {
   .container {
-    width: 100vw;
+    width: 100vw !important;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
@@ -404,6 +424,11 @@ input[type=reset].button,
   line-height: 1;
   -webkit-appearance: none;
   -moz-appearance: none;
+}
+
+a.button, .control.is-file a.file-trigger {
+  text-decoration: none;
+  color: inherit;
 }
 
 .button, .control.is-file .file-trigger {
