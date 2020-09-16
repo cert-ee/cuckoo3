@@ -55,13 +55,17 @@ h5,
 h6 {
   margin: 0.75rem 0;
 }
-h1.has-border-bottom,
+h1.has-border-bottom, h1.has-border-y,
 h2.has-border-bottom,
+h2.has-border-y,
 h3.has-border-bottom,
+h3.has-border-y,
 h4.has-border-bottom,
+h4.has-border-y,
 h5.has-border-bottom,
-h6.has-border-bottom {
-  border-bottom: 0.0625rem solid #CCCCCC;
+h5.has-border-y,
+h6.has-border-bottom,
+h6.has-border-y {
   padding-bottom: 0.75rem;
 }
 
@@ -357,6 +361,9 @@ p {
 .columns.is-vcenter, .is-vcenter.tabbar {
   align-items: center;
 }
+.columns.is-vtop, .is-vtop.tabbar {
+  align-items: flex-start;
+}
 .columns.is-vbottom, .is-vbottom.tabbar {
   align-items: flex-end;
 }
@@ -615,6 +622,9 @@ input[type=reset].button,
   bottom: 0;
 }
 
+.details:not([open]):hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
 .details > summary {
   position: relative;
   list-style: none;
@@ -804,6 +814,9 @@ input[type=reset].button,
   display: inline-block;
   line-height: 1.4em;
 }
+.list.is-horizontal > li:not(:first-child) {
+  margin-left: -4px;
+}
 .list.is-horizontal > li:not(:last-child):after {
   content: "•";
   display: inline-block;
@@ -879,11 +892,11 @@ input[type=reset].button,
   background-color: rgba(0, 0, 0, 0.05);
   color: #000000;
 }
-.box.has-background-blue {
+.box.has-background-blue, .box.has-background-info {
   background-color: #2E94F1;
   color: #FFFFFF;
 }
-.box.has-background-red {
+.box.has-background-red, .box.has-background-danger {
   background-color: #FF0000;
   color: #FFFFFF;
 }
@@ -894,6 +907,12 @@ input[type=reset].button,
 .box.has-background-black {
   background-color: #000000;
   color: #FFFFFF;
+}
+.box.has-background-green, .box.has-background-success {
+  background-color: #82DB7A;
+}
+.box.has-background-yellow, .box.has-background-warning {
+  background-color: #FCC200;
 }
 .box.has-inset-shadow {
   box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
@@ -912,6 +931,7 @@ input[type=reset].button,
   margin: 0.75rem 0;
   width: 100%;
   border-bottom: 0.15rem solid #CCCCCC;
+  background-color: #FFFFFF;
 }
 .tabbar-link {
   margin-left: 0;
@@ -1045,99 +1065,78 @@ input[type=reset].button,
 .no-padding {
   padding: 0 !important;
 }
-.no-padding-left {
+.no-padding-left, .no-padding-x {
   padding-left: 0 !important;
 }
-.no-padding-right {
+.no-padding-right, .no-padding-x {
   padding-right: 0 !important;
 }
-.no-padding-top {
+.no-padding-top, .no-padding-y {
   padding-top: 0 !important;
 }
-.no-padding-bottom {
+.no-padding-bottom, .no-padding-y {
   padding-bottom: 0 !important;
 }
-.no-padding-x {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-.no-padding-y {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
 .no-margin {
   margin: 0 !important;
 }
-.no-margin-left {
+.no-margin-left, .no-margin-x {
   margin-left: 0 !important;
 }
-.no-margin-right {
+.no-margin-right, .no-margin-x {
   margin-right: 0 !important;
 }
-.no-margin-top {
+.no-margin-top, .no-margin-y {
   margin-top: 0 !important;
 }
-.no-margin-bottom {
+.no-margin-bottom, .no-margin-y {
   margin-bottom: 0 !important;
 }
-.no-margin-x {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-.no-margin-y {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
-
 .has-padding {
   padding: 0.75rem;
 }
-.has-padding-left {
+.has-padding-left, .has-padding-x {
   padding-left: 0.75rem !important;
 }
-.has-padding-right {
+.has-padding-right, .has-padding-x {
   padding-right: 0.75rem !important;
 }
-.has-padding-top {
+.has-padding-top, .has-padding-y {
   padding-top: 0.75rem !important;
 }
-.has-padding-bottom {
+.has-padding-bottom, .has-padding-y {
   padding-bottom: 0.75rem !important;
 }
-.has-padding-x {
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
-}
-.has-padding-y {
-  padding-top: 0.75rem !important;
-  padding-bottom: 0.75rem !important;
-}
-
 .has-margin {
   margin: 0.75rem;
 }
-.has-margin-left {
+.has-margin-left, .has-margin-x {
   margin-left: 0.75rem !important;
 }
-.has-margin-right {
+.has-margin-right, .has-margin-x {
   margin-right: 0.75rem !important;
 }
-.has-margin-top {
+.has-margin-top, .has-margin-y {
   margin-top: 0.75rem !important;
 }
-.has-margin-bottom {
+.has-margin-bottom, .has-margin-y {
   margin-bottom: 0.75rem !important;
 }
-.has-margin-x {
-  margin-left: 0.75rem !important;
-  margin-right: 0.75rem !important;
+.has-border {
+  border: 0.0625rem solid #CCCCCC;
 }
-.has-margin-y {
-  margin-top: 0.75rem !important;
-  margin-bottom: 0.75rem !important;
+.has-border-top, .has-border-y {
+  border-top: 0.0625rem solid #CCCCCC;
 }
-
+.has-border-bottom, .has-border-y {
+  border-bottom: 0.0625rem solid #CCCCCC;
+}
+.has-border-left, .has-border-x {
+  border-left: 0.0625rem solid #CCCCCC;
+}
+.has-border-right, .has-border-x {
+  border-right: 0.0625rem solid #CCCCCC;
+}
 .hidden, .control.is-file input[type=file], .list.is-tree li > input[type=checkbox].list-collapse:not(:checked) + label + ul {
   position: absolute;
   overflow: hidden;

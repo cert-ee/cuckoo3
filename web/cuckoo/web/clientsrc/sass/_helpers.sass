@@ -12,11 +12,11 @@
   &-bottom
     padding-bottom: 0 !important
   &-x
-    padding-left: 0 !important
-    padding-right: 0 !important
+    @extend .no-padding-left
+    @extend .no-padding-right
   &-y
-    padding-top: 0 !important
-    padding-bottom: 0 !important
+    @extend .no-padding-top
+    @extend .no-padding-bottom
 
 .no-margin
   margin: 0 !important
@@ -29,11 +29,11 @@
   &-bottom
     margin-bottom: 0 !important
   &-x
-    margin-left: 0 !important
-    margin-right: 0 !important
+    @extend .no-margin-left
+    @extend .no-margin-right
   &-y
-    margin-top: 0 !important
-    margin-bottom: 0 !important
+    @extend .no-margin-top
+    @extend .no-margin-bottom
 
 .has-padding
   padding: $gap
@@ -46,11 +46,11 @@
   &-bottom
     padding-bottom: $gap !important
   &-x
-    padding-left: $gap !important
-    padding-right: $gap !important
+    @extend .has-padding-left
+    @extend .has-padding-right
   &-y
-    padding-top: $gap !important
-    padding-bottom: $gap !important
+    @extend .has-padding-top
+    @extend .has-padding-bottom
 
 .has-margin
   margin: $gap
@@ -63,11 +63,28 @@
   &-bottom
     margin-bottom: $gap !important
   &-x
-    margin-left: $gap !important
-    margin-right: $gap !important
+    @extend .has-margin-left
+    @extend .has-margin-right
   &-y
-    margin-top: $gap !important
-    margin-bottom: $gap !important
+    @extend .has-margin-top
+    @extend .has-margin-bottom
+
+.has-border
+  border: .0625rem solid $border
+  &-top
+    border-top: .0625rem solid $border
+  &-bottom
+    border-bottom: .0625rem solid $border
+  &-left
+    border-left: .0625rem solid $border
+  &-right
+    border-right: .0625rem solid $border
+  &-x
+    @extend .has-border-left
+    @extend .has-border-right
+  &-y
+    @extend .has-border-top
+    @extend .has-border-bottom
 
 .hidden
   position: absolute

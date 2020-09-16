@@ -60,6 +60,8 @@
     & > li
       display: inline-block
       line-height: 1.4em
+      &:not(:first-child)
+        margin-left: -4px
       &:not(:last-child):after
         content: "\2022"
         display: inline-block

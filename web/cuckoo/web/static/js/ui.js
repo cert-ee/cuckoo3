@@ -196,7 +196,9 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
  * @param {HTMLElement} trigger - the button that holds the popover
  */
 function handlePopover(trigger) {
+
   const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
+  const close = elem.querySelector('[data-popover-close]');
 
   function onBodyClick(e) {
     const inPopover = !(lib.parent('.popover', e.target));
@@ -207,14 +209,17 @@ function handlePopover(trigger) {
   }
 
   trigger.addEventListener('click', ev => {
-
     ev.preventDefault();
     elem.classList.toggle('in');
-
     // register body click
     setTimeout(() => document.body.addEventListener('click', onBodyClick), 100);
-
   });
+
+  if(close)
+    close.addEventListener('click', ev => {
+      ev.preventDefault();
+      document.body.click();
+    })
 
 }
 
