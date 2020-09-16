@@ -48,7 +48,7 @@ const lib = {
  * @return null;
  */
 function handleNavbar(toggle) {
-  let n = lib.parent('navbar', toggle);
+  let n = lib.parent('.navbar', toggle);
   if(!n) return;
   toggle.addEventListener("click", ev => {
     ev.preventDefault();
