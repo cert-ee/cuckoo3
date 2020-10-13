@@ -66,3 +66,49 @@
     &.has-background-dark,
     &.has-background-black
       box-shadow: 0px 2px 4px rgba($black, .4)
+
+  // additional space modifiers3
+  &.has-addon
+    position: relative
+    padding-top: $gap * 3
+
+    .box-addon
+      position: absolute
+      top: 0
+      left: 0
+      width: auto
+      padding: $gap/2 $gap
+      margin-bottom: $gap
+      background-color: $light
+      font-size: .7em
+      border-radius: $radius 0 $radius 0
+
+  &-header
+    background-color: $dark
+    color: $white
+    margin-top: -$gap
+    margin-left: -$gap
+    margin-right: -$gap
+    padding: $gap $gap $gap/2
+    border-bottom: .0625rem solid $border
+    border-top-left-radius: $radius
+    border-top-right-radius: $radius
+
+    .is-big > &
+      margin-top: -#{$gap*2}
+      margin-left: -#{$gap*2}
+      margin-right: -#{$gap*2}
+      padding: ($gap*2) ($gap*2) $gap
+
+
+    &.is-light
+      background-color: $light
+      color: $dark
+
+    &.is-white
+      background-color: $white
+      color: $black
+
+    &.is-black
+      background-color: $black
+      color: $white

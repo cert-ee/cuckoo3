@@ -7,7 +7,7 @@ input[type="reset"].button
   border: none
   font-size: 100%
   font-family: inherit
-  line-height: 1
+  line-height: 1.3em
   -webkit-appearance: none
   -moz-appearance: none
 
@@ -21,6 +21,7 @@ a.button
   padding: $gap/2 $gap
   border-radius: $radius
   font-weight: 700
+  text-align: center
 
   &:hover
     cursor: pointer
@@ -93,8 +94,25 @@ a.button
   display: inline-block
   & > .button
     border-radius: 0
+    border-right-width: 0
     margin-right: -4px
     &:first-child
       border-radius: $gap/2 0 0 $gap/2
     &:last-child
       border-radius: 0 $gap/2 $gap/2 0
+      &.has-border
+        border-right-width: 0.0625rem
+
+  &.is-vertical
+    & > .button
+      display: block
+      margin-right: 0
+      border-right-width: 0.0625rem
+      &.has-border
+        border-bottom-width: 0
+      &:first-child
+        border-radius: $gap/2 $gap/2 0 0
+      &:last-child
+        border-radius: 0 0 $gap/2 $gap/2
+        &.has-border
+          border-bottom-width: 0.0625rem

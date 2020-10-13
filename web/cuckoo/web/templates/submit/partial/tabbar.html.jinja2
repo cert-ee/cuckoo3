@@ -8,7 +8,7 @@
   <div class="container">
     <h1>Submit file for analysis</h1>
     <p>Upload a sample and start analysis by following each step in this form.</p>
-    <nav class="tabbar">
+    <nav class="tabbar is-rs-static">
       {% for name, caption in submit_levels %}
         <p class="tabbar-link {% if active_level == name %}is-active{% endif %}">{{ caption|e }}</p>
       {% endfor %}
