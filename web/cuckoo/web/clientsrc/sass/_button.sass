@@ -7,15 +7,21 @@ input[type="reset"].button
   border: none
   font-size: 100%
   font-family: inherit
-  line-height: 1
+  line-height: 1.3em
   -webkit-appearance: none
   -moz-appearance: none
 
+a.button
+  text-decoration: none
+  color: inherit
+
 .button
   display: inline-block
+  vertical-align: text-bottom
   padding: $gap/2 $gap
   border-radius: $radius
-  font-weight: 600
+  font-weight: 700
+  text-align: center
 
   &:hover
     cursor: pointer
@@ -23,10 +29,10 @@ input[type="reset"].button
     border-color: $black
     outline: none
 
-  &, &.is-light
-    background-color: tint($border, .7)
-    .has-background-light &
-      background-color: $white
+  &, &.is-gray
+    background-color: $border
+    &:hover
+      background-color: shade($border, .1)
 
   &.is-blue
     background-color: $blue
@@ -38,6 +44,8 @@ input[type="reset"].button
   &.is-red
     background-color: $red
     color: $white
+    &:hover
+      background-color: shade($red, .1)
 
   &.is-dark
     background-color: $dark
@@ -53,10 +61,22 @@ input[type="reset"].button
       background-color: shade($white, .1)
       color: rgba($black, .9)
 
+  &.is-yellow
+    background-color: $yellow
+    color: rgba($black, .9)
+    &:hover
+      background-color: shade($yellow, .1)
+
+  &.is-green
+    background-color: $green
+    color: rgba($black, .9)
+    &:hover
+      background-color: shade($green, .1)
+
   &.is-disabled
     pointer-events: none
-    background-color: tint($border, .7)
-    color: shade($border, .3)
+    background-color: $border
+    color: rgba($black, .75)
     text-shadow: none
     &:hover
       cursor: not-allowed
@@ -67,14 +87,32 @@ input[type="reset"].button
   &.is-small
     padding: $gap/4 $gap/2
     font-size: .8em
-    font-weight: 500
+    font-weight: 600
+    border-radius: $radius/2
 
 .buttons-conjoined
   display: inline-block
   & > .button
     border-radius: 0
+    border-right-width: 0
     margin-right: -4px
     &:first-child
       border-radius: $gap/2 0 0 $gap/2
     &:last-child
       border-radius: 0 $gap/2 $gap/2 0
+      &.has-border
+        border-right-width: 0.0625rem
+
+  &.is-vertical
+    & > .button
+      display: block
+      margin-right: 0
+      border-right-width: 0.0625rem
+      &.has-border
+        border-bottom-width: 0
+      &:first-child
+        border-radius: $gap/2 $gap/2 0 0
+      &:last-child
+        border-radius: 0 0 $gap/2 $gap/2
+        &.has-border
+          border-bottom-width: 0.0625rem

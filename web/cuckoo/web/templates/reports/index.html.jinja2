@@ -51,18 +51,17 @@
       </thead>
       <tbody>
       {% for analysis in analyses %}
-        {% if analysis.state == 'waiting_manual' %}
-          {% set url = "/submit/settings/" + analysis.id + "/" %}
-        {% else %}
-          {% set url = "/analyses/" + analysis.id + "/" %}
-        {% endif %}
         <tr>
-          <td><a href="{{ url }}">{{ analysis.created_on | formatdatetime }}</a></td>
-          <td class="is-monospace"><a href="{{ url }}">{{ analysis.id }}</a></td>
-          <td><a href="{{ url }}"></a></td>
-          <td><a href="{{ url }}"></a></td>
-          <td><a href="{{ url }}">{{ analysis.state | humanstate }}</a></td>
-          <td><a href="{{ url }}"></a></td>
+          <td>{{ analysis.created_on | formatdatetime }}</td>
+          <td class="is-monospace">{{ analysis.id }}</td>
+          <td></td>
+          <td></td>
+          {% if analysis.state == 'waiting_manual' %}
+            <td><a href="{{ url('Submit/settings', args=[analysis.id]) }}">{{ analysis.state | humanstate }}</a></td>
+          {% else %}
+            <td>{{ analysis.state | humanstate }}</td>
+          {% endif %}
+          <td></td>
         </tr>
       {% endfor %}
       </tbody>

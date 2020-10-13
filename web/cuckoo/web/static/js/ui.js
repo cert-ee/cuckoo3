@@ -48,12 +48,12 @@ const lib = {
  * @return null;
  */
 function handleNavbar(toggle) {
-  let n = lib.parent('navbar', toggle);
+  let n = lib.parent('.navbar', toggle);
   if(!n) return;
-  toggle.addEventListener("click", ev => {
+  toggle.addEventListener('click', ev => {
     ev.preventDefault();
-    n.classList.toggle("is-expanded");
-    n.setAttribute("aria-expanded", n.classList.contains("is-expanded"));
+    n.classList.toggle('is-expanded');
+    n.setAttribute('aria-expanded', n.classList.contains('is-expanded'));
   });
   return null;
 }
@@ -67,13 +67,13 @@ function handleNavbar(toggle) {
 function handleFileInput(input) {
   const { previousElementSibling } = input;
   const { url } = lib;
-  input.addEventListener("change", ev => {
+  input.addEventListener('change', ev => {
     if(previousElementSibling) {
       const file = input.files[0];
       if(file instanceof File) {
         previousElementSibling.textContent = file.name;
-        previousElementSibling.classList.add("is-disabled");
-        previousElementSibling.classList.remove("is-blue");
+        previousElementSibling.classList.add('is-disabled');
+        previousElementSibling.classList.remove('is-blue');
       }
     }
   });
@@ -162,7 +162,7 @@ function toggleVisibility(element, force=null) {
  * @param {string} type - DOM format, should be 'text/html' or 'text/svg'
  * @return {HTMLElement}
  */
-function parseDOM(str="", type="text/html") {
+function parseDOM(str='', type='text/html') {
   return new DOMParser().parseFromString(str, type).body.firstChild;
 }
 
@@ -196,7 +196,9 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
  * @param {HTMLElement} trigger - the button that holds the popover
  */
 function handlePopover(trigger) {
+
   const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
+  const close = elem.querySelector('[data-popover-close]');
 
   function onBodyClick(e) {
     const inPopover = !(lib.parent('.popover', e.target));
@@ -207,14 +209,67 @@ function handlePopover(trigger) {
   }
 
   trigger.addEventListener('click', ev => {
-
     ev.preventDefault();
     elem.classList.toggle('in');
-
     // register body click
     setTimeout(() => document.body.addEventListener('click', onBodyClick), 100);
-
   });
+
+  if(close)
+    close.addEventListener('click', ev => {
+      ev.preventDefault();
+      document.body.click();
+    })
+
+}
+
+/**
+ * Makes a certain password field reveal on demand
+ * @param {HTMLElement} input - the password field to toggle
+ * @return {null}
+ * @note Requires an already existing addon/button element within the control
+ *       group that has 'data-toggle' assigned. An additional [data-hide] and
+ *       [data-hidden] are toggled to use different icons for the states.
+ */
+function handlePasswordHide(input) {
+  const control   = lib.parent('.control', input);
+  const button    = control.querySelector('[data-toggle]');
+  const revealed  = control.querySelector('[data-revealed]');
+  const hidden    = control.querySelector('[data-hide]');
+
+  function getState() {
+    console.log(input.getAttribute('type'));
+    return input.getAttribute('type') == 'password' ? false : true;
+  }
+
+  let isRevealed = getState();
+
+  function toggleButton() {
+    if(isRevealed === false) {
+      hidden.removeAttribute('hidden');
+      revealed.setAttribute('hidden', true);
+    } else {
+      hidden.setAttribute('hidden', true);
+      revealed.removeAttribute('hidden');
+    }
+  }
+
+  if(button) {
+    button.addEventListener('click', ev => {
+      ev.preventDefault();
+
+      if(isRevealed) {
+        input.setAttribute('type', 'password');
+      } else {
+        input.setAttribute('type', 'text');
+      }
+
+      isRevealed = getState();
+      toggleButton();
+    });
+  }
+
+  toggleButton(isRevealed);
 
 }
 
@@ -232,10 +287,11 @@ function applyHandler(sel=null, fn=null) {
 /**
  * document ready state initializer
  */
-document.addEventListener("DOMContentLoaded", () => {
-  applyHandler(".navbar .navbar-toggle", handleNavbar);
-  applyHandler(".input[type='file'][data-enhance]", handleFileInput);
-  applyHandler(".list.is-tree[data-enhance]", handleListTree);
-  applyHandler(".tabbar[data-enhance]", handlePageTabs);
-  applyHandler("[data-popover]", handlePopover);
+document.addEventListener('DOMContentLoaded', () => {
+  applyHandler('.navbar .navbar-toggle', handleNavbar);
+  applyHandler('.input[type="file"][data-enhance]', handleFileInput);
+  applyHandler('.input[type="password"][data-enhance]', handlePasswordHide);
+  applyHandler('.list.is-tree[data-enhance]', handleListTree);
+  applyHandler('.tabbar[data-enhance]', handlePageTabs);
+  applyHandler('[data-popover]', handlePopover);
 });

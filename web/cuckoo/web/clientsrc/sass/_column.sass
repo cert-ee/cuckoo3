@@ -37,10 +37,16 @@
     justify-content: flex-end
   &.is-center
     justify-content: center
-  &.is-divided > .column
-    flex: 1
+  &.is-divided
+    flex-wrap: nowrap
+    & > .column
+      flex: 1
+      &.is-auto
+        white-space: nowrap
   &.is-vcenter
     align-items: center
+  &.is-vtop
+    align-items: flex-start
   &.is-vbottom
     align-items: flex-end
   &.is-vstretch

@@ -4,14 +4,12 @@
 .tabbar
   @extend .columns
   margin: $gap 0
-  width: 100%
   border-bottom: .15rem solid $border
+  background-color: $white
 
   &-link
     @extend .column
-    margin-left: 0
-    margin-right: 0
-    margin-bottom: 0
+    margin: 0
     padding: $gap
     color: $black
     text-decoration: none
@@ -31,3 +29,23 @@
         background-color: $blue
         bottom: -.15rem
         left: 0
+
+  // when a container is used to wrap the links, make sure it's
+  // an extension of the initial tab bar.
+  & > .container
+    @extend .tabbar
+    @extend .no-margin-y
+    @extend .no-border-bottom
+    &.is-fixed
+      margin-left: auto
+      margin-right: auto
+
+      .tabbar-link:first-child
+        margin-left: 0
+      .tabbar-link:last-child
+        margin-right: 0
+
+  // optional responsive behavior that will 'hide' the non-active tabs
+  &.is-rs-static
+    & > .tabbar-link:not(.is-active)
+      display: none
