@@ -1,0 +1,28 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.banner
+  @extend .box
+  @extend .columns
+  @extend .is-vstretch
+  @extend .is-divided
+  @extend .no-padding
+  overflow: hidden
+  border-width: 0.065rem
+  border-color: $border
+  border-style: solid
+  background-color: tint($light, .1)
+  .banner-icon
+    @extend .column
+    @extend .is-auto
+    @extend .has-padding
+    @extend .no-margin-x
+    background-color: $light
+  .column
+    align-self: center
+  &.is-danger
+    background-color: tint($red, .75)
+    border: .065rem solid $red
+    .banner-icon
+      color: $white
+      background-color: $red

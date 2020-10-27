@@ -1,0 +1,41 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+.tag
+  display: inline-block
+  background-color: $light
+  padding: $gap/4 $gap/2
+  vertical-align: text-bottom
+  margin: $gap $gap/2 0 0
+  border-radius: $radius
+  border: .065rem solid shade($light-matte, .1)
+  font-size: .9em
+
+  // specific support for inline tag input field
+  &.control
+    border-width: .065rem
+    border-style: solid
+    border-color: $border
+    background: transparent
+    height: 1.5rem
+    .input
+      padding: 0 !important
+    .button
+      height: 100%
+
+  .tag-remove
+    margin-left: $gap/2
+    color: $black
+    opacity: .25
+    &:hover
+      cursor: pointer
+      opacity: .75
+
+
+.tag-list
+  @extend .columns
+  @extend .is-vcenter
+  @extend .has-padding-bottom
+  height: auto
+  .tag:first-child
+    margin-left: 0
