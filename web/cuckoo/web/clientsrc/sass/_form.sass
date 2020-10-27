@@ -25,6 +25,7 @@
     display: inline-block
   // for select boxes, render an arrow
   &.is-select
+    min-width: 10rem
     .input:hover
       cursor: pointer
       background-color: $light
@@ -33,12 +34,13 @@
       content: ""
       position: absolute
       right: .75rem
-      top: 1rem
+      top: 50%
       width: 0
       height: 0
       border-style: solid
       border-width: 3px 3px 0 3px
-      border-color: $border transparent transparent transparent
+      border-color: shade($border, .2) transparent transparent transparent
+
   // tweak the layout for file inputs
   &.is-file
     .file-trigger
@@ -82,10 +84,13 @@
 .label
   display: block
   font-weight: 500
-  margin-bottom: $gap/2
+  margin: $gap/2 0
   font-size: .9em
   opacity: .75
   white-space: nowrap
+
+  &.is-set-title
+    font-size: 1.1em
 
 // input control wrapper
 .input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
@@ -93,6 +98,8 @@
   padding: $gap/2
   background: $white
   border: .05rem solid $border
+  &.is-small
+    width: 4rem
   &:focus
     border: .05rem solid shade($border, .2)
 
@@ -108,16 +115,25 @@
   @extend .is-vcenter
   @extend .is-gapless
   @extend .no-margin-y
-  .control,
-  .label,
-  .field-end
+  @extend .input
+  @extend .no-padding-y
+  & > .control,
+  & > .label,
+  & > .field-end
     @extend .column
     @extend .no-margin-y
-  .field-end,
-  .label
+  & > .field-end,
+  & > .label
     @extend .is-auto
-  .control
+  & > .control
     @extend .has-padding-x
+    & > .input
+      &,
+      &:focus,
+      &:active
+        border-color: transparent
+        background: transparent
+
 
 // redoing the entirety of a field. This is a much more simplified way.
 .field-block

@@ -103,6 +103,15 @@
     @extend .no-border-top
     @extend .no-border-bottom
 
+.no-radius
+  border-radius: 0
+  &-left
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
+  &-right
+    border-top-right-radius: 0
+    border-bottom-right-radius: 0
+
 .hidden
   position: absolute
   overflow: hidden
@@ -120,3 +129,14 @@ textarea[disabled]
   opacity: .5
   &:hover
     cursor: not-allowed
+
+.clear-box,
+.clear-box:before,
+.clear-box:after
+  clear: both
+  &:before,
+  &:after
+    display: table
+
+.pull-right
+  float: right

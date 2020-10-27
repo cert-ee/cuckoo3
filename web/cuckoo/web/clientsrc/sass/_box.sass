@@ -28,7 +28,10 @@
     &.has-border
       &, & ~ .box:not(:last-child)
         border-bottom: 1px solid rgba($black, .05)
-
+  &.has-border
+    border-style: solid
+    border-width: .065rem
+    border-color: $border
   &.has-background-light
     background-color: $light
     color: $black
@@ -100,7 +103,6 @@
       margin-right: -#{$gap*2}
       padding: ($gap*2) ($gap*2) $gap
 
-
     &.is-light
       background-color: $light
       color: $dark
@@ -112,3 +114,10 @@
     &.is-black
       background-color: $black
       color: $white
+
+  .separator
+    border-width: 0.065rem
+    border-color: $border
+    border-style: solid
+    opacity: .5
+    margin-bottom: $gap*2
