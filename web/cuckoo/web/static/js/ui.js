@@ -197,7 +197,7 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
  */
 function handlePopover(trigger) {
 
-  const elem = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
+  const elem  = document.querySelector('.popover' + trigger.getAttribute('data-popover'));
   const close = elem.querySelector('[data-popover-close]');
 
   function onBodyClick(e) {
@@ -219,7 +219,7 @@ function handlePopover(trigger) {
     close.addEventListener('click', ev => {
       ev.preventDefault();
       document.body.click();
-    })
+    });
 
 }
 
@@ -238,7 +238,6 @@ function handlePasswordHide(input) {
   const hidden    = control.querySelector('[data-hide]');
 
   function getState() {
-    console.log(input.getAttribute('type'));
     return input.getAttribute('type') == 'password' ? false : true;
   }
 
@@ -274,6 +273,94 @@ function handlePasswordHide(input) {
 }
 
 /**
+ * This enables interactions on tag lists such as; 'type-to-tag'
+ * @param * @param {HTMLElement} tagList - the password field to toggle
+ * @return {null}
+ */
+function handleTagInput(tagList) {
+
+  const tagValue   = tagList.querySelector('input[data-tag-value]');
+  const addTag     = tagList.querySelector('button[data-add-tag]');
+  let tagStore     = tagList.querySelector('input[data-tags]');
+  const tags       = tagStore ? tagStore.value.split(',') : [];
+
+  function commit(str) {
+    if(str)
+      tags.push(str);
+    tagStore.value = tags.join(',');
+    tagStore.dispatchEvent(new Event('change'));
+  }
+
+  function createTagStore() {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.setAttribute('data-tags', true);
+    tagList.appendChild(input);
+    tagStore = input;
+  }
+
+  function createTag(str, store=true) {
+    const tag = document.createElement(`div`);
+    tag.classList.add('tag');
+    tag.textContent = str;
+    tagList.insertBefore(tag, lib.parent('.control', addTag));
+    // append removal 'x'
+    const closeTag = document.createElement('a');
+    const closeIcon = document.createElement('i');
+    closeIcon.classList.add('fas');
+    closeIcon.classList.add('fa-times');
+    closeTag.appendChild(closeIcon);
+    closeTag.classList.add('tag-remove');
+    tag.appendChild(closeTag);
+    closeTag.addEventListener('click', () => removeTag(tag));
+    if(store) {
+      blink(tag);
+      commit(str);
+    }
+  }
+
+  function removeTag(tag) {
+    if(!tag) {
+      tagList.querySelectorAll('.tag').forEach(t => removeTag(t));
+    } else {
+      let index = tags.indexOf(tag.textContent);
+      if(index !== -1) {
+        tags.splice(index, 1);
+      }
+      tag.parentNode.removeChild(tag);
+      commit();
+    }
+  }
+
+  tagList.querySelectorAll('.tag .tag-remove').forEach(rm => {
+    rm.addEventListener('click', () => removeTag(lib.parent('.tag', rm)));
+  });
+
+  tagValue.addEventListener('keydown', e => {
+    switch(e.keyCode) {
+      case 13:
+        addTag.dispatchEvent(new Event('click'));
+      break;
+    }
+  });
+
+  addTag.addEventListener('click', () => {
+    if(tagValue.value.length) {
+      createTag(tagValue.value);
+      tagValue.value = "";
+      tagValue.focus();
+    }
+  });
+
+  if(tags.length)
+    tags.forEach(tag => createTag(tag, false));
+
+  if(!tagStore)
+    createTagStore();
+
+ }
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -293,5 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.input[type="password"][data-enhance]', handlePasswordHide);
   applyHandler('.list.is-tree[data-enhance]', handleListTree);
   applyHandler('.tabbar[data-enhance]', handlePageTabs);
+  applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
 });
