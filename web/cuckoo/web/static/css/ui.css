@@ -2,7 +2,7 @@
 /* Copyright (C) 2016-2020 Cuckoo Foundation.
  * This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
  * See the file 'docs/LICENSE' for copying permission. */
-.input:not([type=file]):not([type=checkbox]):not([type=radio]) {
+.input:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
   -webkit-appearance: none;
   border: 0;
   box-shadow: none;
@@ -11,7 +11,7 @@
   background: transparent;
   width: 100%;
 }
-.input:focus:not([type=file]):not([type=checkbox]):not([type=radio]) {
+.input:focus:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:focus:not([type=file]):not([type=checkbox]):not([type=radio]) {
   outline: none;
 }
 
@@ -333,173 +333,88 @@ p {
   color: #FFFFFF;
 }
 
-.columns, .tabbar, .tabbar > .container, .tabbar > .container > .container, .field.is-inline {
+.columns, .tag-list, .tabbar, .tabbar > .container, .tabbar > .container > .container, .banner, .field.is-inline {
   display: flex;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
-.columns.box, .box.tabbar, .tabbar > .box.container, .tabbar > .container > .box.container, .box.field.is-inline {
+.columns.box, .box.tag-list, .box.tabbar, .tabbar > .box.container, .tabbar > .container > .box.container, .banner, .box.field.is-inline, .field.is-inline.banner {
   margin-left: -0.375rem;
   margin-right: -0.375rem;
 }
-.columns > .column, .columns > .tabbar-link, .tabbar > .column, .tabbar > .container > .column, .tabbar > .container > .container > .column, .tabbar > .tabbar-link, .tabbar > .container > .tabbar-link, .tabbar > .container > .container > .tabbar-link, .field.is-inline .columns > .control, .field.is-inline .tabbar > .control, .field.is-inline .tabbar > .container > .control, .field.is-inline .tabbar > .container > .container > .control,
-.field.is-inline .columns > .label,
-.field.is-inline .tabbar > .label,
-.field.is-inline .tabbar > .container > .label,
-.field.is-inline .tabbar > .container > .container > .label,
-.field.is-inline .columns > .field-end,
-.field.is-inline .tabbar > .field-end,
-.field.is-inline .tabbar > .container > .field-end,
-.field.is-inline .tabbar > .container > .container > .field-end, .field.is-inline > .column, .field.is-inline > .tabbar-link, .field.is-inline > .control,
-.field.is-inline > .label,
-.field.is-inline > .field-end {
+.columns > .column, .tag-list > .column, .columns > .tabbar-link, .tag-list > .tabbar-link, .tabbar > .column, .tabbar > .container > .column, .tabbar > .container > .container > .column, .tabbar > .tabbar-link, .tabbar > .container > .tabbar-link, .tabbar > .container > .container > .tabbar-link, .banner .columns > .banner-icon, .banner .tag-list > .banner-icon, .banner .tabbar > .banner-icon, .banner .tabbar > .container > .banner-icon, .banner .tabbar > .container > .container > .banner-icon, .banner > .column, .banner > .tabbar-link, .banner > .banner-icon, .field.is-inline > .column, .field.is-inline > .tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end {
   margin-left: 0.75rem;
   margin-right: 0.75rem;
 }
-.columns > .column.is-full, .columns > .is-full.tabbar-link, .tabbar > .column.is-full, .tabbar > .container > .column.is-full, .tabbar > .container > .container > .column.is-full, .tabbar > .is-full.tabbar-link, .tabbar > .container > .is-full.tabbar-link, .tabbar > .container > .container > .is-full.tabbar-link, .field.is-inline .columns > .is-full.control, .field.is-inline .tabbar > .is-full.control, .field.is-inline .tabbar > .container > .is-full.control, .field.is-inline .tabbar > .container > .container > .is-full.control,
-.field.is-inline .columns > .is-full.label,
-.field.is-inline .tabbar > .is-full.label,
-.field.is-inline .tabbar > .container > .is-full.label,
-.field.is-inline .tabbar > .container > .container > .is-full.label,
-.field.is-inline .columns > .is-full.field-end,
-.field.is-inline .tabbar > .is-full.field-end,
-.field.is-inline .tabbar > .container > .is-full.field-end,
-.field.is-inline .tabbar > .container > .container > .is-full.field-end, .field.is-inline > .column.is-full, .field.is-inline > .is-full.tabbar-link, .field.is-inline > .is-full.control,
-.field.is-inline > .is-full.label,
-.field.is-inline > .is-full.field-end {
+.columns > .column.is-full, .tag-list > .column.is-full, .columns > .is-full.tabbar-link, .tag-list > .is-full.tabbar-link, .tabbar > .column.is-full, .tabbar > .container > .column.is-full, .tabbar > .container > .container > .column.is-full, .tabbar > .is-full.tabbar-link, .tabbar > .container > .is-full.tabbar-link, .tabbar > .container > .container > .is-full.tabbar-link, .banner .columns > .is-full.banner-icon, .banner .tag-list > .is-full.banner-icon, .banner .tabbar > .is-full.banner-icon, .banner .tabbar > .container > .is-full.banner-icon, .banner .tabbar > .container > .container > .is-full.banner-icon, .banner > .column.is-full, .banner > .is-full.tabbar-link, .banner > .is-full.banner-icon, .field.is-inline > .column.is-full, .field.is-inline > .is-full.tabbar-link, .banner .field.is-inline > .is-full.banner-icon, .field.is-inline > .is-full.control, .field.is-inline > .is-full.label, .field.is-inline > .is-full.field-end {
   flex: 0 0 100% !important;
   margin-left: 0;
   margin-right: 0;
 }
-.columns > .column.is-auto, .columns > .is-auto.tabbar-link, .tabbar > .column.is-auto, .tabbar > .container > .column.is-auto, .tabbar > .container > .container > .column.is-auto, .tabbar > .is-auto.tabbar-link, .tabbar > .container > .is-auto.tabbar-link, .tabbar > .container > .container > .is-auto.tabbar-link, .field.is-inline .columns > .is-auto.control, .field.is-inline .tabbar > .is-auto.control, .field.is-inline .tabbar > .container > .is-auto.control, .field.is-inline .tabbar > .container > .container > .is-auto.control,
-.field.is-inline .columns > .label,
-.field.is-inline .tabbar > .label,
-.field.is-inline .tabbar > .container > .label,
-.field.is-inline .tabbar > .container > .container > .label,
-.field.is-inline .columns > .field-end,
-.field.is-inline .tabbar > .field-end,
-.field.is-inline .tabbar > .container > .field-end,
-.field.is-inline .tabbar > .container > .container > .field-end, .field.is-inline > .column.is-auto, .field.is-inline > .is-auto.tabbar-link, .field.is-inline > .is-auto.control,
-.field.is-inline > .label,
-.field.is-inline > .field-end {
-  flex: 0 !important;
-}
-.columns.is-vertical, .is-vertical.tabbar, .tabbar > .is-vertical.container, .tabbar > .container > .is-vertical.container, .is-vertical.field.is-inline {
-  flex-direction: column;
-}
-.columns.is-even, .is-even.tabbar, .tabbar > .is-even.container, .tabbar > .container > .is-even.container, .is-even.field.is-inline {
-  justify-content: space-evenly;
-}
-.columns.is-between, .is-between.tabbar, .tabbar > .is-between.container, .tabbar > .container > .is-between.container, .is-between.field.is-inline {
-  justify-content: space-between;
-}
-.columns.is-around, .is-around.tabbar, .tabbar > .is-around.container, .tabbar > .container > .is-around.container, .is-around.field.is-inline {
-  justify-content: space-around;
-}
-.columns.is-left, .is-left.tabbar, .tabbar > .is-left.container, .tabbar > .container > .is-left.container, .is-left.field.is-inline {
-  justify-content: flex-start;
-}
-.columns.is-right, .is-right.tabbar, .tabbar > .is-right.container, .tabbar > .container > .is-right.container, .is-right.field.is-inline {
-  justify-content: flex-end;
-}
-.columns.is-center, .is-center.tabbar, .tabbar > .is-center.container, .tabbar > .container > .is-center.container, .is-center.field.is-inline {
-  justify-content: center;
-}
-.columns.is-divided, .is-divided.tabbar, .tabbar > .is-divided.container, .tabbar > .container > .is-divided.container, .field-block.has-columns > .columns, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .field.is-inline {
-  flex-wrap: nowrap;
-}
-.columns.is-divided > .column, .columns.is-divided > .tabbar-link, .is-divided.tabbar > .column, .tabbar > .is-divided.container > .column, .tabbar > .container > .is-divided.container > .column, .is-divided.tabbar > .tabbar-link, .tabbar > .is-divided.container > .tabbar-link, .tabbar > .container > .is-divided.container > .tabbar-link, .field-block.has-columns > .columns > .column, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .tabbar > .column, .tabbar.field-block.has-columns > .container > .column, .tabbar > .container.field-block.has-columns > .container > .column, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .tabbar-link, .tabbar > .container.field-block.has-columns > .container > .tabbar-link, .field-block.has-columns > .columns.field.is-inline > .column, .field-block.has-columns > .columns.field.is-inline > .tabbar-link, .field-block.has-columns > .field.is-inline.tabbar > .column, .field-block.has-columns > .field.is-inline.tabbar > .tabbar-link, .field.is-inline .columns.is-divided > .control, .field.is-inline .is-divided.tabbar > .control, .field.is-inline .tabbar > .is-divided.container > .control, .field.is-inline .tabbar > .container > .is-divided.container > .control, .field.is-inline .field-block.has-columns > .columns > .control, .field.is-inline .field-block.has-columns > .tabbar > .control, .field.is-inline .tabbar.field-block.has-columns > .container > .control, .field.is-inline .tabbar > .container.field-block.has-columns > .container > .control,
-.field.is-inline .columns.is-divided > .label,
-.field.is-inline .is-divided.tabbar > .label,
-.field.is-inline .tabbar > .is-divided.container > .label,
-.field.is-inline .tabbar > .container > .is-divided.container > .label,
-.field.is-inline .field-block.has-columns > .columns > .label,
-.field.is-inline .field-block.has-columns > .tabbar > .label,
-.field.is-inline .tabbar.field-block.has-columns > .container > .label,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .label,
-.field.is-inline .columns.is-divided > .field-end,
-.field.is-inline .is-divided.tabbar > .field-end,
-.field.is-inline .tabbar > .is-divided.container > .field-end,
-.field.is-inline .tabbar > .container > .is-divided.container > .field-end,
-.field.is-inline .field-block.has-columns > .columns > .field-end,
-.field.is-inline .field-block.has-columns > .tabbar > .field-end,
-.field.is-inline .tabbar.field-block.has-columns > .container > .field-end,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .field-end, .field.is-inline > .column, .field.is-inline > .tabbar-link, .field.is-inline > .control,
-.field.is-inline > .label,
-.field.is-inline > .field-end {
+.columns > .column.is-fill, .tag-list > .column.is-fill, .columns > .is-fill.tabbar-link, .tag-list > .is-fill.tabbar-link, .tabbar > .column.is-fill, .tabbar > .container > .column.is-fill, .tabbar > .container > .container > .column.is-fill, .tabbar > .is-fill.tabbar-link, .tabbar > .container > .is-fill.tabbar-link, .tabbar > .container > .container > .is-fill.tabbar-link, .banner .columns > .is-fill.banner-icon, .banner .tag-list > .is-fill.banner-icon, .banner .tabbar > .is-fill.banner-icon, .banner .tabbar > .container > .is-fill.banner-icon, .banner .tabbar > .container > .container > .is-fill.banner-icon, .banner > .column.is-fill, .banner > .is-fill.tabbar-link, .banner > .is-fill.banner-icon, .field.is-inline > .column.is-fill, .field.is-inline > .is-fill.tabbar-link, .banner .field.is-inline > .is-fill.banner-icon, .field.is-inline > .is-fill.control, .field.is-inline > .is-fill.label, .field.is-inline > .is-fill.field-end {
   flex: 1;
 }
-.columns.is-divided > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .tabbar > .is-divided.container > .column.is-auto, .tabbar > .container > .is-divided.container > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link, .tabbar > .is-divided.container > .is-auto.tabbar-link, .tabbar > .container > .is-divided.container > .is-auto.tabbar-link, .field-block.has-columns > .columns > .column.is-auto, .field-block.has-columns > .columns > .is-auto.tabbar-link, .field-block.has-columns > .tabbar > .column.is-auto, .tabbar.field-block.has-columns > .container > .column.is-auto, .tabbar > .container.field-block.has-columns > .container > .column.is-auto, .field-block.has-columns > .tabbar > .is-auto.tabbar-link, .tabbar.field-block.has-columns > .container > .is-auto.tabbar-link, .tabbar > .container.field-block.has-columns > .container > .is-auto.tabbar-link, .field.is-inline .columns.is-divided > .is-auto.control, .field.is-inline .is-divided.tabbar > .is-auto.control, .field.is-inline .tabbar > .is-divided.container > .is-auto.control, .field.is-inline .tabbar > .container > .is-divided.container > .is-auto.control, .field.is-inline .field-block.has-columns > .columns > .is-auto.control, .field.is-inline .field-block.has-columns > .tabbar > .is-auto.control, .field.is-inline .tabbar.field-block.has-columns > .container > .is-auto.control, .field.is-inline .tabbar > .container.field-block.has-columns > .container > .is-auto.control,
-.field.is-inline .columns.is-divided > .label,
-.field.is-inline .is-divided.tabbar > .label,
-.field.is-inline .tabbar > .is-divided.container > .label,
-.field.is-inline .tabbar > .container > .is-divided.container > .label,
-.field.is-inline .field-block.has-columns > .columns > .label,
-.field.is-inline .field-block.has-columns > .tabbar > .label,
-.field.is-inline .tabbar.field-block.has-columns > .container > .label,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .label,
-.field.is-inline .columns.is-divided > .field-end,
-.field.is-inline .is-divided.tabbar > .field-end,
-.field.is-inline .tabbar > .is-divided.container > .field-end,
-.field.is-inline .tabbar > .container > .is-divided.container > .field-end,
-.field.is-inline .field-block.has-columns > .columns > .field-end,
-.field.is-inline .field-block.has-columns > .tabbar > .field-end,
-.field.is-inline .tabbar.field-block.has-columns > .container > .field-end,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .field-end, .field.is-inline > .column.is-auto, .field.is-inline > .is-auto.tabbar-link, .field.is-inline > .is-auto.control,
-.field.is-inline > .label,
-.field.is-inline > .field-end {
+.columns > .column.is-auto, .tag-list > .column.is-auto, .columns > .is-auto.tabbar-link, .tag-list > .is-auto.tabbar-link, .tabbar > .column.is-auto, .tabbar > .container > .column.is-auto, .tabbar > .container > .container > .column.is-auto, .tabbar > .is-auto.tabbar-link, .tabbar > .container > .is-auto.tabbar-link, .tabbar > .container > .container > .is-auto.tabbar-link, .banner .columns > .banner-icon, .banner .tag-list > .banner-icon, .banner .tabbar > .banner-icon, .banner .tabbar > .container > .banner-icon, .banner .tabbar > .container > .container > .banner-icon, .banner > .column.is-auto, .banner > .is-auto.tabbar-link, .banner > .banner-icon, .field.is-inline > .column.is-auto, .field.is-inline > .is-auto.tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .is-auto.control, .field.is-inline > .label, .field.is-inline > .field-end {
+  flex: 0 !important;
+}
+.columns.is-vertical, .is-vertical.tag-list, .is-vertical.tabbar, .tabbar > .is-vertical.container, .tabbar > .container > .is-vertical.container, .is-vertical.banner, .is-vertical.field.is-inline {
+  flex-direction: column;
+}
+.columns.is-even, .is-even.tag-list, .is-even.tabbar, .tabbar > .is-even.container, .tabbar > .container > .is-even.container, .is-even.banner, .is-even.field.is-inline {
+  justify-content: space-evenly;
+}
+.columns.is-between, .is-between.tag-list, .is-between.tabbar, .tabbar > .is-between.container, .tabbar > .container > .is-between.container, .is-between.banner, .is-between.field.is-inline {
+  justify-content: space-between;
+}
+.columns.is-around, .is-around.tag-list, .is-around.tabbar, .tabbar > .is-around.container, .tabbar > .container > .is-around.container, .is-around.banner, .is-around.field.is-inline {
+  justify-content: space-around;
+}
+.columns.is-left, .is-left.tag-list, .is-left.tabbar, .tabbar > .is-left.container, .tabbar > .container > .is-left.container, .is-left.banner, .is-left.field.is-inline {
+  justify-content: flex-start;
+}
+.columns.is-right, .is-right.tag-list, .is-right.tabbar, .tabbar > .is-right.container, .tabbar > .container > .is-right.container, .is-right.banner, .is-right.field.is-inline {
+  justify-content: flex-end;
+}
+.columns.is-center, .is-center.tag-list, .is-center.tabbar, .tabbar > .is-center.container, .tabbar > .container > .is-center.container, .is-center.banner, .is-center.field.is-inline {
+  justify-content: center;
+}
+.columns.is-divided, .is-divided.tag-list, .is-divided.tabbar, .tabbar > .is-divided.container, .tabbar > .container > .is-divided.container, .banner, .field-block.has-columns > .columns, .field-block.has-columns > .tag-list, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .banner, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tag-list, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .field-block.has-columns > .field.is-inline.banner, .field.is-inline {
+  flex-wrap: nowrap;
+}
+.columns.is-divided > .column, .is-divided.tag-list > .column, .columns.is-divided > .tabbar-link, .is-divided.tag-list > .tabbar-link, .is-divided.tabbar > .column, .tabbar > .is-divided.container > .column, .tabbar > .container > .is-divided.container > .column, .is-divided.tabbar > .tabbar-link, .tabbar > .is-divided.container > .tabbar-link, .tabbar > .container > .is-divided.container > .tabbar-link, .banner .columns.is-divided > .banner-icon, .banner .is-divided.tag-list > .banner-icon, .banner .is-divided.tabbar > .banner-icon, .banner .tabbar > .is-divided.container > .banner-icon, .banner .tabbar > .container > .is-divided.container > .banner-icon, .banner > .column, .banner > .tabbar-link, .banner > .banner-icon, .field-block.has-columns > .columns > .column, .field-block.has-columns > .tag-list > .column, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .tag-list > .tabbar-link, .field-block.has-columns > .tabbar > .column, .tabbar.field-block.has-columns > .container > .column, .tabbar > .container.field-block.has-columns > .container > .column, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .tabbar-link, .tabbar > .container.field-block.has-columns > .container > .tabbar-link, .banner .field-block.has-columns > .columns > .banner-icon, .banner .field-block.has-columns > .tag-list > .banner-icon, .banner .field-block.has-columns > .tabbar > .banner-icon, .banner .tabbar.field-block.has-columns > .container > .banner-icon, .banner .tabbar > .container.field-block.has-columns > .container > .banner-icon, .field-block.has-columns > .banner > .column, .field-block.has-columns > .banner > .tabbar-link, .field-block.has-columns > .banner > .banner-icon, .field-block.has-columns > .columns.field.is-inline > .column, .field-block.has-columns > .field.is-inline.tag-list > .column, .field-block.has-columns > .columns.field.is-inline > .tabbar-link, .field-block.has-columns > .field.is-inline.tag-list > .tabbar-link, .field-block.has-columns > .field.is-inline.tabbar > .column, .field-block.has-columns > .field.is-inline.tabbar > .tabbar-link, .field-block.has-columns > .field.is-inline.banner > .column, .field-block.has-columns > .field.is-inline.banner > .tabbar-link, .field-block.has-columns > .field.is-inline.banner > .banner-icon, .field.is-inline > .column, .field.is-inline > .tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end {
+  flex: 1;
+}
+.columns.is-divided > .column.is-auto, .is-divided.tag-list > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tag-list > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .tabbar > .is-divided.container > .column.is-auto, .tabbar > .container > .is-divided.container > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link, .tabbar > .is-divided.container > .is-auto.tabbar-link, .tabbar > .container > .is-divided.container > .is-auto.tabbar-link, .banner .columns.is-divided > .banner-icon, .banner .is-divided.tag-list > .banner-icon, .banner .is-divided.tabbar > .banner-icon, .banner .tabbar > .is-divided.container > .banner-icon, .banner .tabbar > .container > .is-divided.container > .banner-icon, .banner > .column.is-auto, .banner > .is-auto.tabbar-link, .banner > .banner-icon, .field-block.has-columns > .columns > .column.is-auto, .field-block.has-columns > .tag-list > .column.is-auto, .field-block.has-columns > .columns > .is-auto.tabbar-link, .field-block.has-columns > .tag-list > .is-auto.tabbar-link, .field-block.has-columns > .tabbar > .column.is-auto, .tabbar.field-block.has-columns > .container > .column.is-auto, .tabbar > .container.field-block.has-columns > .container > .column.is-auto, .field-block.has-columns > .tabbar > .is-auto.tabbar-link, .tabbar.field-block.has-columns > .container > .is-auto.tabbar-link, .tabbar > .container.field-block.has-columns > .container > .is-auto.tabbar-link, .banner .field-block.has-columns > .columns > .banner-icon, .banner .field-block.has-columns > .tag-list > .banner-icon, .banner .field-block.has-columns > .tabbar > .banner-icon, .banner .tabbar.field-block.has-columns > .container > .banner-icon, .banner .tabbar > .container.field-block.has-columns > .container > .banner-icon, .field-block.has-columns > .banner > .column.is-auto, .field-block.has-columns > .banner > .is-auto.tabbar-link, .field-block.has-columns > .banner > .column.banner-icon, .field-block.has-columns > .banner > .banner-icon.tabbar-link, .field-block.has-columns > .banner > .is-auto.banner-icon, .field-block.has-columns > .banner > .banner-icon, .field.is-inline > .column.is-auto, .field.is-inline > .is-auto.tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .is-auto.control, .field.is-inline > .label, .field.is-inline > .field-end {
   white-space: nowrap;
 }
-.columns.is-vcenter, .is-vcenter.tabbar, .tabbar > .is-vcenter.container, .tabbar > .container > .is-vcenter.container, .field.is-inline {
+.columns.is-vcenter, .tag-list, .is-vcenter.tabbar, .tabbar > .is-vcenter.container, .tabbar > .container.tag-list, .tabbar > .container > .is-vcenter.container, .tabbar > .container > .container.tag-list, .is-vcenter.banner, .field.is-inline {
   align-items: center;
 }
-.columns.is-vtop, .is-vtop.tabbar, .tabbar > .is-vtop.container, .tabbar > .container > .is-vtop.container, .field-block.has-columns > .columns, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .is-vtop.field.is-inline, .field-block.has-columns > .field.is-inline {
+.columns.is-vtop, .is-vtop.tag-list, .is-vtop.tabbar, .tabbar > .is-vtop.container, .tabbar > .container > .is-vtop.container, .is-vtop.banner, .field-block.has-columns > .columns, .field-block.has-columns > .tag-list, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .banner, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tag-list, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .field-block.has-columns > .field.is-inline.banner, .is-vtop.field.is-inline, .field-block.has-columns > .field.is-inline {
   align-items: flex-start;
 }
-.columns.is-vbottom, .is-vbottom.tabbar, .tabbar > .is-vbottom.container, .tabbar > .container > .is-vbottom.container, .is-vbottom.field.is-inline {
+.columns.is-vbottom, .is-vbottom.tag-list, .is-vbottom.tabbar, .tabbar > .is-vbottom.container, .tabbar > .container > .is-vbottom.container, .is-vbottom.banner, .is-vbottom.field.is-inline {
   align-items: flex-end;
 }
-.columns.is-vstretch, .is-vstretch.tabbar, .tabbar > .is-vstretch.container, .tabbar > .container > .is-vstretch.container, .field-block.has-columns > .columns, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .is-vstretch.field.is-inline, .field-block.has-columns > .field.is-inline {
+.columns.is-vstretch, .is-vstretch.tag-list, .is-vstretch.tabbar, .tabbar > .is-vstretch.container, .tabbar > .container > .is-vstretch.container, .banner, .field-block.has-columns > .columns, .field-block.has-columns > .tag-list, .field-block.has-columns > .tabbar, .tabbar.field-block.has-columns > .container, .tabbar > .container.field-block.has-columns > .container, .field-block.has-columns > .banner, .field-block.has-columns > .columns.field.is-inline, .field-block.has-columns > .field.is-inline.tag-list, .field-block.has-columns > .field.is-inline.tabbar, .tabbar.field-block.has-columns > .field.is-inline.container, .field-block.has-columns > .field.is-inline.banner, .is-vstretch.field.is-inline, .field.is-inline.banner, .field-block.has-columns > .field.is-inline {
   align-items: stretch;
 }
-.columns.is-gapless > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tabbar > .column, .tabbar > .is-gapless.container > .column, .tabbar > .container > .is-gapless.container > .column, .is-gapless.tabbar > .tabbar-link, .tabbar > .is-gapless.container > .tabbar-link, .tabbar > .container > .is-gapless.container > .tabbar-link, .field.is-inline .columns.is-gapless > .control, .field.is-inline .is-gapless.tabbar > .control, .field.is-inline .tabbar > .is-gapless.container > .control, .field.is-inline .tabbar > .container > .is-gapless.container > .control,
-.field.is-inline .columns.is-gapless > .label,
-.field.is-inline .is-gapless.tabbar > .label,
-.field.is-inline .tabbar > .is-gapless.container > .label,
-.field.is-inline .tabbar > .container > .is-gapless.container > .label,
-.field.is-inline .columns.is-gapless > .field-end,
-.field.is-inline .is-gapless.tabbar > .field-end,
-.field.is-inline .tabbar > .is-gapless.container > .field-end,
-.field.is-inline .tabbar > .container > .is-gapless.container > .field-end, .field.is-inline > .column, .field.is-inline > .tabbar-link, .field.is-inline > .control,
-.field.is-inline > .label,
-.field.is-inline > .field-end {
+.columns.is-gapless > .column, .is-gapless.tag-list > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tag-list > .tabbar-link, .is-gapless.tabbar > .column, .tabbar > .is-gapless.container > .column, .tabbar > .container > .is-gapless.container > .column, .is-gapless.tabbar > .tabbar-link, .tabbar > .is-gapless.container > .tabbar-link, .tabbar > .container > .is-gapless.container > .tabbar-link, .banner .columns.is-gapless > .banner-icon, .banner .is-gapless.tag-list > .banner-icon, .banner .is-gapless.tabbar > .banner-icon, .banner .tabbar > .is-gapless.container > .banner-icon, .banner .tabbar > .container > .is-gapless.container > .banner-icon, .is-gapless.banner > .column, .is-gapless.banner > .tabbar-link, .is-gapless.banner > .banner-icon, .field.is-inline > .column, .field.is-inline > .tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end {
   margin-left: 0;
   margin-right: 0;
 }
-.columns.has-tiny-gaps > .column, .columns.has-tiny-gaps > .tabbar-link, .has-tiny-gaps.tabbar > .column, .tabbar > .has-tiny-gaps.container > .column, .tabbar > .container > .has-tiny-gaps.container > .column, .has-tiny-gaps.tabbar > .tabbar-link, .tabbar > .has-tiny-gaps.container > .tabbar-link, .tabbar > .container > .has-tiny-gaps.container > .tabbar-link, .field.is-inline .columns.has-tiny-gaps > .control, .field.is-inline .has-tiny-gaps.tabbar > .control, .field.is-inline .tabbar > .has-tiny-gaps.container > .control, .field.is-inline .tabbar > .container > .has-tiny-gaps.container > .control,
-.field.is-inline .columns.has-tiny-gaps > .label,
-.field.is-inline .has-tiny-gaps.tabbar > .label,
-.field.is-inline .tabbar > .has-tiny-gaps.container > .label,
-.field.is-inline .tabbar > .container > .has-tiny-gaps.container > .label,
-.field.is-inline .columns.has-tiny-gaps > .field-end,
-.field.is-inline .has-tiny-gaps.tabbar > .field-end,
-.field.is-inline .tabbar > .has-tiny-gaps.container > .field-end,
-.field.is-inline .tabbar > .container > .has-tiny-gaps.container > .field-end, .has-tiny-gaps.field.is-inline > .column, .has-tiny-gaps.field.is-inline > .tabbar-link, .has-tiny-gaps.field.is-inline > .control,
-.has-tiny-gaps.field.is-inline > .label,
-.has-tiny-gaps.field.is-inline > .field-end {
+.columns.has-tiny-gaps > .column, .has-tiny-gaps.tag-list > .column, .columns.has-tiny-gaps > .tabbar-link, .has-tiny-gaps.tag-list > .tabbar-link, .has-tiny-gaps.tabbar > .column, .tabbar > .has-tiny-gaps.container > .column, .tabbar > .container > .has-tiny-gaps.container > .column, .has-tiny-gaps.tabbar > .tabbar-link, .tabbar > .has-tiny-gaps.container > .tabbar-link, .tabbar > .container > .has-tiny-gaps.container > .tabbar-link, .banner .columns.has-tiny-gaps > .banner-icon, .banner .has-tiny-gaps.tag-list > .banner-icon, .banner .has-tiny-gaps.tabbar > .banner-icon, .banner .tabbar > .has-tiny-gaps.container > .banner-icon, .banner .tabbar > .container > .has-tiny-gaps.container > .banner-icon, .has-tiny-gaps.banner > .column, .has-tiny-gaps.banner > .tabbar-link, .has-tiny-gaps.banner > .banner-icon, .has-tiny-gaps.field.is-inline > .column, .has-tiny-gaps.field.is-inline > .tabbar-link, .banner .has-tiny-gaps.field.is-inline > .banner-icon, .field.is-inline.has-tiny-gaps > .control, .field.is-inline.has-tiny-gaps > .label, .field.is-inline.has-tiny-gaps > .field-end {
   margin-left: 0.375rem;
   margin-right: 0.375rem;
 }
 @media screen and (max-width: 40rem) {
-  .columns, .tabbar, .tabbar > .container, .tabbar > .container > .container, .field.is-inline {
+  .columns, .tag-list, .tabbar, .tabbar > .container, .tabbar > .container > .container, .banner, .field.is-inline {
     flex-direction: column;
     width: 100%;
     margin-left: 0;
     margin-right: 0;
   }
-  .columns .column, .columns .tabbar-link, .tabbar .column, .tabbar .tabbar-link, .field.is-inline .column, .field.is-inline .tabbar-link, .field.is-inline .control,
-.field.is-inline .label,
-.field.is-inline .field-end {
+  .columns .column, .tag-list .column, .columns .tabbar-link, .tag-list .tabbar-link, .tabbar .column, .tabbar .tabbar-link, .banner .column, .banner .tabbar-link, .banner .banner-icon, .columns .field.is-inline > .control, .tag-list .field.is-inline > .control, .tabbar .field.is-inline > .control, .tabbar > .container .field.is-inline > .control, .tabbar > .container > .container .field.is-inline > .control, .banner .field.is-inline > .control, .columns .field.is-inline > .label, .tag-list .field.is-inline > .label, .tabbar .field.is-inline > .label, .tabbar > .container .field.is-inline > .label, .tabbar > .container > .container .field.is-inline > .label, .banner .field.is-inline > .label, .columns .field.is-inline > .field-end, .tag-list .field.is-inline > .field-end, .tabbar .field.is-inline > .field-end, .tabbar > .container .field.is-inline > .field-end, .tabbar > .container > .container .field.is-inline > .field-end, .banner .field.is-inline > .field-end, .field.is-inline .column, .field.is-inline .tabbar-link, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end {
     margin: 0.375rem 0;
   }
 }
@@ -821,7 +736,10 @@ a.button, .control.is-file a.file-trigger {
 .control .label {
   display: inline-block;
 }
-.control.is-select .input:hover {
+.control.is-select {
+  min-width: 10rem;
+}
+.control.is-select .input:hover, .control.is-select .field.is-inline:hover {
   cursor: pointer;
   background-color: rgba(0, 0, 0, 0.05);
 }
@@ -830,12 +748,12 @@ a.button, .control.is-file a.file-trigger {
   content: "";
   position: absolute;
   right: 0.75rem;
-  top: 1rem;
+  top: 50%;
   width: 0;
   height: 0;
   border-style: solid;
   border-width: 3px 3px 0 3px;
-  border-color: #CCCCCC transparent transparent transparent;
+  border-color: #a3a3a3 transparent transparent transparent;
 }
 .control.is-file .file-trigger {
   text-align: center;
@@ -857,7 +775,7 @@ a.button, .control.is-file a.file-trigger {
   border: 0.1rem solid #CCCCCC;
   background-color: #FFFFFF;
 }
-.control.has-addon .input, .control.has-addon .input:focus {
+.control.has-addon .input, .control.has-addon .field.is-inline, .control.has-addon .input:focus {
   border: 0 !important;
 }
 .control.has-addon .addon {
@@ -881,24 +799,36 @@ a.button, .control.is-file a.file-trigger {
 .label {
   display: block;
   font-weight: 500;
-  margin-bottom: 0.375rem;
+  margin: 0.375rem 0;
   font-size: 0.9em;
   opacity: 0.75;
   white-space: nowrap;
 }
+.label.is-set-title {
+  font-size: 1.1em;
+}
 
-.input:not([type=file]):not([type=checkbox]):not([type=radio]) {
+.input:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
   padding: 0.375rem;
   background: #FFFFFF;
   border: 0.05rem solid #CCCCCC;
 }
-.input:not([type=file]):not([type=checkbox]):not([type=radio]):focus {
+.input:not([type=file]):not([type=checkbox]):not([type=radio]).is-small, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]).is-small {
+  width: 4rem;
+}
+.input:not([type=file]):not([type=checkbox]):not([type=radio]):focus, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]):focus {
   border: 0.05rem solid #a3a3a3;
 }
 
-.input[type=checkbox],
-.input[type=radio] {
+.input[type=checkbox], [type=checkbox].field.is-inline,
+.input[type=radio],
+[type=radio].field.is-inline {
   margin: 0;
+}
+
+.field.is-inline > .control > .input, .field.is-inline > .control > .field.is-inline, .field.is-inline > .control > .input:focus, .field.is-inline > .control > .input:active {
+  border-color: transparent;
+  background: transparent;
 }
 
 .field-block {
@@ -917,7 +847,7 @@ a.button, .control.is-file a.file-trigger {
   border-color: transparent;
   background-color: transparent;
 }
-.field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]) {
+.field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
   border: 0;
   background: transparent;
 }
@@ -930,34 +860,14 @@ a.button, .control.is-file a.file-trigger {
 .field-block .label > .is-error {
   float: right;
 }
-.field-block.has-columns > .columns > .column, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .tabbar > .column, .tabbar.field-block.has-columns > .container > .column, .tabbar > .container.field-block.has-columns > .container > .column, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .tabbar-link, .tabbar > .container.field-block.has-columns > .container > .tabbar-link, .field-block.has-columns > .field.is-inline > .column, .field-block.has-columns > .field.is-inline > .tabbar-link, .field.is-inline .field-block.has-columns > .columns > .control, .field.is-inline .field-block.has-columns > .tabbar > .control, .field.is-inline .tabbar.field-block.has-columns > .container > .control, .field.is-inline .tabbar > .container.field-block.has-columns > .container > .control, .field-block.has-columns > .field.is-inline > .control,
-.field.is-inline .field-block.has-columns > .columns > .label,
-.field.is-inline .field-block.has-columns > .tabbar > .label,
-.field.is-inline .tabbar.field-block.has-columns > .container > .label,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .label,
-.field-block.has-columns > .field.is-inline > .label,
-.field.is-inline .field-block.has-columns > .columns > .field-end,
-.field.is-inline .field-block.has-columns > .tabbar > .field-end,
-.field.is-inline .tabbar.field-block.has-columns > .container > .field-end,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .field-end,
-.field-block.has-columns > .field.is-inline > .field-end {
+.field-block.has-columns > .columns > .column, .field-block.has-columns > .tag-list > .column, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .tag-list > .tabbar-link, .field-block.has-columns > .tabbar > .column, .tabbar.field-block.has-columns > .container > .column, .tabbar > .container.field-block.has-columns > .container > .column, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .tabbar-link, .tabbar > .container.field-block.has-columns > .container > .tabbar-link, .banner .field-block.has-columns > .columns > .banner-icon, .banner .field-block.has-columns > .tag-list > .banner-icon, .banner .field-block.has-columns > .tabbar > .banner-icon, .banner .tabbar.field-block.has-columns > .container > .banner-icon, .banner .tabbar > .container.field-block.has-columns > .container > .banner-icon, .field-block.has-columns > .banner > .column, .field-block.has-columns > .banner > .tabbar-link, .field-block.has-columns > .banner > .banner-icon, .field-block.has-columns > .field.is-inline > .column, .field-block.has-columns > .field.is-inline > .tabbar-link, .banner .field-block.has-columns > .field.is-inline > .banner-icon, .field-block.has-columns > .field.is-inline > .control, .field-block.has-columns > .field.is-inline > .label, .field-block.has-columns > .field.is-inline > .field-end {
   margin-left: 0;
   margin-right: 0;
   border-style: solid;
   border-color: #CCCCCC;
   border-width: 0 0.0625rem 0 0;
 }
-.field-block.has-columns > .columns > .column:last-child, .field-block.has-columns > .columns > .tabbar-link:last-child, .field-block.has-columns > .tabbar > .column:last-child, .tabbar.field-block.has-columns > .container > .column:last-child, .tabbar > .container.field-block.has-columns > .container > .column:last-child, .field-block.has-columns > .tabbar > .tabbar-link:last-child, .tabbar.field-block.has-columns > .container > .tabbar-link:last-child, .tabbar > .container.field-block.has-columns > .container > .tabbar-link:last-child, .field-block.has-columns > .field.is-inline > .column:last-child, .field-block.has-columns > .field.is-inline > .tabbar-link:last-child, .field.is-inline .field-block.has-columns > .columns > .control:last-child, .field.is-inline .field-block.has-columns > .tabbar > .control:last-child, .field.is-inline .tabbar.field-block.has-columns > .container > .control:last-child, .field.is-inline .tabbar > .container.field-block.has-columns > .container > .control:last-child, .field-block.has-columns > .field.is-inline > .control:last-child,
-.field.is-inline .field-block.has-columns > .columns > .label:last-child,
-.field.is-inline .field-block.has-columns > .tabbar > .label:last-child,
-.field.is-inline .tabbar.field-block.has-columns > .container > .label:last-child,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .label:last-child,
-.field-block.has-columns > .field.is-inline > .label:last-child,
-.field.is-inline .field-block.has-columns > .columns > .field-end:last-child,
-.field.is-inline .field-block.has-columns > .tabbar > .field-end:last-child,
-.field.is-inline .tabbar.field-block.has-columns > .container > .field-end:last-child,
-.field.is-inline .tabbar > .container.field-block.has-columns > .container > .field-end:last-child,
-.field-block.has-columns > .field.is-inline > .field-end:last-child {
+.field-block.has-columns > .columns > .column:last-child, .field-block.has-columns > .tag-list > .column:last-child, .field-block.has-columns > .columns > .tabbar-link:last-child, .field-block.has-columns > .tag-list > .tabbar-link:last-child, .field-block.has-columns > .tabbar > .column:last-child, .tabbar.field-block.has-columns > .container > .column:last-child, .tabbar > .container.field-block.has-columns > .container > .column:last-child, .field-block.has-columns > .tabbar > .tabbar-link:last-child, .tabbar.field-block.has-columns > .container > .tabbar-link:last-child, .tabbar > .container.field-block.has-columns > .container > .tabbar-link:last-child, .banner .field-block.has-columns > .columns > .banner-icon:last-child, .banner .field-block.has-columns > .tag-list > .banner-icon:last-child, .banner .field-block.has-columns > .tabbar > .banner-icon:last-child, .banner .tabbar.field-block.has-columns > .container > .banner-icon:last-child, .banner .tabbar > .container.field-block.has-columns > .container > .banner-icon:last-child, .field-block.has-columns > .banner > .column:last-child, .field-block.has-columns > .banner > .tabbar-link:last-child, .field-block.has-columns > .banner > .banner-icon:last-child, .field-block.has-columns > .field.is-inline > .column:last-child, .field-block.has-columns > .field.is-inline > .tabbar-link:last-child, .banner .field-block.has-columns > .field.is-inline > .banner-icon:last-child, .field-block.has-columns > .field.is-inline > .control:last-child, .field-block.has-columns > .field.is-inline > .label:last-child, .field-block.has-columns > .field.is-inline > .field-end:last-child {
   border-width: 0;
 }
 .field-block-group .field-block:not(:first-child):not(:last-child) {
@@ -1006,7 +916,7 @@ a.button, .control.is-file a.file-trigger {
 .list.is-tree li.is-parent > input[type=checkbox].list-collapse {
   display: none;
 }
-.list.is-tree li.is-parent > label > .columns, .list.is-tree li.is-parent > label > .tabbar, .list.is-tree li.is-parent > label.tabbar > .container, .list.is-tree li.tabbar.is-parent > label.container > .container, .list.is-tree li.is-parent > label > .field.is-inline {
+.list.is-tree li.is-parent > label > .columns, .list.is-tree li.is-parent > label > .tag-list, .list.is-tree li.is-parent > label > .tabbar, .list.is-tree li.is-parent > label.tabbar > .container, .list.is-tree li.tabbar.is-parent > label.container > .container, .list.is-tree li.is-parent > label > .banner, .list.is-tree li.is-parent > label > .field.is-inline {
   display: inline-flex;
 }
 .list.is-tree li.is-parent > label:before {
@@ -1072,81 +982,86 @@ a.button, .control.is-file a.file-trigger {
   vertical-align: middle;
 }
 
-.box {
+.box, .banner {
   padding: 0.75rem;
   margin: 0.75rem 0;
   border-radius: 0.2rem;
   background-color: #FFFFFF;
 }
-.box.is-big {
+.box.is-big, .is-big.banner {
   padding: 1.5rem;
 }
-.box.is-grouped {
+.box.is-grouped, .is-grouped.banner {
   border-radius: 0;
   border-top-left-radius: 0.2rem;
   border-top-right-radius: 0.2rem;
   margin-top: 0;
   margin-bottom: 0;
 }
-.box.is-grouped ~ .box {
+.box.is-grouped ~ .box, .is-grouped.banner ~ .box, .box.is-grouped ~ .banner, .is-grouped.banner ~ .banner {
   border-radius: 0;
 }
-.box.is-grouped ~ .box:last-child {
+.box.is-grouped ~ .box:last-child, .is-grouped.banner ~ .box:last-child, .box.is-grouped ~ .banner:last-child, .is-grouped.banner ~ .banner:last-child {
   border-bottom-left-radius: 0.2rem;
   border-bottom-right-radius: 0.2rem;
 }
-.box.is-grouped ~ .box:not(:first-child) {
+.box.is-grouped ~ .box:not(:first-child), .is-grouped.banner ~ .box:not(:first-child), .box.is-grouped ~ .banner:not(:first-child), .is-grouped.banner ~ .banner:not(:first-child) {
   margin-top: 0;
 }
-.box.is-grouped ~ .box:not(:last-child) {
+.box.is-grouped ~ .box:not(:last-child), .is-grouped.banner ~ .box:not(:last-child), .box.is-grouped ~ .banner:not(:last-child), .is-grouped.banner ~ .banner:not(:last-child) {
   margin-bottom: 0;
 }
-.box.is-grouped.has-border, .box.is-grouped.has-border ~ .box:not(:last-child) {
+.box.is-grouped.has-border, .is-grouped.has-border.banner, .box.is-grouped.has-border ~ .box:not(:last-child), .is-grouped.has-border.banner ~ .box:not(:last-child), .box.is-grouped.has-border ~ .banner:not(:last-child), .is-grouped.has-border.banner ~ .banner:not(:last-child) {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
-.box.has-background-light {
+.box.has-border, .has-border.banner {
+  border-style: solid;
+  border-width: 0.065rem;
+  border-color: #CCCCCC;
+}
+.box.has-background-light, .has-background-light.banner {
   background-color: rgba(0, 0, 0, 0.05);
   color: #000000;
 }
-.box.has-background-blue, .box.has-background-info {
+.box.has-background-blue, .has-background-blue.banner, .box.has-background-info, .has-background-info.banner {
   background-color: #2E94F1;
   color: #FFFFFF;
 }
-.box.has-background-red, .box.has-background-danger {
+.box.has-background-red, .has-background-red.banner, .box.has-background-danger, .has-background-danger.banner {
   background-color: #FF0000;
   color: #FFFFFF;
 }
-.box.has-background-dark {
+.box.has-background-dark, .has-background-dark.banner {
   background-color: #0F485A;
   color: #FFFFFF;
 }
-.box.has-background-black {
+.box.has-background-black, .has-background-black.banner {
   background-color: #000000;
   color: #FFFFFF;
 }
-.box.has-background-green, .box.has-background-success {
+.box.has-background-green, .has-background-green.banner, .box.has-background-success, .has-background-success.banner {
   background-color: #82DB7A;
 }
-.box.has-background-yellow, .box.has-background-warning {
+.box.has-background-yellow, .has-background-yellow.banner, .box.has-background-warning, .has-background-warning.banner {
   background-color: #FCC200;
 }
-.box.has-inset-shadow {
+.box.has-inset-shadow, .has-inset-shadow.banner {
   box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
-.box.has-inset-shadow.has-background-red, .box.has-inset-shadow.has-background-dark, .box.has-inset-shadow.has-background-black {
+.box.has-inset-shadow.has-background-red, .has-inset-shadow.has-background-red.banner, .box.has-inset-shadow.has-background-dark, .has-inset-shadow.has-background-dark.banner, .box.has-inset-shadow.has-background-black, .has-inset-shadow.has-background-black.banner {
   box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.4);
 }
-.box.has-shadow {
+.box.has-shadow, .has-shadow.banner {
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
-.box.has-shadow.has-background-red, .box.has-shadow.has-background-dark, .box.has-shadow.has-background-black {
+.box.has-shadow.has-background-red, .has-shadow.has-background-red.banner, .box.has-shadow.has-background-dark, .has-shadow.has-background-dark.banner, .box.has-shadow.has-background-black, .has-shadow.has-background-black.banner {
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4);
 }
-.box.has-addon {
+.box.has-addon, .has-addon.banner {
   position: relative;
   padding-top: 2.25rem;
 }
-.box.has-addon .box-addon {
+.box.has-addon .box-addon, .has-addon.banner .box-addon {
   position: absolute;
   top: 0;
   left: 0;
@@ -1185,6 +1100,35 @@ a.button, .control.is-file a.file-trigger {
 .box-header.is-black {
   background-color: #000000;
   color: #FFFFFF;
+}
+.box .separator, .banner .separator {
+  border-width: 0.065rem;
+  border-color: #CCCCCC;
+  border-style: solid;
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
+}
+
+.banner {
+  overflow: hidden;
+  border-width: 0.065rem;
+  border-color: #CCCCCC;
+  border-style: solid;
+  background-color: rgba(207, 207, 207, 0.145);
+}
+.banner .banner-icon {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.banner .column, .banner .tabbar-link, .banner .field.is-inline > .control, .banner .field.is-inline > .label, .banner .field.is-inline > .field-end, .banner .banner-icon {
+  align-self: center;
+}
+.banner.is-danger {
+  background-color: #ffbfbf;
+  border: 0.065rem solid #FF0000;
+}
+.banner.is-danger .banner-icon {
+  color: #FFFFFF;
+  background-color: #FF0000;
 }
 
 .tabbar, .tabbar > .container, .tabbar > .container > .container {
@@ -1227,6 +1171,46 @@ a.button, .control.is-file a.file-trigger {
 }
 .tabbar.is-rs-static > .tabbar-link:not(.is-active), .tabbar > .is-rs-static.container > .tabbar-link:not(.is-active), .tabbar > .container > .is-rs-static.container > .tabbar-link:not(.is-active) {
   display: none;
+}
+
+.tag {
+  display: inline-block;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.1875rem 0.375rem;
+  vertical-align: text-bottom;
+  margin: 0.75rem 0.375rem 0 0;
+  border-radius: 0.2rem;
+  border: 0.065rem solid #dadada;
+  font-size: 0.9em;
+}
+.tag.control {
+  border-width: 0.065rem;
+  border-style: solid;
+  border-color: #CCCCCC;
+  background: transparent;
+  height: 1.5rem;
+}
+.tag.control .input, .tag.control .field.is-inline {
+  padding: 0 !important;
+}
+.tag.control .button, .tag.control .control.is-file .file-trigger, .control.is-file .tag.control .file-trigger {
+  height: 100%;
+}
+.tag .tag-remove {
+  margin-left: 0.375rem;
+  color: #000000;
+  opacity: 0.25;
+}
+.tag .tag-remove:hover {
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.tag-list {
+  height: auto;
+}
+.tag-list .tag:first-child {
+  margin-left: 0;
 }
 
 [data-popover]:hover {
@@ -1323,23 +1307,17 @@ a.button, .control.is-file a.file-trigger {
   .footer-push {
     height: 21rem;
   }
-  .footer .columns, .footer .field.is-inline, .footer .tabbar, .footer .tabbar > .container {
+  .footer .columns, .footer .field.is-inline, .footer .banner, .footer .tabbar, .footer .tabbar > .container, .footer .tag-list {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .footer .columns .column, .footer .field.is-inline .column, .footer .tabbar .column, .field.is-inline .footer .columns .control, .footer .field.is-inline .control, .field.is-inline .footer .tabbar .control,
-.field.is-inline .footer .columns .label,
-.footer .field.is-inline .label,
-.field.is-inline .footer .tabbar .label,
-.field.is-inline .footer .columns .field-end,
-.footer .field.is-inline .field-end,
-.field.is-inline .footer .tabbar .field-end, .footer .columns .tabbar-link, .footer .field.is-inline .tabbar-link, .footer .tabbar .tabbar-link {
+  .footer .columns .column, .footer .field.is-inline .column, .footer .banner .column, .footer .tabbar .column, .footer .tag-list .column, .footer .columns .field.is-inline > .control, .footer .field.is-inline > .control, .footer .banner .field.is-inline > .control, .footer .tabbar .field.is-inline > .control, .footer .tabbar > .container .field.is-inline > .control, .footer .tag-list .field.is-inline > .control, .footer .columns .field.is-inline > .label, .footer .field.is-inline > .label, .footer .banner .field.is-inline > .label, .footer .tabbar .field.is-inline > .label, .footer .tabbar > .container .field.is-inline > .label, .footer .tag-list .field.is-inline > .label, .footer .columns .field.is-inline > .field-end, .footer .field.is-inline > .field-end, .footer .banner .field.is-inline > .field-end, .footer .tabbar .field.is-inline > .field-end, .footer .tabbar > .container .field.is-inline > .field-end, .footer .tag-list .field.is-inline > .field-end, .banner .footer .columns .banner-icon, .banner .footer .field.is-inline .banner-icon, .footer .banner .banner-icon, .banner .footer .tabbar .banner-icon, .banner .footer .tag-list .banner-icon, .footer .columns .tabbar-link, .footer .field.is-inline .tabbar-link, .footer .banner .tabbar-link, .footer .tabbar .tabbar-link, .footer .tag-list .tabbar-link {
     flex-basis: 40%;
   }
 }
 
-.no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]),
-.field-block .label, .field-block.has-columns {
+.no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]),
+.field-block .label, .field-block.has-columns, .banner {
   padding: 0 !important;
 }
 .no-padding-left, .no-padding-x {
@@ -1348,52 +1326,40 @@ a.button, .control.is-file a.file-trigger {
 .no-padding-right, .no-padding-x {
   padding-right: 0 !important;
 }
-.no-padding-top, .no-padding-y {
+.no-padding-top, .no-padding-y, .field.is-inline {
   padding-top: 0 !important;
 }
-.no-padding-bottom, .no-padding-y {
+.no-padding-bottom, .no-padding-y, .field.is-inline {
   padding-bottom: 0 !important;
 }
 .no-margin {
   margin: 0 !important;
 }
-.no-margin-left, .no-margin-x {
+.no-margin-left, .no-margin-x, .banner .banner-icon {
   margin-left: 0 !important;
 }
-.no-margin-right, .no-margin-x {
+.no-margin-right, .no-margin-x, .banner .banner-icon {
   margin-right: 0 !important;
 }
-.no-margin-top, .no-margin-y, .field.is-inline, .field.is-inline .control,
-.field.is-inline .label,
-.field.is-inline .field-end, .field-block .is-error, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
+.no-margin-top, .no-margin-y, .field.is-inline, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end, .field-block .is-error, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
   margin-top: 0 !important;
 }
-.no-margin-bottom, .no-margin-y, .field.is-inline, .field.is-inline .control,
-.field.is-inline .label,
-.field.is-inline .field-end, .field-block .is-error, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
+.no-margin-bottom, .no-margin-y, .field.is-inline, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end, .field-block .is-error, .tabbar > .container, .tabbar > .container > .container, .tabbar > .container > .container > .container {
   margin-bottom: 0 !important;
 }
-.has-padding, .field-block.has-columns > .columns > .column, .field-block.has-columns > .field.is-inline > .column, .field.is-inline .field-block.has-columns > .columns > .control, .field-block.has-columns > .field.is-inline > .control,
-.field.is-inline .field-block.has-columns > .columns > .label,
-.field-block.has-columns > .field.is-inline > .label,
-.field.is-inline .field-block.has-columns > .columns > .field-end,
-.field-block.has-columns > .field.is-inline > .field-end, .field-block.has-columns > .tabbar > .column, .field.is-inline .field-block.has-columns > .tabbar > .control,
-.field.is-inline .field-block.has-columns > .tabbar > .label,
-.field.is-inline .field-block.has-columns > .tabbar > .field-end, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .field.is-inline > .tabbar-link, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .column, .field.is-inline .tabbar.field-block.has-columns > .container > .control,
-.field.is-inline .tabbar.field-block.has-columns > .container > .label,
-.field.is-inline .tabbar.field-block.has-columns > .container > .field-end, .tabbar.field-block.has-columns > .container > .tabbar-link {
+.has-padding, .field-block.has-columns > .columns > .column, .field-block.has-columns > .field.is-inline > .column, .field-block.has-columns > .field.is-inline > .control, .field-block.has-columns > .field.is-inline > .label, .field-block.has-columns > .field.is-inline > .field-end, .field-block.has-columns > .banner > .column, .banner .field-block.has-columns > .columns > .banner-icon, .banner .field-block.has-columns > .field.is-inline > .banner-icon, .field-block.has-columns > .banner > .banner-icon, .banner .banner-icon, .field-block.has-columns > .tabbar > .column, .banner .field-block.has-columns > .tabbar > .banner-icon, .field-block.has-columns > .columns > .tabbar-link, .field-block.has-columns > .field.is-inline > .tabbar-link, .field-block.has-columns > .banner > .tabbar-link, .field-block.has-columns > .tabbar > .tabbar-link, .tabbar.field-block.has-columns > .container > .column, .banner .tabbar.field-block.has-columns > .container > .banner-icon, .tabbar.field-block.has-columns > .container > .tabbar-link, .field-block.has-columns > .tag-list > .column, .banner .field-block.has-columns > .tag-list > .banner-icon, .field-block.has-columns > .tag-list > .tabbar-link {
   padding: 0.75rem;
 }
-.has-padding-left, .has-padding-x, .field.is-inline .control {
+.has-padding-left, .has-padding-x, .field.is-inline > .control {
   padding-left: 0.75rem !important;
 }
-.has-padding-right, .has-padding-x, .field.is-inline .control {
+.has-padding-right, .has-padding-x, .field.is-inline > .control {
   padding-right: 0.75rem !important;
 }
 .has-padding-top, .has-padding-y {
   padding-top: 0.75rem !important;
 }
-.has-padding-bottom, .has-padding-y {
+.has-padding-bottom, .has-padding-y, .tag-list {
   padding-bottom: 0.75rem !important;
 }
 .has-margin {
@@ -1441,6 +1407,18 @@ a.button, .control.is-file a.file-trigger {
 .no-border-right, .no-border-x {
   border-right: 0;
 }
+.no-radius {
+  border-radius: 0;
+}
+.no-radius-left {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.no-radius-right {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .hidden, .control.is-file input[type=file], .list.is-tree li > input[type=checkbox].list-collapse:not(:checked) + label + ul {
   position: absolute;
   overflow: hidden;
@@ -1463,6 +1441,23 @@ input[disabled]:hover,
 select[disabled]:hover,
 textarea[disabled]:hover {
   cursor: not-allowed;
+}
+
+.clear-box,
+.clear-box:before,
+.clear-box:after {
+  clear: both;
+}
+.clear-box:before, .clear-box:after,
+.clear-box:before:before,
+.clear-box:before:after,
+.clear-box:after:before,
+.clear-box:after:after {
+  display: table;
+}
+
+.pull-right {
+  float: right;
 }
 
 /*# sourceMappingURL=ui.css.map */
