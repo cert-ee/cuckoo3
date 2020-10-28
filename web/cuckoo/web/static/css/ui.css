@@ -302,6 +302,11 @@ p {
     width: calc(40rem - 2.25rem);
   }
 }
+@media screen and (min-width: 70rem) {
+  .container.is-fixed.is-smol {
+    width: calc(60rem - 2.25rem);
+  }
+}
 @media screen and (max-width: 40rem) {
   .container {
     width: 100vw !important;
@@ -1056,6 +1061,23 @@ a.button, .control.is-file a.file-trigger {
 }
 .box.has-shadow.has-background-red, .has-shadow.has-background-red.banner, .box.has-shadow.has-background-dark, .has-shadow.has-background-dark.banner, .box.has-shadow.has-background-black, .has-shadow.has-background-black.banner {
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4);
+}
+.box.has-background-fade, .has-background-fade.banner {
+  position: relative;
+}
+.box.has-background-fade > *, .has-background-fade.banner > * {
+  position: relative;
+  z-index: 2;
+}
+.box.has-background-fade:after, .has-background-fade.banner:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.05));
 }
 .box.has-addon, .has-addon.banner {
   position: relative;

@@ -15,6 +15,10 @@
     @media screen and (max-width: $breakpoint-small)
       width: calc(#{$breakpoint-mobile} - #{$gap * 3})
 
+    &.is-smol
+      @media screen and (min-width: $breakpoint-medium)
+        width: calc(#{$breakpoint-small} - #{$gap * 3})
+
   @media screen and (max-width: $breakpoint-mobile)
     width: 100vw !important
     padding-left: $gap
