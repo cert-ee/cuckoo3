@@ -115,7 +115,7 @@
                 </div>
               </div>
             </div>
-            <button type="button" class="column is-auto button is-red no-radius-left" data-delete-machine>
+            <button type="button" class="column is-auto button has-hover-red no-radius-left" data-delete-machine>
               <i class="fas fa-times"></i>
             </button>
           </div>
