@@ -47,10 +47,12 @@
   // in the version dropdown
   function platformHandler() {
 
-    const platforms    = document.querySelector('select[name="platform"]');
-    const versions    = document.querySelector('select[name="version"]');
-    const addPlatform = document.querySelector('#add-platform');
-    const machinery   = document.querySelector('#machinery');
+    const platforms     = document.querySelector('select[name="platform"]');
+    const versions      = document.querySelector('select[name="version"]');
+    const addPlatform   = document.querySelector('#add-platform');
+    const machinery     = document.querySelector('#machinery');
+    const totalMachines = document.querySelector('#total-machines');
+    let banner;
 
     // display available versions for selected platform
     platforms.addEventListener('change', ev => {
@@ -67,6 +69,22 @@
       }
     });
 
+    function countMachines() {
+      const count = machinery.querySelectorAll('[data-machine]').length;
+      totalMachines.textContent = count;
+      blink(totalMachines);
+
+      if(count > 0) {
+        if(banner)
+          banner.remove();
+        finish.removeAttribute('disabled');
+      } else {
+        banner = lib.banner('No machines selected.', 'info');
+        machinery.appendChild(banner);
+        finish.setAttribute('disabled', true);
+      }
+    }
+
     // handle machines being added to the list
     function addMachine(data={}) {
 
@@ -75,7 +93,7 @@
         version: null
       }, data);
 
-      const machine = new DOMParser().parseFromString(`
+      const machine = parseDOM(`
         <div class="box has-border has-background-light no-padding" data-machine data-platform="${data.platform}" data-version="${data.version}">
           <div class="columns is-divided is-gapless">
             <div class="column has-padding-x has-padding-bottom">
@@ -102,7 +120,7 @@
             </button>
           </div>
         </div>
-      `, 'text/html').body.firstChild;
+      `);
 
       // if more machines exist, append it before the first one in the list
       if(machinery.querySelector('[data-machine]'))
@@ -118,7 +136,10 @@
       // remove the machine from the list by clicking
       machine.querySelector('[data-delete-machine]').addEventListener('click', () => {
         machine.remove();
+        countMachines();
       });
+
+      countMachines();
 
     }
 
@@ -130,6 +151,9 @@
 
     // display the correct versions for the initialized platforms
     platforms.dispatchEvent(new Event('change'));
+
+    // run count once to initialize the state
+    countMachines();
 
   }
 
@@ -155,7 +179,7 @@
         return {
           platform: machine.dataset.platform,
           os_version: machine.dataset.version,
-          tags: machine.querySelector('input[data-tags]').value
+          tags: machine.querySelector('input[data-tags]').value.split(',')
         }
       }),
       fileid: document.querySelector('input[name="selected-file"]:checked').value

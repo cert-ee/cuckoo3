@@ -1176,12 +1176,13 @@ a.button, .control.is-file a.file-trigger {
 .tag {
   display: inline-block;
   background-color: rgba(0, 0, 0, 0.05);
-  padding: 0.1875rem 0.375rem;
-  vertical-align: text-bottom;
-  margin: 0.75rem 0.375rem 0 0;
+  padding: 0.1875rem 0.75rem;
   border-radius: 0.2rem;
   border: 0.065rem solid #dadada;
   font-size: 0.9em;
+}
+.tag.is-rounded {
+  border-radius: 5rem;
 }
 .tag.control {
   border-width: 0.065rem;
@@ -1208,6 +1209,9 @@ a.button, .control.is-file a.file-trigger {
 
 .tag-list {
   height: auto;
+}
+.tag-list .tag {
+  margin: 0.75rem 0.375rem 0 0;
 }
 .tag-list .tag:first-child {
   margin-left: 0;
@@ -1433,13 +1437,15 @@ a.button, .control.is-file a.file-trigger {
 .is-disabled,
 input[disabled],
 select[disabled],
-textarea[disabled] {
+textarea[disabled],
+button[disabled] {
   opacity: 0.5;
 }
 .is-disabled:hover,
 input[disabled]:hover,
 select[disabled]:hover,
-textarea[disabled]:hover {
+textarea[disabled]:hover,
+button[disabled]:hover {
   cursor: not-allowed;
 }
 

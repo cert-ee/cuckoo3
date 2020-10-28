@@ -38,7 +38,37 @@ const lib = {
       node = node.parentNode;
     }
     return result;
+  },
+  // generates a banner element with a type + text
+  banner(content="", type) {
+    let icon;
+    switch(type) {
+      case 'info':
+        icon = 'fas fa-info';
+      break;
+      case 'danger':
+        icon = 'fas fa-exclamation';
+      break;
+      default:
+        icon = 'fas fa-comment';
+    }
+    return parseDOM(`
+      <div class="banner is-${type}">
+        <div class="banner-icon"><i class="${icon}"></i></div>
+        <p class="column no-margin-y">${content}</p>
+      </div>
+    `);
   }
+}
+
+/**
+ * Parses a string to DOM object to be injected into the page.
+ * @param {string} str - HTML as a string
+ * @param {string} type - DOM format, should be 'text/html' or 'text/svg'
+ * @return {HTMLElement}
+ */
+function parseDOM(str='', type='text/html') {
+  return new DOMParser().parseFromString(str, type).body.firstChild;
 }
 
 /**
@@ -157,22 +187,12 @@ function toggleVisibility(element, force=null) {
 }
 
 /**
- * Parses a string to DOM object to be injected into the page.
- * @param {string} str - HTML as a string
- * @param {string} type - DOM format, should be 'text/html' or 'text/svg'
- * @return {HTMLElement}
- */
-function parseDOM(str='', type='text/html') {
-  return new DOMParser().parseFromString(str, type).body.firstChild;
-}
-
-/**
  * Lets an element blink for a moment to indicate a change caused by another
  * action.
  * @param {HTMLElement} el - the element to apply the effect on
  * @param {blinkColor} string - a HEX value of the color that the element blinks into
  */
-function blink(el, blinkColor = '#fffae8', speed = 100) {
+function blink(el, blinkColor = '#fffae8', speed = 75) {
   const background = getComputedStyle(el).getPropertyValue('background-color');
   el.style.transition = `background-color ${speed}ms linear`;
   let mode = 1;
@@ -187,6 +207,7 @@ function blink(el, blinkColor = '#fffae8', speed = 100) {
     if(step == 4) {
       clearInterval(iv);
       el.style.transition = null;
+      el.style.backgroundColor = background;
     }
   }, speed * 2);
 }
