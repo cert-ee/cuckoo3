@@ -41,10 +41,11 @@ a.button
     &:hover
       background-color: shade($blue, .1)
 
-  &.is-red
+  &.is-red,
+  &.has-hover-red:hover
     background-color: $red
     color: $white
-    &:hover
+    &:hover:not(.has-hover-red)
       background-color: shade($red, .1)
 
   &.is-dark

@@ -466,11 +466,11 @@ a.button, .control.is-file a.file-trigger {
 .button.is-blue:hover, .control.is-file .is-blue.file-trigger:hover {
   background-color: #2985d9;
 }
-.button.is-red, .control.is-file .is-red.file-trigger {
+.button.is-red, .control.is-file .is-red.file-trigger, .button.has-hover-red:hover, .control.is-file .has-hover-red.file-trigger:hover {
   background-color: #FF0000;
   color: #FFFFFF;
 }
-.button.is-red:hover, .control.is-file .is-red.file-trigger:hover {
+.button.is-red:hover:not(.has-hover-red), .control.is-file .is-red.file-trigger:hover:not(.has-hover-red), .button.has-hover-red:hover:hover:not(.has-hover-red), .control.is-file .has-hover-red.file-trigger:hover:hover:not(.has-hover-red) {
   background-color: #e60000;
 }
 .button.is-dark, .control.is-file .is-dark.file-trigger {
@@ -1440,25 +1440,13 @@ select[disabled],
 textarea[disabled],
 button[disabled] {
   opacity: 0.5;
-}
-.is-disabled:hover,
-input[disabled]:hover,
-select[disabled]:hover,
-textarea[disabled]:hover,
-button[disabled]:hover {
-  cursor: not-allowed;
+  cursor: not-allowed !important;
 }
 
-.clear-box,
-.clear-box:before,
-.clear-box:after {
+.clear-box {
   clear: both;
 }
-.clear-box:before, .clear-box:after,
-.clear-box:before:before,
-.clear-box:before:after,
-.clear-box:after:before,
-.clear-box:after:after {
+.clear-box:before, .clear-box:after {
   display: table;
 }
 

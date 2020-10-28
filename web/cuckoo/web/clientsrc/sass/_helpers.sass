@@ -128,12 +128,9 @@ select[disabled],
 textarea[disabled],
 button[disabled]
   opacity: .5
-  &:hover
-    cursor: not-allowed
+  cursor: not-allowed !important
 
-.clear-box,
-.clear-box:before,
-.clear-box:after
+.clear-box
   clear: both
   &:before,
   &:after
