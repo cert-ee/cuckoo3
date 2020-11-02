@@ -1,7 +1,8 @@
 // Copyright (C) 2016-2020 Cuckoo Foundation.
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
-const lib = {
+
+window.lib = Object.assign(window.lib || {}, {
   // splits url in its counterparts
   url(url) {
     return url.split('/');
@@ -59,7 +60,7 @@ const lib = {
       </div>
     `);
   }
-}
+});
 
 /**
  * Parses a string to DOM object to be injected into the page.
