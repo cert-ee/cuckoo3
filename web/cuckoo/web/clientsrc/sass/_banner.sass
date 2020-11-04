@@ -20,9 +20,17 @@
     background-color: $light
   .column
     align-self: center
-  &.is-danger
+  &.is-danger,
+  &.is-red
     background-color: tint($red, .75)
     border: .065rem solid $red
     .banner-icon
       color: $white
       background-color: $red
+  &.is-yellow,
+  &.is-warning
+    background-color: tint($yellow, .75)
+    border: .0625rem solid $yellow
+    .banner-icon
+      color: $black
+      background-color: $yellow

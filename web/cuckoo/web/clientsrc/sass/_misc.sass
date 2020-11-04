@@ -1,0 +1,25 @@
+// Copyright (C) 2016-2020 Cuckoo Foundation.
+// This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+// See the file 'docs/LICENSE' for copying permission.
+
+// provide 1:1 ratio scalability for an element
+.ratio-1-1
+  position: relative
+  border: 0.0625rem solid $border
+  width: 100%
+  padding-top: calc(100% + (0.0625rem * 2)) // border width
+  min-width: 10rem
+  border-radius: $radius
+
+  .ratio-content
+    position: absolute
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
+    padding: $gap
+    background-color: rgba(#fff, .5)
+
+    &.is-bottom
+      bottom: 0
+      top: auto
+      transform: translateX(-50%)

@@ -66,3 +66,32 @@
         content: "\2022"
         display: inline-block
         margin: 0 $gap/2
+
+  // list variented for a hierarchical list/index component
+  &.is-index
+
+    &,
+    & ul
+      list-style: none
+      padding: 0
+      margin: 0
+
+    ul,
+    li,
+    .label
+      margin-bottom: $gap
+      width: 100%
+
+    ul
+      margin-left: $gap
+
+    .label
+      opacity: .5
+      font-size: 1em
+
+    a
+      text-decoration: none
+      color: $black
+      &.is-active
+        font-weight: 700
+        color: $dark

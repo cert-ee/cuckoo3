@@ -105,7 +105,7 @@ p {
 }
 
 .has-text-light {
-  color: rgba(0, 0, 0, 0.05);
+  color: #999999;
 }
 
 .is-error {
@@ -153,6 +153,14 @@ p {
 
 .has-text-small {
   font-size: 0.8em;
+}
+
+.has-text-big {
+  font-size: 1.5em;
+}
+
+.has-text-huge {
+  font-size: 3em;
 }
 
 .has-half-opacity {
@@ -953,6 +961,32 @@ a.button, .control.is-file a.file-trigger {
   display: inline-block;
   margin: 0 0.375rem;
 }
+.list.is-index, .list.is-index ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.list.is-index ul,
+.list.is-index li,
+.list.is-index .label {
+  margin-bottom: 0.75rem;
+  width: 100%;
+}
+.list.is-index ul {
+  margin-left: 0.75rem;
+}
+.list.is-index .label {
+  opacity: 0.5;
+  font-size: 1em;
+}
+.list.is-index a {
+  text-decoration: none;
+  color: #000000;
+}
+.list.is-index a.is-active {
+  font-weight: 700;
+  color: #0F485A;
+}
 
 .icon {
   display: inline-block;
@@ -1094,34 +1128,13 @@ a.button, .control.is-file a.file-trigger {
   font-size: 0.7em;
   border-radius: 0.2rem 0 0.2rem 0;
 }
-.box-header {
-  background-color: #0F485A;
-  color: #FFFFFF;
-  margin-top: -0.75rem;
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-  padding: 0.75rem 0.75rem 0.375rem;
-  border-bottom: 0.0625rem solid #CCCCCC;
-  border-top-left-radius: 0.2rem;
-  border-top-right-radius: 0.2rem;
-}
-.is-big > .box-header {
-  margin-top: -1.5rem;
-  margin-left: -1.5rem;
-  margin-right: -1.5rem;
-  padding: 1.5rem 1.5rem 0.75rem;
-}
-.box-header.is-light {
+.box-title {
+  font-size: 1.1em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.145);
   background-color: rgba(0, 0, 0, 0.05);
+  margin: 0;
+  padding: 0.75rem;
   color: #0F485A;
-}
-.box-header.is-white {
-  background-color: #FFFFFF;
-  color: #000000;
-}
-.box-header.is-black {
-  background-color: #000000;
-  color: #FFFFFF;
 }
 .box .separator, .banner .separator {
   border-width: 0.065rem;
@@ -1144,13 +1157,21 @@ a.button, .control.is-file a.file-trigger {
 .banner .column, .banner .tabbar-link, .banner .field.is-inline > .control, .banner .field.is-inline > .label, .banner .field.is-inline > .field-end, .banner .banner-icon {
   align-self: center;
 }
-.banner.is-danger {
+.banner.is-danger, .banner.is-red {
   background-color: #ffbfbf;
   border: 0.065rem solid #FF0000;
 }
-.banner.is-danger .banner-icon {
+.banner.is-danger .banner-icon, .banner.is-red .banner-icon {
   color: #FFFFFF;
   background-color: #FF0000;
+}
+.banner.is-yellow, .banner.is-warning {
+  background-color: #fef0bf;
+  border: 0.0625rem solid #FCC200;
+}
+.banner.is-yellow .banner-icon, .banner.is-warning .banner-icon {
+  color: #000000;
+  background-color: #FCC200;
 }
 
 .tabbar, .tabbar > .container, .tabbar > .container > .container {
@@ -1205,6 +1226,18 @@ a.button, .control.is-file a.file-trigger {
 }
 .tag.is-rounded {
   border-radius: 5rem;
+}
+.tag.is-red {
+  background-color: #ffbfbf;
+  border-color: #FF0000;
+}
+.tag.is-yellow {
+  background-color: #fef0bf;
+  border-color: #FCC200;
+}
+.tag.is-green {
+  background-color: #e0f6de;
+  border-color: #82DB7A;
 }
 .tag.control {
   border-width: 0.065rem;
@@ -1340,6 +1373,28 @@ a.button, .control.is-file a.file-trigger {
   .footer .columns .column, .footer .field.is-inline .column, .footer .banner .column, .footer .tabbar .column, .footer .tag-list .column, .footer .columns .field.is-inline > .control, .footer .field.is-inline > .control, .footer .banner .field.is-inline > .control, .footer .tabbar .field.is-inline > .control, .footer .tabbar > .container .field.is-inline > .control, .footer .tag-list .field.is-inline > .control, .footer .columns .field.is-inline > .label, .footer .field.is-inline > .label, .footer .banner .field.is-inline > .label, .footer .tabbar .field.is-inline > .label, .footer .tabbar > .container .field.is-inline > .label, .footer .tag-list .field.is-inline > .label, .footer .columns .field.is-inline > .field-end, .footer .field.is-inline > .field-end, .footer .banner .field.is-inline > .field-end, .footer .tabbar .field.is-inline > .field-end, .footer .tabbar > .container .field.is-inline > .field-end, .footer .tag-list .field.is-inline > .field-end, .banner .footer .columns .banner-icon, .banner .footer .field.is-inline .banner-icon, .footer .banner .banner-icon, .banner .footer .tabbar .banner-icon, .banner .footer .tag-list .banner-icon, .footer .columns .tabbar-link, .footer .field.is-inline .tabbar-link, .footer .banner .tabbar-link, .footer .tabbar .tabbar-link, .footer .tag-list .tabbar-link {
     flex-basis: 40%;
   }
+}
+
+.ratio-1-1 {
+  position: relative;
+  border: 0.0625rem solid #CCCCCC;
+  width: 100%;
+  padding-top: calc(100% + (0.0625rem * 2));
+  min-width: 10rem;
+  border-radius: 0.2rem;
+}
+.ratio-1-1 .ratio-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.ratio-1-1 .ratio-content.is-bottom {
+  bottom: 0;
+  top: auto;
+  transform: translateX(-50%);
 }
 
 .no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]),
