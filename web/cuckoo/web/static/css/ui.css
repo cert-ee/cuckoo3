@@ -1441,6 +1441,25 @@ a.button, .control.is-file a.file-trigger {
   transform: translateX(-50%);
 }
 
+.dot {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  vertical-align: middle;
+  border-radius: 0.75rem;
+  margin: 0 0.375rem;
+}
+.dot.is-red {
+  background-color: #FF0000;
+}
+.dot.is-yellow {
+  background-color: #FCC200;
+}
+.dot.is-blue {
+  background-color: #2E94F1;
+}
+
 .no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]),
 .field-block .label, .field-block.has-columns, .banner {
   padding: 0 !important;

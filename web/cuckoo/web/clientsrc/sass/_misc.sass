@@ -23,3 +23,18 @@
       bottom: 0
       top: auto
       transform: translateX(-50%)
+
+.dot
+  display: inline-block
+  width: $gap
+  height: $gap
+  background-color: $light
+  vertical-align: middle
+  border-radius: $gap
+  margin: 0 $gap/2
+  &.is-red
+    background-color: $red
+  &.is-yellow
+    background-color: $yellow
+  &.is-blue
+    background-color: $blue
