@@ -5,55 +5,35 @@
 {% block body %}
   {% include "submit/partial/tabbar.html.jinja2" %}
   <section class="section">
-    <div class="columns is-center">
-      <div class="column">
-        <form class="form box has-shadow is-big" method="post" action="/submit/" enctype="multipart/form-data">
-          {{ csrf_input }}
-          <div class="columns is-vcenter">
-            <div class="column">
-              <span class="icon">
-                <i class="fas fa-3x fa-file-upload"></i>
-              </span>
+    <div class="container is-fixed is-smol">
+      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data">
+        {{ csrf_input }}
+        <nav class="tabbar has-padding-x has-margin-bottom" data-enhance>
+          <a href="#options-form" class="tabbar-link is-active">File</a>
+          <a href="#options-form" class="tabbar-link">URL</a>
+        </nav>
+        <h4 class="label is-set-title has-margin has-padding clear-box">
+          Submit a sample by uploading a file or archive
+          <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
+        </h4>
+        <hr class="separator" />
+        <div class="box is-big has-background-fade no-margin-bottom has-text-center" id="file-dropzone">
+          <div class="field no-margin-top">
+            <div class="control is-file has-text-center">
+              <label class="file-trigger" for="file">Select file</label>
+              <input class="input" type="file" id="file" name="file" data-enhance />
             </div>
-            <div class="column">
-              <h3>Sample</h3>
-              <p>Upload a target sample or archive for the analyzer.</p>
-            </div>
+            <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
           </div>
-          <div class="box has-background-light has-inset-shadow">
-            <div class="field">
-              <div class="control is-file has-text-center">
-                <label class="file-trigger" for="file">Select file</label>
-                <input type="file" class="input" id="file" name="file" data-enhance />
-              </div>
-            </div>
+        </div>
+        <hr class="separator no-margin-top" />
+        <div class="columns is-gapless is-between has-margin has-padding-x">
+          <div class="column">&nbsp;</div>
+          <div class="column">
+            <input type="submit" class="button is-blue" />
           </div>
-          <div class="columns is-between is-vcenter is-gapless">
-            <div class="column">
-              {# <div class="field is-horizontal">
-                <div class="control is-checkable is-borderless has-addon">
-                  <span class="addon is-left">
-                    <i class="fas fa-lock"></i>
-                  </span>
-                  <input class="input" type="checkbox" value="true" id="is-encrypted" name="is-encrypted" onclick="toggleVisibility('#encrypted-password', this.checked);" />
-                  <label class="label" for="is-encrypted">Encrypted archive</label>
-                  <div class="control">
-                    <input type="text" class="input" id="encrypted-password" name="encrypted-password" placeholder="Password" hidden />
-                  </div>
-                </div>
-              </div> #}
-              <p class="no-margin has-text-small">Cuckoo supports most executables and archives.</p>
-              {% if error %}
-                <p class="is-error">An error occured: {{ error }}</p>
-                <p>{{ error }}</p>
-              {% endif %}
-            </div>
-            <div class="column">
-              <button type="submit" class="button is-blue">Start</button>
-            </div>
-          </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </section>
 {% endblock %}
