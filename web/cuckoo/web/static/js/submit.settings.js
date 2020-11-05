@@ -185,10 +185,6 @@
       fileid: document.querySelector('input[name="selected-file"]:checked').value
     };
 
-    console.log(options);
-    console.info('aborted submission temporarily.');
-    return;
-
     fetch('/api/analyses/{{analysis_id}}/settings', {
       method: 'PUT',
       body: JSON.stringify(options),
