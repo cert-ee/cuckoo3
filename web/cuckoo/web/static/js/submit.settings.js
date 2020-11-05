@@ -111,7 +111,7 @@
                       <i class="fas fa-plus"></i>
                     </button>
                   </div>
-                  <input type="hidden" value="${data.platform}-${data.version}" data-tags />
+                  <input type="hidden" data-tags />
                 </div>
               </div>
             </div>
@@ -172,20 +172,25 @@
   // submission and proceed to analysis
   function finishSubmission() {
 
+    const { analysis_id } = window.Application;
+    if(!analysis_id)
+      return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
+
     options = {
       timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
       priority: parseInt(document.querySelector('select[name="priority"]').value),
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
+        let t = machine.querySelector('input[data-tags]');
         return {
           platform: machine.dataset.platform,
           os_version: machine.dataset.version,
-          tags: machine.querySelector('input[data-tags]').value.split(',')
+          tags: t.value.length ? t.value.split(',') : []
         }
       }),
       fileid: document.querySelector('input[name="selected-file"]:checked').value
     };
 
-    fetch('/api/analyses/{{analysis_id}}/settings', {
+    fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
       body: JSON.stringify(options),
       headers: {

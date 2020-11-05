@@ -1,11 +1,10 @@
 // Copyright (C) 2016-2020 Cuckoo Foundation.
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
-
 window.lib = Object.assign(window.lib || {}, {
   // splits url in its counterparts
   url(url) {
-    return url.split('/');
+    return url.split('/').filter(p => p.length > 0);
   },
   // returns a parent of a child node matching a certain property
   // ex: lib.parent('parent', document.querySelector('.test'))
@@ -97,7 +96,6 @@ function handleNavbar(toggle) {
  */
 function handleFileInput(input) {
   const { previousElementSibling } = input;
-  const { url } = lib;
   input.addEventListener('change', ev => {
     if(previousElementSibling) {
       const file = input.files[0];
@@ -304,7 +302,7 @@ function handleTagInput(tagList) {
   const tagValue   = tagList.querySelector('input[data-tag-value]');
   const addTag     = tagList.querySelector('button[data-add-tag]');
   let tagStore     = tagList.querySelector('input[data-tags]');
-  const tags       = tagStore ? tagStore.value.split(',') : [];
+  const tags       = tagStore.value.length > 0 ? tagStore.value.split(',') : [];
 
   function commit(str) {
     if(str)
@@ -322,6 +320,7 @@ function handleTagInput(tagList) {
   }
 
   function createTag(str, store=true) {
+    console.log(str);
     const tag = document.createElement(`div`);
     tag.classList.add('tag');
     tag.textContent = str;
@@ -374,8 +373,12 @@ function handleTagInput(tagList) {
     }
   });
 
-  if(tags.length)
-    tags.forEach(tag => createTag(tag, false));
+  if(tags.length) {
+    tags.forEach(tag => {
+      if(tag.length)
+        createTag(tag, false);
+    });
+  }
 
   if(!tagStore)
     createTagStore();
