@@ -534,6 +534,9 @@ a.button, .control.is-file a.file-trigger {
   font-weight: 600;
   border-radius: 0.1rem;
 }
+.button.is-block, .control.is-file .is-block.file-trigger {
+  display: block;
+}
 
 .buttons-conjoined {
   display: inline-block;
@@ -896,6 +899,47 @@ a.button, .control.is-file a.file-trigger {
 }
 .field-block-group .field-block:not(:first-child) {
   border-top: 0;
+}
+
+.toggle-box {
+  display: block;
+  margin: 0 -0.375rem;
+}
+.toggle-box .toggle {
+  margin: 0 0.375rem;
+}
+.toggle-box .toggle:hover {
+  cursor: pointer;
+}
+.toggle-box .toggle,
+.toggle-box .toggle-label {
+  display: inline-block;
+}
+.toggle-box .toggle-label {
+  background-color: #FFFFFF;
+  border-radius: 0.2rem;
+  border: 0.06;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  border: 0.0625rem solid #CCCCCC;
+}
+.toggle-box .toggle-label:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.toggle-box input[type=checkbox],
+.toggle-box input[type=radio] {
+  display: none;
+}
+.toggle-box input[type=checkbox]:checked + .toggle-label,
+.toggle-box input[type=radio]:checked + .toggle-label {
+  background-color: #2E94F1;
+  color: #FFFFFF;
+  border-color: #2985d9;
+}
+.toggle-box input[type=checkbox]:checked + .toggle-label .has-half-opacity,
+.toggle-box input[type=radio]:checked + .toggle-label .has-half-opacity {
+  opacity: 0.75;
 }
 
 .list.is-reset {
