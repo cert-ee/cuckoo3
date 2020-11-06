@@ -124,15 +124,15 @@
             <tbody>
               <tr>
                 <td><strong>Size</strong></td>
-                <td>314kB</td>
+                <td>{{ analysis.target.size | filesizeformat }}</td>
               </tr>
               <tr>
                 <td><strong>Type</strong></td>
-                <td>PE32 Executable (GUI) Intel 80386, for MS Windows, UPX Compressed</td>
+                <td>{{ analysis.target.filetype }}</td>
               </tr>
               <tr>
                 <td><strong>MD5</strong></td>
-                <td>1524931bba35781d77cf74c35dc6cd99</td>
+                <td>{{ analysis.target.md5 }}</td>
               </tr>
               <tr>
                 <td><strong>SHA256</strong></td>
