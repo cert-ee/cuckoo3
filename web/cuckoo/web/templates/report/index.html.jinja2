@@ -1,0 +1,200 @@
+{% extends "base.html.jinja2" %}
+{% set active_page = "reports" %}
+{% set title = "Report" %}
+
+{% block page_script %}
+  <script type="text/javascript">
+    (function() {
+
+      const signatures = document.querySelector('#signatures');
+      const filters = [...signatures.querySelectorAll('[name="toggle-sig"]')];
+
+      function onUnselected() {
+        if(!filters.find(f => f.checked))
+          filters[0].checked = true;
+      }
+
+      filters.forEach(filter => {
+        filter.addEventListener('change', ev => {
+          switch(ev.currentTarget.value) {
+            case 'all':
+              filters.forEach(f => f.value !== 'all' ? f.checked = false : null);
+            break;
+            default:
+              filters.find(f => f.value == 'all').checked = false;
+          }
+          onUnselected();
+        });
+      });
+
+    }());
+  </script>
+{% endblock %}
+
+{% block body %}
+  <div class="container is-fixed">
+    <div class="columns is-divided">
+      <aside class="column is-auto has-padding">
+        <ul class="list is-index">
+          <li>
+            <p class="label">Task report</p>
+            <ul>
+              <li>
+                <p class="label">Summary</p>
+                <ul>
+                  <li><a href="#">Static analysis</a></li>
+                  <li><a href="#">Signatures</a></li>
+                  <li><a href="#">Screenshots & Replay</a></li>
+                </ul>
+              </li>
+              <li>
+                <p class="label">Detail views</p>
+                <ul>
+                  <li><a href="#">Network analysis</a></li>
+                  <li><a href="#">Behavioral analysis</a></li>
+                  <li><a href="#">VM memory dump</a></li>
+                  <li><a href="#">Dropped files</a></li>
+                </ul>
+              </li>
+              <li>
+                <p class="label">Tools</p>
+                <ul>
+                  <li><a href="#">Export analysis</a></li>
+                  <li><a href="#">Download PCAP</a></li>
+                  <li><a href="#">Download sample</a></li>
+                </ul>
+              </li>
+            </ul>
+          <li>
+          <li><a href="#">MISP</a></li>
+          <li><a href="#">SNORT</a></li>
+          <li><a href="#">IRMA</a></li>
+        </ul>
+      </aside>
+      <section class="column has-padding">
+
+        <h2>Static analysis</h2>
+        <p>Sample analysis results and results from other vendors. This page summarizes the results. For detailed views use the navigation on the left of the page.</p>
+
+        <div class="box has-background-white has-shadow no-padding has-border">
+          <h3 class="box-title">Sample &amp; related files</h3>
+          <div class="columns has-padding is-divided">
+            <div class="column is-auto">
+              <div class="ratio-1-1">
+                <div class="ratio-content">
+                  <p class="has-text-red has-text-huge no-margin"><strong>7</strong><sub class="has-text-light">/10</sub></p>
+                </div>
+                <div class="ratio-content is-bottom">
+                  <span class="tag is-red">Emotet</span>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <h3><i class="fas fa-file-archive"></i> 7ba1f8a0-a90d-4032-8376-46cac5c5b496.zip</h3>
+              <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> 2020107-h76d1j</h4>
+              <div class="tag-list">
+                <p class="tag is-red">tag 1</p>
+                <p class="tag is-yellow">tag 2</p>
+                <p class="tag is-green">tag 3</p>
+                <p class="tag">tag 4</p>
+              </div>
+              <ul class="list is-horizontal no-margin-bottom">
+                <li>reported on 2020-10-07</li>
+                <li>314kB</li>
+                <li class="is-monospace">application/zip</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="box has-background-white has-shadow no-padding has-border">
+          <h3 class="box-title">Static analysis</h3>
+          <div class="tabbar">
+            <a href="#" class="tabbar-link is-active">File analysis</a>
+            <a href="#" class="tabbar-link">VirusTotal <strong class="has-half-opacity">8.2</strong></a>
+            <a href="#" class="tabbar-link">Bitdefender <strong class="has-half-opacity">7</strong></a>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Size</strong></td>
+                <td>314kB</td>
+              </tr>
+              <tr>
+                <td><strong>Type</strong></td>
+                <td>PE32 Executable (GUI) Intel 80386, for MS Windows, UPX Compressed</td>
+              </tr>
+              <tr>
+                <td><strong>MD5</strong></td>
+                <td>1524931bba35781d77cf74c35dc6cd99</td>
+              </tr>
+              <tr>
+                <td><strong>SHA256</strong></td>
+                <td>B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9</td>
+              </tr>
+              <tr>
+                <td><strong>CRC32</strong></td>
+                <td>1361703869</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
+
+          <h3 class="box-title">Signatures</h3>
+
+          <div class="toggle-box has-padding-x">
+            <label class="toggle" for="toggle-all">
+              <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
+              <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
+            </label>
+            <label class="toggle" for="toggle-critical">
+              <input type="checkbox" id="toggle-critical" name="toggle-sig" />
+              <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
+            </label>
+            <label class="toggle" for="suspicious">
+              <input type="checkbox" id="suspicious" name="toggle-sig" />
+              <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
+            </label>
+            <label class="toggle" for="info">
+              <input type="checkbox" id="info" name="toggle-sig" />
+              <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
+            </label>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Detected signatures</th>
+                <th>Events</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
+                <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
+              </tr>
+              <tr>
+                <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
+                <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
+              </tr>
+              <tr>
+                <td><span class="dot is-blue"></span> Creates hidden or system file</td>
+                <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+
+      </section>
+    </div>
+  </div>
+{% endblock %}
