@@ -1594,4 +1594,13 @@ button[disabled] {
   float: right;
 }
 
+.no-line-break {
+  white-space: nowrap;
+}
+
+.has-line-break {
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
 /*# sourceMappingURL=ui.css.map */

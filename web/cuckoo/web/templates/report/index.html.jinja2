@@ -28,6 +28,7 @@
       });
 
     }());
+
   </script>
 {% endblock %}
 
@@ -90,8 +91,8 @@
               </div>
             </div>
             <div class="column">
-              <h3><i class="fas fa-file-archive"></i> 7ba1f8a0-a90d-4032-8376-46cac5c5b496.zip</h3>
-              <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> 2020107-h76d1j</h4>
+              <h3><i class="fas fa-file-archive"></i> {{ analysis.target.filename }}</h3>
+              <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> {{ analysis.id }}</h4>
               <div class="tag-list">
                 <p class="tag is-red">tag 1</p>
                 <p class="tag is-yellow">tag 2</p>
@@ -99,22 +100,25 @@
                 <p class="tag">tag 4</p>
               </div>
               <ul class="list is-horizontal no-margin-bottom">
-                <li>reported on 2020-10-07</li>
-                <li>314kB</li>
-                <li class="is-monospace">application/zip</li>
+                <li>reported on {{ analysis.created_on | formatdatetime }}</li>
+                <li>{{ analysis.target.size | filesizeformat }}</li>
+                <li class="is-monospace">{{ analysis.target.media_type }}</li>
               </ul>
             </div>
           </div>
         </div>
 
         <div class="box has-background-white has-shadow no-padding has-border">
-          <h3 class="box-title">Static analysis</h3>
-          <div class="tabbar">
-            <a href="#" class="tabbar-link is-active">File analysis</a>
-            <a href="#" class="tabbar-link">VirusTotal <strong class="has-half-opacity">8.2</strong></a>
-            <a href="#" class="tabbar-link">Bitdefender <strong class="has-half-opacity">7</strong></a>
+          <h3 class="box-title">Target summary</h3>
+          <div class="tabbar" data-enhance>
+            <a href="#submission" class="tabbar-link">Submission</a>
+            <a href="#settings" class="tabbar-link">Settings</a>
+            <a href="#file-analysis" class="tabbar-link is-active">File analysis</a>
+            <!-- <a href="#virustotal" class="tabbar-link">VirusTotal <strong class="has-half-opacity">8.2</strong></a>
+            <a href="#bitdefender" class="tabbar-link">Bitdefender <strong class="has-half-opacity">7</strong></a> -->
           </div>
-          <table class="table">
+
+          <table class="table" id="submission" hidden>
             <thead>
               <tr>
                 <th>Property</th>
@@ -123,27 +127,132 @@
             </thead>
             <tbody>
               <tr>
-                <td><strong>Size</strong></td>
-                <td>{{ analysis.target.size | filesizeformat }}</td>
+                <td class="no-line-break"><strong>Category</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.category }}</td>
               </tr>
               <tr>
-                <td><strong>Type</strong></td>
-                <td>{{ analysis.target.filetype }}</td>
+                <td class="no-line-break"><strong>File name</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.filename }}</td>
               </tr>
               <tr>
-                <td><strong>MD5</strong></td>
-                <td>{{ analysis.target.md5 }}</td>
+                <td class="no-line-break"><strong>Size</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.size | filesizeformat }}</td>
               </tr>
               <tr>
-                <td><strong>SHA256</strong></td>
-                <td>B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9</td>
+                <td class="no-line-break"><strong>Type</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.type }}</td>
               </tr>
               <tr>
-                <td><strong>CRC32</strong></td>
-                <td>1361703869</td>
+                <td class="no-line-break"><strong>Media Type</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.media_type }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>MD5</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.md5 }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>SHA1</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.sha1 }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>SHA256</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.sha256 }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>SHA512</strong></td>
+                <td class="has-line-break">{{ analysis.submitted.sha512 }}</td>
               </tr>
             </tbody>
           </table>
+          <table class="table" id="settings" hidden>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="no-line-break"><strong>Timeout</strong></td>
+                <td class="has-line-break">{{ analysis.settings.timeout }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Priority</strong></td>
+                <td class="has-line-break">{{ analysis.settings.priority }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Platforms</strong></td>
+                <td class="has-line-break">{{ analysis.settings.platforms }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Machines</strong></td>
+                <td class="has-line-break">{{ analysis.settings.machines }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Machine tags</strong></td>
+                <td class="has-line-break">{{ analysis.settings.machine_tags }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Manual</strong></td>
+                <td class="has-line-break">{{ analysis.settings.manual }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Memory dump</strong></td>
+                <td class="has-line-break">{{ analysis.settings.dump_memory }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Options</strong></td>
+                <td class="has-line-break">{{ analysis.settings.options }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Enforce timeout</strong></td>
+                <td class="has-line-break">{{ analysis.settings.enforce_timeout }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Extracted path</strong></td>
+                <td class="has-line-break">{{ analysis.settings.extrpath }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="table" id="file-analysis">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="no-line-break"><strong>File name</strong></td>
+                <td class="has-line-break">{{ analysis.target.filename }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Size</strong></td>
+                <td class="has-line-break">{{ analysis.target.size | filesizeformat }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Type</strong></td>
+                <td class="has-line-break">{{ analysis.target.filetype }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>Media Type</strong></td>
+                <td class="has-line-break">{{ analysis.target.media_type }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>MD5</strong></td>
+                <td class="has-line-break">{{ analysis.target.md5 }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>SHA1</strong></td>
+                <td class="has-line-break">{{ analysis.target.sha1 }}</td>
+              </tr>
+              <tr>
+                <td class="no-line-break"><strong>SHA256</strong></td>
+                <td class="has-line-break">{{ analysis.target.sha256 }}</td>
+              </tr>
+            </tbody>
+          </table>
+
         </div>
 
         <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
