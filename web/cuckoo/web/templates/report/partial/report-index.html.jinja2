@@ -1,0 +1,44 @@
+<ul class="list is-index">
+  <li>
+    <p class="label">Report</p>
+    <ul>
+      <li><a href="{{ url('Analysis/index', args=[analysis.id]) }}"><strong>Index</strong></a></li>
+      <li><a href="{{ url('Analysis/static', args=[analysis.id]) }}">Static analysis</a></li>
+    </ul>
+  </li>
+  {#
+    <li>
+      <p class="label">Task report</p>
+      <ul>
+        <li>
+          <p class="label">Summary</p>
+          <ul>
+            <li><a href="#">Static analysis</a></li>
+            <li><a href="#">Signatures</a></li>
+            <li><a href="#">Screenshots & Replay</a></li>
+          </ul>
+        </li>
+        <li>
+          <p class="label">Detail views</p>
+          <ul>
+            <li><a href="#">Network analysis</a></li>
+            <li><a href="#">Behavioral analysis</a></li>
+            <li><a href="#">VM memory dump</a></li>
+            <li><a href="#">Dropped files</a></li>
+          </ul>
+        </li>
+        <li>
+          <p class="label">Tools</p>
+          <ul>
+            <li><a href="#">Export analysis</a></li>
+            <li><a href="#">Download PCAP</a></li>
+            <li><a href="#">Download sample</a></li>
+          </ul>
+        </li>
+      </ul>
+    <li>
+    <li><a href="#">MISP</a></li>
+    <li><a href="#">SNORT</a></li>
+    <li><a href="#">IRMA</a></li>
+  #}
+</ul>

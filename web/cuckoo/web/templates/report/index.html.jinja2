@@ -33,50 +33,7 @@
   <div class="container is-fixed">
     <div class="columns is-divided">
       <aside class="column is-auto has-padding">
-        <ul class="list is-index">
-          <li>
-            <p class="label">Report</p>
-            <ul>
-              <li><a href="{{ url('Analysis/index', args=[analysis.id]) }}">Index</a></li>
-              <li><a href="{{ url('Analysis/static', args=[analysis.id]) }}">Static analysis</a></li>
-            </ul>
-          </li>
-          {#
-            <li>
-              <p class="label">Task report</p>
-              <ul>
-                <li>
-                  <p class="label">Summary</p>
-                  <ul>
-                    <li><a href="#">Static analysis</a></li>
-                    <li><a href="#">Signatures</a></li>
-                    <li><a href="#">Screenshots & Replay</a></li>
-                  </ul>
-                </li>
-                <li>
-                  <p class="label">Detail views</p>
-                  <ul>
-                    <li><a href="#">Network analysis</a></li>
-                    <li><a href="#">Behavioral analysis</a></li>
-                    <li><a href="#">VM memory dump</a></li>
-                    <li><a href="#">Dropped files</a></li>
-                  </ul>
-                </li>
-                <li>
-                  <p class="label">Tools</p>
-                  <ul>
-                    <li><a href="#">Export analysis</a></li>
-                    <li><a href="#">Download PCAP</a></li>
-                    <li><a href="#">Download sample</a></li>
-                  </ul>
-                </li>
-              </ul>
-            <li>
-            <li><a href="#">MISP</a></li>
-            <li><a href="#">SNORT</a></li>
-            <li><a href="#">IRMA</a></li>
-          #}
-        </ul>
+        {% include "report/partial/report-index.html.jinja2" %}
       </aside>
       <section class="column has-padding">
 
@@ -97,7 +54,7 @@
               </div>
             </div>
             <div class="column">
-              <h3><i class="fas fa-file-archive"></i> {{ analysis.target.filename }}</h3>
+              <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ analysis.target.filename }}</h3>
               <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> {{ analysis.id }}</h4>
               <div class="tag-list">
                 <p class="tag is-red">tag 1</p>
@@ -120,8 +77,6 @@
             <a href="#submission" class="tabbar-link">Submission</a>
             <a href="#settings" class="tabbar-link">Settings</a>
             <a href="#file-analysis" class="tabbar-link is-active">Target</a>
-            <!-- <a href="#virustotal" class="tabbar-link">VirusTotal <strong class="has-half-opacity">8.2</strong></a>
-            <a href="#bitdefender" class="tabbar-link">Bitdefender <strong class="has-half-opacity">7</strong></a> -->
           </div>
 
           <table class="table" id="submission" hidden>
