@@ -51,16 +51,20 @@
       </thead>
       <tbody>
       {% for analysis in analyses %}
+        {# Create link based on state (go to manual settings or report) #}
+        {% if analysis.state == 'waiting_manual' %}
+          {% set href = url('Submit/settings', args=[analysis.id])  %}
+        {% elif analysis.state == 'finished' %}
+          {% set href = url('Analysis/index', args=[analysis.id])  %}
+        {% else %}
+          {% set href = "#" %}
+        {% endif %}
         <tr>
-          <td>{{ analysis.created_on | formatdatetime }}</td>
-          <td class="is-monospace">{{ analysis.id }}</td>
+          <td><a href="{{ href }}">{{ analysis.created_on | formatdatetime }}</a></td>
+          <td class="is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
           <td></td>
           <td></td>
-          {% if analysis.state == 'waiting_manual' %}
-            <td><a href="{{ url('Submit/settings', args=[analysis.id]) }}">{{ analysis.state | humanstate }}</a></td>
-          {% else %}
-            <td>{{ analysis.state | humanstate }}</td>
-          {% endif %}
+          <td><a href="{{ href }}">{{ analysis.state | humanstate }}</a></td>
           <td></td>
         </tr>
       {% endfor %}

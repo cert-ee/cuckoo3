@@ -4,8 +4,7 @@
 
 {% block page_script %}
   <script type="text/javascript">
-    (function() {
-
+    (function signatureFilters() {
       const signatures = document.querySelector('#signatures');
       const filters = [...signatures.querySelectorAll('[name="toggle-sig"]')];
 
@@ -26,9 +25,7 @@
           onUnselected();
         });
       });
-
     }());
-
   </script>
 {% endblock %}
 
@@ -113,7 +110,7 @@
           <div class="tabbar" data-enhance>
             <a href="#submission" class="tabbar-link">Submission</a>
             <a href="#settings" class="tabbar-link">Settings</a>
-            <a href="#file-analysis" class="tabbar-link is-active">File analysis</a>
+            <a href="#file-analysis" class="tabbar-link is-active">Target</a>
             <!-- <a href="#virustotal" class="tabbar-link">VirusTotal <strong class="has-half-opacity">8.2</strong></a>
             <a href="#bitdefender" class="tabbar-link">Bitdefender <strong class="has-half-opacity">7</strong></a> -->
           </div>
@@ -187,14 +184,6 @@
               <tr>
                 <td class="no-line-break"><strong>Machines</strong></td>
                 <td class="has-line-break">{{ analysis.settings.machines }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Machine tags</strong></td>
-                <td class="has-line-break">{{ analysis.settings.machine_tags }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Manual</strong></td>
-                <td class="has-line-break">{{ analysis.settings.manual }}</td>
               </tr>
               <tr>
                 <td class="no-line-break"><strong>Memory dump</strong></td>
