@@ -17,6 +17,7 @@
 
 html {
   box-sizing: border-box;
+  scroll-behavior: smooth;
 }
 
 *, *:before, *:after {
@@ -1267,6 +1268,14 @@ a.button, .control.is-file a.file-trigger {
   border-radius: 0.2rem;
   border: 0.065rem solid #dadada;
   font-size: 0.9em;
+}
+.tag[href] {
+  color: inherit;
+  text-decoration: none;
+}
+.tag[href]:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.0975);
 }
 .tag.is-rounded {
   border-radius: 5rem;

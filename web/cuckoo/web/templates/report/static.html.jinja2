@@ -5,6 +5,35 @@
 
 {% block page_script %}
   <script type="text/javascript">
+
+    // scroll to ioc result in av table when clicking a tag
+    (function scrollToIOC() {
+
+      const ioc = document.querySelector('#ioc');
+      const avs = document.querySelector('#avs .table');
+
+      function compromiseStickyHeader() {
+        if(!avs.classList.contains('has-sticky-header'))
+          return 0;
+        else
+          return avs.querySelector('thead').offsetHeight;
+      }
+
+      [...ioc.querySelectorAll('.tag')].forEach(tag => {
+        tag.addEventListener('click', ev => {
+          ev.preventDefault();
+          const result = avs.querySelector('tr' + tag.getAttribute('href'));
+          if(result) {
+            let pos = result.getBoundingClientRect().top + window.scrollY
+            window.scroll(0, pos - compromiseStickyHeader());
+            setTimeout(() => blink(result), 500);
+          }
+        });
+      });
+
+    }());
+
+    // tap through various levels of signature severities
     (function signatureFilters() {
 
       const signatures = document.querySelector('#signatures');
@@ -29,6 +58,7 @@
       });
 
     }());
+
   </script>
 {% endblock %}
 
@@ -76,7 +106,7 @@
               {% if signature.iocs|length %}
                 <div class="tag-list">
                   {% for ioc in signature.iocs %}
-                    <span class="tag">{{ ioc }}</span>
+                    <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
                   {% endfor %}
                 </div>
               {% else %}
@@ -101,7 +131,7 @@
             </thead>
             <tbody>
               {% for av in pre.virustotal.avs.values() %}
-                <tr>
+                <tr id="av-engine-{{ av.engine_name }}">
                   <td>{{ av.category }}</td>
                   <td>{{ av.engine_name }}</td>
                   <td>{{ av.engine_update }}</td>
