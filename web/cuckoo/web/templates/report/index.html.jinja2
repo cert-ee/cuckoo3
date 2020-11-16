@@ -1,35 +1,10 @@
 {% extends "base.html.jinja2" %}
 {% set active_page = "reports" %}
+{% set report_page = "sample" %}
 {% set title = "Report" %}
 
-{% block page_script %}
-  <script type="text/javascript">
-    (function signatureFilters() {
-      const signatures = document.querySelector('#signatures');
-      const filters = [...signatures.querySelectorAll('[name="toggle-sig"]')];
-
-      function onUnselected() {
-        if(!filters.find(f => f.checked))
-          filters[0].checked = true;
-      }
-
-      filters.forEach(filter => {
-        filter.addEventListener('change', ev => {
-          switch(ev.currentTarget.value) {
-            case 'all':
-              filters.forEach(f => f.value !== 'all' ? f.checked = false : null);
-            break;
-            default:
-              filters.find(f => f.value == 'all').checked = false;
-          }
-          onUnselected();
-        });
-      });
-    }());
-  </script>
-{% endblock %}
-
 {% block body %}
+  {% include "report/partial/report-taskbar.html.jinja2" %}
   <div class="container is-fixed">
     <div class="columns is-divided">
       <aside class="column is-auto has-padding">
@@ -37,13 +12,13 @@
       </aside>
       <section class="column has-padding">
 
-        <h2>Static analysis</h2>
-        <p>Sample analysis results and results from other vendors. This page summarizes the results. For detailed views use the navigation on the left of the page.</p>
+        <h2>Sample analysis</h2>
+        <p>Description and overview of sample and submission configuration.</p>
 
         <div class="box has-background-white has-shadow no-padding has-border">
-          <h3 class="box-title">Sample &amp; related files</h3>
+          <h3 class="box-title">Target</h3>
           <div class="columns has-padding is-divided">
-            <div class="column is-auto">
+            {# <div class="column is-auto">
               <div class="ratio-1-1">
                 <div class="ratio-content">
                   <p class="has-text-red has-text-huge no-margin"><strong>7</strong><sub class="has-text-light">/10</sub></p>
@@ -52,16 +27,10 @@
                   <span class="tag is-red">Emotet</span>
                 </div>
               </div>
-            </div>
+            </div> #}
             <div class="column">
               <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ analysis.target.filename }}</h3>
               <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> {{ analysis.id }}</h4>
-              <div class="tag-list">
-                <p class="tag is-red">tag 1</p>
-                <p class="tag is-yellow">tag 2</p>
-                <p class="tag is-green">tag 3</p>
-                <p class="tag">tag 4</p>
-              </div>
               <ul class="list is-horizontal no-margin-bottom">
                 <li>reported on {{ analysis.created_on | formatdatetime }}</li>
                 <li>{{ analysis.target.size | filesizeformat }}</li>
@@ -202,54 +171,6 @@
               <tr>
                 <td class="no-line-break"><strong>SHA256</strong></td>
                 <td class="has-line-break">{{ analysis.target.sha256 }}</td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-
-        <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
-
-          <h3 class="box-title">Signatures</h3>
-
-          <div class="toggle-box has-padding-x">
-            <label class="toggle" for="toggle-all">
-              <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
-              <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
-            </label>
-            <label class="toggle" for="toggle-critical">
-              <input type="checkbox" id="toggle-critical" name="toggle-sig" />
-              <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
-            </label>
-            <label class="toggle" for="suspicious">
-              <input type="checkbox" id="suspicious" name="toggle-sig" />
-              <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
-            </label>
-            <label class="toggle" for="info">
-              <input type="checkbox" id="info" name="toggle-sig" />
-              <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
-            </label>
-          </div>
-
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Detected signatures</th>
-                <th>Events</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
-                <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
-              </tr>
-              <tr>
-                <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
-                <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
-              </tr>
-              <tr>
-                <td><span class="dot is-blue"></span> Creates hidden or system file</td>
-                <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
               </tr>
             </tbody>
           </table>

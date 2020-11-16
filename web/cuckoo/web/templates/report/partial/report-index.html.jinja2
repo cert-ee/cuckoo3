@@ -2,8 +2,8 @@
   <li>
     <p class="label">Report</p>
     <ul>
-      <li><a href="{{ url('Analysis/index', args=[analysis.id]) }}"><strong>Index</strong></a></li>
-      <li><a href="{{ url('Analysis/static', args=[analysis.id]) }}">Static analysis</a></li>
+      <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Sample</a></li>
+      <li><a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a></li>
     </ul>
   </li>
   {#
