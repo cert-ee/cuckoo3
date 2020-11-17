@@ -7,6 +7,15 @@
   border-bottom: .15rem solid $border
   background-color: $white
 
+  &.has-background-transparent
+    background-color: transparent
+
+    .is-active
+      // background-color: shade($light, .1)
+      background-color: $white
+      color: $dark
+      font-weight: bold
+
   &-link
     @extend .column
     margin: 0

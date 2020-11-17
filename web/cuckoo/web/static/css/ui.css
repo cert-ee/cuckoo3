@@ -109,6 +109,10 @@ p {
   color: #999999;
 }
 
+.has-text-bold {
+  font-weight: 700;
+}
+
 .is-error {
   font-weight: 700;
   font-size: 0.9em;
@@ -1223,6 +1227,14 @@ a.button, .control.is-file a.file-trigger {
   margin: 0.75rem 0;
   border-bottom: 0.15rem solid #CCCCCC;
   background-color: #FFFFFF;
+}
+.tabbar.has-background-transparent, .tabbar > .has-background-transparent.container, .tabbar > .container > .has-background-transparent.container {
+  background-color: transparent;
+}
+.tabbar.has-background-transparent .is-active, .tabbar > .has-background-transparent.container .is-active {
+  background-color: #FFFFFF;
+  color: #0F485A;
+  font-weight: bold;
 }
 .tabbar-link {
   margin: 0;

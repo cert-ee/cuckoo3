@@ -63,134 +63,155 @@
 {% endblock %}
 
 {% block body %}
-  {% include "report/partial/report-taskbar.html.jinja2" %}
   <div class="container is-fixed">
     <div class="columns is-divided">
       <aside class="column is-auto has-padding">
-        {% include "report/partial/report-index.html.jinja2" %}
+        {% include "report/partial/sidebar.html.jinja2" %}
       </aside>
       <section class="column has-padding">
 
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
-        <div class="box has-background-white has-shadow no-padding has-border">
-          <h3 class="box-title">Target</h3>
-          <div class="columns has-padding is-divided">
-            <div class="column is-auto">
-              <div class="ratio-1-1">
-                <div class="ratio-content">
-                  <p class="has-text-red has-text-huge no-margin"><strong>{{ pre.score }}</strong><sub class="has-text-light">/10</sub></p>
+        <nav class="tabbar has-background-transparent" data-enhance>
+          <a class="tabbar-link is-active" href="#tab-target">Target</a>
+          <a class="tabbar-link" href="#tab-signatures">Signatures</a>
+          <a class="tabbar-link" href="#tab-virus-total">Virus Total</a>
+        </nav>
+
+        {# tab: static.target #}
+        <div id="tab-target">
+
+          <div class="box has-background-white has-shadow no-padding has-border">
+            <h3 class="box-title">Target</h3>
+            <div class="columns has-padding is-divided">
+              <div class="column is-auto">
+                <div class="ratio-1-1">
+                  <div class="ratio-content">
+                    <p class="has-text-red has-text-huge no-margin"><strong>{{ pre.score }}</strong><sub class="has-text-light">/10</sub></p>
+                  </div>
+                  {# <div class="ratio-content is-bottom">
+                    <span class="tag is-red">Emotet</span>
+                  </div> #}
                 </div>
-                {# <div class="ratio-content is-bottom">
-                  <span class="tag is-red">Emotet</span>
-                </div> #}
+              </div>
+              <div class="column">
+                <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ pre.target.filename }}</h3>
+                <ul class="list is-horizontal no-margin-bottom">
+                  <li>{{ pre.target.size | filesizeformat }}</li>
+                  <li class="is-monospace">{{ pre.target.media_type }}</li>
+                </ul>
+                <a class="button has-margin-top" href="{{ url('Analysis/index', args=[analysis_id]) }}">Extended sample information</a>
               </div>
             </div>
-            <div class="column">
-              <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ pre.target.filename }}</h3>
-              <ul class="list is-horizontal no-margin-bottom">
-                <li>{{ pre.target.size | filesizeformat }}</li>
-                <li class="is-monospace">{{ pre.target.media_type }}</li>
-              </ul>
-              <a class="button has-margin-top" href="{{ url('Analysis/index', args=[analysis_id]) }}">Extended sample information</a>
-            </div>
           </div>
+
         </div>
 
-        <div class="box has-background-white has-shadow no-padding has-border" id="ioc">
-          <h3 class="box-title">IOC's</h3>
-          {% for signature in pre.signatures %}
-            <div class="has-padding-x has-margin-y">
-              <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
-              {% if signature.iocs|length %}
-                <div class="tag-list">
-                  {% for ioc in signature.iocs %}
-                    <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
-                  {% endfor %}
-                </div>
-              {% else %}
-                <p>No IOC's.</p>
-              {% endif %}
+        {# tab: static.signatures #}
+        <div id="tab-signatures" hidden>
+          <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
+
+            <h3 class="box-title">Signatures</h3>
+
+            <div class="toggle-box has-padding-x">
+              <label class="toggle" for="toggle-all">
+                <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
+                <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
+              </label>
+              <label class="toggle" for="toggle-critical">
+                <input type="checkbox" id="toggle-critical" name="toggle-sig" />
+                <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
+              </label>
+              <label class="toggle" for="suspicious">
+                <input type="checkbox" id="suspicious" name="toggle-sig" />
+                <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
+              </label>
+              <label class="toggle" for="info">
+                <input type="checkbox" id="info" name="toggle-sig" />
+                <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
+              </label>
             </div>
-          {% endfor %}
-        </div>
 
-        <div class="box has-background-white has-shadow no-padding has-border" id="avs">
-          <h3 class="box-title">Antivirus engines (provided by VirusTotal)</h3>
-          <table class="table has-sticky-header has-margin-top">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Name</th>
-                <th>Update</th>
-                <th>Version</th>
-                <th>Method</th>
-                <th>Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for av in pre.virustotal.avs.values() %}
-                <tr id="av-engine-{{ av.engine_name }}">
-                  <td>{{ av.category }}</td>
-                  <td>{{ av.engine_name }}</td>
-                  <td>{{ av.engine_update }}</td>
-                  <td>{{ av.engine_version }}</td>
-                  <td>{{ av.method }}</td>
-                  <td>{{ av.result }}</td>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Detected signatures</th>
+                  <th>Events</th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
+                </tr>
+                <tr>
+                  <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
+                </tr>
+                <tr>
+                  <td><span class="dot is-blue"></span> Creates hidden or system file</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
         </div>
 
-        <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
-
-          <h3 class="box-title">Signatures</h3>
-
-          <div class="toggle-box has-padding-x">
-            <label class="toggle" for="toggle-all">
-              <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
-              <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
-            </label>
-            <label class="toggle" for="toggle-critical">
-              <input type="checkbox" id="toggle-critical" name="toggle-sig" />
-              <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
-            </label>
-            <label class="toggle" for="suspicious">
-              <input type="checkbox" id="suspicious" name="toggle-sig" />
-              <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
-            </label>
-            <label class="toggle" for="info">
-              <input type="checkbox" id="info" name="toggle-sig" />
-              <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
-            </label>
+        {# tab: static.virustotal #}
+        <div id="tab-virus-total" hidden>
+          <div class="box has-background-white has-shadow no-padding has-border" id="ioc">
+            <h3 class="box-title">IOC's</h3>
+            {% for signature in pre.signatures %}
+              <div class="has-padding-x has-margin-y">
+                <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
+                {% if signature.iocs|length %}
+                  <div class="tag-list">
+                    {% for ioc in signature.iocs %}
+                      <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p>No IOC's.</p>
+                {% endif %}
+              </div>
+            {% endfor %}
           </div>
 
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Detected signatures</th>
-                <th>Events</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
-                <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
-              </tr>
-              <tr>
-                <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
-                <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
-              </tr>
-              <tr>
-                <td><span class="dot is-blue"></span> Creates hidden or system file</td>
-                <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
-              </tr>
-            </tbody>
-          </table>
-
+          <div class="box has-background-white has-shadow no-padding has-border" id="avs">
+            <h3 class="box-title">Antivirus engines (provided by VirusTotal)</h3>
+            <table class="table has-sticky-header has-margin-top">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Name</th>
+                  <th>Version</th>
+                  <th>Method</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for av in pre.virustotal.avs.values() %}
+                  <tr id="av-engine-{{ av.engine_name }}">
+                    <td>
+                      {% if av.category == "malicious" %}
+                        <p class="no-margin has-text-red has-text-bold">{{ av.category }}</p>
+                      {% else %}
+                        <p class="no-margin">{{ av.category }}</p>
+                      {% endif %}
+                    </td>
+                    <td>{{ av.engine_name }}</td>
+                    <td>{{ av.engine_version }}</td>
+                    <td>{{ av.method }}</td>
+                    <td>{{ av.result }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </section>
     </div>
   </div>
