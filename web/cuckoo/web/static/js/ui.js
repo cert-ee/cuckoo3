@@ -212,6 +212,36 @@ function blink(el, blinkColor = '#fffae8', speed = 75) {
 }
 
 /**
+ * Toggles all <details> elements on or off
+ * @param {Boolean} force - force toggle into a state (true=open/false=closed)
+ * @param {HTMLElement} context - look for details inside this context
+ * @return {Boolean}
+ */
+function toggleDetails(force=null, context=document, ev) {
+
+  // escape default event cycle
+  if(ev instanceof Event)
+    ev.preventDefault();
+
+  const details = context.querySelectorAll('details');
+  if(details.length) {
+    [...details].forEach(d => {
+      if(force === true) {
+        return d.setAttribute('open', true);
+      } else if(force === false) {
+        return d.removeAttribute('open');
+      } else {
+        if(d.hasAttribute('open')) {
+          d.removeAttribute('open');
+        } else {
+          d.setAttribute('open', true);
+        }
+      }
+    });
+  }
+}
+
+/**
  * Creates a popover that will toggle on click
  * @param {HTMLElement} trigger - the button that holds the popover
  */
@@ -320,7 +350,6 @@ function handleTagInput(tagList) {
   }
 
   function createTag(str, store=true) {
-    console.log(str);
     const tag = document.createElement(`div`);
     tag.classList.add('tag');
     tag.textContent = str;

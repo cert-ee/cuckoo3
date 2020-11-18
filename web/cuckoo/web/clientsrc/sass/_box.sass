@@ -33,7 +33,12 @@
     border-width: .065rem
     border-color: $border
   &.has-background-light
-    background-color: $light
+    background-color: $light-matte
+  // use stack shade for boxes in boxes. if the top box has a background-color assigned,
+  // underlying boxes will create darker shades to indicate leveling.
+  &.has-background-stack-shade
+    background-color: rgba($black, .075)
+
     color: $black
   &.has-background-blue,
   &.has-background-info

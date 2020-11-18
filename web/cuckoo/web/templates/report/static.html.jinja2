@@ -57,15 +57,45 @@
         });
       });
 
-    }());
+    });
 
   </script>
 {% endblock %}
 
+{# renders a dict according to the data structure and contents. In theory,
+you could use this macro to print out an entire JSON blob in a representable
+format. uses <details> for native collapsing of dict-like childs. #}
+{% macro render_dict(d) %}
+    <ul class="list is-reset has-padding-x text-center">
+      {% for key, value in d.items() %}
+        <li>
+          <details class="details box has-background-stack-shade is-grouped" {% if value is string or value is boolean %}open{% endif %}>
+            <summary>
+              <h4 class="no-margin has-text-small has-text-uppercased">
+                <span class="has-half-opacity">{{ key }}:</span>
+              </h4>
+            </summary>
+            {% if value is mapping %}
+              {{ render_dict(value) }}
+            {% elif value is iterable and not value is string %}
+              <ul class="list">
+                {% for v in value %}
+                  <li>{{ v }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="has-margin-left has-padding-left no-margin-y has-text-small is-monospace">{{ value }}</p>
+            {% endif %}
+          </details>
+        </li>
+      {% endfor %}
+    </ul>
+{% endmacro %}
+
 {% block body %}
   <div class="container is-fixed">
-    <div class="columns is-divided">
-      <aside class="column is-auto has-padding">
+    <div class="columns is-divided is-vtop">
+      <aside class="column is-auto has-padding is-sticky">
         {% include "report/partial/sidebar.html.jinja2" %}
       </aside>
       <section class="column has-padding">
@@ -74,13 +104,13 @@
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
         <nav class="tabbar has-background-transparent" data-enhance>
-          <a class="tabbar-link is-active" href="#tab-target">Target</a>
-          <a class="tabbar-link" href="#tab-signatures">Signatures</a>
-          <a class="tabbar-link" href="#tab-virus-total">Virus Total</a>
+          <a class="tabbar-link" href="#tab-static">Static Analysis</a>
+          <a class="tabbar-link is-active" href="#tab-signatures">Signatures</a>
+          <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
         </nav>
 
-        {# tab: static.target #}
-        <div id="tab-target">
+        {# tab: static.target/static.pe #}
+        <div id="tab-static" hidden>
 
           <div class="box has-background-white has-shadow no-padding has-border">
             <h3 class="box-title">Target</h3>
@@ -106,56 +136,154 @@
             </div>
           </div>
 
-        </div>
-
-        {# tab: static.signatures #}
-        <div id="tab-signatures" hidden>
-          <div class="box has-background-white has-shadow no-padding has-border" id="signatures">
-
-            <h3 class="box-title">Signatures</h3>
-
-            <div class="toggle-box has-padding-x">
-              <label class="toggle" for="toggle-all">
-                <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
-                <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
-              </label>
-              <label class="toggle" for="toggle-critical">
-                <input type="checkbox" id="toggle-critical" name="toggle-sig" />
-                <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
-              </label>
-              <label class="toggle" for="suspicious">
-                <input type="checkbox" id="suspicious" name="toggle-sig" />
-                <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
-              </label>
-              <label class="toggle" for="info">
-                <input type="checkbox" id="info" name="toggle-sig" />
-                <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
-              </label>
+          <div class="columns is-divided">
+            <div class="column no-margin-left">
+              <div class="box has-background-white has-border has-shadow">
+                <p class="label no-margin-top">PE Timestamp</p>
+                <p class="is-monospace no-margin">{{ pre.static.pe.pe_timestamp }}</p>
+              </div>
             </div>
+            <div class="column no-margin-right">
+              <div class="box has-background-white has-border has-shadow">
+                <p class="label no-margin-top">PE Imphash</p>
+                <p class="is-monospace no-margin">{{ pre.static.pe.pe_imphash }}</p>
+              </div>
+            </div>
+          </div>
 
-            <table class="table">
+          <div class="box no-padding has-border">
+            <h3 class="box-title">PE Sections</h3>
+            <table class="table has-sticky-header">
               <thead>
                 <tr>
-                  <th>Detected signatures</th>
-                  <th>Events</th>
+                  <th>Name</th>
+                  <th>Address</th>
+                  <th>Size</th>
+                  <th>Data size</th>
+                  <th>Entropy</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
-                </tr>
-                <tr>
-                  <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
-                </tr>
-                <tr>
-                  <td><span class="dot is-blue"></span> Creates hidden or system file</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
-                </tr>
+                {% for section in pre.static.pe.pe_sections %}
+                  <tr>
+                    <td>{{ section.name }}</td>
+                    <td>{{ section.virtual_address }}</td>
+                    <td>{{ section.virtual_size }}</td>
+                    <td>{{ section.size_of_data }}</td>
+                    <td>{{ section.entropy }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="5">No results</td>
+                  </tr>
+                {% endfor %}
               </tbody>
             </table>
+          </div>
 
+          <div class="box no-padding has-margin-top has-border">
+            <h3 class="box-title">PE Resources</h3>
+            <table class="table has-sticky-header">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Offset</th>
+                  <th>Size</th>
+                  <th>Language</th>
+                  <th>Sub-language</th>
+                  <th>File type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for resource in pre.static.pe.pe_resources %}
+                  <tr>
+                    <td>{{ resource.name }}</td>
+                    <td>{{ resource.offset }}</td>
+                    <td>{{ resource.size }}</td>
+                    <td>{{ resource.language }}</td>
+                    <td>{{ resource.sublanguage }}</td>
+                    <td>{{ resource.filetype }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="6">No results</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="columns is-divided">
+            <div class="column no-margin-left">
+              <div class="box has-shadow has-border no-padding">
+                <h3 class="box-title">PE Imports</h3>
+                <table class="table has-sticky-header">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for p in pre.static.pe.pe_imports %}
+                      {% for i in p.imports %}
+                        <tr>
+                          <td>{{ i.name }}</td>
+                          <td>{{ i.address }}</td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="2">No results</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="column no-margin-right">
+              <div class="box has-shadow has-border no-padding">
+                <h3 class="box-title">PE Exports</h3>
+                <table class="table has-sticky-header">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for p in pre.static.pe.pe_exports %}
+                      {% for e in p.exports %}
+                        <tr>
+                          <td>{{ e.name }}</td>
+                          <td>{{ e.address }}</td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="2">No results</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {# tab: static.pe.signatures #}
+        <div id="tab-signatures">
+          <ul class="list is-horizontal has-text-small">
+            <li><a class="is-link" href="#" onclick="toggleDetails(true, lib.parent('#tab-signatures', this));"><i class="fas fa-caret-square-down"></i></a></li>
+            <li><a class="is-link" href="#" onclick="toggleDetails(false, lib.parent('#tab-signatures', this));"><i class="fas fa-caret-square-right"></i></a></li>
+          </ul>
+          <div class="box has-background-white has-shadow has-border" id="signatures">
+            {% for signature in pre.static.pe.signatures %}
+              <div class="box has-background-light">
+                {{ render_dict(signature) }}
+              </div>
+            {% endfor %}
           </div>
         </div>
 

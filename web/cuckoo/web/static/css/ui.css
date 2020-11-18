@@ -168,6 +168,10 @@ p {
   font-size: 3em;
 }
 
+.has-text-uppercased {
+  text-transform: uppercase;
+}
+
 .has-half-opacity {
   opacity: 0.5;
 }
@@ -699,6 +703,10 @@ a.button, .control.is-file a.file-trigger {
   bottom: 0;
 }
 
+.details {
+  display: block;
+  padding: 0;
+}
 .details:not([open]):hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
@@ -726,7 +734,10 @@ a.button, .control.is-file a.file-trigger {
 .details > summary::-webkit-details-marker {
   display: none;
 }
-.details[open] summary:before {
+.details[open] > summary {
+  margin-bottom: 0.75rem;
+}
+.details[open] > summary:before {
   border-width: 7px 3.5px 0 3.5px;
   border-color: #000000 transparent transparent transparent;
 }
@@ -1108,7 +1119,10 @@ a.button, .control.is-file a.file-trigger {
   border-color: #CCCCCC;
 }
 .box.has-background-light, .has-background-light.banner {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #f2f2f2;
+}
+.box.has-background-stack-shade, .has-background-stack-shade.banner {
+  background-color: rgba(0, 0, 0, 0.075);
   color: #000000;
 }
 .box.has-background-blue, .has-background-blue.banner, .box.has-background-info, .has-background-info.banner {
@@ -1622,6 +1636,11 @@ button[disabled] {
 .has-line-break {
   word-break: break-all;
   word-wrap: break-word;
+}
+
+.is-sticky {
+  position: sticky;
+  top: 0;
 }
 
 /*# sourceMappingURL=ui.css.map */
