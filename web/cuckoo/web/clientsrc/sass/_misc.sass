@@ -24,6 +24,7 @@
       top: auto
       transform: translateX(-50%)
 
+// adds a gap*gap dot in front of anything, can use included colors
 .dot
   display: inline-block
   width: $gap
@@ -38,3 +39,15 @@
     background-color: $yellow
   &.is-blue
     background-color: $blue
+
+// extra support for fontawesome-directed toggle icons, to display properly
+// directed icons
+.visibility
+  &-visible
+    // support fa-chevron-* icons
+    .chevron:before
+      content: "\f078" !important
+  &-hidden
+    // suspport fa-chevron-* icons
+    .chevron:before
+      content: "\f054" !important

@@ -1495,6 +1495,13 @@ a.button, .control.is-file a.file-trigger {
   background-color: #2E94F1;
 }
 
+.visibility-visible .chevron:before {
+  content: "" !important;
+}
+.visibility-hidden .chevron:before {
+  content: "" !important;
+}
+
 .no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]),
 .field-block .label, .field-block.has-columns, .banner {
   padding: 0 !important;

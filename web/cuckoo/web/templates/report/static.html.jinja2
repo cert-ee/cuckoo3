@@ -24,7 +24,7 @@
           ev.preventDefault();
           const result = avs.querySelector('tr' + tag.getAttribute('href'));
           if(result) {
-            let pos = result.getBoundingClientRect().top + window.scrollY
+            let pos = result.getBoundingClientRect().top + window.scrollY;
             window.scroll(0, pos - compromiseStickyHeader());
             setTimeout(() => blink(result), 500);
           }
@@ -33,32 +33,6 @@
 
     }());
 
-    // tap through various levels of signature severities
-    (function signatureFilters() {
-
-      const signatures = document.querySelector('#signatures');
-      const filters = [...signatures.querySelectorAll('[name="toggle-sig"]')];
-
-      function onUnselected() {
-        if(!filters.find(f => f.checked))
-          filters[0].checked = true;
-      }
-
-      filters.forEach(filter => {
-        filter.addEventListener('change', ev => {
-          switch(ev.currentTarget.value) {
-            case 'all':
-              filters.forEach(f => f.value !== 'all' ? f.checked = false : null);
-            break;
-            default:
-              filters.find(f => f.value == 'all').checked = false;
-          }
-          onUnselected();
-        });
-      });
-
-    });
-
   </script>
 {% endblock %}
 
@@ -66,30 +40,30 @@
 you could use this macro to print out an entire JSON blob in a representable
 format. uses <details> for native collapsing of dict-like childs. #}
 {% macro render_dict(d) %}
-    <ul class="list is-reset has-padding-x text-center">
-      {% for key, value in d.items() %}
-        <li>
-          <details class="details box has-background-stack-shade is-grouped" {% if value is string or value is boolean %}open{% endif %}>
-            <summary>
-              <h4 class="no-margin has-text-small has-text-uppercased">
-                <span class="has-half-opacity">{{ key }}:</span>
-              </h4>
-            </summary>
-            {% if value is mapping %}
-              {{ render_dict(value) }}
-            {% elif value is iterable and not value is string %}
-              <ul class="list">
-                {% for v in value %}
-                  <li>{{ v }}</li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="has-margin-left has-padding-left no-margin-y has-text-small is-monospace">{{ value }}</p>
-            {% endif %}
-          </details>
-        </li>
-      {% endfor %}
-    </ul>
+  <ul class="list is-reset has-padding-x text-center">
+    {% for key, value in d.items() %}
+      <li>
+        <details class="details box has-background-stack-shade is-grouped" {% if value is string or value is boolean %}open{% endif %}>
+          <summary>
+            <h4 class="no-margin has-text-small has-text-uppercased">
+              <span class="has-half-opacity">{{ key }}:</span>
+            </h4>
+          </summary>
+          {% if value is mapping %}
+            {{ render_dict(value) }}
+          {% elif value is iterable and not value is string %}
+            <ul class="list">
+              {% for v in value %}
+                <li>{{ v }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="has-margin-left has-padding-left no-margin-y has-text-small is-monospace">{{ value }}</p>
+          {% endif %}
+        </details>
+      </li>
+    {% endfor %}
+  </ul>
 {% endmacro %}
 
 {% block body %}
@@ -104,13 +78,12 @@ format. uses <details> for native collapsing of dict-like childs. #}
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
         <nav class="tabbar has-background-transparent" data-enhance>
-          <a class="tabbar-link" href="#tab-static">Static Analysis</a>
-          <a class="tabbar-link is-active" href="#tab-signatures">Signatures</a>
+          <a class="tabbar-link is-active" href="#tab-static">Static Analysis</a>
           <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
         </nav>
 
         {# tab: static.target/static.pe #}
-        <div id="tab-static" hidden>
+        <div id="tab-static">
 
           <div class="box has-background-white has-shadow no-padding has-border">
             <h3 class="box-title">Target</h3>
@@ -152,7 +125,11 @@ format. uses <details> for native collapsing of dict-like childs. #}
           </div>
 
           <div class="box no-padding has-border">
-            <h3 class="box-title">PE Sections</h3>
+            <h3 class="box-title">PE Sections
+              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
+                <i class="fas chevron"></i>
+              </a>
+            </h3>
             <table class="table has-sticky-header">
               <thead>
                 <tr>
@@ -182,7 +159,11 @@ format. uses <details> for native collapsing of dict-like childs. #}
           </div>
 
           <div class="box no-padding has-margin-top has-border">
-            <h3 class="box-title">PE Resources</h3>
+            <h3 class="box-title">PE Resources
+              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
+                <i class="fas chevron"></i>
+              </a>
+            </h3>
             <table class="table has-sticky-header">
               <thead>
                 <tr>
@@ -213,10 +194,29 @@ format. uses <details> for native collapsing of dict-like childs. #}
             </table>
           </div>
 
+          <div class="box no-padding has-border">
+            <h3 class="box-title">PE Signatures
+              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#pe-signatures'), null, event);" class="pull-right visibility-visible">
+                <i class="fas chevron"></i>
+              </a>
+            </h3>
+            <div id="pe-signatures">
+              {% for signature in pre.static.pe.signatures %}
+                <div class="box has-background-light">
+                  {{ render_dict(signature) }}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
           <div class="columns is-divided">
             <div class="column no-margin-left">
               <div class="box has-shadow has-border no-padding">
-                <h3 class="box-title">PE Imports</h3>
+                <h3 class="box-title">PE Imports
+                  <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
+                    <i class="fas chevron"></i>
+                  </a>
+                </h3>
                 <table class="table has-sticky-header">
                   <thead>
                     <tr>
@@ -243,7 +243,11 @@ format. uses <details> for native collapsing of dict-like childs. #}
             </div>
             <div class="column no-margin-right">
               <div class="box has-shadow has-border no-padding">
-                <h3 class="box-title">PE Exports</h3>
+                <h3 class="box-title">PE Exports
+                  <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
+                    <i class="fas chevron"></i>
+                  </a>
+                </h3>
                 <table class="table has-sticky-header">
                   <thead>
                     <tr>
@@ -270,21 +274,6 @@ format. uses <details> for native collapsing of dict-like childs. #}
             </div>
           </div>
 
-        </div>
-
-        {# tab: static.pe.signatures #}
-        <div id="tab-signatures">
-          <ul class="list is-horizontal has-text-small">
-            <li><a class="is-link" href="#" onclick="toggleDetails(true, lib.parent('#tab-signatures', this));"><i class="fas fa-caret-square-down"></i></a></li>
-            <li><a class="is-link" href="#" onclick="toggleDetails(false, lib.parent('#tab-signatures', this));"><i class="fas fa-caret-square-right"></i></a></li>
-          </ul>
-          <div class="box has-background-white has-shadow has-border" id="signatures">
-            {% for signature in pre.static.pe.signatures %}
-              <div class="box has-background-light">
-                {{ render_dict(signature) }}
-              </div>
-            {% endfor %}
-          </div>
         </div>
 
         {# tab: static.virustotal #}

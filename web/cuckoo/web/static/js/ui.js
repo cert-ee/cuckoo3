@@ -172,10 +172,16 @@ function handlePageTabs(tabContext) {
  *                                       string, it will querySelector to an element.
  * @param {Boolean} force              - optional, if set it will force the state
  *                                       of the visibility.
+ * @param {Undefined} event            - optional, if set it will escape the default
+ *                                       event behavior (e.g onclick-like events)
  * @example
  * <button onclick="toggleVisibility('#element', true)">
  */
-function toggleVisibility(element, force=null) {
+function toggleVisibility(element, force=null, event) {
+
+  if(event instanceof Event)
+    event.preventDefault();
+
   if(typeof element == 'string')
     element = document.querySelector(element);
   if(!element) return;
@@ -183,13 +189,27 @@ function toggleVisibility(element, force=null) {
     element.toggleAttribute('hidden', force);
   else
     element.toggleAttribute('hidden');
+
+  // approach 1: if the dispatcher sent an event, take the target of the event
+  // to indicate said toggleable visibility for appropriate style changes.
+  if(event) {
+    if(element.getAttribute('hidden') === null) {
+      event.currentTarget.classList.remove('visibility-hidden');
+      event.currentTarget.classList.add('visibility-visible');
+    } else {
+      event.currentTarget.classList.remove('visibility-visible');
+      event.currentTarget.classList.add('visibility-hidden');
+    }
+  }
+
 }
 
 /**
  * Lets an element blink for a moment to indicate a change caused by another
  * action.
  * @param {HTMLElement} el - the element to apply the effect on
- * @param {blinkColor} string - a HEX value of the color that the element blinks into
+ * @param {String} blinkColor - a HEX value of the color that the element blinks into
+ * @param {Number} speed - the speed in milliseconds of the blink animation
  */
 function blink(el, blinkColor = '#fffae8', speed = 75) {
   const background = getComputedStyle(el).getPropertyValue('background-color');
