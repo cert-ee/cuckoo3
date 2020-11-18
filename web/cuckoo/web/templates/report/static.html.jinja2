@@ -279,25 +279,35 @@ format. uses <details> for native collapsing of dict-like childs. #}
         {# tab: static.virustotal #}
         <div id="tab-virus-total" hidden>
           <div class="box has-background-white has-shadow no-padding has-border" id="ioc">
-            <h3 class="box-title">IOC's</h3>
-            {% for signature in pre.signatures %}
-              <div class="has-padding-x has-margin-y">
-                <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
-                {% if signature.iocs|length %}
-                  <div class="tag-list">
-                    {% for ioc in signature.iocs %}
-                      <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
-                    {% endfor %}
-                  </div>
+            <h3 class="box-title">IOC's
+              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#ioc-tags'), null, event);" class="pull-right visibility-visible">
+                <i class="fas chevron"></i>
+              </a>
+            </h3>
+            <div id="ioc-tags" class="has-padding-x has-margin-y">
+              {% for signature in pre.signatures %}
+                  <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
+                  {% if signature.iocs %}
+                    <div class="tag-list">
+                      {% for ioc in signature.iocs %}
+                        <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p>No IOC's.</p>
+                  {% endif %}
                 {% else %}
-                  <p>No IOC's.</p>
-                {% endif %}
-              </div>
-            {% endfor %}
+                <p>No Data.</p>
+              {% endfor %}
+            </div>
           </div>
 
           <div class="box has-background-white has-shadow no-padding has-border" id="avs">
-            <h3 class="box-title">Antivirus engines (provided by VirusTotal)</h3>
+            <h3 class="box-title">Antivirus engines (provided by VirusTotal)
+              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
+                <i class="fas chevron"></i>
+              </a>
+            </h3>
             <table class="table has-sticky-header has-margin-top">
               <thead>
                 <tr>
