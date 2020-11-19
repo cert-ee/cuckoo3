@@ -9,8 +9,8 @@
     // scroll to ioc result in av table when clicking a tag
     (function scrollToIOC() {
 
-      const ioc = document.querySelector('#ioc');
-      const avs = document.querySelector('#avs .table');
+      const ioc = document.querySelector('#box-IOCs');
+      const avs = document.querySelector('#box-Antivirus-Engines .table');
 
       function compromiseStickyHeader() {
         if(!avs.classList.contains('has-sticky-header'))
@@ -40,30 +40,67 @@
 you could use this macro to print out an entire JSON blob in a representable
 format. uses <details> for native collapsing of dict-like childs. #}
 {% macro render_dict(d) %}
-  <ul class="list is-reset has-padding-x text-center">
+  <ul class="list is-reset has-padding-x">
     {% for key, value in d.items() %}
       <li>
-        <details class="details box has-background-stack-shade is-grouped" {% if value is string or value is boolean %}open{% endif %}>
-          <summary>
-            <h4 class="no-margin has-text-small has-text-uppercased">
-              <span class="has-half-opacity">{{ key }}:</span>
+        {% if value is mapping or value is iterable and value is not string and value is not boolean %}
+          <details class="details box has-background-stack-shade is-grouped">
+            <summary>
+              <h4 class="has-text-uppercased has-text-weight-bold has-text-small has-half-opacity no-margin">{{ key }}</h4>
+            </summary>
+            {% if value is mapping %}
+              {{ render_dict(value) }}
+            {% elif value is iterable %}
+              <ul class="list has-text-small">
+                {% for val in value %}
+                  <li>{{ val }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </details>
+        {% else %}
+          <div class="box has-background-stack-shade is-grouped">
+            <h4 class="has-text-uppercased has-text-weight-bold has-text-small no-margin">
+              <span class="dot is-blue no-margin-left has-margin-right"></span>
+              <span class="has-half-opacity">{{ key }}:</span> <span class="is-monospace">{{ key }}</span>
             </h4>
-          </summary>
-          {% if value is mapping %}
-            {{ render_dict(value) }}
-          {% elif value is iterable and not value is string %}
-            <ul class="list">
-              {% for v in value %}
-                <li>{{ v }}</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="has-margin-left has-padding-left no-margin-y has-text-small is-monospace">{{ value }}</p>
-          {% endif %}
-        </details>
+          </div>
+        {% endif %}
       </li>
     {% endfor %}
   </ul>
+{% endmacro %}
+
+{#
+  creates a box, where the contents can be defined inside the macro call. Using this
+  method provides a consistent use of repeatable HTML. This utility exposes a few options:
+
+    title           String    Title of the UI container
+    prefix          String    Attached to ID used for the collapsing functionality
+    description     String    Description of content, [needs to prove its usage]
+    display_title   Boolean   Whether or not to display the title. Also disables collapsibility.
+    no_padding      Boolean   Whether or not to add an extra padding to the box content section
+
+  example:
+
+    {% call ui_box(title="hello world") %}
+      <p>Wrapped contents of the box.</p>
+    {% endcall %}
+
+#}
+{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True) %}
+  {% set boxid = prefix + "-" + title|replace(" ","-") %}
+  <div class="box has-background-white has-shadow no-padding has-border">
+    {% if display_title == True and title %}
+      <h3 class="box-title">{{ title }}
+        <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);" class="pull-right visibility-visible">
+          <i class="fas chevron"></i>
+        </a>
+      </h3>
+    {% endif %}
+    {% if description|length > 0 %}<p class="has-padding no-margin">{{ description }}</p>{% endif %}
+    <div id="{{ boxid }}" {% if has_padding == True %}class="has-padding"{% endif %}>{{ caller() }}</div>
+  </div>
 {% endmacro %}
 
 {% block body %}
@@ -78,24 +115,20 @@ format. uses <details> for native collapsing of dict-like childs. #}
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
         <nav class="tabbar has-background-transparent" data-enhance>
-          <a class="tabbar-link is-active" href="#tab-static">Static Analysis</a>
+          <a class="tabbar-link is-active" href="#tab-static">Static</a>
+          <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
           <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
         </nav>
 
-        {# tab: static.target/static.pe #}
+        {# tab: static.overview #}
         <div id="tab-static">
-
-          <div class="box has-background-white has-shadow no-padding has-border">
-            <h3 class="box-title">Target</h3>
+          {% call ui_box(title="Target") %}
             <div class="columns has-padding is-divided">
               <div class="column is-auto">
                 <div class="ratio-1-1">
                   <div class="ratio-content">
                     <p class="has-text-red has-text-huge no-margin"><strong>{{ pre.score }}</strong><sub class="has-text-light">/10</sub></p>
                   </div>
-                  {# <div class="ratio-content is-bottom">
-                    <span class="tag is-red">Emotet</span>
-                  </div> #}
                 </div>
               </div>
               <div class="column">
@@ -107,29 +140,30 @@ format. uses <details> for native collapsing of dict-like childs. #}
                 <a class="button has-margin-top" href="{{ url('Analysis/index', args=[analysis_id]) }}">Extended sample information</a>
               </div>
             </div>
-          </div>
+          {% endcall %}
+        </div>
 
+        {# tab: static.target/static.pe #}
+        <div id="tab-pefiles" hidden>
+
+          {# PE Timestamp / imphash #}
           <div class="columns is-divided">
             <div class="column no-margin-left">
-              <div class="box has-background-white has-border has-shadow">
+              {% call ui_box(title="PE Timestamp",display_title=False) %}
                 <p class="label no-margin-top">PE Timestamp</p>
                 <p class="is-monospace no-margin">{{ pre.static.pe.pe_timestamp }}</p>
-              </div>
+              {% endcall %}
             </div>
             <div class="column no-margin-right">
-              <div class="box has-background-white has-border has-shadow">
+              {% call ui_box(title="PE Timestamp",display_title=False) %}
                 <p class="label no-margin-top">PE Imphash</p>
                 <p class="is-monospace no-margin">{{ pre.static.pe.pe_imphash }}</p>
-              </div>
+              {% endcall %}
             </div>
           </div>
 
-          <div class="box no-padding has-border">
-            <h3 class="box-title">PE Sections
-              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
-                <i class="fas chevron"></i>
-              </a>
-            </h3>
+          {# PE Sections #}
+          {% call ui_box(title="PE Sections", has_padding=False) %}
             <table class="table has-sticky-header">
               <thead>
                 <tr>
@@ -156,14 +190,10 @@ format. uses <details> for native collapsing of dict-like childs. #}
                 {% endfor %}
               </tbody>
             </table>
-          </div>
+          {% endcall %}
 
-          <div class="box no-padding has-margin-top has-border">
-            <h3 class="box-title">PE Resources
-              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
-                <i class="fas chevron"></i>
-              </a>
-            </h3>
+          {# PE Resources #}
+          {% call ui_box(title="PE Resources", has_padding=False) %}
             <table class="table has-sticky-header">
               <thead>
                 <tr>
@@ -192,31 +222,21 @@ format. uses <details> for native collapsing of dict-like childs. #}
                 {% endfor %}
               </tbody>
             </table>
-          </div>
+          {% endcall %}
 
-          <div class="box no-padding has-border">
-            <h3 class="box-title">PE Signatures
-              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#pe-signatures'), null, event);" class="pull-right visibility-visible">
-                <i class="fas chevron"></i>
-              </a>
-            </h3>
-            <div id="pe-signatures">
-              {% for signature in pre.static.pe.signatures %}
-                <div class="box has-background-light">
-                  {{ render_dict(signature) }}
-                </div>
-              {% endfor %}
-            </div>
-          </div>
+          {# PE Sigatures #}
+          {% call ui_box(title="PE Signatures") %}
+            {% for signature in pre.static.pe.signatures %}
+              <div class="box has-background-light">
+                {{ render_dict(signature) }}
+              </div>
+            {% endfor %}
+          {% endcall %}
 
+          {# PE Imports & Exports #}
           <div class="columns is-divided">
             <div class="column no-margin-left">
-              <div class="box has-shadow has-border no-padding">
-                <h3 class="box-title">PE Imports
-                  <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
-                    <i class="fas chevron"></i>
-                  </a>
-                </h3>
+              {% call ui_box(title="PE Imports", has_padding=False) %}
                 <table class="table has-sticky-header">
                   <thead>
                     <tr>
@@ -239,15 +259,10 @@ format. uses <details> for native collapsing of dict-like childs. #}
                     {% endfor %}
                   </tbody>
                 </table>
-              </div>
+              {% endcall %}
             </div>
             <div class="column no-margin-right">
-              <div class="box has-shadow has-border no-padding">
-                <h3 class="box-title">PE Exports
-                  <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
-                    <i class="fas chevron"></i>
-                  </a>
-                </h3>
+              {% call ui_box(title="PE Imports", has_padding=False) %}
                 <table class="table has-sticky-header">
                   <thead>
                     <tr>
@@ -270,7 +285,7 @@ format. uses <details> for native collapsing of dict-like childs. #}
                     {% endfor %}
                   </tbody>
                 </table>
-              </div>
+              {% endcall %}
             </div>
           </div>
 
@@ -278,13 +293,10 @@ format. uses <details> for native collapsing of dict-like childs. #}
 
         {# tab: static.virustotal #}
         <div id="tab-virus-total" hidden>
-          <div class="box has-background-white has-shadow no-padding has-border" id="ioc">
-            <h3 class="box-title">IOC's
-              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#ioc-tags'), null, event);" class="pull-right visibility-visible">
-                <i class="fas chevron"></i>
-              </a>
-            </h3>
-            <div id="ioc-tags" class="has-padding-x has-margin-y">
+
+          {# Antivirus detected IOC's #}
+          {% call ui_box(title="IOCs") %}
+            <div id="ioc-tags" class="no-margin">
               {% for signature in pre.signatures %}
                   <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
                   {% if signature.iocs %}
@@ -300,14 +312,10 @@ format. uses <details> for native collapsing of dict-like childs. #}
                 <p>No Data.</p>
               {% endfor %}
             </div>
-          </div>
+          {% endcall %}
 
-          <div class="box has-background-white has-shadow no-padding has-border" id="avs">
-            <h3 class="box-title">Antivirus engines (provided by VirusTotal)
-              <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('table'), null, event);" class="pull-right visibility-visible">
-                <i class="fas chevron"></i>
-              </a>
-            </h3>
+          {# Antivirus result list #}
+          {% call ui_box(title="Antivirus Engines", has_padding=False) %}
             <table class="table has-sticky-header has-margin-top">
               <thead>
                 <tr>
@@ -323,7 +331,7 @@ format. uses <details> for native collapsing of dict-like childs. #}
                   <tr id="av-engine-{{ av.engine_name }}">
                     <td>
                       {% if av.category == "malicious" %}
-                        <p class="no-margin has-text-red has-text-bold">{{ av.category }}</p>
+                        <p class="no-margin has-text-red has-text-weight-bold">{{ av.category }}</p>
                       {% else %}
                         <p class="no-margin">{{ av.category }}</p>
                       {% endif %}
@@ -336,7 +344,8 @@ format. uses <details> for native collapsing of dict-like childs. #}
                 {% endfor %}
               </tbody>
             </table>
-          </div>
+          {% endcall %}
+
         </div>
 
       </section>

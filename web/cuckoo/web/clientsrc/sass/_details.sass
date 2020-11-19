@@ -5,7 +5,7 @@
 .details
   display: block
   padding: 0
-  &:not([open]):hover
+  &:hover
     background-color: rgba(0,0,0,.05)
   & > summary
     position: relative
@@ -13,6 +13,8 @@
     padding: 0 $gap * 2
     &:focus
       outline: none
+    &:hover
+      cursor: pointer
     &:before
       content: ""
       display: block
