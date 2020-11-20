@@ -3,21 +3,29 @@
   provided. Although it seems a bit complex, it can help a lot to maintain
   readability and quickly displaying data sets into the UI.
 
-    data    Array or Dict   rows to display inside the table
-    cols    Array           columns, these refer in that order to the data objects
-    labels  Array           customized or human-friendly labels, follows the same order as cols[]
+    required:
+      data                Array or Dict    Rows to display inside the table.
+      cols                Array            Columns, these refer in that order to the data objects.
+
+    optional:
+      labels              Array            Customized or human-friendly labels, follows the same order as cols.
+      style               Array            Cell styles, pass in any text modifier, as defined in _typography.sass.
+                                           To apply multple, define the casses space separated. If no style has to be applied,
+                                           leave None. Order is the same als column order.
+      has_sticky_header  Boolean           Wether or not to apply a sticky header experience.
 
   example:
 
     {{ render_table(
                     data = my_data,
                     cols = ["first_name", "last_name", "age"],
-                    labels = ["First name", "Last name", "Age"]
+                    labels = ["First name", "Last name", "Age"],
+                    style: ["has-text-right", None, "is-monospace has-text-red"]
                   )
     }}
 #}
-{% macro render_table(data=[], cols=[], labels=[]) %}
-  <table class="table">
+{% macro render_table(data=[], cols=[], labels=[], style=[], has_sticky_header=False) %}
+  <table class="table {% if has_sticky_header %}has-sticky-header{% endif %}">
     <thead>
       <tr>
         {% for col in cols %}
@@ -36,12 +44,12 @@
         {% for entry in data %}
           <tr>
             {% for col in cols %}
-              <td>{{ entry[col] }}</td>
+              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>{{ entry[col] }}</td>
             {% endfor %}
           </tr>
         {% else %}
           <tr>
-            <td colspan="{{cols|length}}">No data</td>
+            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% else %}
@@ -53,7 +61,7 @@
           </tr>
         {% else %}
           <tr>
-            <td colspan="{{cols|length}}">No data</td>
+            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% endif %}
