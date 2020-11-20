@@ -3,6 +3,8 @@
 {% set report_page = "static" %}
 {% set title = "Report - static analysis" %}
 
+{% from 'macros.html.jinja2' import render_dict, ui_box %}
+
 {% block page_script %}
   <script type="text/javascript">
 
@@ -35,73 +37,6 @@
 
   </script>
 {% endblock %}
-
-{# renders a dict according to the data structure and contents. In theory,
-you could use this macro to print out an entire JSON blob in a representable
-format. uses <details> for native collapsing of dict-like childs. #}
-{% macro render_dict(d) %}
-  <ul class="list is-reset has-padding-x">
-    {% for key, value in d.items() %}
-      <li>
-        {% if value is mapping or value is iterable and value is not string and value is not boolean %}
-          <details class="details box has-background-stack-shade is-grouped">
-            <summary>
-              <h4 class="has-text-uppercased has-text-weight-bold has-text-small has-half-opacity no-margin">{{ key }}</h4>
-            </summary>
-            {% if value is mapping %}
-              {{ render_dict(value) }}
-            {% elif value is iterable %}
-              <ul class="list has-text-small">
-                {% for val in value %}
-                  <li>{{ val }}</li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </details>
-        {% else %}
-          <div class="box has-background-stack-shade is-grouped">
-            <h4 class="has-text-uppercased has-text-weight-bold has-text-small no-margin">
-              <span class="dot is-blue no-margin-left has-margin-right"></span>
-              <span class="has-half-opacity">{{ key }}:</span> <span class="is-monospace">{{ key }}</span>
-            </h4>
-          </div>
-        {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-{% endmacro %}
-
-{#
-  creates a box, where the contents can be defined inside the macro call. Using this
-  method provides a consistent use of repeatable HTML. This utility exposes a few options:
-
-    title           String    Title of the UI container
-    prefix          String    Attached to ID used for the collapsing functionality
-    description     String    Description of content, [needs to prove its usage]
-    display_title   Boolean   Whether or not to display the title. Also disables collapsibility.
-    no_padding      Boolean   Whether or not to add an extra padding to the box content section
-
-  example:
-
-    {% call ui_box(title="hello world") %}
-      <p>Wrapped contents of the box.</p>
-    {% endcall %}
-
-#}
-{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True) %}
-  {% set boxid = prefix + "-" + title|replace(" ","-") %}
-  <div class="box has-background-white has-shadow no-padding has-border">
-    {% if display_title == True and title %}
-      <h3 class="box-title">{{ title }}
-        <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);" class="pull-right visibility-visible">
-          <i class="fas chevron"></i>
-        </a>
-      </h3>
-    {% endif %}
-    {% if description|length > 0 %}<p class="has-padding no-margin">{{ description }}</p>{% endif %}
-    <div id="{{ boxid }}" {% if has_padding == True %}class="has-padding"{% endif %}>{{ caller() }}</div>
-  </div>
-{% endmacro %}
 
 {% block body %}
   <div class="container is-fixed">
@@ -227,7 +162,7 @@ format. uses <details> for native collapsing of dict-like childs. #}
           {# PE Sigatures #}
           {% call ui_box(title="PE Signatures") %}
             {% for signature in pre.static.pe.signatures %}
-              <div class="box has-background-light">
+              <div class="box has-background-light no-margin-top has-border has-shadow">
                 {{ render_dict(signature) }}
               </div>
             {% endfor %}
@@ -306,10 +241,10 @@ format. uses <details> for native collapsing of dict-like childs. #}
                       {% endfor %}
                     </div>
                   {% else %}
-                    <p>No IOC's.</p>
+                    <p class="no-margin">No IOC's.</p>
                   {% endif %}
                 {% else %}
-                <p>No Data.</p>
+                <p class="no-margin">No Data.</p>
               {% endfor %}
             </div>
           {% endcall %}
