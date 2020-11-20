@@ -3,7 +3,7 @@
 {% set report_page = "static" %}
 {% set title = "Report - static analysis" %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box %}
+{% from 'macros.html.jinja2' import render_table, render_dict, ui_box %}
 
 {% block page_script %}
   <script type="text/javascript">
@@ -99,64 +99,20 @@
 
           {# PE Sections #}
           {% call ui_box(title="PE Sections", has_padding=False) %}
-            <table class="table has-sticky-header">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Address</th>
-                  <th>Size</th>
-                  <th>Data size</th>
-                  <th>Entropy</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for section in pre.static.pe.pe_sections %}
-                  <tr>
-                    <td>{{ section.name }}</td>
-                    <td>{{ section.virtual_address }}</td>
-                    <td>{{ section.virtual_size }}</td>
-                    <td>{{ section.size_of_data }}</td>
-                    <td>{{ section.entropy }}</td>
-                  </tr>
-                {% else %}
-                  <tr>
-                    <td colspan="5">No results</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {{ render_table(
+                            data=pre.static.pe.pe_sections,
+                            cols=["name","virtual_address","virtual_size","size_of_data","entropy"],
+                            labels=["Name", "Address","Size","Data Size", "Entropy"])
+            }}
           {% endcall %}
 
           {# PE Resources #}
           {% call ui_box(title="PE Resources", has_padding=False) %}
-            <table class="table has-sticky-header">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Offset</th>
-                  <th>Size</th>
-                  <th>Language</th>
-                  <th>Sub-language</th>
-                  <th>File type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for resource in pre.static.pe.pe_resources %}
-                  <tr>
-                    <td>{{ resource.name }}</td>
-                    <td>{{ resource.offset }}</td>
-                    <td>{{ resource.size }}</td>
-                    <td>{{ resource.language }}</td>
-                    <td>{{ resource.sublanguage }}</td>
-                    <td>{{ resource.filetype }}</td>
-                  </tr>
-                {% else %}
-                  <tr>
-                    <td colspan="6">No results</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {{ render_table(
+                            data=pre.static.pe.pe_resources,
+                            cols=["name","offset","size","language","sublanguage","filetype"],
+                            labels=["Name", "Offset","Size","Language","Sub-Language","File type"])
+            }}
           {% endcall %}
 
           {# PE Sigatures #}
@@ -172,54 +128,28 @@
           <div class="columns is-divided">
             <div class="column no-margin-left">
               {% call ui_box(title="PE Imports", has_padding=False) %}
-                <table class="table has-sticky-header">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Address</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for p in pre.static.pe.pe_imports %}
-                      {% for i in p.imports %}
-                        <tr>
-                          <td>{{ i.name }}</td>
-                          <td>{{ i.address }}</td>
-                        </tr>
-                      {% endfor %}
-                    {% else %}
-                      <tr>
-                        <td colspan="2">No results</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+                {% if pre.static.pe.pe_imports[0] %}
+                  {{ render_table(
+                                  data=pre.static.pe.pe_imports[0].imports,
+                                  cols=["name","address"],
+                                  labels=["Name", "Address"])
+                  }}
+                {% else %}
+                  <p class="has-margin-x">No data</p>
+                {% endif %}
               {% endcall %}
             </div>
             <div class="column no-margin-right">
-              {% call ui_box(title="PE Imports", has_padding=False) %}
-                <table class="table has-sticky-header">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Address</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for p in pre.static.pe.pe_exports %}
-                      {% for e in p.exports %}
-                        <tr>
-                          <td>{{ e.name }}</td>
-                          <td>{{ e.address }}</td>
-                        </tr>
-                      {% endfor %}
-                    {% else %}
-                      <tr>
-                        <td colspan="2">No results</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+              {% call ui_box(title="PE Exports", has_padding=False) %}
+                {% if pre.static.pe.pe_exports[0] %}
+                  {{ render_table(
+                                  data=pre.static.pe.pe_exports[0].exports,
+                                  cols=["name","address"],
+                                  labels=["Name", "Address"])
+                  }}
+                {% else %}
+                  <p class="has-margin-x">No data</p>
+                {% endif %}
               {% endcall %}
             </div>
           </div>
@@ -251,34 +181,12 @@
 
           {# Antivirus result list #}
           {% call ui_box(title="Antivirus Engines", has_padding=False) %}
-            <table class="table has-sticky-header has-margin-top">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Name</th>
-                  <th>Version</th>
-                  <th>Method</th>
-                  <th>Result</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for av in pre.virustotal.avs.values() %}
-                  <tr id="av-engine-{{ av.engine_name }}">
-                    <td>
-                      {% if av.category == "malicious" %}
-                        <p class="no-margin has-text-red has-text-weight-bold">{{ av.category }}</p>
-                      {% else %}
-                        <p class="no-margin">{{ av.category }}</p>
-                      {% endif %}
-                    </td>
-                    <td>{{ av.engine_name }}</td>
-                    <td>{{ av.engine_version }}</td>
-                    <td>{{ av.method }}</td>
-                    <td>{{ av.result }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {{ render_table(
+                            data=pre.virustotal.avs,
+                            cols=["category","engine_name","engine_version","method","result"],
+                            labels=["Category","Name","Version","Method","Result"]
+                            )
+            }}
           {% endcall %}
 
         </div>

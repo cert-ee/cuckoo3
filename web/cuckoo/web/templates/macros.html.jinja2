@@ -1,4 +1,67 @@
 {#
+  renders a table. some configuration on ordering of property names have to be
+  provided. Although it seems a bit complex, it can help a lot to maintain
+  readability and quickly displaying data sets into the UI.
+
+    data    Array or Dict   rows to display inside the table
+    cols    Array           columns, these refer in that order to the data objects
+    labels  Array           customized or human-friendly labels, follows the same order as cols[]
+
+  example:
+
+    {{ render_table(
+                    data = my_data,
+                    cols = ["first_name", "last_name", "age"],
+                    labels = ["First name", "Last name", "Age"]
+                  )
+    }}
+#}
+{% macro render_table(data=[], cols=[], labels=[]) %}
+  <table class="table">
+    <thead>
+      <tr>
+        {% for col in cols %}
+          <th>
+            {% if not labels[loop.index-1] %}
+              {{ col }}
+            {% else %}
+              {{ labels[loop.index-1] }}
+            {% endif %}
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% if not data is mapping %}
+        {% for entry in data %}
+          <tr>
+            {% for col in cols %}
+              <td>{{ entry[col] }}</td>
+            {% endfor %}
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="{{cols|length}}">No data</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        {% for val in data.values() %}
+          <tr>
+            {% for col in cols %}
+              <td>{{ val[col] }}</td>
+            {% endfor %}
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="{{cols|length}}">No data</td>
+          </tr>
+        {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+{#
   renders a dict according to the data structure and contents. In theory,
   you could use this macro to print out an entire JSON blob in a representable
   format. uses <details> for native collapsing of dict-like childs.
@@ -50,7 +113,7 @@
 {% endmacro %}
 
 {#
-  creates a box, where the contents can be defined inside the macro call. Using this
+  renders a box, where the contents can be defined inside the macro call. Using this
   method provides a consistent use of repeatable HTML. This utility exposes a few options:
 
     title           String    Title of the UI container
