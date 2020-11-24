@@ -129,6 +129,8 @@
     description     String    Description of content, [needs to prove its usage]
     display_title   Boolean   Whether or not to display the title. Also disables collapsibility.
     no_padding      Boolean   Whether or not to add an extra padding to the box content section
+    collapsible     Boolean   Toggles collapsing functionality on or off
+    collapsed       Boolean   Default collapse state
 
   example:
 
@@ -137,17 +139,25 @@
     {% endcall %}
 
 #}
-{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True) %}
+{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True, collapsible=True, collapsed=False) %}
   {% set boxid = prefix + "-" + title|replace(" ","-") %}
   <div class="box has-background-white has-shadow no-padding has-border">
     {% if display_title == True and title %}
       <h3 class="box-title">{{ title }}
-        <a href="#" onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);" class="pull-right visibility-visible">
+        {% if collapsible %}
+        <a href="#"
+          onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);"
+          class="pull-right {% if collapsible %} {% if not collapsed %}visibility-visible{% else %}visibility-hidden{% endif %}{% endif %}">
           <i class="fas chevron"></i>
         </a>
+        {% endif %}
       </h3>
     {% endif %}
     {% if description|length > 0 %}<p class="has-padding no-margin">{{ description }}</p>{% endif %}
-    <div id="{{ boxid }}" {% if has_padding == True %}class="has-padding"{% endif %}>{{ caller() }}</div>
+    <div id="{{ boxid }}"
+      class="{% if has_padding == True %}has-padding{% endif %}"
+      {% if collapsible and collapsed %}hidden{% endif%}>
+      {{ caller() }}
+    </div>
   </div>
 {% endmacro %}
