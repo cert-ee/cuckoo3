@@ -74,6 +74,18 @@ a.button
     &:hover
       background-color: shade($green, .1)
 
+  &.is-beveled
+    background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .9) 100%)
+    border: 0.0625rem solid $border
+    box-shadow: inset 0px -2px 0px $border, inset 0px 2px 0px #FFFFFF
+    color: rgba($dark, .8)
+    text-shadow: 0 0.0625rem 0 rgba($white, .75)
+    &:hover
+      background: linear-gradient(180deg, shade($white, .1) 23.44%, tint($blue, .8) 100%)
+    &:active
+      background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .7) 100%)
+
+
   &.is-disabled
     pointer-events: none
     background-color: $border
@@ -101,10 +113,13 @@ a.button
     border-right-width: 0
     margin-right: -4px
     &:first-child
-      border-radius: $gap/2 0 0 $gap/2
+      border-top-left-radius: $gap/2
+      border-bottom-left-radius: $gap/2
     &:last-child
-      border-radius: 0 $gap/2 $gap/2 0
-      &.has-border
+      border-top-right-radius: $gap/2
+      border-bottom-right-radius: $gap/2
+      &.has-border,
+      &.is-beveled
         border-right-width: 0.0625rem
 
   &.is-vertical

@@ -45,7 +45,7 @@ body {
 }
 
 pre, code, tt {
-  font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+  font-family: Consolas, Monaco, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Courier New", Courier, monospace;
 }
 
 h1,
@@ -76,7 +76,7 @@ p {
 
 .code,
 .is-monospace {
-  font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+  font-family: Consolas, Monaco, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Courier New", Courier, monospace;
 }
 
 .code {
@@ -557,6 +557,19 @@ a.button, .control.is-file a.file-trigger {
 .button.is-green:hover, .control.is-file .is-green.file-trigger:hover {
   background-color: #75c56e;
 }
+.button.is-beveled, .control.is-file .is-beveled.file-trigger {
+  background: linear-gradient(180deg, #EEEEEE 23.44%, #eaf4fe 100%);
+  border: 0.0625rem solid #CCCCCC;
+  box-shadow: inset 0px -2px 0px #CCCCCC, inset 0px 2px 0px #FFFFFF;
+  color: rgba(15, 72, 90, 0.8);
+  text-shadow: 0 0.0625rem 0 rgba(255, 255, 255, 0.75);
+}
+.button.is-beveled:hover, .control.is-file .is-beveled.file-trigger:hover {
+  background: linear-gradient(180deg, #e6e6e6 23.44%, #d5eafc 100%);
+}
+.button.is-beveled:active, .control.is-file .is-beveled.file-trigger:active {
+  background: linear-gradient(180deg, #EEEEEE 23.44%, #c0dffb 100%);
+}
 .button.is-disabled, .control.is-file .is-disabled.file-trigger {
   pointer-events: none;
   background-color: #CCCCCC;
@@ -588,12 +601,14 @@ a.button, .control.is-file a.file-trigger {
   margin-right: -4px;
 }
 .buttons-conjoined > .button:first-child, .control.is-file .buttons-conjoined > .file-trigger:first-child {
-  border-radius: 0.375rem 0 0 0.375rem;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
 }
 .buttons-conjoined > .button:last-child, .control.is-file .buttons-conjoined > .file-trigger:last-child {
-  border-radius: 0 0.375rem 0.375rem 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
 }
-.buttons-conjoined > .button:last-child.has-border, .control.is-file .buttons-conjoined > .file-trigger:last-child.has-border {
+.buttons-conjoined > .button:last-child.has-border, .control.is-file .buttons-conjoined > .file-trigger:last-child.has-border, .buttons-conjoined > .button:last-child.is-beveled, .control.is-file .buttons-conjoined > .file-trigger:last-child.is-beveled {
   border-right-width: 0.0625rem;
 }
 .buttons-conjoined.is-vertical > .button, .control.is-file .buttons-conjoined.is-vertical > .file-trigger {
