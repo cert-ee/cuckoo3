@@ -1,0 +1,33 @@
+.json-expander
+  background: transparent
+  list-style: none
+  // using rem for font size disables relative scaling by em-units
+  font-size: .9rem
+  padding-left: $gap
+
+  &, ul
+    list-style: none
+
+  ul
+    margin: 0
+    padding-left: $gap * 2
+  p
+    margin: $gap/2 0
+
+  details
+    margin-bottom: $gap
+  details > summary:hover
+    cursor: pointer
+  details > summary:focus
+    outline: none
+
+  .is-string
+    color: $dark
+  .is-integer
+    color: $red
+  .is-object
+    color: $blue
+  .is-array
+    color: shade($green, .2)
+  .is-boolean
+    color: mix($yellow, $red, 50%)

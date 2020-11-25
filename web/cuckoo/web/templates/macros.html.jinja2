@@ -88,34 +88,54 @@
   {{ render_dict(d) }}
 
 #}
-{% macro render_dict(dict) %}
-  <ul class="list is-reset has-padding-x">
+{% macro render_dict(dict, depth=0) %}
+  <ul class="json-expander is-monospace has-text-bold">
     {% for key, value in dict.items() %}
-      <li>
-        {% if value is mapping or value is iterable and value is not string and value is not boolean %}
-          <details class="details box has-background-stack-shade is-grouped">
-            <summary>
-              <h4 class="has-text-uppercased has-text-weight-bold has-text-small has-half-opacity no-margin">{{ key }}</h4>
-            </summary>
-            {% if value is mapping %}
-              {{ render_dict(value) }}
-            {% elif value is iterable %}
-              <ul class="list has-text-small">
-                {% for val in value %}
-                  <li>{{ val }}</li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </details>
-        {% else %}
-          <div class="box has-background-stack-shade is-grouped">
-            <h4 class="has-text-uppercased has-text-weight-bold has-text-small no-margin">
-              <span class="dot is-blue no-margin-left has-margin-right"></span>
-              <span class="has-half-opacity">{{ key }}:</span> <span class="is-monospace">{{ key }}</span>
-            </h4>
-          </div>
-        {% endif %}
-      </li>
+    <li>
+      {% if value is mapping %}
+        <details>
+          <summary class="has-margin-bottom">
+            <span class="has-text-blue">{{ key }}:</span>
+            <span class="has-text-small">&#123;{{ value|length }}&#125;</span>
+          </summary>
+          {{ render_dict(value) }}
+        </details>
+      {% elif value is string %}
+        <p>
+          <span class="has-half-opacity">{{key}}:</span>
+          <span class="is-string">{{ value }}</span>
+        </p>
+      {% elif value is integer %}
+        <p>
+          <span class="has-half-opacity">{{ key }}:</span>
+          <span class="is-integer">{{ value }}</span>
+        </p>
+      {% elif value is boolean %}
+        <p>
+          <span class="has-half-opacity">{{ key }}:</span>
+          <span class="is-boolean">{{ value }}</span>
+        </p>
+      {% elif value is iterable %}
+        <details>
+          <summary>
+            <span class="is-array">{{ key }}:</span>
+            <span class="has-text-small">&#91;{{ value|length }}&#93;</span>
+          </summary>
+          <ul>
+            {% for val in value %}
+              <li>
+                <p>
+                  <span class="has-half-opacity">{{loop.index}}:</span>
+                  {{ val }}
+                </p>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% else %}
+        {{ key }}: {{ value }}
+      {% endif %}
+    </li>
     {% endfor %}
   </ul>
 {% endmacro %}

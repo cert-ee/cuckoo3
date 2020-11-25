@@ -50,14 +50,14 @@
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
         <nav class="tabbar has-background-transparent" data-enhance>
-          <a class="tabbar-link is-active" href="#tab-static">Static</a>
-          <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
+          <a class="tabbar-link" href="#tab-static">Static</a>
+          <a class="tabbar-link is-active" href="#tab-pefiles">PE Files</a>
           <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
         </nav>
 
         {# tab: static.overview #}
-        <div id="tab-static">
-          {% call ui_box(title="Target") %}
+        <div id="tab-static" hidden>
+          {% call ui_box(title="Target", collapsible=False) %}
             <div class="columns has-padding is-divided">
               <div class="column is-auto">
                 <div class="ratio-1-1">
@@ -79,7 +79,7 @@
         </div>
 
         {# tab: static.target/static.pe #}
-        <div id="tab-pefiles" hidden>
+        <div id="tab-pefiles">
 
           {# PE Timestamp / imphash #}
           <div class="columns is-divided">
@@ -98,7 +98,7 @@
           </div>
 
           {# PE Sections #}
-          {% call ui_box(title="PE Sections", has_padding=False) %}
+          {% call ui_box(title="PE Sections", has_padding=False, collapsed=True) %}
             {{ render_table(
                   data=pre.static.pe.pe_sections,
                   cols=["name","virtual_address","virtual_size","size_of_data","entropy"],
@@ -109,7 +109,7 @@
           {% endcall %}
 
           {# PE Resources #}
-          {% call ui_box(title="PE Resources", has_padding=False) %}
+          {% call ui_box(title="PE Resources", has_padding=False, collapsed=True) %}
             {{ render_table(
                   data=pre.static.pe.pe_resources,
                   cols=["name","offset","size","language","sublanguage","filetype"],
@@ -121,8 +121,14 @@
 
           {# PE Sigatures #}
           {% call ui_box(title="PE Signatures") %}
+            <div class="buttons-conjoined has-margin no-margin-bottom">
+              <button class="button is-beveled" title="Use dark syntax theme"><i class="fas fa-adjust"></i></button>
+              <button class="button is-beveled" title="Switch font style"><i class="fas fa-font"></i></button>
+              <button class="button is-beveled" title="Expand all sections"><i class="fas fa-plus-square"></i></button>
+              <button class="button is-beveled" title="Collapse all sections"><i class="fas fa-minus-square"></i></button>
+            </div>
             {% for signature in pre.static.pe.signatures %}
-              <div class="box has-background-light no-margin-top has-border has-shadow">
+              <div class="box has-background-light has-padding">
                 {{ render_dict(signature) }}
               </div>
             {% endfor %}
