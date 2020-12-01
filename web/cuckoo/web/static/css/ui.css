@@ -645,6 +645,7 @@ a.button, .control.is-file a.file-trigger {
   border-collapse: collapse;
 }
 .table th, .table td {
+  text-align: left;
   padding: 0.75rem;
 }
 .table th a, .table td a {
