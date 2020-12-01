@@ -599,6 +599,9 @@ a.button, .control.is-file a.file-trigger {
 .button.is-block, .control.is-file .is-block.file-trigger {
   display: block;
 }
+.button-icon {
+  pointer-events: none;
+}
 
 .buttons-conjoined {
   display: inline-block;
@@ -642,12 +645,14 @@ a.button, .control.is-file a.file-trigger {
   border-collapse: collapse;
 }
 .table th, .table td {
-  text-align: left;
   padding: 0.75rem;
 }
 .table th a, .table td a {
   color: inherit;
   text-decoration: none;
+}
+.table.has-border td {
+  border-bottom: 1px solid #CCCCCC;
 }
 .table thead th,
 .table tfoot td {
@@ -692,6 +697,10 @@ a.button, .control.is-file a.file-trigger {
 }
 .table td {
   font-size: 0.8em;
+}
+.table td.is-auto-width {
+  width: 1px;
+  white-space: nowrap;
 }
 .table thead tr {
   background-color: #FFFFFF;
@@ -744,6 +753,19 @@ a.button, .control.is-file a.file-trigger {
 }
 .table tbody tr.has-background-red:hover {
   background-color: #e60000;
+}
+.table tbody tr.separator {
+  background-color: #FFFFFF;
+  font-size: 0.9em;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-top: 0.0625rem solid #CCCCCC;
+  border-bottom: 0.0625rem solid #CCCCCC;
+  border: 0;
+  text-align: center;
+}
+.table tbody tr.separator:hover {
+  background-color: #FFFFFF;
 }
 .table.has-sticky-header, .table.has-sticky-footer {
   position: relative;
@@ -1413,11 +1435,13 @@ a.button, .control.is-file a.file-trigger {
   cursor: pointer;
 }
 
-.has-popover {
+.has-popover,
+.has-tooltip {
   position: relative;
 }
 
-.popover {
+.popover,
+.tooltip {
   position: absolute;
   background-color: #FFFFFF;
   color: #0F485A;
@@ -1427,35 +1451,63 @@ a.button, .control.is-file a.file-trigger {
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   transition: opacity 100ms linear, transform 100ms linear;
 }
-.popover:not(.in) {
+.popover.in,
+.tooltip.in {
+  z-index: 2;
+}
+.popover:not(.in),
+.tooltip:not(.in) {
   opacity: 0;
   pointer-events: none;
   transform: translateY(0.75rem);
 }
-.popover:after, .popover:before {
+.popover:after, .popover:before,
+.tooltip:after,
+.tooltip:before {
   content: "";
   position: absolute;
   pointer-events: none;
   height: 0;
   width: 0;
 }
-.popover.is-top {
+.popover.is-top,
+.tooltip.is-top {
   bottom: calc(100% + 0.75rem);
 }
-.popover.is-top:after, .popover.is-top:before {
+.popover.is-top:after, .popover.is-top:before,
+.tooltip.is-top:after,
+.tooltip.is-top:before {
   border: solid transparent;
   left: 50%;
   top: calc(100% + 1px);
 }
-.popover.is-top:after {
+.popover.is-top:after,
+.tooltip.is-top:after {
   border-top-color: #FFFFFF;
   border-width: 7px;
   margin-left: -7px;
 }
-.popover.is-top:before {
+.popover.is-top:before,
+.tooltip.is-top:before {
   border-top-color: #CCCCCC;
   border-width: 8px;
   margin-left: -8px;
+}
+
+.tooltip {
+  width: auto;
+  white-space: nowrap;
+  left: 50%;
+  top: calc(100% + 0.375rem);
+  transform: none;
+  font-size: 0.8rem;
+  font-weight: 400;
+  padding: 0.1875rem 0.375rem;
+  transition: opacity 100ms linear;
+  pointer-events: none;
+}
+.tooltip:not(.in) {
+  transform: none;
 }
 
 .json-expander {
@@ -1599,6 +1651,14 @@ a.button, .control.is-file a.file-trigger {
 }
 .visibility-hidden .chevron:before {
   content: "" !important;
+}
+
+.has-hover-fadein {
+  opacity: 0.5;
+  transition: opacity 100ms linear;
+}
+.has-hover-fadein:hover {
+  opacity: 1;
 }
 
 .no-padding, .field-block .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field-block .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]),

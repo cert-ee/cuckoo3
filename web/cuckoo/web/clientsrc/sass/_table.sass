@@ -7,11 +7,15 @@
 
   // shared styles for cells and column headers
   th, td
-    text-align: left
+    // text-align: left
     padding: $gap
     a
       color: inherit
       text-decoration: none
+
+  &.has-border
+    td
+      border-bottom: 1px solid $border
 
   // table cell (heading) styles, including support for sorting indication
   thead th,
@@ -57,6 +61,10 @@
   td
     font-size: .8em
 
+    &.is-auto-width
+      width: 1px
+      white-space: nowrap
+
   // table header styles
   thead
     tr
@@ -101,6 +109,18 @@
         color: $white
         &:hover
           background-color: shade($red, .1)
+
+      &.separator
+        background-color: $white
+        font-size: .9em
+        font-weight: 800
+        text-transform: uppercase
+        border-top: 0.0625rem solid $border
+        border-bottom: 0.0625rem solid $border
+        border: 0
+        text-align: center
+        &:hover
+          background-color: $white
 
   // sticky header/footer modifier - snaps the table heading to the top of the element
   &.has-sticky-header,

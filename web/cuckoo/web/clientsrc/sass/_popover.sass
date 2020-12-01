@@ -8,10 +8,12 @@
 [data-popover]:hover
   cursor: pointer
 
-.has-popover
+.has-popover,
+.has-tooltip
   position: relative
 
-.popover
+.popover,
+.tooltip
   position: absolute
   background-color: $white
   color: $dark
@@ -21,6 +23,8 @@
   box-shadow: 0px 2px 4px rgba($black, .1)
   transition: opacity 100ms linear, transform 100ms linear
 
+  &.in
+    z-index: 2
   &:not(.in)
     opacity: 0
     pointer-events: none
@@ -37,7 +41,7 @@
   &.is-top
     bottom: calc(100% + #{$gap})
     &:after, &:before
-      border : solid transparent
+      border: solid transparent
       left: 50%
       top: calc(100% + 1px)
     &:after
@@ -48,3 +52,18 @@
       border-top-color: $border
       border-width: 8px
       margin-left: -8px
+
+
+.tooltip
+  width: auto
+  white-space: nowrap
+  left: 50%
+  top: calc(100% + #{$gap/2})
+  transform: none
+  font-size: .8rem
+  font-weight: 400
+  padding: $gap/4 $gap/2
+  transition: opacity 100ms linear
+  pointer-events: none
+  &:not(.in)
+    transform: none

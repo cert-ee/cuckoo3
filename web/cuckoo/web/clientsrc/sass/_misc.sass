@@ -51,3 +51,11 @@
     // suspport fa-chevron-* icons
     .chevron:before
       content: "\f054" !important
+
+// creates a fade-in effect when hovered, useful when hiding secondary content
+// from the complete visual
+.has-hover-fadein
+  opacity: .5
+  transition: opacity 100ms linear
+  &:hover
+    opacity: 1

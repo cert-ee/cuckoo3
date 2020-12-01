@@ -147,7 +147,10 @@ function handlePageTabs(tabContext) {
   // hides all the referenced tabs before displaying the new one
   function hideAllRelatedTabs() {
     links.forEach(link => link.classList.remove('is-active'));
-    refs.forEach(ref => ref.setAttribute('hidden', true));
+    refs.forEach(ref => {
+      if(ref)
+        ref.setAttribute('hidden', true);
+    });
   }
 
   links.forEach(link => {
@@ -290,6 +293,40 @@ function handlePopover(trigger) {
       ev.preventDefault();
       document.body.click();
     });
+
+}
+
+/*
+ * Creates a tooltip
+ */
+function handleTooltip(elem) {
+
+  let tip;
+  const text = (elem.getAttribute('title') || elem.getAttribute('data-tooltip'));
+
+  const removeTip = t => setTimeout(() => {
+    t.classList.remove('in');
+  }, 100);
+
+  elem.classList.add('has-tooltip');
+
+  if(elem.getAttribute('title')) {
+    elem.dataset.title = elem.getAttribute('title');
+    elem.removeAttribute('title');
+  }
+
+  elem.addEventListener('mouseenter', ev => {
+    ev.stopPropagation();
+    tip = parseDOM(`<span class="tooltip is-bottom">${text}</span>`);
+    elem.appendChild(tip);
+    setTimeout(() => {
+      tip.classList.add('in');
+    }, 10);
+  }, false);
+
+  elem.addEventListener('mouseout', ev => {
+    removeTip(tip);
+  });
 
 }
 
@@ -456,4 +493,5 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.tabbar[data-enhance]', handlePageTabs);
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
+  applyHandler('[data-tooltip]', handleTooltip);
 });
