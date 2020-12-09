@@ -6,14 +6,14 @@ import os
 import queue
 import threading
 
-from cuckoo.common import db, analyses, task
+from cuckoo.common import analyses, task, targets
 from cuckoo.common.config import cfg
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths
 from cuckoo.common.strictcontainer import (
-    Analysis, Task, Identification, Pre
+    Analysis, Task, Identification, Pre, Post
 )
 from cuckoo.common.submit import SettingsMaker, SubmissionError
 
@@ -48,99 +48,86 @@ def handle_identification_done(worktracker):
     analysis = worktracker.analysis
 
     if analysis.settings.manual:
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.WAITING_MANUAL
+        analysis.state = analyses.States.WAITING_MANUAL
+        analyses.write_changes(analysis)
+        return
+
+    ident_path = AnalysisPaths.identjson(worktracker.analysis_id)
+    if not os.path.isfile(ident_path):
+        worktracker.log.error(
+            "Failed to read identification stage file",
+            error="File does not exist", filepath=ident_path
         )
-    else:
-        ident_path = AnalysisPaths.identjson(worktracker.analysis_id)
-        if not os.path.isfile(ident_path):
-            worktracker.log.error(
-                "Failed to read identification stage file",
-                error="File does not exist", filepath=ident_path
-            )
-            worktracker.errtracker.fatal_error(
-                "Failed to read identification stage file. File does not exist"
-            )
-            db.set_analysis_state(
-                worktracker.analysis_id, analyses.States.FATAL_ERROR
-            )
-            return
+        worktracker.errtracker.fatal_error(
+            "Failed to read identification stage file. File does not exist"
+        )
+        analysis.state = analyses.States.FATAL_ERROR
+        analyses.write_changes(analysis)
+        return
 
-        ident = Identification.from_file(ident_path)
-
-        allow_pre_analysis = False
-        if not ident.selected:
-            cancel = cfg("cuckoo", "state_control", "cancel_unidentified")
-            if not ident.identified and not cancel:
-                allow_pre_analysis = True
-            else:
-                newstate = analyses.States.NO_SELECTED
-                worktracker.log.debug(
-                    "Updating analysis state.", newstate=newstate
-                )
-                db.set_analysis_state(worktracker.analysis_id, newstate)
-
-        if ident.selected or allow_pre_analysis:
-            newstate = analyses.States.PENDING_PRE
+    ident = Identification.from_file(ident_path)
+    allow_pre_analysis = False
+    if not ident.selected:
+        # No target was selected. Check settings if this means we should
+        # still perform the pre analysis processing stage.
+        cancel = cfg("cuckoo", "state_control", "cancel_unidentified")
+        if not ident.identified and not cancel:
+            allow_pre_analysis = True
+        else:
+            newstate = analyses.States.NO_SELECTED
             worktracker.log.debug(
                 "Updating analysis state.", newstate=newstate
             )
-            db.set_analysis_state(worktracker.analysis_id, newstate)
-            started.processing_handler.pre_analysis(worktracker.analysis_id)
+
+            analysis.state = newstate
+            analyses.write_changes(analysis)
+
+    if ident.selected or allow_pre_analysis:
+        newstate = analyses.States.PENDING_PRE
+        worktracker.log.debug(
+            "Updating analysis state.", newstate=newstate
+        )
+        analysis.state = newstate
+        analyses.write_changes(analysis)
+        started.processing_handler.pre_analysis(worktracker.analysis_id)
 
 
 def handle_pre_done(worktracker):
     analysis = worktracker.analysis
 
-    # We currently only use the identified platforms and tags if the user
-    # did not supply either. TODO improve this and move logic to location
-    # where the analysis json is already being stored. TODO tags will be per
-    # platform/analysis machine. Combine tags when tasks are created
-    if not analysis.settings.manual and not analysis.settings.machines:
-        ident_path = AnalysisPaths.identjson(worktracker.analysis_id)
-        if not os.path.isfile(ident_path):
-            worktracker.log.error(
-                "Failed to read identified platforms",
-                error="Identification processing stage file does not exist.",
-                filepath=ident_path
-            )
-            worktracker.errtracker.fatal_error(
-                "Identification processing stage file does not exist."
-            )
-            db.set_analysis_state(
-                worktracker.analysis_id, analyses.States.FATAL_ERROR
-            )
-            return
-
-        ident = Identification.from_file(ident_path)
-        analyses.merge_settings_ident(analysis, ident)
-
-    # Write the final target to the analysis.json
     pre_path = AnalysisPaths.prejson(worktracker.analysis_id)
     if not os.path.isfile(pre_path):
         worktracker.log.error(
-            "Failed to read final target",
+            "Failed to pre processing stage file",
             error="Pre processing stage file does not exist.",
             filepath=pre_path
         )
         worktracker.errtracker.fatal_error(
             "Pre processing stage file does not exist."
         )
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.FATAL_ERROR
-        )
+        analysis.state = analyses.States.FATAL_ERROR
+        analyses.write_changes(analysis)
         return
 
     pre = Pre.from_file(pre_path)
-    analyses.set_final_target(analysis, pre.target)
 
-    # Write to disk here because the target will be read by the task runner.
-    # the task can start as soon as it is queued.
-    analysis.to_file_safe(
-        AnalysisPaths.analysisjson(worktracker.analysis_id)
-    )
+    # Update analysis settings of the final target using information identified
+    # during the identification phase.
+    analyses.merge_target_settings(analysis, pre.target)
+
+    # Set the final target in analysis.json
+    analysis.target = pre.target
+
+    # Update the analysis with the score of pre analysis
+    analyses.set_score(analysis, pre.score)
 
     worktracker.log.debug("Creating tasks for analysis.")
+    # It is possible that no tasks are created if the identified machine tags
+    # or platforms are not available. If autotag is enabled
+    # this can cause submitted analyses to then become non-runnable if the
+    # submitted settings are enriched with machine tags that no machine has.
+    # This is not a bug. This is the intended operation of auto tagging. It
+    # should stop analyses before creating tasks that are not useful to run.
     try:
         tasks, resource_errs = task.create_all(analysis)
     except task.TaskCreationError as e:
@@ -154,18 +141,20 @@ def handle_pre_done(worktracker):
             worktracker.errtracker.add_error(err)
             worktracker.log.warning("Task creation failed.", error=err)
 
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.FATAL_ERROR
-        )
+        analysis.state = analyses.States.FATAL_ERROR
+        analyses.write_changes(analysis)
         return
 
     for err in resource_errs:
         worktracker.errtracker.add_error(err)
         worktracker.log.warning("Task creation failed.", error=err)
 
-    db.set_analysis_state(
-        worktracker.analysis_id, analyses.States.TASKS_PENDING
-    )
+    analysis.state = analyses.States.TASKS_PENDING
+
+    # Write to disk here because the target will be read by the task runner.
+    # the task can start as soon as it is queued.
+    analyses.write_changes(analysis)
+
     task_queue.queue_many(tasks)
     started.scheduler.newtask()
 
@@ -188,23 +177,47 @@ def handle_manual_done(worktracker, settings_dict):
         )
         return
 
-    analyses.overwrite_settings(worktracker.analysis, settings)
-
-    # Write the new settings to the analysis file
-    worktracker.analysis.to_file_safe(
-        AnalysisPaths.analysisjson(worktracker.analysis_id)
-    )
+    worktracker.analysis.settings = settings
 
     # Update the analysis to the new pending pre state and queue it for
     # pre analysis processing.
-    db.set_analysis_state(worktracker.analysis_id, analyses.States.PENDING_PRE)
+    worktracker.analysis.state = analyses.States.PENDING_PRE
+
+    # Write the new settings to the analysis file
+    analyses.write_changes(worktracker.analysis)
+
     started.processing_handler.pre_analysis(worktracker.analysis_id)
+
+def handle_post_done(worktracker):
+    report_path = TaskPaths.report(worktracker.task_id)
+    if not os.path.isfile(report_path):
+        worktracker.log.error(
+            "Failed to read post processing report",
+            error="File does not exist", filepath=report_path
+        )
+        worktracker.errtracker.fatal_error(
+            "Post processing report file does not exist"
+        )
+        worktracker.task.state = task.States.FATAL_ERROR
+        task.write_changes(worktracker.task)
+        return
+
+    post = Post.from_file(report_path)
+    analyses.set_score(worktracker.analysis, post.score)
+    worktracker.task.score = post.score
+    worktracker.task.state = task.States.REPORTED
+
+    # Update the score of this task in the analysis json.
+    worktracker.analysis.set_task_score(worktracker.task.id, post.score)
+
+    worktracker.log.info("Setting task to reported.")
+    task.write_changes(worktracker.task)
+    update_final_analysis_state(worktracker)
+    analyses.write_changes(worktracker.analysis)
 
 def update_final_analysis_state(worktracker):
     if not task.has_unfinished_tasks(worktracker.analysis_id):
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.FINISHED
-        )
+        worktracker.analysis.state = analyses.States.FINISHED
 
 def set_next_state(worktracker, worktype):
     if worktype == "identification":
@@ -216,10 +229,9 @@ def set_next_state(worktracker, worktype):
         handle_pre_done(worktracker)
 
     elif worktype == "post":
-        worktracker.log.info("Setting task to reported.")
         task.merge_processing_errors(worktracker.task)
-        task.set_db_state(worktracker.task.id, task.States.REPORTED)
-        update_final_analysis_state(worktracker)
+        handle_post_done(worktracker)
+
 
     else:
         raise ValueError(
@@ -231,22 +243,22 @@ def set_failed(worktracker, worktype):
     if worktype == "identification":
         worktracker.log.error("Analysis identification stage failed")
         analyses.merge_processing_errors(worktracker.analysis)
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.FATAL_ERROR
-        )
+        worktracker.analysis.state = analyses.States.FATAL_ERROR
+        analyses.write_changes(worktracker.analysis)
 
     elif worktype == "pre":
         worktracker.log.error("Analysis pre stage failed")
         analyses.merge_processing_errors(worktracker.analysis)
-        db.set_analysis_state(
-            worktracker.analysis_id, analyses.States.FATAL_ERROR
-        )
+        worktracker.analysis.state = analyses.States.FATAL_ERROR
+        analyses.write_changes(worktracker.analysis)
 
     elif worktype == "post":
         worktracker.log.error("Task post stage failed")
         task.merge_processing_errors(worktracker.task)
-        task.set_db_state(worktracker.task.id, task.States.FATAL_ERROR)
+        worktracker.task.state = task.States.FATAL_ERROR
+        task.write_changes(task)
         update_final_analysis_state(worktracker)
+        analyses.write_changes(worktracker.analysis)
 
     else:
         raise ValueError(
@@ -259,7 +271,8 @@ def handle_task_done(worktracker):
     task.merge_run_errors(worktracker.task)
 
     worktracker.log.debug("Queueing task for post analysis processing.")
-    task.set_db_state(worktracker.task_id, task.States.PENDING_POST)
+    worktracker.task.state = task.States.PENDING_POST
+    task.write_changes(worktracker.task)
     started.processing_handler.post_analysis(
         worktracker.analysis_id, worktracker.task_id
     )
@@ -268,11 +281,13 @@ def set_task_failed(worktracker):
     worktracker.log.info("Setting task to state failed")
     started.scheduler.task_ended(worktracker.task_id)
     task.merge_run_errors(worktracker.task)
-    task.set_db_state(worktracker.task_id, task.States.FATAL_ERROR)
+    worktracker.task.state = task.States.FATAL_ERROR
+    task.write_changes(worktracker.task)
 
 def set_task_running(worktracker):
     worktracker.log.debug("Setting task to state running")
-    task.set_db_state(worktracker.task_id, task.States.RUNNING)
+    worktracker.task.state = task.States.RUNNING
+    task.write_changes(worktracker.task)
 
 class _WorkTracker:
 
@@ -334,11 +349,9 @@ class _WorkTracker:
                 )
 
         if self.analysis and self.analysis.was_updated:
-            self.analysis.to_file_safe(
-                AnalysisPaths.analysisjson(self.analysis_id)
-            )
+            analyses.write_changes(self.analysis)
         elif self.task and self.task.was_updated:
-            self.task.to_file_safe(TaskPaths.taskjson(self.task_id))
+            task.write_changes(self.task)
 
 
 class StateControllerWorker(threading.Thread):
@@ -376,7 +389,8 @@ class StateControllerWorker(threading.Thread):
 class StateController(UnixSocketServer):
 
     # Keep amount of worker to 1 for now to prevent db locking issues with
-    # sqlite. 1 thread should be enough.
+    # sqlite. 1 thread should be enough. Also because not all steps, such
+    # as writing scores from tasks to analyses can cause race conditions.
     NUM_STATE_CONTROLLER_WORKERS = 1
     
     def __init__(self, controller_sock_path):
