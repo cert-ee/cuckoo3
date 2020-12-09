@@ -9,7 +9,7 @@ import zipfile
 import sflock
 
 from cuckoo.common.log import set_logger_level
-from cuckoo.common.storage import AnalysisPaths
+from cuckoo.common.storage import AnalysisPaths, Binaries, InMemoryFile, Paths
 from cuckoo.common.strictcontainer import TargetFile
 
 from ..abtracts import Processor
@@ -153,6 +153,10 @@ class CreateZip(Processor):
                 f"Path: {target.extrpath} not found in container. No file to "
                 f"unpack"
             )
+
+        # Store the unpacked file in the binaries folder so it can be retrieved
+        # by hash when needed.
+        Binaries.store(Paths.binaries(), InMemoryFile(selected_file.contents))
 
         # Normalize the lowest parent of the target to a zipfile. This
         # is the zipfile that will be uploaded to the analysis machine.
