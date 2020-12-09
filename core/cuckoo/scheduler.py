@@ -25,7 +25,7 @@ class _TaskQueue:
     _queued_task = namedtuple(
         "QueuedTask",
         ["id", "analysis_id", "priority", "created_on", "platform",
-         "os_version", "kind"]
+         "os_version", "machine_tags", "kind"]
     )
 
     def __init__(self):
@@ -65,7 +65,8 @@ class _TaskQueue:
                         priority=task["priority"],
                         created_on=task["created_on"],
                         platform=task["platform"],
-                        os_version=task["os_version"]
+                        os_version=task["os_version"],
+                        machine_tags=task["machine_tags"]
                     )
                 else:
                     self._add_entry(
@@ -75,17 +76,18 @@ class _TaskQueue:
                         priority=task.priority,
                         created_on=task.created_on,
                         platform=task.platform,
-                        os_version=task.os_version
+                        os_version=task.os_version,
+                        machine_tags=task.machine_tags
                     )
             self._sort_queue()
 
     def _add_entry(self, task_id, analysis_id, kind, priority, created_on,
-                   platform, os_version=""):
+                   platform, os_version="", machine_tags=[]):
         with self._lock:
             self._queue.append(self._queued_task(
                 id=task_id, analysis_id=analysis_id, priority=priority,
                 created_on=int(created_on.timestamp()), platform=platform,
-                kind=kind, os_version=os_version
+                kind=kind, os_version=os_version, machine_tags=machine_tags
             ))
 
     def find_work(self):
@@ -94,7 +96,7 @@ class _TaskQueue:
             for index, task in enumerate(self._queue):
                 machine = acquire_available(
                     task_id=task.id, platform=task.platform,
-                    os_version=task.os_version
+                    os_version=task.os_version, tags=task.machine_tags
                 )
                 if machine:
                     return self._queue.pop(index), machine
