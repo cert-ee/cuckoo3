@@ -8,7 +8,7 @@ import os
 from cuckoo.common.storage import TaskPaths
 
 from cuckoo.processing.abtracts import EventConsumer
-from cuckoo.processing.translate.events import Kinds
+from cuckoo.processing.event.events import Kinds
 
 class EventJSONFiles(EventConsumer):
 
