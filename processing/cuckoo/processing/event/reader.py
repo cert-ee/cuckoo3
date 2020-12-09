@@ -11,7 +11,8 @@ from cuckoo.processing.abtracts import LogFileTranslator, Safelist
 class NormalizedEventReader:
 
     _translator_classes = enumerate_plugins(
-        "cuckoo.processing.translate.threemon", globals(), LogFileTranslator
+        "cuckoo.processing.event.translate.threemon", globals(),
+        LogFileTranslator
     )
 
     _safelist_instances = []
@@ -62,7 +63,7 @@ class NormalizedEventReader:
                 translator_class=translator_class
             )
 
-            yield translator_class(filepath)
+            yield translator_class(filepath, self.taskctx)
 
     def read_events(self):
 

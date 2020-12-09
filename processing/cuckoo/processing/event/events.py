@@ -61,9 +61,6 @@ _FILE_ACTION_SIMPLIFIED = {
     FileActions.RENAME: "rename",
 }
 
-
-from . import filetools
-
 class File(NormalizedEvent):
 
     __slots__ = ("action", "pid", "procid", "srcpath", "dstpath", "status",
@@ -84,21 +81,24 @@ class File(NormalizedEvent):
         self.srcpath_normalized = srcpath_normalized
         self.dstpath_normalized = dstpath_normalized
 
-
         self.status = status
 
         self.effect = _FILE_ACTION_EFFECT.get(action, "file_read")
         self.description = FILE_ACTION_DESC.get(action, "")
 
     def pattern_scan(self, pattern_scanner):
-        pattern_scanner.scan(
-            self.srcpath_normalized, self.srcpath, self, self.kind,
-            event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
-        )
-
         if self.action == FileActions.RENAME:
             pattern_scanner.scan(
                 self.dstpath_normalized, self.dstpath, self, self.kind,
+                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} dst"
+            )
+            pattern_scanner.scan(
+                self.dstpath_normalized, self.srcpath, self, self.kind,
+                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} src"
+            )
+        else:
+            pattern_scanner.scan(
+                self.srcpath_normalized, self.srcpath, self, self.kind,
                 event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
             )
 
@@ -126,7 +126,10 @@ class Process(NormalizedEvent):
         "status", "pid", "ppid", "procid", "parentprocid", "image",
         "commandline", "exit_code", "commandline_normalized"
     )
-    dictdump = NormalizedEvent.dictdump + __slots__
+    dictdump = NormalizedEvent.dictdump + (
+        "status", "pid", "ppid", "procid", "parentprocid", "image",
+        "commandline", "exit_code"
+    )
     kind = Kinds.PROCESS
 
     def __init__(self, ts, status, pid, ppid, procid, parentprocid,
@@ -146,6 +149,9 @@ class Process(NormalizedEvent):
         self.effect = PROCESS_ACTION_EFFECT.get(status, "")
 
     def pattern_scan(self, pattern_scanner):
+        if self.status != ProcessStatuses.CREATED:
+            return
+
         pattern_scanner.scan(
             self.commandline_normalized, self.commandline, self, "commandline"
         )
@@ -239,8 +245,6 @@ _REGISTRY_ACTION_SIMPLIFIED= {
     RegistryActions.DELETE_VALUE_KEY: "delete",
     RegistryActions.DELETE_KEY: "delete",
 }
-
-from . import registrytools
 
 class Registry(NormalizedEvent):
 
