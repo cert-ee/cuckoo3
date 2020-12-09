@@ -26,5 +26,14 @@ typeloaders = {
             }
         ),
         "log_unidentified": config.Boolean(default_val=False)
+    },
+    "virustotal.yaml": {
+        "enabled": config.Boolean(default_val=True),
+        "key": config.String(
+            default_val="a0283a2c3d55728300d064874239b5346fb991317e8449fe43c902879d758088",
+            sensitive=True
+        ),
+        "min_suspicious": config.Int(default_val=3, min_value=1),
+        "min_malicious": config.Int(default_val=5, min_value=1)
     }
 }
