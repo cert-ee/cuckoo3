@@ -44,18 +44,25 @@ class StrictContainer:
 
         self._load()
         self._updated = False
+        self._updated_fields = []
 
     @property
     def was_updated(self):
         return self._updated
 
-    def set_updated(self):
+    @property
+    def updated_fields(self):
+        return self._updated_fields
+
+    def set_updated(self, fields=[]):
         self._updated = True
+        self._updated_fields.extend(fields)
         if self._parent:
             self._parent.set_updated()
 
     def clear_updated(self):
         self._updated = False
+        self._updated_fields = []
         if self._parent:
             self._parent.clear_updated()
 
@@ -227,11 +234,14 @@ class StrictContainer:
 
         return super().__getattribute__(item)
 
+    def __getitem__(self, item):
+        return self.__getattr__(item)
+
     def __setattr__(self, key, value):
         # TODO add type checking
         if key in self.__dict__.get("_loaded", {}):
             self._loaded[key] = value
-            self.set_updated()
+            self.set_updated(fields=[key])
         else:
             super().__setattr__(key, value)
 
@@ -244,7 +254,6 @@ class Settings(StrictContainer):
         "dump_memory": bool,
         "priority": int,
         "options": dict,
-        "machine_tags": list,
         "platforms": list,
         "machines": list,
         "extrpath": list,
@@ -262,7 +271,7 @@ class Errors(StrictContainer):
     def merge_errors(self, errors_container):
         self.errors.extend(errors_container.errors)
         self.fatal.extend(errors_container.fatal)
-        self.set_updated()
+        self.set_updated(["errors", "fatal"])
 
 class SubmittedFile(StrictContainer):
 
@@ -296,14 +305,16 @@ class Task(StrictContainer):
         "id": str,
         "analysis_id": str,
         "kind": str,
+        "state": str,
         "number": int,
+        "score": int,
         "platform": str,
         "os_version": str,
         "machine_tags": list,
         "machine": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("machine", "machine_tags", "os_version", "errors")
+    ALLOW_EMPTY = ("machine", "machine_tags", "os_version", "errors", "score")
 
 class TargetFile(StrictContainer):
 
@@ -312,7 +323,6 @@ class TargetFile(StrictContainer):
         "filename": str,
         "orig_filename": str,
         "platforms": list,
-        "machine_tags": list,
         "size": int,
         "filetype": str,
         "media_type": str,
@@ -322,7 +332,7 @@ class TargetFile(StrictContainer):
         "extrpath": list,
         "container": bool
     }
-    ALLOW_EMPTY = ("extrpath", "machine_tags")
+    ALLOW_EMPTY = ("extrpath",)
 
     @property
     def target(self):
@@ -333,10 +343,9 @@ class TargetURL(StrictContainer):
     PARENT_KEYVAL = ("category", "url")
     FIELDS = {
         "url": str,
-        "platforms": list,
-        "machine_tags": list
+        "platforms": list
     }
-    ALLOW_EMPTY = ("machine_tags", "platforms")
+    ALLOW_EMPTY = ("platforms",)
 
     @property
     def target(self):
@@ -356,22 +365,50 @@ class Identification(StrictContainer):
 
 class Pre(StrictContainer):
     FIELDS = {
+        "analysis_id": str,
+        "score": int,
+        "signatures": list,
         "target": (TargetFile, TargetURL),
         "category": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("errors",)
+    ALLOW_EMPTY = ("errors", "signatures")
+
+class Post(StrictContainer):
+
+    FIELDS = {
+        "task_id": str,
+        "score": int,
+        "signatures": list,
+        "ttps": list,
+        "tags": list
+    }
 
 class Analysis(StrictContainer):
 
     FIELDS = {
         "id": str,
         "kind": str,
+        "score": int,
+        "state": str,
         "settings": Settings,
         "created_on": datetime.datetime,
         "category": str,
         "submitted": (SubmittedFile, SubmittedURL),
         "target": (TargetFile, TargetURL),
         "errors": Errors,
+        "tasks": list
     }
-    ALLOW_EMPTY = ("errors", "target")
+    ALLOW_EMPTY = ("errors", "target", "score", "tasks")
+
+    def set_task_score(self, task_id, score):
+        for task in self.tasks:
+            if task["id"] == task_id:
+                task["score"] = score
+
+                self.set_updated(["tasks"])
+                break
+
+    def update_settings(self, **kwargs):
+        self.settings.update(kwargs)
+        self.set_updated(["settings"])
