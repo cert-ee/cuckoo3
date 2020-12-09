@@ -88,8 +88,9 @@ class LogFileTranslator:
     name = ""
     supports = ("",)
 
-    def __init__(self, log_path):
+    def __init__(self, log_path, taskctx):
         self.log_path = log_path
+        self._taskctx = taskctx
         self._fp = None
 
     @classmethod
@@ -150,6 +151,9 @@ class EventConsumer:
 
     def use_event(self, event):
         raise NotImplementedError
+
+    def finalize(self):
+        pass
 
     def cleanup(self):
         pass
