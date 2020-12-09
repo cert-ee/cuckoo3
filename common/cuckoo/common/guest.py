@@ -466,7 +466,7 @@ class TmStage(StagerHelper):
         # Very ugly check until we can properly separate info, warn, and fatal
         # log messages. All messages are now in stderr. TODO fix
         for line in stderr.split("\n"):
-            if "Failed to" in line:
+            if "Failed to" in line or "Payload error" in line:
                 if "image=" not in line and "command=" not in line:
                     raise PayloadExecFailed(
                         f"Payload execution failed: {line}. {stderr}"
