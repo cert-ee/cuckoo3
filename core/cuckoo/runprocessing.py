@@ -100,7 +100,7 @@ class WorkReceiver(UnixSocketServer):
         cuckoocwd.set(self.cuckoocwd)
         init_global_logging(
             self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
-            warningsonly=["elasticsearch"]
+            warningsonly=["elasticsearch", "asyncio"]
         )
 
         log.debug("Loading configuration files", worker=self.name)
