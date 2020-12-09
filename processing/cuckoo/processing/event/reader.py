@@ -6,7 +6,7 @@ import os
 
 from cuckoo.common.storage import TaskPaths
 from cuckoo.common.packages import enumerate_plugins
-from ..abtracts import LogFileTranslator, Safelist
+from cuckoo.processing.abtracts import LogFileTranslator, Safelist
 
 class NormalizedEventReader:
 

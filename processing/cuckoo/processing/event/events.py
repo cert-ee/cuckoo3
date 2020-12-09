@@ -19,6 +19,8 @@ class NormalizedEvent:
     def to_dict(self):
         return {k: getattr(self, k) for k in self.dictdump}
 
+    def pattern_scan(self, pattern_scanner):
+        pass
 
 class FileActions:
     OPEN_READ = "open_read"
@@ -49,27 +51,56 @@ _FILE_ACTION_EFFECT = {
     FileActions.RENAME: "file_renamed",
 }
 
+_FILE_ACTION_SIMPLIFIED = {
+    FileActions.OPEN_READ: "read",
+    FileActions.OPEN_MODIFY: "write",
+    FileActions.CREATE_READ: "write",
+    FileActions.CREATE_MODIFY: "write",
+    FileActions.TRUNCATE: "delete",
+    FileActions.DELETE: "delete",
+    FileActions.RENAME: "rename",
+}
+
+
+from . import filetools
 
 class File(NormalizedEvent):
 
-    __slots__ = ("action", "pid", "procid", "srcpath", "dstpath", "status")
+    __slots__ = ("action", "pid", "procid", "srcpath", "dstpath", "status",
+                 "srcpath_normalized", "dstpath_normalized")
     dictdump = NormalizedEvent.dictdump + (
         "action", "pid", "procid", "srcpath", "dstpath"
     )
     kind = Kinds.FILE
 
     def __init__(self, ts, action, pid, procid, srcpath, dstpath,
-                 status):
+                 status, srcpath_normalized, dstpath_normalized):
         self.ts = ts
         self.action = action
         self.pid = pid
         self.procid = procid
         self.srcpath = srcpath
         self.dstpath = dstpath
+        self.srcpath_normalized = srcpath_normalized
+        self.dstpath_normalized = dstpath_normalized
+
+
         self.status = status
 
         self.effect = _FILE_ACTION_EFFECT.get(action, "file_read")
         self.description = FILE_ACTION_DESC.get(action, "")
+
+    def pattern_scan(self, pattern_scanner):
+        pattern_scanner.scan(
+            self.srcpath_normalized, self.srcpath, self, self.kind,
+            event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
+        )
+
+        if self.action == FileActions.RENAME:
+            pattern_scanner.scan(
+                self.dstpath_normalized, self.dstpath, self, self.kind,
+                event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
+            )
 
 class ProcessStatuses:
     EXISTING = "existing"
@@ -93,13 +124,13 @@ class Process(NormalizedEvent):
 
     __slots__ = (
         "status", "pid", "ppid", "procid", "parentprocid", "image",
-        "commandline", "exit_code"
+        "commandline", "exit_code", "commandline_normalized"
     )
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.PROCESS
 
     def __init__(self, ts, status, pid, ppid, procid, parentprocid,
-                 image, commandline, exit_code):
+                 image, commandline, exit_code, commandline_normalized):
         self.ts = ts
         self.status = status
         self.pid = pid
@@ -108,10 +139,16 @@ class Process(NormalizedEvent):
         self.parentprocid = parentprocid
         self.image = image
         self.commandline = commandline
+        self.commandline_normalized = commandline_normalized
         self.exit_code = exit_code
 
         self.description = PROCESS_STATUS_DESC.get(status, "")
         self.effect = PROCESS_ACTION_EFFECT.get(status, "")
+
+    def pattern_scan(self, pattern_scanner):
+        pattern_scanner.scan(
+            self.commandline_normalized, self.commandline, self, "commandline"
+        )
 
 
 class RegistryActions:
@@ -182,10 +219,34 @@ REGISTRY_ACTION_EFFECT = {
     RegistryActions.DELETE_KEY: "key_deleted",
 }
 
+_REGISTRY_ACTION_SIMPLIFIED= {
+    RegistryActions.CREATE_KEY: "write",
+    RegistryActions.CREATE_KEY_EX: "write",
+    RegistryActions.LOADKEY: "write",
+    RegistryActions.ENUMERATE_KEY: "read",
+    RegistryActions.ENUMERATE_VALUE_KEY: "read",
+    RegistryActions.OPEN_KEY: "read",
+    RegistryActions.OPEN_KEY_EX: "read",
+    RegistryActions.QUERY_KEY: "read",
+    RegistryActions.QUERY_KEY_SECURITY: "read",
+    RegistryActions.QUERY_MULTIPLE_VALUE_KEY: "read",
+    RegistryActions.QUERY_VALUE_KEY: "read",
+    RegistryActions.RENAME_KEY: "rename",
+    RegistryActions.SET_INFORMATION_KEY: "write",
+    RegistryActions.SET_KEY_SECURITY: "write",
+    RegistryActions.SET_VALUE: "write",
+    RegistryActions.UNLOAD_KEY: "delete",
+    RegistryActions.DELETE_VALUE_KEY: "delete",
+    RegistryActions.DELETE_KEY: "delete",
+}
+
+from . import registrytools
+
 class Registry(NormalizedEvent):
 
     __slots__ = (
-        "action", "status", "pid", "procid", "path", "value", "valuetype"
+        "action", "status", "pid", "procid", "path", "value", "valuetype",
+        "path_normalized"
     )
     dictdump = NormalizedEvent.dictdump + (
         "action", "status", "pid", "procid", "path", "valuetype"
@@ -193,18 +254,26 @@ class Registry(NormalizedEvent):
     kind = Kinds.REGISTRY
 
     def __init__(self, ts, action, status, pid, procid, path, value,
-                 valuetype):
+                 valuetype, path_normalized):
         self.ts = ts
         self.action = action
         self.status = status
         self.pid = pid
         self.procid = procid
         self.path = path
+        self.path_normalized = path_normalized
         self.value = value
         self.valuetype = valuetype
 
+
         self.effect = REGISTRY_ACTION_EFFECT.get(action, "key_read")
         self.description = REGISTRY_ACTION_DESC.get(action, "")
+
+    def pattern_scan(self, pattern_scanner):
+        pattern_scanner.scan(
+            self.path_normalized, self.path, self, self.kind,
+            event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action)
+        )
 
 
 class ProcessInjectActions:
@@ -273,6 +342,12 @@ _MUTANT_ACTION_EFFECT = {
     MutantActions.OPEN: "mutant_opened"
 }
 
+_MUTANT_ACTION_SIMPLIFIED = {
+    MutantActions.CREATE: "created",
+    MutantActions.OPEN: "open"
+}
+
+
 class Mutant(NormalizedEvent):
 
     __slots__ = ("action", "status", "pid", "procid", "path",)
@@ -289,3 +364,9 @@ class Mutant(NormalizedEvent):
 
         self.description = MUTANT_ACTION_DESC.get(action, "")
         self.effect = _MUTANT_ACTION_EFFECT.get(action, "")
+
+    def pattern_scan(self, pattern_scanner):
+        pattern_scanner.scan(
+            self.path, self.path, self, "mutant",
+            event_subtype=_MUTANT_ACTION_SIMPLIFIED.get(self.action)
+        )

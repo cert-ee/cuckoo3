@@ -6,12 +6,12 @@ from google.protobuf import message
 
 from cuckoo.processing import abtracts
 
+
+from .. import registrytools, filetools, processtools
 from . import (
-    debug_pb2, file_pb2, inject_pb2, mutant_pb2, network_pb2, notification_pb2,
-    process_pb2, registry_pb2, suspicious_pb2, thread_pb2, vminfo_pb2,
-    whois_pb2
+    file_pb2, inject_pb2, mutant_pb2, network_pb2, process_pb2, registry_pb2
 )
-from ..events import (
+from cuckoo.processing.event.events import (
     File, FileActions, Process, ProcessStatuses, Registry, RegistryActions,
     RegistryValueTypes, REGISTRY_ACTION_EFFECT, ProcessInjection,
     ProcessInjectActions, NetworkFlow, Mutant, MutantActions
@@ -39,7 +39,9 @@ def _translate_file_event(threemon_file):
         ts=threemon_file.ts, action=normalized_action,
         pid=threemon_file.pid, procid=threemon_file.procid,
         srcpath=threemon_file.srcpath, dstpath=threemon_file.dstpath,
-        status=threemon_file.status
+        status=threemon_file.status,
+        srcpath_normalized=filetools.normalize_winpath(threemon_file.srcpath),
+        dstpath_normalized=filetools.normalize_winpath(threemon_file.dstpath)
     )
 
 
@@ -61,7 +63,10 @@ def _translate_process_event(threemon_process):
         procid=threemon_process.procid,
         parentprocid=threemon_process.parentprocid,
         image=threemon_process.image, commandline=threemon_process.command,
-        exit_code=threemon_process.exit_status
+        exit_code=threemon_process.exit_status,
+        commandline_normalized=processtools.normalize_wincommandline(
+            threemon_process.command, threemon_process.image
+        )
     )
 
 _REGISTRY_ACTION_TRANSLATE = {
@@ -159,7 +164,10 @@ def _translate_registry_event(threemon_registry):
         ts=threemon_registry.ts, action=normalized_action,
         status=threemon_registry.status, pid=threemon_registry.pid,
         procid=threemon_registry.procid, path=threemon_registry.path,
-        value=val, valuetype=valuetype
+        value=val, valuetype=valuetype,
+        path_normalized=registrytools.normalize_winregistry(
+            threemon_registry.path
+        )
     )
 
 _INJECTION_ACTION_TRANSLATE = {
