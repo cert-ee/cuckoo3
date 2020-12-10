@@ -66,5 +66,6 @@ class JSONDump(Reporter):
             "score": self.ctx.signature_tracker.score,
             "signatures": self.ctx.signature_tracker.signatures_to_dict(),
             "ttps": self.ctx.ttp_tracker.ttps,
-            "tags": self.ctx.tag_tracker.tags
+            "tags": self.ctx.tag_tracker.tags,
+            "processes": self.ctx.process_tracker.process_dictlist()
         }).to_file(TaskPaths.report(self.ctx.task.id))

@@ -61,6 +61,21 @@ class Process:
     def mark_tracked(self):
         self.tracked = True
 
+    def to_dict(self):
+        return {
+            "pid": self.pid,
+            "ppid": self.ppid,
+            "procid": self.procid,
+            "parent_procid": self.parent_procid,
+            "image": self.image,
+            "name": self.process_name,
+            "commandline": self.commandline,
+            "tracked": self.tracked,
+            "state": self.state,
+            "start_ts": self.start_ts,
+            "end_ts": self.end_ts
+        }
+
     def __str__(self):
         return f"<pid={self.pid}, ppid={self.ppid}, procid={self.procid}, " \
                f"parent_procid={self.parent_procid}, image={self.image}, " \
@@ -118,3 +133,13 @@ class ProcessTracker:
 
     def lookup_procid(self, pid):
         return self._pid_procid.get(pid)
+
+    def process_dictlist(self, tracked_only=True):
+        plist = []
+        for p in self._procid_proc.values():
+            if tracked_only and not p.tracked:
+                continue
+
+            plist.append(p.to_dict())
+
+        return plist
