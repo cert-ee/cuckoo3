@@ -17,7 +17,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path("", include("cuckoo.web.dashboard.urls")),
-    path("reports/", include("cuckoo.web.reports.urls")),
+    path("analyses/", include("cuckoo.web.analyses.urls")),
     path("analysis/", include("cuckoo.web.analysis.urls")),
     path("submit/", include("cuckoo.web.submit.urls")),
     path("search/", include("cuckoo.web.search.urls")),

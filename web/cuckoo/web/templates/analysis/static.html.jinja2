@@ -1,7 +1,7 @@
 {% extends "base.html.jinja2" %}
-{% set active_page = "reports" %}
+{% set active_page = "analyses" %}
 {% set report_page = "static" %}
-{% set title = "Report - static analysis" %}
+{% set title = "Analysis - static analysis" %}
 
 {% from 'macros.html.jinja2' import render_table, render_dict, ui_box %}
 
@@ -42,7 +42,7 @@
   <div class="container is-fixed">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
-        {% include "report/partial/sidebar.html.jinja2" %}
+        {% include "analysis/partial/sidebar.html.jinja2" %}
       </aside>
       <section class="column has-padding">
 

@@ -203,7 +203,7 @@
         if(error) {
           handleError(error);
         } else {
-          window.location = '/reports';
+          window.location = '/analyses';
         }
       });
 

@@ -14,7 +14,7 @@
 | `/submit`             | Sample submission form        | `submit/index.html`      |
 | `/submit/prepare`     | Analysis preparation form     | `submit/prepare.html`    |
 | `/submit/processing`  | Analysis processing view      | `submit/processing.html` |
-| `/reports`            | Reports overview              | `index.html`             |
+| `/analyses`           | Analyses overview             | `index.html`             |
 | `/search`             | Result searching with filters | `index.html`             |
 | `/settings`           | Application configuration     | `index.html`             |
 | `/overview`           | UI kit reference              | `overview.html`          |

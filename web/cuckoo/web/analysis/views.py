@@ -19,23 +19,19 @@ def index(request, analysis_id):
         return HttpResponseServerError(str(e))
 
     return render(
-        request, template_name="report/index.html.jinja2",
-        context={"analysis": analysis.to_dict()}
+        request, template_name="analysis/index.html.jinja2",
+        context={"analysis": analysis.to_dict(), "analysis_id": analysis_id}
     )
 
 def static(request, analysis_id):
-    path = os.getenv("PRE_REPORT")
-    if not path or not os.path.isfile(path):
-        return HttpResponseNotFound(f"Not found: {path}")
-
     try:
-        pre = Pre.from_file(path)
+        pre = Pre.from_file(AnalysisPaths.prejson(analysis_id))
     except FileNotFoundError:
         return HttpResponseNotFound()
     except (ValueError, KeyError, TypeError) as e:
         return HttpResponseServerError(str(e))
 
     return render(
-        request, template_name="report/static.html.jinja2",
-        context={"pre": pre.to_dict()}
+        request, template_name="analysis/static.html.jinja2",
+        context={"pre": pre.to_dict(), "analysis_id": analysis_id}
     )

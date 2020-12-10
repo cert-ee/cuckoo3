@@ -31,7 +31,7 @@ def index(request):
         return HttpResponseBadRequest(str(e))
 
     return render(
-        request, template_name="reports/index.html.jinja2",
+        request, template_name="analyses/index.html.jinja2",
         context={
             "analyses": analyses_list,
             "offset": offset,
