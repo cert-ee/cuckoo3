@@ -44,6 +44,7 @@ setuptools.setup(
         "sflock",
         "sqlalchemy>=1.3.13, <1.4",
         "elasticsearch>=7.8.1, <8.0",
-        "elasticsearch-dsl>=7.2.1, <7.3"
+        "elasticsearch-dsl>=7.2.1, <7.3",
+        "vt-py>=0.5.4, <0.6"
     ]
 )

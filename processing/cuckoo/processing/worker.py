@@ -12,7 +12,12 @@ from .errors import (
     PluginError, PluginWorkerError, CancelProcessing, CancelReporting
 )
 
-from .stage.post import NormalizedEventReader
+from cuckoo.processing.event.reader import NormalizedEventReader
+
+from .tag import TagTracker
+from .ttp import TTPTracker
+from .signatures.signature import SignatureTracker
+from .event.processtools import ProcessTracker
 
 class ProcessingResult:
 
@@ -28,6 +33,9 @@ class ProcessingResult:
     def get(self, key, default=None):
         return self._result.get(key, default)
 
+    def __contains__(self, item):
+        return item in self._result
+
 class ProcessingContext:
 
     def __init__(self, analysis_id, logger):
@@ -38,6 +46,12 @@ class ProcessingContext:
 
         self.analysis = Analysis.from_file(
             AnalysisPaths.analysisjson(analysis_id)
+        )
+
+        self.ttp_tracker = TTPTracker()
+        self.tag_tracker = TagTracker()
+        self.signature_tracker = SignatureTracker(
+            tagtracker=self.tag_tracker, ttptracker=self.ttp_tracker
         )
         self.completed = False
 
@@ -83,6 +97,7 @@ class TaskContext(ProcessingContext):
         self.stage = "post"
         self.task = Task.from_file(TaskPaths.taskjson(task_id))
         self.machine = Machine.from_file(TaskPaths.machinejson(self.task.id))
+        self.process_tracker = ProcessTracker()
 
     def _errtracker_to_file(self):
         self.errtracker.to_file(
@@ -269,6 +284,7 @@ def make_event_consumper_map(event_user_instances):
 
     return consumer_map
 
+
 class PostProcessingRunner:
 
     def __init__(self, task_context, event_consumer_classes,
@@ -313,6 +329,9 @@ class PostProcessingRunner:
     def start(self):
         try:
             self._read_events()
+
+            for consumer in self._consumers:
+                consumer.finalize()
         except Exception as e:
             self.taskctx.log.exception(
                 "Fatal error during event usage", error=e

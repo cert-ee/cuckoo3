@@ -3,6 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import os
+import copy
 
 from .storage import TaskPaths, make_task_id
 from .strictcontainer import Task, Errors
@@ -51,7 +52,7 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
             raise MissingResourceError(
                 f"No machine with platform: '{platform}'. "
                 f"Os version: '{os_version}'. "
-                f"Tags: '{' ,'.join(tag for tag in machine_tags)}'."
+                f"Tags: '{', '.join(machine_tags)}'."
             )
 
     task_id = make_task_id(analysis.id, task_number)
@@ -72,15 +73,23 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
         "kind": analysis.kind,
         "number": task_number,
         "id": task_id,
+        "state": States.PENDING,
         "analysis_id": analysis.id,
         "platform": platform,
         "os_version": os_version,
-        "machine_tags": machine_tags,
+        "machine_tags": list(machine_tags),
         "machine": machine_name or ""
     }
 
     task = Task(**task_values)
     task.to_file(TaskPaths.taskjson(task_id))
+    analysis.tasks.append({
+        "id": task_id,
+        "platform": platform,
+        "os_version": os_version,
+        "score": 0
+    })
+
     return task_values
 
 def create_all(analysis):
@@ -105,7 +114,7 @@ def create_all(analysis):
                     analysis, task_number=tasknum,
                     platform=platform["platform"],
                     os_version=platform["os_version"],
-                    machine_tags=analysis.settings.machine_tags
+                    machine_tags=platform["tags"]
                 ))
                 tasknum += 1
             except MissingResourceError as e:
@@ -119,14 +128,19 @@ def create_all(analysis):
 
     # Set the default state for each task dict
     for task_dict in tasks:
-        task_dict["state"] = States.PENDING
-        task_dict["machine_tags"] = ",".join(task_dict["machine_tags"])
         task_dict["created_on"] = analysis.created_on
         task_dict["priority"] = analysis.settings.priority
 
+    # Copy the list of task dicts to allow the changing of data in preparation
+    # of db insertion. Normally would be handled by ORM, but is not since
+    # we are using a bulk insert here.
+    task_rows = copy.deepcopy(tasks)
+    for row in task_rows:
+        row["machine_tags"] = ",".join(row["machine_tags"])
+
     ses = db.dbms.session()
     try:
-        ses.bulk_insert_mappings(db.Task, tasks)
+        ses.bulk_insert_mappings(db.Task, task_rows)
         ses.commit()
     finally:
         ses.close()
@@ -187,3 +201,24 @@ def has_unfinished_tasks(analysis_id):
         return count > 0
     finally:
         ses.close()
+
+def update_db_row(task_id, **kwargs):
+    ses = db.dbms.session()
+    try:
+        ses.query(db.Task).filter_by(id=task_id).update(kwargs)
+        ses.commit()
+    finally:
+        ses.close()
+
+def write_changes(task):
+    if not task.was_updated:
+        return
+
+    db_fields = {}
+    for field in ("state", "score"):
+        if field in task.updated_fields:
+            db_fields[field] = task[field]
+
+    task.to_file_safe(TaskPaths.taskjson(task.id))
+    if db_fields:
+        update_db_row(task.id, **db_fields)

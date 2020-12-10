@@ -357,10 +357,10 @@ def platformconditional(default, **kwargs):
         return plat_val
     return  default
 
-def typeloaders_to_templatedict(config_dictionary):
+def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
     def _typeloader_to_yamlval(obj):
         if isinstance(obj, TypeLoader):
-            if obj.sensitive:
+            if obj.sensitive and filter_sensitive:
                 return "*"*8
 
             return obj.yaml_value
@@ -384,11 +384,13 @@ def render_config(template_path, typeloaders, write_to):
             f"Configuration template path: {template_path} does not exist"
         )
 
-    values = typeloaders_to_templatedict(typeloaders)
+    values = typeloaders_to_templatedict(typeloaders, filter_sensitive=False)
 
     import jinja2
     with open(template_path, "r") as fp:
-        template = jinja2.Template(fp.read(), lstrip_blocks=True, trim_blocks=True)
+        template = jinja2.Template(
+            fp.read(), lstrip_blocks=True, trim_blocks=True
+        )
 
     rendered = template.render(values)
     with open(write_to, "w") as fp:

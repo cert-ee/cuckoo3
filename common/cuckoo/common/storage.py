@@ -246,6 +246,10 @@ class TaskPaths:
     def pcap(task_id):
         return TaskPaths._path(task_id, "dump.pcap")
 
+    @staticmethod
+    def report(task_id):
+        return TaskPaths._path(task_id, "report.json")
+
 
 class Paths(object):
 
@@ -312,6 +316,17 @@ class Paths(object):
     def safelistfile(*args):
         return os.path.join(cuckoocwd.root, "safelists", *args)
 
+    @staticmethod
+    def signatures(*args):
+        return os.path.join(cuckoocwd.root, "signatures", *args)
+
+    @staticmethod
+    def pattern_signatures(platform=None):
+        pattern_path = os.path.join(Paths.signatures("cuckoo", "pattern"))
+        if not platform:
+            return pattern_path
+
+        return os.path.join(pattern_path, platform)
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):
@@ -392,6 +407,25 @@ def safe_copyfile(source, destination):
         os.unlink(tmp_path)
         raise
 
+def safe_writedata(data, destination):
+    if os.path.exists(destination):
+        raise FileExistsError(f"Destination file exists: {destination}")
+
+    dst_dir = os.path.dirname(destination)
+    if shutil.disk_usage(dst_dir).free <= len(data):
+        raise IOError("Destination does not have enough space to store data")
+
+    tmp_path = os.path.join(dst_dir, f".{uuid.uuid4()}")
+    with open(tmp_path, "wb") as fp:
+        fp.write(data)
+
+    try:
+        open(destination, "x").close()
+        os.replace(tmp_path, destination)
+    except (OSError, FileExistsError):
+        os.unlink(tmp_path)
+        raise
+
 def safe_json_dump(destination, data, overwrite=False, **kwargs):
     """json.dump the given data to a temporary file in the same directory as
     the destination and replace the given destination afterwards.
@@ -413,7 +447,7 @@ def safe_json_dump(destination, data, overwrite=False, **kwargs):
         os.unlink(tmp_path)
         raise
 
-class Binaries(object):
+class Binaries:
 
     DEPTH = 2
 
@@ -447,7 +481,62 @@ class Binaries(object):
 
         return File(path)
 
-class File(object):
+
+class _DataHasher:
+
+    def __init__(self, data=None):
+
+        self._progress = False
+        self._md5 = None
+        self._sha1 = None
+        self._sha256 = None
+        self._sha512 = None
+
+        if data:
+            self.calculate(data)
+
+    @property
+    def md5(self):
+        if not self._progress:
+            raise ValueError("No hashes are calculated. Cannot return any.")
+
+        return self._md5.hexdigest()
+
+    @property
+    def sha1(self):
+        if not self._progress:
+            raise ValueError("No hashes are calculated. Cannot return any.")
+
+        return self._sha1.hexdigest()
+
+    @property
+    def sha256(self):
+        if not self._progress:
+            raise ValueError("No hashes are calculated. Cannot return any.")
+
+        return self._sha256.hexdigest()
+
+    @property
+    def sha512(self):
+        if not self._progress:
+            raise ValueError("No hashes are calculated. Cannot return any.")
+
+        return self._sha512.hexdigest()
+
+    def calculate(self, data_chunk):
+        if not self._progress:
+            self._md5 = hashlib.md5()
+            self._sha1 = hashlib.sha1()
+            self._sha256 = hashlib.sha256()
+            self._sha512 = hashlib.sha512()
+            self._progress = True
+
+        self._md5.update(data_chunk)
+        self._sha1.update(data_chunk)
+        self._sha256.update(data_chunk)
+        self._sha512.update(data_chunk)
+
+class File:
 
     def __init__(self, file_path):
         self._path = pathlib.Path(file_path)
@@ -517,18 +606,16 @@ class File(object):
         """Get the file type.
         @return: file type.
         """
-        return sflock.magic.from_file(
-            os.path.realpath(self._path)
-        )
+        return str(sflock.magic.from_file(os.path.realpath(self._path)))
 
     @property
     def media_type(self):
         """Get MIME content file type (example: image/jpeg).
         @return: file content type.
         """
-        return sflock.magic.from_file(
+        return str(sflock.magic.from_file(
             os.path.realpath(self._path), mime=True
-        )
+        ))
 
     def valid(self):
         return self._path and self._path.is_file()
@@ -548,27 +635,71 @@ class File(object):
 
     def _calc_hashes(self):
         """Calculate all possible hashes for this file."""
-        md5 = hashlib.md5()
-        sha1 = hashlib.sha1()
-        sha256 = hashlib.sha256()
-        sha512 = hashlib.sha512()
-
+        hasher = _DataHasher()
         for chunk in self.get_chunks():
-            md5.update(chunk)
-            sha1.update(chunk)
-            sha256.update(chunk)
-            sha512.update(chunk)
+            hasher.calculate(chunk)
 
-        self._md5 = md5.hexdigest()
-        self._sha1 = sha1.hexdigest()
-        self._sha256 = sha256.hexdigest()
-        self._sha512 = sha512.hexdigest()
+        self._md5 = hasher.md5
+        self._sha1 = hasher.sha1
+        self._sha256 = hasher.sha256
+        self._sha512 = hasher.sha512
 
     def copy_to(self, path):
         safe_copyfile(self._path, path)
 
     def symlink(self, link_path):
         os.symlink(str(self._path), link_path)
+
+    def to_dict(self):
+        """Get all information available.
+        @return: information dict.
+        """
+        return {
+            "size": self.size,
+            "md5": self.md5,
+            "sha1": self.sha1,
+            "sha256": self.sha256,
+            "sha512": self.sha512,
+            "media_type": self.media_type,
+            "type": self.type
+        }
+
+class InMemoryFile:
+
+    def __init__(self, data, name=""):
+        self._data = data
+        self.name = name
+
+        hasher = _DataHasher(data=data)
+
+        self.md5 = hasher.md5
+        self.sha1 = hasher.sha1
+        self.sha256 = hasher.sha256
+        self.sha512 = hasher.sha512
+
+    @property
+    def size(self):
+        """Get file size.
+        @return: file size.
+        """
+        return len(self._data)
+
+    @property
+    def type(self):
+        """Get the file type.
+        @return: file type.
+        """
+        return str(sflock.magic.from_buffer(self._data))
+
+    @property
+    def media_type(self):
+        """Get MIME content file type (example: image/jpeg).
+        @return: file content type.
+        """
+        return str(sflock.magic.from_buffer(self._data, mime=True))
+
+    def copy_to(self, path):
+        safe_writedata(self._data, path)
 
     def to_dict(self):
         """Get all information available.

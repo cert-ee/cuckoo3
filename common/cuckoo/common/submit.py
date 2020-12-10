@@ -25,6 +25,7 @@ def _write_analysis(analysis_id, settings, target_strictcontainer):
     analysis_info = Analysis(**{
         "id": analysis_id,
         "kind": AnalysisKinds.STANDARD,
+        "state": AnalysisStates.UNTRACKED,
         "settings": settings,
         "created_on": datetime.utcnow(),
         "category": target_strictcontainer.category,
@@ -43,7 +44,6 @@ _DEFAULT_SETTINGS = {
     "priority": 1,
     "platforms": [],
     "machines": [],
-    "machine_tags": [],
     "manual": False,
     "dump_memory": False,
     "options": {},
@@ -142,7 +142,7 @@ class SettingsMaker:
 
         self._settings["extrpath"] = extrpath
 
-    def add_platform(self, platform, os_version=""):
+    def add_platform(self, platform, os_version="", tags=[]):
         if not isinstance(platform, str):
             raise SubmissionError(f"platform must be a string. {platform!r}")
         if not isinstance(os_version, str):
@@ -150,42 +150,46 @@ class SettingsMaker:
                 f"os_version must be a string. {os_version!r}"
             )
 
-        self._settings["platforms"].append(
-            {"platform": platform, "os_version": os_version}
-        )
+        if not isinstance(tags, list):
+            raise SubmissionError(f"Tags must be a list of strings. {tags!r}")
 
-    def add_platform_dict(self, platform_osversion):
-        err = """Platform dict must be dict {'platform': '<platform>',
+        for tag in tags:
+            if not isinstance(tag, str):
+                raise SubmissionError(
+                    f"Tags must be a list of strings. Invalid value: {tag}"
+                )
+
+        self._settings["platforms"].append({
+            "platform": platform,
+            "os_version": os_version,
+            "tags": list(set(tags))
+        })
+
+    def add_platform_dict(self, platform_version_tags):
+        err = """Platform dict must have {'platform': '<platform>',
         'os_version': '<optional version>'}"""
-        if not isinstance(platform_osversion, dict):
+        if not isinstance(platform_version_tags, dict):
             raise SubmissionError(err)
 
         for k in ("platform", "os_version"):
-            if k not in platform_osversion:
+            if k not in platform_version_tags:
                 raise SubmissionError(err)
 
         self.add_platform(
-            platform_osversion["platform"], platform_osversion["os_version"]
+            platform_version_tags["platform"],
+            os_version=platform_version_tags["os_version"],
+            tags=platform_version_tags.get("tags", [])
         )
 
     def set_platforms_list(self, platforms):
         if not isinstance(platforms, list):
             raise SubmissionError(
                 "Platforms must be a list of platform:<platform>,"
-                "os_version:<version> dictionaries"
+                "os_version:<version>, tags:<machine tag list> dictionaries"
             )
 
         for entry in platforms:
             self.add_platform_dict(entry)
-
-    def add_machine_tag(self, tag):
-        if not isinstance(tag, str):
-            raise SubmissionError(f"tag must be a string. {tag!r}")
-
-        tags = self._settings["machine_tags"]
-        if tag not in tags:
-            tags.append(tag)
-
 
     def make_settings(self):
         try:

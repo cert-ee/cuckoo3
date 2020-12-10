@@ -292,8 +292,8 @@ def find_tags(find_in, tags):
     if not isinstance(tags, set):
         if isinstance(tags, (list, tuple)):
             tags = set(tags)
-
-        raise TypeError(f"tags must be a set of strings. Not {type(tags)}")
+        else:
+            raise TypeError(f"tags must be a set of strings. Not {type(tags)}")
 
     matches = []
     for machine in find_in:

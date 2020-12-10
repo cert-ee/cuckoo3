@@ -13,3 +13,6 @@ class PluginError(Exception):
 
 class PluginWorkerError(Exception):
     pass
+
+class StaticAnalysisError(Exception):
+    pass

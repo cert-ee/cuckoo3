@@ -13,6 +13,7 @@ from httpreplay import reader, protohandlers, udpprotoparsers, transport
 from ..abtracts import Processor
 
 set_logger_level("httpreplay.transport", logging.ERROR)
+set_logger_level("httpreplay.protoparsers", logging.ERROR)
 
 # TODO move this to a standardized safelist format when there are more things
 # to safelist. Leave it here for now until we create a

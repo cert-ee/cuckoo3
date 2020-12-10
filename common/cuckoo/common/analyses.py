@@ -5,7 +5,7 @@
 import json
 import os
 
-from . import db, machines
+from . import db, machines, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import AnalysisPaths
@@ -20,6 +20,7 @@ class AnalysisError(Exception):
     pass
 
 class HumanStates:
+    UNTRACKED = "Untracked"
     PENDING_IDENTIFICATION = "Pending identification"
     WAITING_MANUAL = "Waiting manual"
     PENDING_PRE = "Pending pre"
@@ -29,6 +30,7 @@ class HumanStates:
     FINISHED = "Finished"
 
 class States:
+    UNTRACKED = "untracked"
     PENDING_IDENTIFICATION = "pending_identification"
     WAITING_MANUAL = "waiting_manual"
     PENDING_PRE = "pending_pre"
@@ -51,7 +53,7 @@ class States:
     def to_human(cls, state):
         try:
             return cls._HUMAN[state]
-        except KeyError as e:
+        except KeyError:
             raise AnalysisError(
                 f"No human readable version for state {state!r} exists"
             )
@@ -71,10 +73,10 @@ class Settings(_Settings):
         errors = []
         if self.priority < 1:
             errors.append("Priority must be 1 at least")
-        if self.machines and (self.platforms or self.machine_tags):
+        if self.machines and self.platforms:
             errors.append(
-                "It is not possible to specify specific machines and "
-                "platforms or tags at the same time"
+                "It is not possible to specify platforms and specific "
+                "machines at the same time"
             )
         for machine in self.machines:
             try:
@@ -86,20 +88,18 @@ class Settings(_Settings):
             for platform in self.platforms:
                 os_name = platform.get("platform")
                 os_version = platform.get("os_version")
+                tags = platform.get("tags", [])
                 found = machines.find(
-                    platform=os_name, os_version=os_version,
-                    tags=set(self.machine_tags)
+                    platform=os_name, os_version=os_version, tags=set(tags)
                 )
                 if not found:
-                    err = f"No machine with platform: {os_name} {os_version}"
-                    if self.machine_tags:
-                        err += f" and tags {self.machine_tags}"
+                    err = f"No machine with platform: {os_name}"
+                    if os_version:
+                        err += f", os version: {os_version}"
+                    if tags:
+                        err += f", tags: {', '.join(tags)}"
 
                     errors.append(err)
-
-        elif self.machine_tags:
-            if not machines.find(tags=set(self.machine_tags)):
-                errors.append(f"No machine with tags: {self.machine_tags}")
 
         if errors:
             raise AnalysisError(
@@ -111,8 +111,8 @@ def exists(analysis_id):
     return os.path.isfile(AnalysisPaths.analysisjson(analysis_id))
 
 def track_analyses(analysis_ids):
-
     untracked_analyses = []
+    submitted_targets = []
     tracked = []
     for analysis_id in analysis_ids:
         info_path = AnalysisPaths.analysisjson(analysis_id)
@@ -125,6 +125,14 @@ def track_analyses(analysis_ids):
             )
             continue
 
+        if analysis.category not in (targets.TargetCategories.FILE,
+                                     targets.TargetCategories.URL):
+            log.error(
+                "Failed to track analysis", analysis_id=analysis_id,
+                error=f"Unknown target category {analysis.category!r}"
+            )
+            continue
+
         untracked_analyses.append({
             "id": analysis_id,
             "kind": analysis.kind,
@@ -132,70 +140,91 @@ def track_analyses(analysis_ids):
             "priority": analysis.settings.priority,
             "state": States.PENDING_IDENTIFICATION
         })
+
+        submitted_target = {
+            "analysis_id": analysis_id,
+            "category": analysis.category
+        }
+        if analysis.category == targets.TargetCategories.URL:
+            submitted_target["target"] = analysis.submitted.url
+        elif analysis.category == targets.TargetCategories.FILE:
+            submitted_target.update({
+                "target": analysis.submitted.filename,
+                "media_type": analysis.submitted.media_type,
+                "md5": analysis.submitted.md5,
+                "sha1": analysis.submitted.sha1,
+                "sha256": analysis.submitted.sha256,
+                "sha512": ""
+            })
+
+        submitted_targets.append(submitted_target)
         tracked.append(analysis_id)
 
     ses = db.dbms.session()
     try:
         ses.bulk_insert_mappings(db.Analysis, untracked_analyses)
+        ses.bulk_insert_mappings(db.Target, submitted_targets)
         ses.commit()
     finally:
         ses.close()
 
     return tracked
 
-def overwrite_settings(analysis, settings):
-    analysis.settings = settings
-
-def update_settings(analysis, **kwargs):
-    analysis.settings.update(kwargs)
-
-def merge_settings_ident(analysis, identification):
+def merge_target_settings(analysis, target):
     if analysis.settings.machines:
-        return False
+        return
 
-    was_updated = False
-    use_autotag = cfg("cuckoo", "platform", "autotag")
-    if use_autotag and identification.target.machine_tags:
-        update_settings(
-            analysis, machine_tags=identification.target.machine_tags
-        )
-        was_updated = True
-
+    autotag = cfg("cuckoo", "platform", "autotag")
     if analysis.settings.platforms:
-        return was_updated
+        if not autotag:
+            return
 
-    if identification.target.platforms:
+        if not target.machine_tags:
+            return
+
+        for platform in analysis.settings.platforms:
+            platform["tags"].extend(target.machine_tags)
+            platform["tags"] = list(set(platform["tags"]))
+
+        analysis.update_settings(platforms=analysis.settings.platforms)
+
+    elif target.platforms:
         # Only use the platforms specified in the config if more than one
         # platform was identified during the identification phase.
-        if len(identification.target.platforms) > 1:
-            allowed_ident = cfg("cuckoo", "platform", "multi_platform")
-            for platform in identification.target.platforms[:]:
-                if platform["platform"] not in allowed_ident:
-                    identification.target.platforms.remove(platform)
+        allowed_multi = cfg("cuckoo", "platform", "multi_platform")
+        all_identified = target.platforms
 
-        update_settings(analysis, platforms=identification.target.platforms)
-        was_updated = True
+        settings_platforms = []
+
+        for platform in all_identified:
+            if len(all_identified) > 1:
+                if platform["platform"] not in allowed_multi:
+                    continue
+
+            if autotag and target.machine_tags:
+                platform["tags"] = target.machine_tags
+            else:
+                platform["tags"] = []
+
+            settings_platforms.append(platform)
+
+        analysis.update_settings(platforms=settings_platforms)
 
     else:
         platform = cfg("cuckoo", "platform", "default_platform", "platform")
         os_version = cfg(
             "cuckoo", "platform", "default_platform", "os_version"
         )
-
         log.debug(
             "No platform given or identified. Using default_platform.",
             analysis_id=analysis.id, platform=platform, os_version=os_version
         )
         default = {
             "platform": platform,
-            "os_version": os_version or ""
+            "os_version": os_version or "",
+            "tags": []
         }
-        update_settings(
-            analysis, platforms=[default]
-        )
-        was_updated = True
-
-    return was_updated
+        analysis.update_settings(platforms=[default])
 
 def merge_errors(analysis, error_container):
     if analysis.errors:
@@ -212,15 +241,12 @@ def merge_processing_errors(analysis):
 
     os.remove(errpath)
 
-def set_final_target(analysis, target):
-    analysis.target = target
-
 def get_state(analysis_id):
     ses = db.dbms.session()
     try:
         analysis = ses.query(
             db.Analysis.state
-        ).filter_by(id=analysis_id).first()
+        ).filter_by(id=analysis_id).raw()
 
         if not analysis:
             return None
@@ -258,7 +284,7 @@ def get_filetree_dict(analysis_id):
     finally:
         fp.close()
 
-def list(limit=None, offset=None, desc=True):
+def list_analyses(limit=None, offset=None, desc=True):
     ses = db.dbms.session()
     try:
         query = ses.query(db.Analysis)
@@ -297,7 +323,7 @@ def dictlist(limit=None, offset=None, desc=True):
             raise TypeError("Desc must be a boolean")
 
     return [
-        a.to_dict() for a in list(
+        a.to_dict() for a in list_analyses(
             limit=limit, offset=offset, desc=desc
         )
     ]
@@ -312,3 +338,46 @@ def get_fatal_errors(analysis_id):
         fatalerrs.append(entry["error"])
 
     return fatalerrs
+
+def db_find_state(state):
+    ses = db.dbms.session()
+    try:
+        return ses.query(db.Analysis).filter_by(state=state)
+    finally:
+        ses.close()
+
+def set_score(analysis, score):
+    if score > analysis.score:
+        analysis.score = score
+
+def update_db_row(analysis_id, **kwargs):
+    ses = db.dbms.session()
+    try:
+        ses.query(db.Analysis).filter_by(id=analysis_id).update(kwargs)
+        ses.commit()
+    finally:
+        ses.close()
+
+def write_changes(analysis):
+    if not analysis.was_updated:
+        return
+
+    db_fields = {}
+    for field in ("state", "score"):
+        if field in analysis.updated_fields:
+            db_fields[field] = analysis[field]
+
+    # Verify updated_fields entries before dumping the analysis object. This
+    # clears that list.
+    update_target = False
+    if "target" in analysis.updated_fields:
+        update_target = True
+
+    analysis.to_file_safe(AnalysisPaths.analysisjson(analysis.id))
+
+    # Only perform database writes if the json dump is successful.
+    if db_fields:
+        update_db_row(analysis.id, **db_fields)
+
+    if update_target:
+        targets.update_target_row(analysis, analysis.target)

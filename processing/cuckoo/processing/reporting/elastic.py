@@ -13,7 +13,7 @@ from cuckoo.common.startup import init_elasticsearch
 from cuckoo.common.storage import TaskPaths
 
 from ..abtracts import Reporter
-from ..translate.events import Kinds
+from cuckoo.processing.event.events import Kinds
 
 class ElasticSearch(Reporter):
 
