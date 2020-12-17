@@ -2,10 +2,10 @@
   <nav class="has-margin-bottom">
     <div class="tabbar is-rounded">
       <p class="tabbar-label no-margin-left">Tasks</p>
-      {% for task in analysis.tasks %}
-        <a href="{{ url('Task/index', args=[analysis.id, task.id]) }}" class="tabbar-link">
-          <span class="has-margin-left">{{ task.platform }} {{ task.os_version }}</span>
-          <span class="tag is-rounded has-text-weight-semibold has-margin-x {{ color_class(task.score) }}">{{ task.score }}</span>
+      {% for t in analysis.tasks %}
+        <a href="{{ url('Task/index', args=[analysis.id, t.id]) }}" class="tabbar-link {% if task and task.id == t.id %}is-active{% endif %}">
+          <span class="has-margin-left">{{ t.platform }} {{ t.os_version }}</span>
+          <span class="tag is-rounded has-text-weight-semibold has-margin-x {{ color_class(t.score) }}">{{ t.score }}</span>
         </a>
       {% endfor %}
     </div>

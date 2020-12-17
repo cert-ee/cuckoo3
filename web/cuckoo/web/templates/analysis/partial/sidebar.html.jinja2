@@ -8,11 +8,11 @@
     {% if analysis %}
       <p class="label">Tasks</p>
       <ul>
-      {% for task in analysis.tasks %}
+      {% for t in analysis.tasks %}
         <li>
-          <a href="{{ url('Task/index', args=[analysis.id, task.id]) }}">
-            {{ task.platform }} {{ task.os_version }}
-            <span class="tag has-margin-left is-right {{ color_class(task.score) }}">{{ task.score }}</span>
+          <a href="{{ url('Task/index', args=[analysis.id, t.id]) }}" class="{% if task and task.id == t.id %}is-active{% endif %}">
+            {{ t.platform }} {{ t.os_version }}
+            <span class="tag has-margin-left is-right {{ color_class(t.score) }}">{{ t.score }}</span>
           </a>
         </li>
       {% endfor %}
