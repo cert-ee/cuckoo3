@@ -3,7 +3,7 @@
 {% set report_page = "static" %}
 {% set title = "Analysis - static analysis" %}
 
-{% from 'macros.html.jinja2' import render_table, render_dict, ui_box %}
+{% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
 
 {% block page_script %}
   <script type="text/javascript">
@@ -46,6 +46,8 @@
       </aside>
       <section class="column has-padding">
 
+        {% include "analysis/partial/taskbar.html.jinja2" %}
+
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
@@ -53,6 +55,7 @@
           <a class="tabbar-link is-active" href="#tab-static">Static</a>
           <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
           <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
+          <a class="tabbar-link" href="#tab-development">Development</a>
         </nav>
 
         {# tab: static.overview #}
@@ -296,7 +299,12 @@
                 has_sticky_header=True
             )}}
           {% endcall %}
+        </div>
 
+        <div id="tab-development" hidden>
+          {% call ui_box(title="Template variables") %}
+            {{ render_dict(pre) }}
+          {% endcall %}
         </div>
 
       </section>

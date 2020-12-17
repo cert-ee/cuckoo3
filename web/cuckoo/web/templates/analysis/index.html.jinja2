@@ -3,7 +3,7 @@
 {% set report_page = "sample" %}
 {% set title = "Analysis" %}
 
-{% from 'macros.html.jinja2' import ui_box %}
+{% from 'macros.html.jinja2' import ui_box, color_class %}
 
 {% block body %}
   <div class="container is-fixed">
@@ -12,6 +12,8 @@
         {% include "analysis/partial/sidebar.html.jinja2" %}
       </aside>
       <section class="column has-padding">
+
+        {% include "analysis/partial/taskbar.html.jinja2" %}
 
         <h2>Sample analysis</h2>
         <p>Description and overview of sample and submission configuration.</p>
@@ -174,6 +176,10 @@
             </tbody>
           </table>
         {% endcall %}
+
+        <script>
+          window.analysis = "{{ analysis.tasks | safe }}";
+        </script>
 
       </section>
     </div>

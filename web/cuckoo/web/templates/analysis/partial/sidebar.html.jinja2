@@ -5,5 +5,18 @@
       <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Sample</a></li>
       <li><a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a></li>
     </ul>
+    {% if analysis %}
+      <p class="label">Tasks</p>
+      <ul>
+      {% for task in analysis.tasks %}
+        <li>
+          <a href="{{ url('Task/index', args=[analysis.id, task.id]) }}">
+            {{ task.platform }} {{ task.os_version }}
+            <span class="tag has-margin-left is-right {{ color_class(task.score) }}">{{ task.score }}</span>
+          </a>
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
   </li>
 </ul>

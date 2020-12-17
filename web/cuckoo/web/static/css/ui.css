@@ -1354,6 +1354,13 @@ a.button, .control.is-file a.file-trigger {
   bottom: -0.15rem;
   left: 0;
 }
+.tabbar-label {
+  font-size: 0.9em;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.25;
+  margin-left: 1rem;
+}
 .tabbar > .container.is-fixed, .tabbar > .container > .container.is-fixed, .tabbar > .container > .container > .container.is-fixed {
   margin-left: auto;
   margin-right: auto;
@@ -1367,6 +1374,24 @@ a.button, .control.is-file a.file-trigger {
 .tabbar.is-rs-static > .tabbar-link:not(.is-active), .tabbar > .is-rs-static.container > .tabbar-link:not(.is-active), .tabbar > .container > .is-rs-static.container > .tabbar-link:not(.is-active) {
   display: none;
 }
+.tabbar.is-rounded, .tabbar > .is-rounded.container, .tabbar > .container > .is-rounded.container {
+  background: transparent;
+  border-bottom: 0;
+}
+.tabbar.is-rounded .tabbar-link, .tabbar > .is-rounded.container .tabbar-link {
+  background-color: #FFFFFF;
+  border-radius: 2rem;
+}
+.tabbar.is-rounded .tabbar-link:hover, .tabbar > .is-rounded.container .tabbar-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.tabbar.is-rounded .tabbar-link.is-active, .tabbar > .is-rounded.container .tabbar-link.is-active {
+  background-color: #2E94F1;
+  color: #FFFFFF;
+}
+.tabbar.is-rounded .tabbar-link.is-active:after, .tabbar > .is-rounded.container .tabbar-link.is-active:after {
+  display: none;
+}
 
 .tag {
   display: inline-block;
@@ -1375,9 +1400,9 @@ a.button, .control.is-file a.file-trigger {
   border-radius: 0.2rem;
   border: 0.065rem solid #dadada;
   font-size: 0.9em;
+  color: #000000;
 }
 .tag[href] {
-  color: inherit;
   text-decoration: none;
 }
 .tag[href]:hover {

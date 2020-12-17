@@ -49,19 +49,19 @@
           </tr>
         {% else %}
           <tr>
-            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
+            <td colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% else %}
         {% for val in data.values() %}
           <tr>
             {% for col in cols %}
-              <td>{{ val[col] }}</td>
+              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>{{ val[col] }}</td>
             {% endfor %}
           </tr>
         {% else %}
           <tr>
-            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
+            <td colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% endif %}
@@ -180,4 +180,25 @@
       {{ caller() }}
     </div>
   </div>
+{% endmacro %}
+
+{#
+
+  Provides the translation from a score from 1-10 to a color class representation.
+
+    score   Number  The score to translate into a color class
+
+  Example:
+
+    <p class="{{ color_class(analysis.score) }}">{{ analysis.verdict }}</p>
+    <!-- could be rendered as: -->
+    <p class="is-danger">This file is most likely severely malicious.</p>
+
+#}
+{% macro color_class(score=1) %}
+  {% if score >= 8 %}
+    is-red
+  {% elif score >= 6 %}
+    is-yellow
+  {% endif %}
 {% endmacro %}
