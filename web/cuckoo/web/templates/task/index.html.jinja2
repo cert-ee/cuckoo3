@@ -19,21 +19,160 @@
         <h2>Task report</h2>
         <p>Results of individual task ran during analysis.</p>
 
-        {% call ui_box(title="Task", has_padding=False) %}
-          {{ render_dict(task) }}
-        {% endcall %}
-        {% call ui_box(title="Report", has_padding=False) %}
-          {{ render_dict(report) }}
-        {% endcall %}
-        {% call ui_box(title="Machine", has_padding=False) %}
-          {{ render_dict(machine) }}
-        {% endcall %}
-        {% call ui_box(title="Analysis", has_padding=False) %}
-          {{ render_dict(analysis) }}
-        {% endcall %}
+        <div class="tabbar has-background-transparent" data-enhance>
+          <a href="#tab-task" class="tabbar-link">Task</a>
+          <a href="#tab-report" class="tabbar-link is-active">Task report</a>
+          <a href="#tab-machine" class="tabbar-link">Machine</a>
+        </div>
+
+        <div id="tab-task" hidden>
+          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+            {{ render_dict(task) }}
+          {% endcall %}
+        </div>
+        <div id="tab-report">
+
+          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+            {{ render_dict(report) }}
+          {% endcall %}
+
+          {% call ui_box(title="Signatures", has_padding=False) %}
+
+            <div class="toggle-box has-padding-x">
+              <label class="toggle" for="toggle-all">
+                <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
+                <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
+              </label>
+              <label class="toggle" for="toggle-critical">
+                <input type="checkbox" id="toggle-critical" name="toggle-sig" />
+                <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
+              </label>
+              <label class="toggle" for="suspicious">
+                <input type="checkbox" id="suspicious" name="toggle-sig" />
+                <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
+              </label>
+              <label class="toggle" for="info">
+                <input type="checkbox" id="info" name="toggle-sig" />
+                <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
+              </label>
+            </div>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th>Detected signatures</th>
+                  <th>Events</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#
+                <tr>
+                  <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
+                </tr>
+                <tr>
+                  <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
+                </tr>
+                <tr>
+                  <td><span class="dot is-blue"></span> Creates hidden or system file</td>
+                  <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
+                </tr>
+                #}
+                {% for signature in report.signatures %}
+                  <tr data-row="{{ loop.index }}">
+                    <td><span class="tag">{{ signature.score }}</span></td>
+                    <td>{{ signature.short_description }}</td>
+                    <td>{{ signature.description }}</td>
+                    <td class="no-text-wrap">
+                      <a class="is-link has-text-small toggle-ioc" href="#">Display IOC's</a>
+                    </td>
+                  </tr>
+                  <tr hidden data-row-of="{{ loop.index }}">
+                    <td colspan="4" class="no-padding has-border-y">
+                      <table class="table">
+                        <tbody>
+                          {% for ioc in signature.iocs %}
+                            <tr>
+                              <td>{{ ioc.description }}</td>
+                              <td>{{ ioc.value }}</td>
+                              <td class="has-text-right">{{ ioc.process_id }}: {{ ioc.process }}</td>
+                            </tr>
+                          {% endfor %}
+                          <tr class="separator-bar">
+                            <td colspan="4">&nbsp;</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endcall %}
+
+        </div>
+        <div id="tab-machine" hidden>
+          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+            {{ render_dict(machine) }}
+          {% endcall %}
+        </div>
+
       </section>
     </div>
 
   </div>
 
+{% endblock %}
+
+{% block page_script %}
+  <script>
+    // tap through various levels of signature severities
+    (function signatureFilters() {
+
+      const signatures  = document.querySelector('#box-Signatures');
+      const table       = signatures.querySelector('.table');
+      const filters     = [...signatures.querySelectorAll('[name="toggle-sig"]')];
+
+      function onUnselected() {
+        if(!filters.find(f => f.checked))
+          filters[0].checked = true;
+      }
+
+      signatures.querySelectorAll('.table tbody tr[data-row]').forEach(row => {
+        row.querySelector('.toggle-ioc').addEventListener('click', ev => {
+          ev.preventDefault();
+          let link = ev.currentTarget;
+          let target = signatures.querySelector('tr[data-row-of="'+row.dataset.row+'"]');
+
+          if(target.hasAttribute('hidden')) {
+            target.removeAttribute('hidden');
+            link.textContent = 'Hide IOCs';
+            row.classList.add('is-shown');
+          } else {
+            target.setAttribute('hidden', true);
+            link.textContent = 'Display IOCs';
+            row.classList.remove('is-shown');
+          }
+
+        });
+      });
+
+      filters.forEach(filter => {
+        filter.addEventListener('change', ev => {
+          switch(ev.currentTarget.value) {
+            case 'all':
+              filters.forEach(f => f.value !== 'all' ? f.checked = false : null);
+            break;
+            default:
+              filters.find(f => f.value == 'all').checked = false;
+          }
+          onUnselected();
+        });
+      });
+
+    }());
+  </script>
 {% endblock %}

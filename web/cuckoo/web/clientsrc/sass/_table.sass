@@ -7,7 +7,8 @@
 
   // shared styles for cells and column headers
   th, td
-    text-align: left
+    &:not([class^=has-text-])
+      text-align: left
     padding: $gap
     a
       color: inherit
@@ -96,7 +97,7 @@
   // tbody-specific styles
   tbody
     tr
-      &:nth-child(odd)
+      &:nth-child(odd):not([class^="separator-"])
         background-color: $row-odd
         &:hover
           background-color: mix($row-odd, $yellow, 95%)
@@ -110,6 +111,15 @@
         &:hover
           background-color: shade($red, .1)
 
+      &.is-shown
+        background-color: $blue !important
+        color: $white
+        a, .is-link
+          color: inherit
+        td
+          background-color: transparent
+          font-weight: 700
+
       &.separator
         background-color: $white
         font-size: .9em
@@ -119,6 +129,15 @@
         border-bottom: 0.0625rem solid $border
         border: 0
         text-align: center
+
+        &-bar
+          td
+            background: linear(white, $border, 50%)
+            padding: 0
+            box-shadow: inset 0 .1rem 0 rgba($white, .5)
+            border-top: 0.0625rem solid $border
+            border-bottom: 0.0625rem solid $border
+
         &:hover
           background-color: $white
 
