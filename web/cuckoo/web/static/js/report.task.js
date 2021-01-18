@@ -116,6 +116,13 @@ const processes = (function() {
         <div class="column is-auto">
           <span class="pid">${process.procid}</span>
         </div>
+        ${(process.children.length > 0) ? `
+          <div class="column is-auto">
+            <span class="icon">
+              <i class="fas caret"></i>
+            </span>
+          </div>
+        ` : ''}
         <div class="column">
           <p>
             <span class="icon">

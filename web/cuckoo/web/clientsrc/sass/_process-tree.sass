@@ -14,10 +14,16 @@ ul.process-tree
     position: relative
     input[type="checkbox"]
       display: none
+      // closed
       & + label
+        .caret:before
+          content: "\f054"
         & + ul
           display: none
+      // open
       &:checked + label
+        .caret:before
+          content: "\f078"
         & + ul
           display: block
     &:before

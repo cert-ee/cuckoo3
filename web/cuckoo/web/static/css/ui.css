@@ -1268,8 +1268,14 @@ ul.process-tree li {
 ul.process-tree li input[type=checkbox] {
   display: none;
 }
+ul.process-tree li input[type=checkbox] + label .caret:before {
+  content: "";
+}
 ul.process-tree li input[type=checkbox] + label + ul {
   display: none;
+}
+ul.process-tree li input[type=checkbox]:checked + label .caret:before {
+  content: "";
 }
 ul.process-tree li input[type=checkbox]:checked + label + ul {
   display: block;
