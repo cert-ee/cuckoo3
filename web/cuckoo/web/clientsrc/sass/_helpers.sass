@@ -130,10 +130,12 @@ button[disabled]
   opacity: .5
   cursor: not-allowed !important
 
+// use with floats and to disable margin collapsing
 .clear-box
   clear: both
   &:before,
   &:after
+    content: ""
     display: table
 
 .pull-right
@@ -148,3 +150,12 @@ button[disabled]
 .is-sticky
   position: sticky
   top: 0
+
+.can-scroll
+  overflow: auto
+  &-horizontal
+    overflow-x: auto
+    overflow-y: hidden
+  &-vertical
+    overflow-x: hidden
+    overflow-y: auto

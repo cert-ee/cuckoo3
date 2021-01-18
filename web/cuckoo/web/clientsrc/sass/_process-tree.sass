@@ -1,0 +1,49 @@
+// bare process tree implementation because using off the shelf code is not
+// sufficient for this use case.
+ul.process-tree
+
+  &, ul
+    list-style: none
+    padding: 0
+    margin: 0
+
+  ul
+    padding-left: 2rem
+
+  li
+    position: relative
+    input[type="checkbox"]
+      display: none
+      & + label
+        & + ul
+          display: none
+      &:checked + label
+        & + ul
+          display: block
+    &:before
+      content: ""
+      position: absolute
+      left: 2rem
+      width: .1rem
+      height: 100%
+      border-left: 1px solid $border
+      z-index: 0
+    &:after
+      content: ""
+      position: absolute
+      width: 2rem
+      height: .062rem
+      background-color: $border
+      top: 0
+      left: 0
+
+  .pid
+    position: relative
+    z-index: 1
+    display: block
+    background-color: $border
+    width: 2rem
+    height: 2rem
+    border-radius: .75rem
+    text-align: center
+    padding-top: .5rem

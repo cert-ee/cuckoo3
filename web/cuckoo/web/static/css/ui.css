@@ -74,15 +74,31 @@ p {
   line-height: 1.4em;
 }
 
-.code,
+.code, .code-block,
 .is-monospace {
   font-family: Consolas, Monaco, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", "Courier New", Courier, monospace;
 }
 
-.code {
+.code, .code-block {
   background-color: rgba(0, 0, 0, 0.05);
+  color: #0F485A;
   padding: 0.1875rem;
   vertical-align: middle;
+  word-wrap: break-word;
+  border-radius: 0.2rem;
+}
+.code-block {
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
+.code.is-dark, .is-dark.code-block {
+  background-color: #0F485A;
+  color: #f2f2f2;
+}
+.code.is-scrollable, .is-scrollable.code-block {
+  max-width: 40rem;
+  overflow: auto;
 }
 
 .has-text-blue {
@@ -648,8 +664,24 @@ a.button, .control.is-file a.file-trigger {
   width: 100%;
   border-collapse: collapse;
 }
+.table.has-border td {
+  border-bottom: 1px solid #CCCCCC;
+}
+.table.has-layout-fixed {
+  table-layout: fixed;
+}
 .table th, .table td {
   padding: 0.75rem;
+}
+.table th.is-auto-width, .table td.is-auto-width {
+  min-width: 1px;
+  white-space: nowrap;
+}
+.table th.is-mini, .table td.is-mini {
+  min-width: 4rem;
+}
+.table th.is-small, .table td.is-small {
+  min-width: 7.5rem;
 }
 .table th:not([class^=has-text-]), .table td:not([class^=has-text-]) {
   text-align: left;
@@ -657,9 +689,6 @@ a.button, .control.is-file a.file-trigger {
 .table th a, .table td a {
   color: inherit;
   text-decoration: none;
-}
-.table.has-border td {
-  border-bottom: 1px solid #CCCCCC;
 }
 .table thead th,
 .table tfoot td {
@@ -704,10 +733,6 @@ a.button, .control.is-file a.file-trigger {
 }
 .table td {
   font-size: 0.8em;
-}
-.table td.is-auto-width {
-  width: 1px;
-  white-space: nowrap;
 }
 .table thead tr {
   background-color: #FFFFFF;
@@ -1151,6 +1176,132 @@ a.button, .control.is-file a.file-trigger {
 .list.is-index a.is-active {
   font-weight: 700;
   color: #0F485A;
+}
+.list.is-tree-diagram {
+  margin: 0 0 1em;
+  text-align: center;
+}
+.list.is-tree-diagram, .list.is-tree-diagram ul, .list.is-tree-diagram li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.list.is-tree-diagram, .list.is-tree-diagram ul {
+  display: table;
+}
+.list.is-tree-diagram ul {
+  width: 100%;
+}
+.list.is-tree-diagram li {
+  display: table-cell;
+  padding: 0.5em 0;
+  vertical-align: top;
+}
+.list.is-tree-diagram li:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  outline: 0.1em solid #CCCCCC;
+}
+.list.is-tree-diagram li:first-child:before {
+  left: 50%;
+}
+.list.is-tree-diagram li:last-child:before {
+  right: 50%;
+}
+.list.is-tree-diagram code,
+.list.is-tree-diagram span {
+  border: solid 0.1em #CCCCCC;
+  border-radius: 0.2em;
+  display: inline-block;
+  margin: 0 0.2em 0.5em;
+  padding: 0.2em 0.5em;
+  position: relative;
+}
+.list.is-tree-diagram code.leading-node,
+.list.is-tree-diagram span.leading-node {
+  padding: 0.2em 1em;
+  border: 0;
+  background: linear-gradient(rgba(204, 204, 204, 0), rgba(204, 204, 204, 0.5));
+}
+.list.is-tree-diagram code.leading-node:before,
+.list.is-tree-diagram span.leading-node:before {
+  outline: none;
+}
+.list.is-tree-diagram ul:before,
+.list.is-tree-diagram code:before,
+.list.is-tree-diagram span:before {
+  content: "";
+  position: absolute;
+  height: 0.5em;
+  left: 50%;
+  outline: 0.1em solid #CCCCCC;
+}
+.list.is-tree-diagram ul:before {
+  top: -0.5em;
+}
+.list.is-tree-diagram code:before,
+.list.is-tree-diagram span:before {
+  top: -0.55em;
+}
+.list.is-tree-diagram > li {
+  margin-top: 0;
+}
+.list.is-tree-diagram > li:before, .list.is-tree-diagram > li:after, .list.is-tree-diagram > li > code:before, .list.is-tree-diagram > li > span:before {
+  outline: none;
+}
+
+ul.process-tree, ul.process-tree ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+ul.process-tree ul {
+  padding-left: 2rem;
+}
+ul.process-tree li {
+  position: relative;
+}
+ul.process-tree li input[type=checkbox] {
+  display: none;
+}
+ul.process-tree li input[type=checkbox] + label + ul {
+  display: none;
+}
+ul.process-tree li input[type=checkbox]:checked + label + ul {
+  display: block;
+}
+ul.process-tree li:before {
+  content: "";
+  position: absolute;
+  left: 2rem;
+  width: 0.1rem;
+  height: 100%;
+  border-left: 1px solid #CCCCCC;
+  z-index: 0;
+}
+ul.process-tree li:after {
+  content: "";
+  position: absolute;
+  width: 2rem;
+  height: 0.062rem;
+  background-color: #CCCCCC;
+  top: 0;
+  left: 0;
+}
+ul.process-tree .pid {
+  position: relative;
+  z-index: 1;
+  display: block;
+  background-color: #CCCCCC;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  padding-top: 0.5rem;
 }
 
 .icon {
@@ -1838,6 +1989,7 @@ button[disabled] {
   clear: both;
 }
 .clear-box:before, .clear-box:after {
+  content: "";
   display: table;
 }
 
@@ -1857,6 +2009,18 @@ button[disabled] {
 .is-sticky {
   position: sticky;
   top: 0;
+}
+
+.can-scroll {
+  overflow: auto;
+}
+.can-scroll-horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.can-scroll-vertical {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /*# sourceMappingURL=ui.css.map */

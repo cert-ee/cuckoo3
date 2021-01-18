@@ -21,9 +21,27 @@ p
   font-family: $font-stack-monospace
 
 .code
-  background-color: $light
+  background-color: $code-light
+  color: $code-light-text
   padding: $gap/4
   vertical-align: middle
+  word-wrap: break-word
+  border-radius: $radius
+
+  &-block
+    @extend .code
+    padding: $gap
+    // white-space: pre-line
+    white-space: pre-wrap
+    max-width: 100%
+
+  &.is-dark
+    background-color: $code-dark
+    color: $code-dark-text
+
+  &.is-scrollable
+    max-width: 40rem
+    overflow: auto
 
 .has-text-blue
   color: $blue

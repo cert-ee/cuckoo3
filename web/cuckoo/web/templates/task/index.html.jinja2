@@ -4,6 +4,19 @@
 
 {% from 'macros.html.jinja2' import render_dict, ui_box, color_class %}
 
+{% block page_script %}
+  <script>
+    (function() {
+      // when available, store the PUT url in this application scope for access
+      // in the settings js file.
+      window.Application = Object.assign(window.Application || {}, {
+        processes: {{ report.processes|tojson }}
+      });
+    }());
+  </script>
+  <script src="{{ static('js/report.task.js') }}"></script>
+{% endblock %}
+
 {% block body %}
 
   <div class="container is-fixed">
@@ -82,8 +95,15 @@
                 </tr>
                 #}
                 {% for signature in report.signatures %}
+                  {% if signature.score > 5 %}
+                    {% set score_class = 'is-red' %}
+                  {% elif signature.score > 4 %}
+                    {% set score_class = 'is-yellow' %}
+                  {% elif signature.score > 0 %}
+                    {% set score_class = '' %}
+                  {% endif %}
                   <tr data-row="{{ loop.index }}">
-                    <td><span class="tag">{{ signature.score }}</span></td>
+                    <td><span class="tag {{ score_class }}">{{ signature.score }}</span></td>
                     <td>{{ signature.short_description }}</td>
                     <td>{{ signature.description }}</td>
                     <td class="no-text-wrap">
@@ -113,6 +133,173 @@
             </table>
           {% endcall %}
 
+          {% call ui_box(title="Processes", has_padding=False) %}
+
+            <div class="tabbar has-background-transparent" data-enhance>
+              <p class="tabbar-label">View type</p>
+              <a href="#tab-process-table" class="tabbar-link">
+                <span class="icon">
+                  <i class="fas fa-table"></i>
+                </span>
+                Table
+              </a>
+              <a href="#tab-process-nodes" class="tabbar-link">
+                <span class="icon">
+                  <i class="fas fa-project-diagram"></i>
+                </span>
+                Nodes
+              </a>
+              <a href="#tab-process-tree" class="tabbar-link is-active">
+                <span class="icon">
+                  <i class="fas fa-sitemap"></i>
+                </span>
+                Tree
+              </a>
+            </div>
+
+            <div id="tab-process-table" hidden>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th class="is-small">PID</th>
+                    <th class="is-mini">Duration</th>
+                    <th>Name/image</th>
+                    <th class="is-mini">State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for process in report.processes %}
+                  <tr>
+                    <td class="is-monospace has-text-center">
+                      <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
+                      <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
+                    </td>
+                    <td class="has-text-center">
+                      {{ process.start_ts }}<br />
+                      <span class="has-half-opacity">&darr;</span><br />
+                      {% if process.end_ts %}
+                        {{ process.end_ts }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {{ process.name }}
+                      <p class="has-half-opacity has-text-small">{{ process.image }}</p>
+                      <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
+                    </td>
+                    <td>{{ process.state }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js: --></div>
+            <div class="has-text-small" id="tab-process-tree">
+
+              <!-- <ul class="process-tree">
+                <li>
+                  <input type="checkbox" id="0" checked />
+                  <label for="0">
+                    <div class="columns is-divided is-vcenter">
+                      <div class="column is-auto">
+                        <span class="pid">70</span>
+                      </div>
+                      <div class="column">
+                        <p>
+                          <span class="icon">
+                            <i class="fas fa-tag"></i>
+                          </span>
+                          fdsjbfjksbjkdsbdskjbasofjsf.exe
+                        </p>
+                        <p>
+                          <span class="icon">
+                            <i class="fas fa-folder"></i>
+                          </span>
+                          fdsjbfjksbjkdsbdskjbasofjsf.exe
+                        </p>
+                        <p>
+                          <span class="icon">
+                            <i class="fas fa-terminal"></i>
+                          </span>
+                          <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                  <ul>
+                    <li>
+                      <input type="checkbox" id="1" checked />
+                      <label for="1">
+                        <div class="columns is-divided is-vcenter">
+                          <div class="column is-auto">
+                            <span class="pid">71</span>
+                          </div>
+                          <div class="column">
+                            <p>
+                              <span class="icon">
+                                <i class="fas fa-tag"></i>
+                              </span>
+                              fdsjbfjksbjkdsbdskjbasofjsf.exe
+                            </p>
+                            <p>
+                              <span class="icon">
+                                <i class="fas fa-folder"></i>
+                              </span>
+                              fdsjbfjksbjkdsbdskjbasofjsf.exe
+                            </p>
+                            <p>
+                              <span class="icon">
+                                <i class="fas fa-terminal"></i>
+                              </span>
+                              <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                      <ul>
+                        <li>
+                          <input type="checkbox" id="2" checked />
+                          <label for="2">
+                            <div class="columns is-divided is-vcenter">
+                              <div class="column is-auto">
+                                <span class="pid">72</span>
+                              </div>
+                              <div class="column">
+                                <p>
+                                  <span class="icon">
+                                    <i class="fas fa-tag"></i>
+                                  </span>
+                                  fdsjbfjksbjkdsbdskjbasofjsf.exe
+                                </p>
+                                <p>
+                                  <span class="icon">
+                                    <i class="fas fa-folder"></i>
+                                  </span>
+                                  fdsjbfjksbjkdsbdskjbasofjsf.exe
+                                </p>
+                                <p>
+                                  <span class="icon">
+                                    <i class="fas fa-terminal"></i>
+                                  </span>
+                                  <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li></li>
+                <li></li>
+              </ul> -->
+
+            </div>
+
+          {% endcall %}
+
         </div>
         <div id="tab-machine" hidden>
           {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
@@ -125,54 +312,4 @@
 
   </div>
 
-{% endblock %}
-
-{% block page_script %}
-  <script>
-    // tap through various levels of signature severities
-    (function signatureFilters() {
-
-      const signatures  = document.querySelector('#box-Signatures');
-      const table       = signatures.querySelector('.table');
-      const filters     = [...signatures.querySelectorAll('[name="toggle-sig"]')];
-
-      function onUnselected() {
-        if(!filters.find(f => f.checked))
-          filters[0].checked = true;
-      }
-
-      signatures.querySelectorAll('.table tbody tr[data-row]').forEach(row => {
-        row.querySelector('.toggle-ioc').addEventListener('click', ev => {
-          ev.preventDefault();
-          let link = ev.currentTarget;
-          let target = signatures.querySelector('tr[data-row-of="'+row.dataset.row+'"]');
-
-          if(target.hasAttribute('hidden')) {
-            target.removeAttribute('hidden');
-            link.textContent = 'Hide IOCs';
-            row.classList.add('is-shown');
-          } else {
-            target.setAttribute('hidden', true);
-            link.textContent = 'Display IOCs';
-            row.classList.remove('is-shown');
-          }
-
-        });
-      });
-
-      filters.forEach(filter => {
-        filter.addEventListener('change', ev => {
-          switch(ev.currentTarget.value) {
-            case 'all':
-              filters.forEach(f => f.value !== 'all' ? f.checked = false : null);
-            break;
-            default:
-              filters.find(f => f.value == 'all').checked = false;
-          }
-          onUnselected();
-        });
-      });
-
-    }());
-  </script>
 {% endblock %}

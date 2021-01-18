@@ -5,18 +5,28 @@
   width: 100%
   border-collapse: collapse
 
+  &.has-border
+    td
+      border-bottom: 1px solid $border
+
+  &.has-layout-fixed
+    table-layout: fixed
+
   // shared styles for cells and column headers
   th, td
+    &.is-auto-width
+      min-width: 1px
+      white-space: nowrap
+    &.is-mini
+      min-width: 4rem
+    &.is-small
+      min-width: 7.5rem
     &:not([class^=has-text-])
       text-align: left
     padding: $gap
     a
       color: inherit
       text-decoration: none
-
-  &.has-border
-    td
-      border-bottom: 1px solid $border
 
   // table cell (heading) styles, including support for sorting indication
   thead th,
@@ -61,10 +71,6 @@
   // table-cell styles
   td
     font-size: .8em
-
-    &.is-auto-width
-      width: 1px
-      white-space: nowrap
 
   // table header styles
   thead

@@ -53,6 +53,7 @@
           border-width: 10.4px 6px 0 6px
           border-color: $border transparent transparent transparent
 
+
   // horizontal list modifier
   &.is-horizontal
     list-style: none
@@ -67,7 +68,7 @@
         display: inline-block
         margin: 0 $gap/2
 
-  // list variented for a hierarchical list/index component
+  // list variant for a hierarchical list/index component
   &.is-index
 
     &,
@@ -95,3 +96,78 @@
       &.is-active
         font-weight: 700
         color: $dark
+
+  // list variant for displaying information like a tree diagram
+  // - experiment for a process tree figure
+  // - https://codepen.io/ross-angus/pen/jwxMjL
+  &.is-tree-diagram
+
+    margin: 0 0 1em
+    text-align: center
+
+    &, ul, li
+      list-style: none
+      margin: 0
+      padding: 0
+      position: relative
+
+    &, ul
+      display: table
+
+    ul
+      width: 100%
+
+    li
+      display: table-cell
+      padding: .5em 0
+      vertical-align: top
+      &:before
+        content: ""
+        position: absolute
+        left: 0
+        right: 0
+        top: 0
+        outline: .1em solid $border
+      &:first-child:before
+        left: 50%
+      &:last-child:before
+        right: 50%
+
+    code,
+    span
+      border: solid .1em $border
+      border-radius: .2em
+      display: inline-block
+      margin: 0 .2em .5em
+      padding: .2em .5em
+      position: relative
+
+      &.leading-node
+        padding: .2em 1em
+        border: 0
+        background: linear-gradient(rgba($border, 0), rgba($border, .5))
+        &:before
+          outline: none
+
+    ul:before,
+    code:before,
+    span:before
+      content: ""
+      position: absolute
+      height: .5em
+      left: 50%
+      outline: .1em solid $border
+
+    ul:before
+      top: -.5em
+    code:before,
+    span:before
+      top: -.55em
+
+    & > li
+      margin-top: 0
+    & > li:before,
+    & > li:after,
+    & > li > code:before,
+    & > li > span:before
+      outline: none
