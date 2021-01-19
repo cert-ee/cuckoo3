@@ -104,13 +104,13 @@ const processes = (function() {
 // renders processes to indented tree view
 (function renderProcessTree() {
 
-  const { mapped } = processes;
-  const tree = document.createElement('ul');
-  const processTreeTab = document.querySelector('#tab-process-tree');
+  const { mapped }      = processes;
+  const tree            = document.createElement('ul');
+  const processTreeTab  = document.querySelector('#tab-process-tree');
   tree.classList.add('list');
   tree.classList.add('process-tree');
 
-  function template(process) {
+  function template(process, meta) {
     return parseDOM(`
       <div class="columns is-divided is-vcenter">
         <div class="column is-auto">
@@ -142,17 +142,37 @@ const processes = (function() {
             </span>
             <code class="code">${process.commandline}</code>
           </p>
+          <div class="duration">
+            <div class="duration--inner" style="
+              width: ${meta.duration.length}%;
+              left: ${meta.duration.offset}%;"
+            ></div>
+          </div>
         </div>
       </div>
     `);
   }
 
+  function getDuration(process) {
+    let dur = Application.duration;
+    let start = process.start_ts;
+    let end   = process.end_ts || Application.duration;
+    return {
+      length: ((end - start) / dur) * 100,
+      offset: (start / dur) * 100
+    }
+  }
+
   function recurse(a=[], dom, it=0) {
     a.forEach((p, i) => {
 
+      console.log(getDuration(p));
+
       let id = 'process-'+p.pid;
       let item = document.createElement('li');
-      let content = template(p);
+      let content = template(p, {
+        duration: getDuration(p)
+      });
 
       if(p.children.length) {
 
@@ -181,7 +201,6 @@ const processes = (function() {
   recurse(mapped, tree);
 
   processTreeTab.appendChild(tree);
-  console.log(tree);
 }());
 
 // tap through various levels of signature severities

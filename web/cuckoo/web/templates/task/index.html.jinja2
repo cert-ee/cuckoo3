@@ -10,6 +10,7 @@
       // when available, store the PUT url in this application scope for access
       // in the settings js file.
       window.Application = Object.assign(window.Application || {}, {
+        duration: {{ analysis.settings.timeout }} * 1000,
         processes: {{ report.processes|tojson }}
       });
     }());
@@ -47,6 +48,10 @@
 
           {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(report) }}
+          {% endcall %}
+
+          {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
+            {{ render_dict(analysis) }}
           {% endcall %}
 
           {% call ui_box(title="Signatures", has_padding=False) %}
@@ -196,105 +201,6 @@
             </div>
             <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js: --></div>
             <div class="has-text-small" id="tab-process-tree">
-
-              <!-- <ul class="process-tree">
-                <li>
-                  <input type="checkbox" id="0" checked />
-                  <label for="0">
-                    <div class="columns is-divided is-vcenter">
-                      <div class="column is-auto">
-                        <span class="pid">70</span>
-                      </div>
-                      <div class="column">
-                        <p>
-                          <span class="icon">
-                            <i class="fas fa-tag"></i>
-                          </span>
-                          fdsjbfjksbjkdsbdskjbasofjsf.exe
-                        </p>
-                        <p>
-                          <span class="icon">
-                            <i class="fas fa-folder"></i>
-                          </span>
-                          fdsjbfjksbjkdsbdskjbasofjsf.exe
-                        </p>
-                        <p>
-                          <span class="icon">
-                            <i class="fas fa-terminal"></i>
-                          </span>
-                          <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
-                        </p>
-                      </div>
-                    </div>
-                  </label>
-                  <ul>
-                    <li>
-                      <input type="checkbox" id="1" checked />
-                      <label for="1">
-                        <div class="columns is-divided is-vcenter">
-                          <div class="column is-auto">
-                            <span class="pid">71</span>
-                          </div>
-                          <div class="column">
-                            <p>
-                              <span class="icon">
-                                <i class="fas fa-tag"></i>
-                              </span>
-                              fdsjbfjksbjkdsbdskjbasofjsf.exe
-                            </p>
-                            <p>
-                              <span class="icon">
-                                <i class="fas fa-folder"></i>
-                              </span>
-                              fdsjbfjksbjkdsbdskjbasofjsf.exe
-                            </p>
-                            <p>
-                              <span class="icon">
-                                <i class="fas fa-terminal"></i>
-                              </span>
-                              <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                      <ul>
-                        <li>
-                          <input type="checkbox" id="2" checked />
-                          <label for="2">
-                            <div class="columns is-divided is-vcenter">
-                              <div class="column is-auto">
-                                <span class="pid">72</span>
-                              </div>
-                              <div class="column">
-                                <p>
-                                  <span class="icon">
-                                    <i class="fas fa-tag"></i>
-                                  </span>
-                                  fdsjbfjksbjkdsbdskjbasofjsf.exe
-                                </p>
-                                <p>
-                                  <span class="icon">
-                                    <i class="fas fa-folder"></i>
-                                  </span>
-                                  fdsjbfjksbjkdsbdskjbasofjsf.exe
-                                </p>
-                                <p>
-                                  <span class="icon">
-                                    <i class="fas fa-terminal"></i>
-                                  </span>
-                                  <code class="code">fdsjbfjksbjkdsbdskjbasofjsf.exe</code>
-                                </p>
-                              </div>
-                            </div>
-                          </label>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </li>
-                <li></li>
-                <li></li>
-              </ul> -->
 
             </div>
 

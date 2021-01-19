@@ -1309,6 +1309,23 @@ ul.process-tree .pid {
   text-align: center;
   padding-top: 0.5rem;
 }
+ul.process-tree .duration {
+  position: relative;
+  display: block;
+  width: 15rem;
+  max-width: 15rem;
+  height: 0.5rem;
+  background-color: #CCCCCC;
+  overflow: hidden;
+}
+ul.process-tree .duration--inner {
+  position: absolute;
+  height: 0.5rem;
+  width: 0;
+  left: 0;
+  top: 0;
+  background-color: #2E94F1;
+}
 
 .icon {
   display: inline-block;
