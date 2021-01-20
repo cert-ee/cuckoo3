@@ -111,11 +111,17 @@ class WorkReceiver(UnixSocketServer):
                 f"Missing configuration file.", error=e, includetrace=False
             )
 
+        self.initialize_workrunners()
+
         self.create_socket(backlog=1)
         self.start_accepting()
 
     def send_msg(self, message_dict):
         self.reader.send_json_message(message_dict)
+
+    def initialize_workrunners(self):
+        PreProcessingRunner.init_once()
+        PostProcessingRunner.init_once()
 
     def initialize_plugins(self):
         plugins = self.PLUGINS.get(self.worktype)
