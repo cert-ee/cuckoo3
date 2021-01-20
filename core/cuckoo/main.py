@@ -65,7 +65,6 @@ def main(ctx, cwd, debug, quiet):
     )
     from .startup import start_cuckoo
 
-
     def _stopmsg():
         print("Stopping Cuckoo..")
 
@@ -154,11 +153,6 @@ def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
 
 @main.command("submit")
 @click.argument("target", nargs=-1)
-# @click.option(
-#     "--machine-tag", multiple=True,
-#     help="Additional machine tag to the ones that are automatically selected "
-#          "in target identification."
-# )
 @click.option(
     "--platform", multiple=True,
     help="The platform and optionally the OS version the analysis task must "

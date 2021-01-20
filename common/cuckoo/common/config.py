@@ -359,6 +359,11 @@ def platformconditional(default, **kwargs):
 
 def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
     def _typeloader_to_yamlval(obj):
+        if isinstance(obj, set):
+            raise ConfigurationError(
+                "Configuration value object cannot be a set"
+            )
+
         if isinstance(obj, TypeLoader):
             if obj.sensitive and filter_sensitive:
                 return "*"*8

@@ -246,7 +246,7 @@ def get_state(analysis_id):
     try:
         analysis = ses.query(
             db.Analysis.state
-        ).filter_by(id=analysis_id).raw()
+        ).filter_by(id=analysis_id).one()
 
         if not analysis:
             return None
