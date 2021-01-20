@@ -196,12 +196,16 @@ def _translate_injection_event(threemon_injection, processes):
         threemon_injection.technique
     )
 
-    # If event is not normalized, fall back to the name of the file access
+    # If event is not normalized, fall back to the name of the injection
     # event declared in the pb event format file.
     if not normalized_action:
         normalized_action = inject_pb2.Technique.Name(
             threemon_injection.technique
         )
+
+    # Mark the injected process as tracked, since it is now under control
+    # of whatever injected it.
+    processes.set_tracked(threemon_injection.dstpid)
 
     return ProcessInjection(
         ts=threemon_injection.ts, action=normalized_action,
