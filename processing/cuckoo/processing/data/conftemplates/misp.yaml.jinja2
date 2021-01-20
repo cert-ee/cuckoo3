@@ -1,0 +1,94 @@
+# Enable the usage of MISP queries in pre and post processing for
+# the discovered IOCs.
+enabled: {{ enabled }}
+
+# The MISP API url. Is also used as the base URL for creating links to
+# events.
+url: {{ url }}
+
+# Verify if the configured MISP server is using a valid TLS certificate.
+# Disable this your certificate is self-signed or no certificate is used.
+verify_tls: {{ verify_tls }}
+
+# The API key to access the MISP api.
+key: {{ key }}
+
+# A connection timeout to use when using the MISP api.
+timeout: {{ timeout }}
+
+processing:
+  # Settings for pre-processing
+  pre:
+    # The maximum amount of events that should be asked from MISP per query.
+    event_limit: {{ processing.pre.event_limit }}
+
+    file:
+      # What target file hashes to use when searching for MISP events.
+      # Supported: md5, sha1, sha256, sha512
+      hashes:
+      {% for hash in processing.pre.file.hashes %}
+      - {{ hash }}
+      {% endfor %}
+
+  # Settings for post behavioral processing.
+  post:
+    # The maximum amount of queries to perform per IOC type.
+    # Currently supported: dst_ip, domain, url
+    query_limits:
+    {% for ioctype, limit in processing.post.query_limits.items() %}
+      {{ ioctype }}: {{ limit }}
+    {% endfor %}
+
+    # The maximum amount of events for each IOC type that should be
+    # asked from MISP per query.
+    event_limits:
+    {% for ioctype, limit in processing.post.event_limits.items() %}
+      {{ ioctype }}: {{ limit }}
+    {% endfor %}
+
+reporting:
+  # Enable the reporting of discovered IOCs as a new event.
+  enabled: {{ reporting.enabled }}
+
+  # The minimum Cuckoo score a task must have before discovered
+  # IOCs are reported to MISP.
+  min_score: {{ reporting.min_score }}
+
+  # The base URL of your running Cuckoo web instance. This is used to create
+  # links to reported tasks.
+  web_baseurl: {{ reporting.web_baseurl }}
+
+  event:
+    # Distribution controls who will be able to see the event.
+    distribution: {{ reporting.event.distribution }}
+    # The sharing group that should be used if distribution is set to sharing group
+    sharing_group: {{ reporting.event.sharing_group }}
+    threat_level: {{ reporting.event.threat_level }}
+    analysis: {{ reporting.event.analysis }}
+    # Add mitre attack TTP tags for the Mitre attack galaxy?
+    galaxy_mitre_attack: {{ reporting.event.galaxy_mitre_attack }}
+    # Should the event be set to published?
+    publish: {{ reporting.event.publish }}
+
+    tags:
+    {% for misptag in reporting.event.tags %}
+    - {{ misptag }}
+    {% endfor %}
+
+    attributes:
+      ip_addresses:
+        include: {{ reporting.event.attributes.ip_addresses.include }}
+        ids: {{ reporting.event.attributes.ip_addresses.ids }}
+      domains:
+        include: {{ reporting.event.attributes.domains.include }}
+        ids: {{ reporting.event.attributes.domains.ids }}
+      urls:
+        include: {{ reporting.event.attributes.urls.include }}
+        ids: {{ reporting.event.attributes.urls.ids }}
+      mutexes:
+        include: {{ reporting.event.attributes.mutexes.include }}
+        ids: {{ reporting.event.attributes.mutexes.ids }}
+      sample_hashes: {{ reporting.event.attributes.filehashes }}
+        include: {{ reporting.event.attributes.sample_hashes.include }}
+        ids: {{ reporting.event.attributes.sample_hashes.ids }}
+        upload_sample: {{ reporting.event.attributes.sample_hashes.upload_sample }}

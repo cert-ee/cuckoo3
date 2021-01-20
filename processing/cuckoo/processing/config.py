@@ -35,5 +35,82 @@ typeloaders = {
         ),
         "min_suspicious": config.Int(default_val=3, min_value=1),
         "min_malicious": config.Int(default_val=5, min_value=1)
+    },
+    "misp.yaml": {
+        "enabled": config.Boolean(default_val=False),
+        "url": config.String(),
+        "verify_tls": config.Boolean(default_val=True),
+        "key": config.String(sensitive=True),
+        "timeout": config.Int(default_val=5, min_value=0),
+        "processing": {
+            "pre": {
+                "event_limit": config.Int(default_val=1, min_value=1),
+                "file": {
+                    "hashes": config.List(
+                        config.String, default_val=["sha256"]
+                    )
+                }
+            },
+            "post": {
+                "query_limits": config.Dict(
+                    config.Int, default_val={
+                        "dst_ip": 10,
+                        "domain": 10,
+                        "url": 10
+                    }
+                ),
+                "event_limits": config.Dict(
+                    config.Int, default_val={
+                        "dst_ip": 1,
+                        "domain": 1,
+                        "url": 1
+                    }
+                )
+            }
+        },
+        "reporting": {
+            "enabled": config.Boolean(default_val=False),
+            "min_score": config.Int(default_val=6, min_value=0, max_value=10),
+            "web_baseurl": config.String(allow_empty=True),
+            "event": {
+                "distribution": config.Int(allow_empty=True),
+                "sharing_group": config.Int(allow_empty=True),
+                "threat_level": config.Int(
+                    allow_empty=True, min_value=0, max_value=4
+                ),
+                "analysis": config.Int(
+                    allow_empty=True, min_value=0, max_value=2
+                ),
+                "galaxy_mitre_attack": config.Boolean(default_val=True),
+                "publish": config.Boolean(default_val=False),
+                "tags": config.List(
+                    config.String, default_val=["Cuckoo Sandbox"],
+                    allow_empty=True
+                ),
+                "attributes": {
+                    "ip_addresses": {
+                        "include": config.Boolean(default_val=True),
+                        "ids": config.Boolean(default_val=False)
+                    },
+                    "domains": {
+                        "include": config.Boolean(default_val=True),
+                        "ids": config.Boolean(default_val=False)
+                    },
+                    "urls": {
+                        "include": config.Boolean(default_val=True),
+                        "ids": config.Boolean(default_val=False)
+                    },
+                    "mutexes": {
+                        "include": config.Boolean(default_val=True),
+                        "ids": config.Boolean(default_val=False)
+                    },
+                    "sample_hashes": {
+                        "include": config.Boolean(default_val=True),
+                        "ids": config.Boolean(default_val=False),
+                        "upload_sample": config.Boolean(default_val=False)
+                    },
+                }
+            }
+        }
     }
 }
