@@ -256,7 +256,7 @@ def set_failed(worktracker, worktype):
         worktracker.log.error("Task post stage failed")
         task.merge_processing_errors(worktracker.task)
         worktracker.task.state = task.States.FATAL_ERROR
-        task.write_changes(task)
+        task.write_changes(worktracker.task)
         update_final_analysis_state(worktracker)
         analyses.write_changes(worktracker.analysis)
 
@@ -283,6 +283,8 @@ def set_task_failed(worktracker):
     task.merge_run_errors(worktracker.task)
     worktracker.task.state = task.States.FATAL_ERROR
     task.write_changes(worktracker.task)
+    update_final_analysis_state(worktracker)
+    analyses.write_changes(worktracker.analysis)
 
 def set_task_running(worktracker):
     worktracker.log.debug("Setting task to state running")

@@ -2,14 +2,17 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from cuckoo.common.dns import ResolveTracker
 from cuckoo.common.strictcontainer import Task, Analysis, Identification
-from cuckoo.common.storage import TaskPaths, AnalysisPaths
+from cuckoo.common.storage import TaskPaths, AnalysisPaths, Paths
+from cuckoo.common.startup import init_safelist_db
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.log import AnalysisLogger, TaskLogger
 from cuckoo.common.machines import Machine
 
 from .errors import (
-    PluginError, PluginWorkerError, CancelProcessing, CancelReporting
+    PluginError, PluginWorkerError, CancelProcessing, CancelReporting,
+    DisablePluginError
 )
 
 from cuckoo.processing.event.reader import NormalizedEventReader
@@ -89,6 +92,11 @@ class AnalysisContext(ProcessingContext):
             AnalysisPaths.processingerr_json(self.analysis.id)
         )
 
+class NetworkContext:
+
+    def __init__(self):
+        self.dns = ResolveTracker()
+
 class TaskContext(ProcessingContext):
 
     def __init__(self, analysis_id, task_id):
@@ -98,6 +106,7 @@ class TaskContext(ProcessingContext):
         self.task = Task.from_file(TaskPaths.taskjson(task_id))
         self.machine = Machine.from_file(TaskPaths.machinejson(self.task.id))
         self.process_tracker = ProcessTracker()
+        self.network = NetworkContext()
 
     def _errtracker_to_file(self):
         self.errtracker.to_file(
@@ -124,6 +133,12 @@ def make_plugin_instances(plugin_classes, ctx, *args, **kwargs):
             instance = plugin_class(ctx, *args, **kwargs)
             instance.init()
             instances.append(instance)
+        except DisablePluginError as e:
+            ctx.log.warning(
+                "Plugin usage disabled during initialization",
+                plugin_class=plugin_class, error=e
+            )
+            continue
         except Exception as e:
             raise PluginError(
                 f"Failed to initialize plugin: {plugin_class}. {e}"
@@ -262,6 +277,13 @@ class PreProcessingRunner:
         self.processing_classes = processing_classes
         self.reporting_classes = reporting_classes
 
+    @classmethod
+    def init_once(cls):
+        TTPTracker.init_once(
+            attack_json_path=Paths.signatures("mitreattack", "attack.json")
+        )
+        init_safelist_db()
+
     def start(self):
         if not _handle_processing(self.processing_classes, self.analysisctx):
             return
@@ -294,6 +316,13 @@ class PostProcessingRunner:
         self._processing_classes = processing_classes
         self._reporting_classes = reporting_classes
         self.completed = False
+
+    @classmethod
+    def init_once(cls):
+        TTPTracker.init_once(
+            attack_json_path=Paths.signatures("mitreattack", "attack.json")
+        )
+        init_safelist_db()
 
     def _init_consumers(self, consumer_classes):
         instances = []

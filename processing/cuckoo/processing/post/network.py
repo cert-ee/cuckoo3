@@ -8,6 +8,7 @@ import os
 
 from cuckoo.common.log import set_logger_level
 from cuckoo.common.storage import TaskPaths, Paths
+from cuckoo.common import safelist
 from httpreplay import reader, protohandlers, udpprotoparsers, transport
 
 from ..abtracts import Processor
@@ -15,59 +16,21 @@ from ..abtracts import Processor
 set_logger_level("httpreplay.transport", logging.ERROR)
 set_logger_level("httpreplay.protoparsers", logging.ERROR)
 
-# TODO move this to a standardized safelist format when there are more things
-# to safelist. Leave it here for now until we create a
-# 'safelist management tool/way'
-class TempSafelist:
-
-    def __init__(self, filepath):
-        self._safelist = self._parse(self.read_file(filepath))
-
-    def read_file(self, filepath):
-        if not os.path.isfile(filepath):
-            return []
-
-        with open(filepath, "r") as fp:
-            return set(val.strip() for val in fp.readlines())
-
-    def _parse(self, values):
-        pass
-
-    def is_safelisted(self, value):
-        pass
-
-class IPSafelist(TempSafelist):
-
-    def _parse(self, values):
-        safelist = set()
-        for value in values:
-            try:
-                safelist.add(ipaddress.ip_network(value))
-            except (TypeError, ValueError):
-                continue
-
-        return safelist
-
-    def is_safelisted(self, value):
-        try:
-            ip = ipaddress.ip_address(value)
-            for network in self._safelist:
-                if ip in network:
-                    return True
-        except (ValueError, TypeError):
-            return False
-
-        return False
-
 class Pcapreader(Processor):
 
     KEY = "network"
+    ORDER = 1
 
     @classmethod
     def init_once(cls):
-        cls.ip_safelist = IPSafelist(Paths.safelistfile("ipnetwork.txt"))
+        cls.ip_sl = safelist.IP()
+        cls.domain_sl = safelist.Domain()
+        cls.ip_sl.load_safelist()
+        cls.domain_sl.load_safelist()
 
     def init(self):
+        self.ip_sl.clear_temp()
+
         self.tcp_handlers = {
             25: protohandlers.smtp_handler,
             80: protohandlers.http_handler,
@@ -99,12 +62,15 @@ class Pcapreader(Processor):
         results = {
             "host": set(),
             "http_request": set(),
+            "url": set(),
             "smtp": set(),
             "dns_query": set(),
-            "dns_answer": set()
+            "dns_answer": set(),
+            "domain": set()
         }
 
         for flow, ts, proto, sent, recv in r.process():
+
             host_index = 2
 
             # Read sender as dst host if DNS. We use DNS replies for the DNS
@@ -112,34 +78,63 @@ class Pcapreader(Processor):
             if proto == "dns":
                 host_index = 0
 
-            if self.ip_safelist.is_safelisted(flow[host_index]):
+            if self.ip_sl.is_safelisted(flow[host_index]):
                 continue
 
             if proto == "http":
-                request = f"{sent.method} " \
-                          f"{sent.headers.get('host', flow[2])}" \
-                          f":{flow[3]}{sent.uri}"
+                host = sent.headers.get('host', flow[2])
+                port = ""
+                if flow[3] != 80:
+                    port = f":{flow[3]}"
 
+                url = f"http://{host}{port}{sent.uri}"
+                request = f"{sent.method} {url}"
                 results["http_request"].add(request)
+                results["url"].add(url)
 
             elif proto == "smtp":
                 results["smtp"].add(" ".join(sent.raw))
 
             elif proto == "dns":
+
+                safelist_reply = False
+                source_domain = ""
                 for dns_r in sent:
+                    if dns_r.type in ("A", "AAAA"):
+                        if self.domain_sl.is_safelisted(
+                                    dns_r.name, self.ctx.machine.platform
+                        ):
+                            safelist_reply = True
+                            source_domain = dns_r.name
+                            continue
+
                     results["dns_query"].add(f"{dns_r.type} {dns_r.name}")
+                    results["domain"].add(dns_r.name)
+
 
                 for dns_a in recv:
+                    if safelist_reply:
+                        if dns_a.type in ("A", "AAAA"):
+                            self.ip_sl.add_temp_entry(
+                                dns_a.data,
+                                platform=self.ctx.machine.platform,
+                                description="Auto safelist based on domain",
+                                source=f"Safelisted domain: {source_domain}"
+                            )
+                        continue
+
                     results["dns_answer"].add(
                         f"{dns_a.type} {dns_a.data} "
                         f"{','.join(dns_a.fields.values())}"
                     )
 
-            host = flow[host_index]
-            if flow == self.ctx.machine.ip:
-                continue
 
+            host = flow[host_index]
+            if host == self.ctx.machine.ip:
+                continue
 
             results["host"].add(host)
 
-        return {k:list(v) for k, v in results.items()}
+        return {
+            "summary": {k:list(v) for k, v in results.items()}
+        }

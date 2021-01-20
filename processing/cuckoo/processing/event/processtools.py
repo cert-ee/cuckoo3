@@ -134,6 +134,17 @@ class ProcessTracker:
     def lookup_procid(self, pid):
         return self._pid_procid.get(pid)
 
+    def set_tracked(self, pid):
+        proc_id = self.lookup_procid(pid)
+        if not proc_id:
+            raise KeyError(
+                f"Cannot set process with pid {pid} to tracked. "
+                f"Pid is unknown."
+            )
+
+        process = self.lookup_process(proc_id)
+        process.mark_tracked()
+
     def process_dictlist(self, tracked_only=True):
         plist = []
         for p in self._procid_proc.values():

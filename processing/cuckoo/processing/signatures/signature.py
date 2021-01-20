@@ -22,7 +22,12 @@ class Signature:
                  ttps=[], tags=[], family=""):
         self.name = name
         self.short_description = short_description
-        self.description = description
+
+        if not description:
+            self.description = short_description
+        else:
+            self.description = description
+
         self.ttps = ttps
         self.tags = tags
         self.family = family
@@ -35,6 +40,16 @@ class Signature:
 
     def add_iocs(self, iocs=[]):
         self.iocs.extend(iocs)
+
+    @classmethod
+    def from_dict(cls, sigdict):
+        return cls(
+            score=sigdict["score"], name=sigdict["name"],
+            short_description=sigdict["short_description"],
+            description=sigdict["description"], iocs=sigdict["iocs"],
+            ttps=sigdict["ttps"], tags=sigdict["tags"],
+            family=sigdict["family"]
+        )
 
     def to_dict(self):
         return {

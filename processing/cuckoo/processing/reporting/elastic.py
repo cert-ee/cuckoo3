@@ -92,8 +92,9 @@ class ElasticSearch(Reporter):
                     )
 
     def _store_network_events(self):
+        network = self.ctx.result.get("network", {})
 
-        for subtype, requests in self.ctx.result.get("network", {}).items():
+        for subtype, requests in network.get("summary", {}).items():
             if not requests:
                 continue
 

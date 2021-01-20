@@ -11,13 +11,13 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.hybrid import hybrid_property
 
 @as_declarative()
-class Base:
+class CuckooDBDTable:
     def to_dict(self):
         return {
             c.name: getattr(self, c.name) for c in self.__table__.columns
         }
 
-class Analysis(Base):
+class Analysis(CuckooDBDTable):
 
     __tablename__ = "analyses"
 
@@ -44,7 +44,7 @@ class Analysis(Base):
         return d
 
 
-class Task(Base):
+class Task(CuckooDBDTable):
 
     __tablename__ = "tasks"
 
@@ -85,7 +85,7 @@ class Task(Base):
 
         self._machine_tags = ",".join(value)
 
-class Target(Base):
+class Target(CuckooDBDTable):
 
     __tablename__ = "targets"
 
@@ -101,7 +101,7 @@ class Target(Base):
     sha256 = sqlalchemy.Column(sqlalchemy.String(64), nullable=True)
     sha512 = sqlalchemy.Column(sqlalchemy.String(128), nullable=True)
 
-class _DBMS(object):
+class DBMS(object):
 
     def __init__(self):
         self.initialized = False
@@ -109,21 +109,22 @@ class _DBMS(object):
         self.engine = None
         self.connection_string = ""
 
-    def initialize(self, dsn):
+    def initialize(self, dsn, tablebaseclass):
         if self.initialized:
             self.cleanup()
 
-        engine = sqlalchemy.create_engine(dsn, poolclass=NullPool)
-        Base.metadata.create_all(engine)
+        engine = sqlalchemy.create_engine(
+            dsn, poolclass=NullPool, connect_args={"timeout": 60}
+        )
+        tablebaseclass.metadata.create_all(engine)
 
         self.engine = engine
         self.session.configure(bind=engine)
+        self.initialized = True
 
     def cleanup(self):
         if self.initialized and self.engine:
             self.engine.dispose()
+            self.initialized = False
 
-    def __del__(self):
-        self.cleanup()
-
-dbms = _DBMS()
+dbms = DBMS()

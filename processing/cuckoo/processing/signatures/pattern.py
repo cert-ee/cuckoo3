@@ -119,13 +119,15 @@ class LoadedSignature(StrictContainer):
         "ttps": list,
         "triggers": list
     }
-    ALLOW_EMPTY = ("list", "ttps", "family", "level")
+    ALLOW_EMPTY = ("tags", "ttps", "family", "level", "description")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         if not self.level:
             self.level = Levels.INFORMATIONAL
+        if not self.description:
+            self.description = self.short_description
 
     def check_constraints(self):
         def _check_trigger(pattern_dict):

@@ -11,6 +11,9 @@ class CancelReporting(Exception):
 class PluginError(Exception):
     pass
 
+class DisablePluginError(Exception):
+    pass
+
 class PluginWorkerError(Exception):
     pass
 
