@@ -49,6 +49,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "cuckoo = cuckoo.main:main",
+            "cuckoosafelist = cuckoo.scripts.safelist:main"
         ],
     },
     install_requires=[
