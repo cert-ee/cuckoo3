@@ -278,6 +278,15 @@ class Registry(NormalizedEvent):
             self.path_normalized, self.path, self, self.kind,
             event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action)
         )
+        # Don't scan binary set value events since pattern scans values
+        # must be strings.
+        if self.action == RegistryActions.SET_VALUE and \
+                self.valuetype != RegistryValueTypes.BINARY:
+            strval = str(self.value)
+            pattern_scanner.scan(
+                strval, strval, self, self.kind,
+                event_subtype="value"
+            )
 
 
 class ProcessInjectActions:
