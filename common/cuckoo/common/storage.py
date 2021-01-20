@@ -313,10 +313,6 @@ class Paths(object):
         return os.path.join(cuckoocwd.root, "web", *args)
 
     @staticmethod
-    def safelistfile(*args):
-        return os.path.join(cuckoocwd.root, "safelists", *args)
-
-    @staticmethod
     def signatures(*args):
         return os.path.join(cuckoocwd.root, "signatures", *args)
 
@@ -327,6 +323,15 @@ class Paths(object):
             return pattern_path
 
         return os.path.join(pattern_path, platform)
+
+    @staticmethod
+    def safelist(filename):
+        return os.path.join(cuckoocwd.root, "safelist", filename)
+
+    @staticmethod
+    def safelist_db():
+        return Paths.safelist("safelist.db")
+
 
 def cwd(*args, **kwargs):
     if kwargs.get("analysis"):

@@ -6,7 +6,8 @@ import os
 
 from .log import CuckooGlobalLogger
 from .packages import (
-    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders
+    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders,
+    NotACuckooPackageError
 )
 from .storage import Paths
 from . import config, shutdown
@@ -107,9 +108,19 @@ def init_global_logging(level, filepath="", use_logqueue=True, warningsonly=[]):
     add_rootlogger_handler(consolelog_handler)
 
 def init_database():
-    from cuckoo.common.db import dbms
-    dbms.initialize(f"sqlite:///{Paths.dbfile()}")
+    from cuckoo.common.db import dbms, CuckooDBDTable
+    dbms.initialize(
+        f"sqlite:///{Paths.dbfile()}", tablebaseclass=CuckooDBDTable
+    )
     shutdown.register_shutdown(dbms.cleanup, order=998)
+
+
+def init_safelist_db():
+    from cuckoo.common.safelist import SafelistTable, safelistdb
+    safelistdb.initialize(
+        f"sqlite:///{Paths.safelist_db()}", tablebaseclass=SafelistTable
+    )
+    shutdown.register_shutdown(safelistdb.cleanup, order=999)
 
 def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
@@ -166,7 +177,11 @@ def load_configurations():
         if subpkg in custom_load:
             continue
 
-        conf_typeloaders = get_conf_typeloaders(pkg)
+        try:
+            conf_typeloaders = get_conf_typeloaders(pkg)
+        except NotACuckooPackageError:
+            continue
+
         if not conf_typeloaders:
             continue
 
