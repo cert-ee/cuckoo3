@@ -17,6 +17,7 @@ from .errors import (
 
 from cuckoo.processing.event.reader import NormalizedEventReader
 
+from .family import FamilyTracker
 from .tag import TagTracker
 from .ttp import TTPTracker
 from .signatures.signature import SignatureTracker
@@ -53,8 +54,10 @@ class ProcessingContext:
 
         self.ttp_tracker = TTPTracker()
         self.tag_tracker = TagTracker()
+        self.family_tracker = FamilyTracker()
         self.signature_tracker = SignatureTracker(
-            tagtracker=self.tag_tracker, ttptracker=self.ttp_tracker
+            tagtracker=self.tag_tracker, ttptracker=self.ttp_tracker,
+            familytracker=self.family_tracker
         )
         self.completed = False
 
