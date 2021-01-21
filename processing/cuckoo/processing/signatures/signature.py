@@ -65,11 +65,11 @@ class Signature:
 
 class SignatureTracker:
 
-    def __init__(self, tagtracker, ttptracker):
+    def __init__(self, tagtracker, ttptracker, familytracker):
         self._triggered_signatures = {}
         self._tag_tracker = tagtracker
         self._ttp_tracker = ttptracker
-        self._families = set()
+        self._family_tracker = familytracker
 
     @property
     def score(self):
@@ -97,7 +97,7 @@ class SignatureTracker:
             self._ttp_tracker.add_ttp(ttp)
 
         if family:
-            self._families.add(family)
+            self._family_tracker.add_family(family)
 
         self._triggered_signatures[name] = Signature(
             score=score, name=name, short_description=short_description,

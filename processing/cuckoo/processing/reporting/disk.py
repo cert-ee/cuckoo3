@@ -51,7 +51,10 @@ class JSONDump(Reporter):
             "score": self.ctx.signature_tracker.score,
             "signatures": self.ctx.signature_tracker.signatures_to_dict(),
             "target": self.ctx.result.get("target", {}),
-            "category": self.ctx.analysis.category
+            "category": self.ctx.analysis.category,
+            "ttps": self.ctx.ttp_tracker.to_dict(),
+            "tags": self.ctx.tag_tracker.tags,
+            "families": self.ctx.family_tracker.families
         }
 
         for resultkey in include_result:
@@ -69,6 +72,7 @@ class JSONDump(Reporter):
             "signatures": self.ctx.signature_tracker.signatures_to_dict(),
             "ttps": self.ctx.ttp_tracker.to_dict(),
             "tags": self.ctx.tag_tracker.tags,
+            "families": self.ctx.family_tracker.families,
             "processes": self.ctx.process_tracker.process_dictlist()
         }
 
