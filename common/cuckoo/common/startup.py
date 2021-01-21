@@ -6,8 +6,7 @@ import os
 
 from .log import CuckooGlobalLogger
 from .packages import (
-    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders,
-    NotACuckooPackageError
+    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders
 )
 from .storage import Paths
 from . import config, shutdown
@@ -125,7 +124,7 @@ def init_safelist_db():
 def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
     has already been set."""
-    for pkgname, subpkg, pkg in find_cuckoo_packages(do_import=True):
+    for pkgname, subpkg, pkg in find_cuckoo_packages():
         conf_typeloaders = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
             continue
@@ -173,15 +172,11 @@ def load_configurations():
     custom_load = {
         "machineries": _load_machinery_configs
     }
-    for pkgname, subpkg, pkg in find_cuckoo_packages(do_import=True):
+    for pkgname, subpkg, pkg in find_cuckoo_packages():
         if subpkg in custom_load:
             continue
 
-        try:
-            conf_typeloaders = get_conf_typeloaders(pkg)
-        except NotACuckooPackageError:
-            continue
-
+        conf_typeloaders = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
             continue
 
