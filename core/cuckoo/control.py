@@ -207,8 +207,10 @@ def handle_post_done(worktracker):
     worktracker.task.score = post.score
     worktracker.task.state = task.States.REPORTED
 
-    # Update the score of this task in the analysis json.
-    worktracker.analysis.set_task_score(worktracker.task.id, post.score)
+    # Update the score and state of this task in the analysis json.
+    worktracker.analysis.update_task(
+        worktracker.task.id, score=post.score, state=worktracker.task.state
+    )
 
     worktracker.log.info("Setting task to reported.")
     task.write_changes(worktracker.task)
@@ -256,6 +258,9 @@ def set_failed(worktracker, worktype):
         worktracker.log.error("Task post stage failed")
         task.merge_processing_errors(worktracker.task)
         worktracker.task.state = task.States.FATAL_ERROR
+        worktracker.analysis.update_task(
+            worktracker.task.id, state=worktracker.task.state
+        )
         task.write_changes(worktracker.task)
         update_final_analysis_state(worktracker)
         analyses.write_changes(worktracker.analysis)
@@ -282,6 +287,10 @@ def set_task_failed(worktracker):
     started.scheduler.task_ended(worktracker.task_id)
     task.merge_run_errors(worktracker.task)
     worktracker.task.state = task.States.FATAL_ERROR
+    worktracker.analysis.update_task(
+        worktracker.task.id, state=worktracker.task.state
+    )
+    analyses.write_changes(worktracker.analysis)
     task.write_changes(worktracker.task)
     update_final_analysis_state(worktracker)
     analyses.write_changes(worktracker.analysis)
