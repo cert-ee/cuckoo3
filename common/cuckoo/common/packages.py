@@ -10,23 +10,6 @@ from pkgutil import iter_modules
 class NotACuckooPackageError(Exception):
     pass
 
-def find_cuckoo_packages(do_import=True):
-    """Returns a list of tuples containing the full package name,
-    a subpackage name, and imported module (optional) of all
-     packages part of the cuckoo namespace"""
-    import cuckoo
-    found = [("cuckoo", "", cuckoo)]
-
-    module_iter = iter_modules(cuckoo.__path__)
-    for _, name, is_package in module_iter:
-        if is_package:
-            fullname = f"cuckoo.{name}"
-            if not do_import:
-                found.append((fullname, name, None))
-            else:
-                found.append((fullname, name, import_module(fullname)))
-
-    return found
 
 def is_cuckoo_package(cuckoo_package):
     if not hasattr(cuckoo_package, "__path__"):
@@ -34,6 +17,25 @@ def is_cuckoo_package(cuckoo_package):
 
     path = os.path.join(cuckoo_package.__path__[0], "data", ".cuckoopackage")
     return os.path.isfile(path)
+
+def find_cuckoo_packages():
+    """Returns a list of tuples containing the full package name,
+    a subpackage name, and imported module of all
+     packages part of the cuckoo namespace"""
+    import cuckoo
+    found = [("cuckoo", "", cuckoo)]
+
+    module_iter = iter_modules(cuckoo.__path__)
+    for _, name, is_package in module_iter:
+        if not is_package:
+            continue
+
+        fullname = f"cuckoo.{name}"
+        imported_module = import_module(fullname)
+        if is_cuckoo_package(imported_module):
+            found.append((fullname, name, imported_module))
+
+    return found
 
 def get_data_dir(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
