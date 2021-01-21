@@ -87,6 +87,7 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
         "id": task_id,
         "platform": platform,
         "os_version": os_version,
+        "state": States.PENDING,
         "score": 0
     })
 

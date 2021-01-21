@@ -401,10 +401,15 @@ class Analysis(StrictContainer):
     }
     ALLOW_EMPTY = ("errors", "target", "score", "tasks")
 
-    def set_task_score(self, task_id, score):
+    def update_task(self, task_id, score=None, state=""):
         for task in self.tasks:
             if task["id"] == task_id:
-                task["score"] = score
+
+                if score is not None:
+                    task["score"] = score
+
+                if state:
+                    task["state"] = state
 
                 self.set_updated(["tasks"])
                 break
