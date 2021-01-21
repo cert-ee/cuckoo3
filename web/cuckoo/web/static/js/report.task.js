@@ -124,17 +124,11 @@ const processes = (function() {
           </div>
         ` : ''}
         <div class="column">
-          <p>
+          <p title="${process.image}">
             <span class="icon">
               <i class="fas fa-tag"></i>
             </span>
             ${process.name}
-          </p>
-          <p>
-            <span class="icon">
-              <i class="fas fa-folder"></i>
-            </span>
-            ${process.image}
           </p>
           <p>
             <span class="icon">
@@ -165,8 +159,6 @@ const processes = (function() {
 
   function recurse(a=[], dom, it=0) {
     a.forEach((p, i) => {
-
-      console.log(getDuration(p));
 
       let id = 'process-'+p.pid;
       let item = document.createElement('li');

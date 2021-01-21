@@ -40,9 +40,11 @@
         </div>
 
         <div id="tab-task" hidden>
+
           {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(task) }}
           {% endcall %}
+
         </div>
         <div id="tab-report">
 
@@ -85,22 +87,8 @@
                 </tr>
               </thead>
               <tbody>
-                {#
-                <tr>
-                  <td><span class="dot is-red"></span> The binary likely contains encrypted or compressed data indicative of a packer</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">2 events</a></td>
-                </tr>
-                <tr>
-                  <td><span class="dot is-yellow"></span> Allocates read-write-execute memory (usually to unpack itself)</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">8 events</a></td>
-                </tr>
-                <tr>
-                  <td><span class="dot is-blue"></span> Creates hidden or system file</td>
-                  <td><a class="is-link" href="#" title="Show in process tree">1 event</a></td>
-                </tr>
-                #}
                 {% for signature in report.signatures %}
-                  {% if signature.score > 5 %}
+                  {% if signature.score > 6 %}
                     {% set score_class = 'is-red' %}
                   {% elif signature.score > 4 %}
                     {% set score_class = 'is-yellow' %}
@@ -199,10 +187,8 @@
                 </tbody>
               </table>
             </div>
-            <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js: --></div>
-            <div class="has-text-small" id="tab-process-tree">
-
-            </div>
+            <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div>
+            <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
 
           {% endcall %}
 
