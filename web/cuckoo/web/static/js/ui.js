@@ -138,15 +138,31 @@ function handleListTree(list) {
  * Enhances in-page tab behavior. Clicking tab links will hide or show the
  * referenced elements
  * @param {HTMLElement} tabContext
+ *
+ * if tabContext is an element containing the class '.tabbar', it initializes
+ * all tabbar-links within the bar.
+ * if tabContext is an element containing the class '.tabbar-link', it will hook
+ * that link to the target tab context - if the appropriate ID has been set
+ * explicitly for the target tabs.
  */
 function handlePageTabs(tabContext) {
 
-  const links = [...tabContext.querySelectorAll('.tabbar-link')];
-  const refs = links.map(link => document.querySelector(link.getAttribute('href')));
+  let tabbar;
+  if(tabContext.classList.contains('tabbar')) {
+    tabbar = tabContext;
+  } else if(tabContext.classList.contains('tabbar-link')) {
+    tabbar = document.querySelector(tabContext.dataset.tabbar);
+  }
+
+  let links = [
+    ...tabContext.querySelectorAll('.tabbar-link'),
+    ...document.querySelectorAll('[data-tabbar="#'+tabbar.getAttribute('id')+'"]')
+  ];
 
   // hides all the referenced tabs before displaying the new one
   function hideAllRelatedTabs() {
     links.forEach(link => link.classList.remove('is-active'));
+    let refs = links.map(link => document.querySelector(link.getAttribute('href')));
     refs.forEach(ref => {
       if(ref)
         ref.setAttribute('hidden', true);
@@ -159,7 +175,7 @@ function handlePageTabs(tabContext) {
       const href = ev.currentTarget.getAttribute('href');
       const target = document.querySelector(href);
       if(target) {
-        hideAllRelatedTabs();
+        hideAllRelatedTabs(tabContext);
         target.removeAttribute('hidden');
         link.classList.add('is-active');
       }

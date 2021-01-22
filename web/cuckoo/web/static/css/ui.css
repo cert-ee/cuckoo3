@@ -1170,8 +1170,12 @@ a.button, .control.is-file a.file-trigger {
   font-size: 1em;
 }
 .list.is-index a {
+  display: block;
   text-decoration: none;
   color: #000000;
+}
+.list.is-index a + ul {
+  margin-top: 0.75rem;
 }
 .list.is-index a.is-active {
   font-weight: 700;

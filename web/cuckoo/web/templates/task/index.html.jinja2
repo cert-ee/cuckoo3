@@ -33,7 +33,7 @@
         <h2>Task report</h2>
         <p>Results of individual task ran during analysis.</p>
 
-        <div class="tabbar has-background-transparent" data-enhance>
+        <div class="tabbar has-background-transparent" data-enhance id="taskReport">
           <a href="#tab-task" class="tabbar-link">Task</a>
           <a href="#tab-report" class="tabbar-link is-active">Task report</a>
           <a href="#tab-machine" class="tabbar-link">Machine</a>
@@ -198,6 +198,14 @@
             {{ render_dict(machine) }}
           {% endcall %}
         </div>
+
+        {% if report.misp %}
+          <div id="tab-misp" hidden>Mispies</div>
+        {% endif %}
+
+        {% if report.cfgextr %}
+          <div id="tab-cfgextr" hidden>Configuratie extractie</div>
+        {% endif %}
 
       </section>
     </div>

@@ -14,15 +14,20 @@
             {{ t.platform }} {{ t.os_version }}
             <span class="tag has-margin-left is-right {{ color_class(t.score) }}">{{ t.score }}</span>
           </a>
-          <ul>
-            <li>
-              <a href="#">Configuration extraction</a>
-            </li>
-            <li>
-              <a href="#">MISP</a>
-            </li>
-          </ul>
-        </li>
+          {% if report %}
+            <ul class="has-text-small">
+              {% if report.misp %}
+                <li>
+                  <a href="#tab-misp" data-tabbar="#taskReport">MISP</a>
+                </li>
+              {% endif %}
+              {% if report.cfgextr %}
+                <li>
+                  <a href="#tab-cfgextr" data-tabbar="#taskReport">Configuration Extraction</a>
+                </li>
+              {% endif %}
+            </ul>
+          {% endif %}
       {% endfor %}
       </ul>
     {% endif %}
