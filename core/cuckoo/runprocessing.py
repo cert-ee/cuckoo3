@@ -147,7 +147,7 @@ class WorkReceiver(UnixSocketServer):
                 except Exception as e:
                     log.exception(
                         "Failed to initialize plugin class",
-                        plugin_class=plugin_class, error=e
+                        plugin_class=plugin_class, error=e, worker=self.name
                     )
                     return False
 
@@ -290,6 +290,9 @@ class ProcessingWorkerHandler(threading.Thread):
             "post": []
         }
 
+        self._workers_started = False
+        self._workers_fail = False
+
     def identify(self, analysis_id):
         self.queues["identification"].append(_ProcessingJob(
             "identification", analysis_id
@@ -311,6 +314,7 @@ class ProcessingWorkerHandler(threading.Thread):
             for worker_number in range(max_workers):
                 self.start_worker(f"{worktype}{worker_number}", worktype)
 
+        self._workers_started = True
         self.handle_workers()
 
     def find_worker(self, name):
@@ -330,6 +334,29 @@ class ProcessingWorkerHandler(threading.Thread):
                 self.stop_worker(worker)
             except OSError:
                 pass
+
+    def setup_finished(self):
+        if not self._workers_started:
+            return False
+
+        max_workers = sum(self.MAX_WORKERS.values())
+        workers = list(self.connected_workers.values()) + self.unready_workers
+        for worker in workers:
+            if not worker["state"] or worker["state"] == States.SETUP:
+                return False
+
+        return True
+
+    def has_failed_workers(self):
+        for worker in self.unready_workers:
+            if not worker["process"].is_alive():
+                return True
+
+        for worker in self.connected_workers.values():
+            if not worker["process"].is_alive():
+                return True
+
+        return self._workers_fail
 
     def start_worker(self, name, worktype):
         if name in self.connected_workers:
@@ -478,12 +505,22 @@ class ProcessingWorkerHandler(threading.Thread):
         # likely abruptly stopped. Inform the controller and perform any
         # handling of the failing worker.
         elif state == States.WORKER_FAIL:
+            self._workers_fail = True
             self.controller_workfail(worker)
             # TODO: Depending on what the fail is, we might want to kill and
             # restart the worker?
             log.error(
                 "Unhandled exception in worker", workername=worker["name"],
                 error=msg.get("error", ""), traceback=msg.get("traceback", "")
+            )
+
+        elif state == States.SETUP_FAIL:
+            self._workers_fail = True
+            self.set_worker_state(States.SETUP_FAIL, worker)
+            self.stop_worker(worker)
+            log.error(
+                "Worker setup failed. See worker logs",
+                workername=worker["name"]
             )
 
     def controller_workdone(self, worker):
