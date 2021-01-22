@@ -44,7 +44,13 @@
         {% for entry in data %}
           <tr>
             {% for col in cols %}
-              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>{{ entry[col] }}</td>
+              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
+                {% if style[loop.index-1] == 'is-clickable' %}
+                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                {% else %}
+                  {{ entry[col] }}
+                {% endif %}
+              </td>
             {% endfor %}
           </tr>
         {% else %}
@@ -56,7 +62,13 @@
         {% for val in data.values() %}
           <tr>
             {% for col in cols %}
-              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>{{ val[col] }}</td>
+              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
+                {% if style[loop.index-1] == 'is-clickable' %}
+                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                {% else %}
+                  {{ entry[col] }}
+                {% endif %}
+              </td>
             {% endfor %}
           </tr>
         {% else %}
