@@ -74,8 +74,18 @@ def start_machinerymanager():
 def start_processing_handler():
     from .runprocessing import ProcessingWorkerHandler
     started.processing_handler = ProcessingWorkerHandler()
+    started.processing_handler.daemon = True
     shutdown.register_shutdown(started.processing_handler.stop)
     started.processing_handler.start()
+
+    while True:
+        if started.processing_handler.setup_finished():
+            break
+
+        time.sleep(1)
+
+    if started.processing_handler.has_failed_workers():
+        raise StartupError("One or more processing workers failed to start")
 
 def start_statecontroller():
     from .control import StateController
