@@ -215,6 +215,13 @@ class TaskPaths:
         return TaskPaths._path(task_id, "memory.dmp")
 
     @staticmethod
+    def procmem_dump(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "memory", filename)
+
+        return TaskPaths._path(task_id, "memory")
+
+    @staticmethod
     def logfile(task_id, *args):
         return TaskPaths._path(task_id, "logs", *args)
 

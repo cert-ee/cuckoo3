@@ -117,18 +117,6 @@ class LogFileTranslator:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._close_log()
 
-class Safelist:
-
-    event_types = ()
-
-    @classmethod
-    def init(cls):
-        pass
-
-    @classmethod
-    def check_safelist(cls, event):
-        raise NotImplementedError
-
 class EventConsumer:
 
     ORDER = 999
@@ -157,3 +145,11 @@ class EventConsumer:
 
     def cleanup(self):
         pass
+
+class ConfigExtractor:
+
+    FAMILY = ""
+
+    @classmethod
+    def search(cls, config_memdump):
+        return None

@@ -44,6 +44,8 @@ setuptools.setup(
         "pefile>=2019.4.18, <2019.5.0",
         "oletools>=0.56, <0.57"
         "cryptography>=3.2, <3.3",
-        "hyperscan>=0.1.5, <0.2"
+        "hyperscan>=0.1.5, <0.2",
+        "yara-python>=4.0.2. <4.1",
+        "roach>=0.3, <0.4"
     ],
 )

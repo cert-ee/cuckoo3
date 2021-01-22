@@ -145,7 +145,6 @@ class LoadedSignature(StrictContainer):
                     )
 
                 if event_type == "safelist":
-                    print(vals)
                     _check_trigger(vals)
                     continue
 
