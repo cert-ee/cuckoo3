@@ -70,7 +70,8 @@ servers = _ResultServerTracker()
 # Directories in which analysis-related files will be stored; Acts as a
 # safelist and mapping to path helper to find the actual path in the CWD
 RESULT_UPLOADABLE = {
-    "logs": TaskPaths.logfile
+    "logs": TaskPaths.logfile,
+    "memory": TaskPaths.procmem_dump
 }
 
 # Prevent malicious clients from using potentially dangerous filenames

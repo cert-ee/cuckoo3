@@ -33,6 +33,20 @@ class States:
     REPORTED = "reported"
     FATAL_ERROR = "fatal_error"
 
+def _make_task_dirs(task_id):
+    task_path = TaskPaths.path(task_id)
+    try:
+        os.mkdir(task_path)
+    except FileExistsError as e:
+        raise TaskCreationError(
+            f"Task directory '{task_path}' creation failed. "
+            f"Already exists: {e}"
+        )
+
+    for dirpath in (TaskPaths.logfile(task_id),
+                    TaskPaths.procmem_dump(task_id)):
+        os.mkdir(dirpath)
+
 
 def _create_task(analysis, task_number, platform="", machine_tags=set(),
                  os_version="", machine_name=None):
@@ -57,18 +71,8 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
 
     task_id = make_task_id(analysis.id, task_number)
     log.debug("Creating task.", task_id=task_id)
-    task_path = TaskPaths.path(task_id)
-    try:
-        os.mkdir(task_path)
-    except FileExistsError as e:
-        raise TaskCreationError(
-            f"Task directory '{task_path}' creation failed. "
-            f"Already exists: {e}"
-        )
 
-    for dirname in ("logs",):
-        os.mkdir(os.path.join(task_path, dirname))
-
+    _make_task_dirs(task_id)
     task_values = {
         "kind": analysis.kind,
         "number": task_number,

@@ -101,7 +101,7 @@ def enumerate_plugins(package_path, namespace, class_, attributes={}):
         dirpath = import_module(package_path).__file__
     except ImportError as e:
         raise ImportError(
-            f"Unable to import plugins from package path: {package_path}. {e}"
+            f"Failed to import package: {package_path}. Error: {e}"
         )
     if os.path.isfile(dirpath):
         dirpath = os.path.dirname(dirpath)
@@ -109,12 +109,12 @@ def enumerate_plugins(package_path, namespace, class_, attributes={}):
     for fname in os.listdir(dirpath):
         if fname.endswith(".py") and not fname.startswith("__init__"):
             module_name, _ = os.path.splitext(fname)
+            module_path = f"{package_path}.{module_name}"
             try:
-                import_module(f"{package_path}.{module_name}")
+                import_module(module_path)
             except ImportError as e:
                 raise ImportError(
-                    "Unable to load the Cuckoo plugin at %s: %s. Please "
-                    "review its contents and/or validity!" % (fname, e)
+                    f"Failed to import: {module_path}. Error: {e}"
                 )
 
     subclasses = class_.__subclasses__()[:]
