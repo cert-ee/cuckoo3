@@ -6,6 +6,7 @@ import os
 
 from cuckoo.common.storage import TaskPaths
 
+from ..signatures.signature import Scores
 from ..abtracts import Processor
 from ..cfgextr.cfgextr import (
     Extractor, ConfigMemdump, ConfigExtractionError, UnexpectedDataError
@@ -38,6 +39,15 @@ class ProcMemCfgExtract(Processor):
 
                 if extracted:
                     configs.append(extracted)
+
+        for config in configs:
+            self.ctx.signature_tracker.add_signature(
+                Scores.KNOWN_BAD,
+                name=f"Malware configuration {config.family}",
+                short_description=f"Extracted malware configuration of "
+                                  f"known family: {config.family}",
+                family=config.family, iocs=[{"dump": confdump.name}]
+            )
 
         if configs:
             return [config.to_dict() for config in configs]
