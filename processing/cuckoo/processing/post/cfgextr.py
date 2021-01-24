@@ -6,10 +6,7 @@ import os
 
 from cuckoo.common.storage import TaskPaths
 
-<<<<<<< HEAD
-=======
 from ..signatures.signature import Scores
->>>>>>> master
 from ..abtracts import Processor
 from ..cfgextr.cfgextr import (
     Extractor, ConfigMemdump, ConfigExtractionError, UnexpectedDataError
