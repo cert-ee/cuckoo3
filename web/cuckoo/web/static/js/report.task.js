@@ -1,6 +1,8 @@
 // map the processes and provide a lookup api
 const processes = (function() {
 
+  if(!window.Application || !window.Application.processes) return;
+
   function findChild(procid) {
     return Application.processes.find(p => p.procid == procid);
   }
@@ -45,6 +47,9 @@ const processes = (function() {
 (function renderProcessNodes() {
 
   const nodes = document.querySelector('#tab-process-nodes');
+
+  if(!nodes)
+    return;
 
   // recursively construct a tree structure containing all information of the
   // children
@@ -104,9 +109,13 @@ const processes = (function() {
 // renders processes to indented tree view
 (function renderProcessTree() {
 
+  const processTreeTab  = document.querySelector('#tab-process-tree');
+
+  if(!processTreeTab) return;
+
   const { mapped }      = processes;
   const tree            = document.createElement('ul');
-  const processTreeTab  = document.querySelector('#tab-process-tree');
+
   tree.classList.add('list');
   tree.classList.add('process-tree');
 

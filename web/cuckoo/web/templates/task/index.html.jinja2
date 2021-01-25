@@ -38,13 +38,15 @@
 
           <div id="tab-report">
 
-            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-              {{ render_dict(report) }}
-            {% endcall %}
+            {#
+              {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+                {{ render_dict(report) }}
+              {% endcall %}
 
-            {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
-              {{ render_dict(analysis) }}
-            {% endcall %}
+              {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
+                {{ render_dict(analysis) }}
+              {% endcall %}
+            #}
 
             {% call ui_box(title="Task") %}
               <div class="columns has-padding is-divided">
@@ -59,7 +61,7 @@
                 <div class="column">
                   <h3 class="no-margin-bottom is-monospace">
                     <strong>{{ report.task_id }}</strong>
-                    <span class="pull-right">state</span>
+                    <span class="pull-right has-half-opacity">{{ task.state }}</span>
                   </h3>
                   <p class="has-line-break has-text-small">
                     <span class="icon">

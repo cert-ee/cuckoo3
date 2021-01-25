@@ -2,7 +2,7 @@
   <li>
     <p class="label">Analysis</p>
     <ul>
-      <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Sample</a></li>
+      <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Overview</a></li>
       <li><a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a></li>
     </ul>
     {% if analysis %}
@@ -22,7 +22,7 @@
               </span>
             {% elif t.state == 'fatal_error' %}
               <span class="tag has-margin-left is-right">
-                <i class="fas fa-exclamation"></i>
+                <i class="fas fa-exclamation has-text-red"></i>
               </span>
             {% endif %}
           </a>

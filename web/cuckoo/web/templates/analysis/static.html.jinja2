@@ -3,7 +3,7 @@
 {% set report_page = "static" %}
 {% set title = "Analysis - static analysis" %}
 
-{% from 'macros.html.jinja2' import render_table, render_dict, ui_box %}
+{% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
 
 {% block page_script %}
   <script type="text/javascript">
@@ -46,43 +46,16 @@
       </aside>
       <section class="column has-padding">
 
-        {% include "analysis/partial/taskbar.html.jinja2" %}
-
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
         <nav class="tabbar has-background-transparent" data-enhance>
-          <a class="tabbar-link is-active" href="#tab-static">Static</a>
-          <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
+          <a class="tabbar-link is-active" href="#tab-pefiles">PE Files</a>
           <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
-          <a class="tabbar-link" href="#tab-development">Development</a>
         </nav>
 
-        {# tab: static.overview #}
-        <div id="tab-static">
-          {% call ui_box(title="Target", collapsible=False) %}
-            <div class="columns has-padding is-divided">
-              <div class="column is-auto">
-                <div class="ratio-1-1">
-                  <div class="ratio-content">
-                    <p class="has-text-red has-text-huge no-margin"><strong>{{ pre.score }}</strong><sub class="has-text-light">/10</sub></p>
-                  </div>
-                </div>
-              </div>
-              <div class="column">
-                <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ pre.target.filename }}</h3>
-                <ul class="list is-horizontal no-margin-bottom">
-                  <li>{{ pre.target.size | filesizeformat }}</li>
-                  <li class="is-monospace">{{ pre.target.media_type }}</li>
-                </ul>
-                <a class="button has-margin-top" href="{{ url('Analysis/index', args=[analysis_id]) }}">Extended sample information</a>
-              </div>
-            </div>
-          {% endcall %}
-        </div>
-
         {# tab: static.target/static.pe #}
-        <div id="tab-pefiles" hidden>
+        <div id="tab-pefiles">
 
           {# PE Timestamp / imphash #}
           <div class="columns is-divided">
@@ -300,12 +273,6 @@
                 labels=["Category","Name","Version","Method","Result"],
                 has_sticky_header=True
             )}}
-          {% endcall %}
-        </div>
-
-        <div id="tab-development" hidden>
-          {% call ui_box(title="Template variables") %}
-            {{ render_dict(pre) }}
           {% endcall %}
         </div>
 
