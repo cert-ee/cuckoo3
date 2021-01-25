@@ -9,7 +9,8 @@ from cuckoo.common.storage import TaskPaths
 from ..signatures.signature import Scores
 from ..abtracts import Processor
 from ..cfgextr.cfgextr import (
-    Extractor, ConfigMemdump, ConfigExtractionError, UnexpectedDataError
+    Extractor, ConfigMemdump, ConfigExtractionError, UnexpectedDataError,
+    ExtractedConfigTracker
 )
 
 class ProcMemCfgExtract(Processor):
@@ -21,35 +22,39 @@ class ProcMemCfgExtract(Processor):
         Extractor.init_once()
 
     def start(self):
-        configs = []
+        dumps = os.listdir(TaskPaths.procmem_dump(self.ctx.task.id))
+        if not dumps:
+            return
 
-        for dumppath in os.listdir(TaskPaths.procmem_dump(self.ctx.task.id)):
-            if not ConfigMemdump.valid_name(dumppath):
+        tracker = ExtractedConfigTracker()
+        for dump in dumps:
+            if not ConfigMemdump.valid_name(dump):
                 continue
 
             with ConfigMemdump(
-                    TaskPaths.procmem_dump(self.ctx.task.id, dumppath)
+                    TaskPaths.procmem_dump(self.ctx.task.id, dump)
             ) as confdump:
 
                 try:
-                    extracted = Extractor.search(confdump)
+                    Extractor.search(confdump, tracker)
                 except UnexpectedDataError as e:
                     self.ctx.log.warning(
                         "Failure during config extraction",
                         dumpname=confdump.name, error=e
                     )
 
-                if extracted:
-                    configs.append(extracted)
+        if not tracker.configs:
+            return
 
-        for config in configs:
+        for config in tracker.configs:
             self.ctx.signature_tracker.add_signature(
                 Scores.KNOWN_BAD,
                 name=f"Malware configuration {config.family}",
                 short_description=f"Extracted malware configuration of "
                                   f"known family: {config.family}",
-                family=config.family, iocs=[{"dump": confdump.name}]
+                family=config.family,
+                iocs=[{"dump": dump} for dump in config.sources]
             )
 
-        if configs:
-            return [config.to_dict() for config in configs]
+
+        return [config.to_dict() for config in tracker.configs]
