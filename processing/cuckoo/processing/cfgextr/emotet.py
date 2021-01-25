@@ -17,45 +17,30 @@ class Emotet(ConfigExtractor):
     rule Emotet {
         strings:
             $rsakey = {
-                A1 ?? ?? ?? ??           // mov     eax, g_xor_constant
-                8B ?? ?? ?? ?? ??        // mov     ebp, dword_42D8C4
-                33 ??                    // xor     ebp, eax
-                [20-50]                  //
-                E8 ?? ?? ?? ??           // call    alloc_heap_space
-                [1-10]                    //
-                85 ??                    // test    eax, eax
-                7? ??                    // jz      short loc_41D12E
-                [0-4]                    // and     [esp+28h+var_14], ebx
-                (
-                BA ?? ?? ?? ??           // mov     edx, offset g_xored_rsa_key
-                C1 ?? 02                 // shr     esi, 2
-                |
-                C1 ?? 02                 // shr     ebp, 2
-                [0-4]                    // push    esi
-                B? ?? ?? ?? ??           // mov     esi, offset g_xor_key
-                )
-                [0-7]
-                8D ?? ?? ?? ?? ?? ??     // lea     ecx, g_xored_rsa_key[esi*4]
+                33 C0                               //  0 xor     eax, eax
+                89 0D ?? ?? ?? ??                   //  2 mov     ren_SYSTEMINFO, ecx
+                C7 05 ?? ?? ?? ?? ?? ?? ?? ??       //  8 mov     RSAKEY1, offset RSAKEY
+                40                                  // 18 inc     eax
+                C7 05 ?? ?? ?? ?? 6A 00 00 00       // 19 mov     RSAKEYSIZE, 6Ah
+                C3                                  // 29 retn
             }
             $enumips = {
-                BE ?? ?? ?? ??      // mov     esi, offset unk_10021000
-                [2-300]             // random opcodes
-                E8 ?? ?? ?? ??      // call    sub_100157E8
-                A3 ?? ?? ?? ??      // mov     dword_100221C0, eax
-                5?                  // pop     ecx
-                85 ??               // test    eax, eax
-                7? ??               // jz      short loc_1001D46B
-                89 [1-3]            // mov     [eax+4], esi
-                89 [1-3]            // mov     [eax+18h], esi
-                8B [1-5]            // mov     eax, [ebp+var_C]
-                8B ?? ?? ?? ?? ??   // mov     ecx, dword_100221C0
-                8B [1-5]            // mov     edx, [ecx+4]
-                89 [1-3]            // mov     [ecx+40h], eax
-                8B [1-5]            // mov     eax, [ecx+28h]
-                EB ??               // jmp     short loc_1001D42F
-                4?                  // inc     eax
-                89 [1-3]            // mov     [ecx+28h], eax
-                83 ?? ?? 00         // cmp     dword ptr [edx+eax*8], 0
+                B8 ?? ?? ?? ??                      //  0 mov     eax, offset IPS
+                A3 ?? ?? ?? ??                      //  5 mov     IPS_1, eax
+                A3 ?? ?? ?? ??                      //    mov     CURRENT_IP, eax
+                33 C0                               //    xor     eax, eax
+                21 05 ?? ?? ?? ??                   //    and     ATTEMPTS, eax
+                A3 ?? ?? ?? ??                      //    mov     NUMBEROFIPS, eax
+                39 05 ?? ?? ?? ??                   //    cmp     IPS, eax
+                74 ??                               //    jz      short loc_1116101
+                40                                  //    inc     eax
+                A3 ?? ?? ?? ??                      //    mov     NUMBEROFIPS, eax
+                83 3C C5 ?? ?? ?? ?? 00             //    cmp     IPS[eax*8], 0
+                75 ??                               //    jnz     short loc_11160E9
+                51                                  //    push    ecx
+                E8 ?? ?? ?? ??                      //    call    generate_aes_key
+                59                                  //    pop     ecx
+                C3                                  //    retn
             }
         condition:
             $rsakey and $enumips
@@ -88,12 +73,9 @@ class Emotet(ConfigExtractor):
     @classmethod
     def _read_rsakey(cls, data, cfg_memdump, extracted):
         try:
-            rsakey_addr = struct.unpack("I", data[-4:])[0]
-            xored_rsakey = cfg_memdump.buf[rsakey_addr
-                                           - cfg_memdump.base_address:][:106]
-            xorkey_addr = struct.unpack("I", data[1:5])[0]
-            xorkey = cfg_memdump.buf[xorkey_addr
-                                     - cfg_memdump.base_address:][:4]
+            rsakey_addr = struct.unpack("I", data[14:18])[0]
+            rsakey = cfg_memdump.buf[rsakey_addr
+                                     - cfg_memdump.base_address:][:106]
         except struct.error as e:
             raise UnexpectedDataError(
                 f"Invalid rsakey address or xorkey bytes: {e}"
@@ -106,9 +88,7 @@ class Emotet(ConfigExtractor):
 
         key = Key(
             keytype="rsa_pubkey",
-            value=roach.rsa.import_key(
-                roach.xor(xorkey, xored_rsakey)
-            ).decode()
+            value=roach.rsa.import_key(rsakey).decode()
         )
         extracted.add_extracted(key)
 
