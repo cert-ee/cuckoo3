@@ -141,20 +141,7 @@
                     </tr>
                     <tr hidden data-row-of="{{ loop.index }}">
                       <td colspan="4" class="no-padding has-border-y">
-                        <table class="table">
-                          <tbody>
-                            {% for ioc in signature.iocs %}
-                              <tr>
-                                <td>{{ ioc.description }}</td>
-                                <td>{{ ioc.value }}</td>
-                                <td class="has-text-right">{{ ioc.process_id }}: {{ ioc.process }}</td>
-                              </tr>
-                            {% endfor %}
-                            <tr class="separator-bar">
-                              <td colspan="4">&nbsp;</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                        {{ render_table(data = signature.iocs, cols = signature.iocs[0].keys()) }}
                       </td>
                     </tr>
                   {% endfor %}
