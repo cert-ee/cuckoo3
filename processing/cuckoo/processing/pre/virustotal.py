@@ -73,7 +73,8 @@ class Virustotal(Processor):
             score = Scores.SUSPICIOUS
 
         if score:
-            avs = [avname for avname, avinfo in info["avs"].items()
+            avs = [{"antivirus": avname}
+                   for avname, avinfo in info["avs"].items()
                    if avinfo["category"] == "malicious"]
 
             self.ctx.signature_tracker.add_signature(
