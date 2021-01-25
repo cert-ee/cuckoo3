@@ -70,49 +70,57 @@
           </div>
         {% endcall %}
 
-        {% call ui_box(title="Signatures", has_padding=False) %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>&nbsp;</th>
-                <th>Detected signatures</th>
-                <th>Events</th>
-                <th>&nbsp;</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for signature in pre.signatures %}
-                <tr data-row="{{ loop.index }}">
-                  <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
-                  <td>{{ signature.short_description }}</td>
-                  <td>{{ signature.description }}</td>
-                  <td class="no-text-wrap">
-                    <a class="is-link has-text-small toggle-ioc" href="#">Display IOC's</a>
-                  </td>
+        {% if pre %}
+          {% call ui_box(title="Signatures", has_padding=False) %}
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th>Detected signatures</th>
+                  <th>Events</th>
+                  <th>&nbsp;</th>
                 </tr>
-                <tr hidden data-row-of="{{ loop.index }}">
-                  <td colspan="4" class="no-padding has-border-y">
-                    <table class="table">
-                      <tbody>
-                        {% for ioc in signature.iocs %}
-                          <tr>
-                            {% for k, v in ioc.items() %}
-                              <td><strong class="has-text-capitalized">{{ k }}</strong></td>
-                              <td>{{ v }}</td>
-                            {% endfor %}
+              </thead>
+              <tbody>
+                {% for signature in pre.signatures %}
+                  <tr data-row="{{ loop.index }}">
+                    <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
+                    <td>{{ signature.short_description }}</td>
+                    <td>{{ signature.description }}</td>
+                    <td class="no-text-wrap">
+                      <a class="is-link has-text-small toggle-ioc" href="#">Display IOC's</a>
+                    </td>
+                  </tr>
+                  <tr hidden data-row-of="{{ loop.index }}">
+                    <td colspan="4" class="no-padding has-border-y">
+                      <table class="table">
+                        <tbody>
+                          {% for ioc in signature.iocs %}
+                            {% if ioc is mapping %}
+                              <tr>
+                                {% for k, v in ioc.items() %}
+                                  <td><strong class="has-text-capitalized">{{ k }}</strong></td>
+                                  <td>{{ v }}</td>
+                                {% endfor %}
+                              </tr>
+                            {% else %}
+                              <tr>
+                                <td>{{ioc}}</td>
+                              </tr>
+                            {% endif %}
+                          {% endfor %}
+                          <tr class="separator-bar">
+                            <td colspan="4">&nbsp;</td>
                           </tr>
-                        {% endfor %}
-                        <tr class="separator-bar">
-                          <td colspan="4">&nbsp;</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% endcall %}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endcall %}
+        {% endif %}
 
         {% call ui_box(title="Target summary", has_padding=False) %}
           <div class="tabbar" data-enhance>
