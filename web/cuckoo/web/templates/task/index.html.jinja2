@@ -38,18 +38,16 @@
 
           <div id="tab-report">
 
-            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-              Report:
-              {{ render_dict(report) }}
-              Analysis:
-              {{ render_dict(analysis) }}
-              Task:
-              {{ render_dict(task) }}
-            {% endcall %}
-
-            {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
-              {{ render_dict(analysis) }}
-            {% endcall %}
+            {#
+              {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+                Report:
+                {{ render_dict(report) }}
+                Analysis:
+                {{ render_dict(analysis) }}
+                Task:
+                {{ render_dict(task) }}
+              {% endcall %}
+            #}
 
             {% call ui_box(title="Task") %}
               <div class="columns has-padding is-divided">
@@ -220,8 +218,42 @@
 
           {# Report.machine #}
           <div id="tab-machine" hidden>
-            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-              {{ render_dict(machine) }}
+            {% call ui_box(title="Machine information", has_padding=False) %}
+              {# {{ render_dict(machine) }} #}
+              <table class="table">
+                <body>
+                  <tr>
+                    <td class="has-text-right"><strong>Name</strong></td>
+                    <td>{{ machine.name }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong>Label</strong></td>
+                    <td>{{ machine.label }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong>IP</strong></td>
+                    <td class="is-monospace">{{ machine.ip }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong>Platform</strong></td>
+                    <td>{{ machine.platform }} {{ machine.os_version }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong>Machinery name</strong></td>
+                    <td>{{ machine.machinery_name }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong>Tags</strong></td>
+                    <td>
+                      <div class="tag-list">
+                        {% for tag in machine.tags %}
+                          <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             {% endcall %}
           </div>
 
@@ -257,10 +289,15 @@
           {% if report.cfgextr %}
             <div id="tab-cfgextr" hidden>
               {% call ui_box(title="Configuration Extraction", has_padding=False) %}
+                {# display family atop the other properties, the family property gets skipped in the loop #}
                 {% for item in report.cfgextr %}
+                  <div class="box has-background-red no-radius has-text-center no-margin-top">
+                    <h3 class="has-text-black has-text-uppercased has-text-weight-900">Detected Family</h3>
+                    <h1 class="has-text-white has-text-huge">{{ item.family }}</h1>
+                  </div>
                   {% for key in item.keys() %}
-                      <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
                       {% if key == 'keys' %}
+                        <h3 class="has-padding-x has-half-opacity">Keys</h3>
                         {% for k in item[key] %}
                           <div class="box has-background-light">
                             <h4 class="no-margin has-text-weight-normal">
@@ -273,10 +310,15 @@
                           </div>
                         {% endfor %}
                       {% elif key == 'c2s' %}
+                        <h3 class="has-padding-x has-half-opacity">c2s</h3>
                         {{ render_table(data=item[key], cols=["address"], labels=["Address"], has_sticky_header=True) }}
+                      {% elif key == 'family' %}
+
                       {% elif item[key] is string %}
+                        <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
                         <p class="has-padding">{{ item[key] }}</p>
                       {% elif item[key] is iterable %}
+                        <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
                         <table class="table has-border no-border-x has-sticky-header">
                           <thead>
                           {% if item[key][0] is not string %}
