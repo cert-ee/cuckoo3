@@ -3,7 +3,7 @@
 {% set report_page = "static" %}
 {% set title = "Analysis - static analysis" %}
 
-{% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
+{% from 'macros.html.jinja2' import render_table, render_dict, ui_box %}
 
 {% block page_script %}
   <script type="text/javascript">
@@ -228,6 +228,8 @@
                   {{ render_dict(signature) }}
                 </div>
               </div>
+            {% else %}
+              <p class="has-padding no-margin">No signatures.</p>
             {% endfor %}
           {% endcall %}
 

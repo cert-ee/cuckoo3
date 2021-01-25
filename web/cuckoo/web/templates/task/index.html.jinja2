@@ -2,7 +2,7 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box, render_table, color_class %}
+{% from 'macros.html.jinja2' import render_dict, ui_box, render_table, color_class, color_text %}
 
 {% block page_script %}
   <script>
@@ -28,258 +28,298 @@
       </aside>
       <section class="column has-padding">
 
-        {% include "analysis/partial/taskbar.html.jinja2" %}
-
         <h2>Task report</h2>
         <p>Results of individual task ran during analysis.</p>
 
-        <div class="tabbar has-background-transparent" data-enhance id="taskReport">
-          <a href="#tab-task" class="tabbar-link">Task</a>
-          <a href="#tab-report" class="tabbar-link is-active">Task report</a>
-          <a href="#tab-machine" class="tabbar-link">Machine</a>
-        </div>
+          <div class="tabbar has-background-transparent" data-enhance id="taskReport">
+            <a href="#tab-report" class="tabbar-link is-active"><strong>Task</strong></a>
+            <a href="#tab-machine" class="tabbar-link">Machine</a>
+          </div>
 
-        <div id="tab-task" hidden>
-          {# {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-            {{ render_dict(task) }}
-          {% endcall %} #}
-        </div>
-        <div id="tab-report">
+          <div id="tab-report">
 
-          {# {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-            {{ render_dict(report) }}
-          {% endcall %} #}
+            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+              {{ render_dict(report) }}
+            {% endcall %}
 
-          {# {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
-            {{ render_dict(analysis) }}
-          {% endcall %} #}
+            {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
+              {{ render_dict(analysis) }}
+            {% endcall %}
 
-          {# Report.signatures #}
-          {% call ui_box(title="Signatures", has_padding=False) %}
-
-            <!-- @TODO -->
-            <!-- <div class="toggle-box has-padding-x">
-              <label class="toggle" for="toggle-all">
-                <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
-                <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
-              </label>
-              <label class="toggle" for="toggle-critical">
-                <input type="checkbox" id="toggle-critical" name="toggle-sig" />
-                <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
-              </label>
-              <label class="toggle" for="suspicious">
-                <input type="checkbox" id="suspicious" name="toggle-sig" />
-                <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
-              </label>
-              <label class="toggle" for="info">
-                <input type="checkbox" id="info" name="toggle-sig" />
-                <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
-              </label>
-            </div> -->
-
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>&nbsp;</th>
-                  <th>Detected signatures</th>
-                  <th>Events</th>
-                  <th>&nbsp;</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for signature in report.signatures %}
-                  {% if signature.score > 6 %}
-                    {% set score_class = 'is-red' %}
-                  {% elif signature.score > 4 %}
-                    {% set score_class = 'is-yellow' %}
-                  {% elif signature.score > 0 %}
-                    {% set score_class = '' %}
+            {% call ui_box(title="Task") %}
+              <div class="columns has-padding is-divided">
+                <div class="column is-auto">
+                  <div class="ratio-1-1">
+                    <div class="ratio-content">
+                      <p class="{{ color_text(report.score) }} has-text-huge no-margin"><strong>{{ report.score }}</strong><sub class="has-text-light">/10</sub></p>
+                    </div>
+                    <div class="ratio-content is-bottom has-text-small has-half-opacity">Task score</div>
+                  </div>
+                </div>
+                <div class="column">
+                  <h3 class="no-margin-bottom is-monospace">
+                    <strong>{{ report.task_id }}</strong>
+                    <span class="pull-right">state</span>
+                  </h3>
+                  <p class="has-line-break has-text-small">
+                    <span class="icon">
+                      <i class="far fa-file"></i>
+                    </span> {{ analysis.target.filename }}
+                  </p>
+                  <ul class="list is-horizontal no-margin-bottom has-text-small">
+                    <li title="Date of creation">
+                      <span class="icon">
+                        <i class="far fa-calendar"></i>
+                      </span> {{ analysis.created_on | formatdatetime }}
+                    </li>
+                    <li>
+                      <span class="icon">
+                        <i class="fas fa-compact-disc"></i>
+                      </span> {{ analysis.target.size | filesizeformat }}
+                    </li>
+                    <li class="is-monospace">
+                      <span class="icon">
+                        <i class="fas fa-terminal"></i>
+                      </span> {{ analysis.target.media_type }}
+                    </li>
+                  </ul>
+                  {% if report.families|length %}
+                    <div class="tag-list has-margin-top">
+                      <span class="label">Detected families:</span>
+                      {% for family in report.families %}
+                        <span class="tag no-margin-top is-red">{{ family }}</span>
+                      {% endfor %}
+                    </div>
                   {% endif %}
-                  <tr data-row="{{ loop.index }}">
-                    <td><span class="tag {{ score_class }}">{{ signature.score }}</span></td>
-                    <td>{{ signature.short_description }}</td>
-                    <td>{{ signature.description }}</td>
-                    <td class="no-text-wrap">
-                      <a class="is-link has-text-small toggle-ioc" href="#">Display IOC's</a>
-                    </td>
+                </div>
+              </div>
+            {% endcall %}
+
+            {# Report.signatures #}
+            {% call ui_box(title="Signatures", has_padding=False) %}
+
+              <!-- @TODO -->
+              <!-- <div class="toggle-box has-padding-x">
+                <label class="toggle" for="toggle-all">
+                  <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
+                  <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
+                </label>
+                <label class="toggle" for="toggle-critical">
+                  <input type="checkbox" id="toggle-critical" name="toggle-sig" />
+                  <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
+                </label>
+                <label class="toggle" for="suspicious">
+                  <input type="checkbox" id="suspicious" name="toggle-sig" />
+                  <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
+                </label>
+                <label class="toggle" for="info">
+                  <input type="checkbox" id="info" name="toggle-sig" />
+                  <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
+                </label>
+              </div> -->
+
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>&nbsp;</th>
+                    <th>Detected signatures</th>
+                    <th>Events</th>
+                    <th>&nbsp;</th>
                   </tr>
-                  <tr hidden data-row-of="{{ loop.index }}">
-                    <td colspan="4" class="no-padding has-border-y">
-                      <table class="table">
-                        <tbody>
-                          {% for ioc in signature.iocs %}
-                            <tr>
-                              <td>{{ ioc.description }}</td>
-                              <td>{{ ioc.value }}</td>
-                              <td class="has-text-right">{{ ioc.process_id }}: {{ ioc.process }}</td>
+                </thead>
+                <tbody>
+                  {% for signature in report.signatures %}
+                    {% if signature.score > 6 %}
+                      {% set score_class = 'is-red' %}
+                    {% elif signature.score > 4 %}
+                      {% set score_class = 'is-yellow' %}
+                    {% elif signature.score > 0 %}
+                      {% set score_class = '' %}
+                    {% endif %}
+                    <tr data-row="{{ loop.index }}">
+                      <td><span class="tag {{ score_class }}">{{ signature.score }}</span></td>
+                      <td>{{ signature.short_description }}</td>
+                      <td>{{ signature.description }}</td>
+                      <td class="no-text-wrap">
+                        <a class="is-link has-text-small toggle-ioc" href="#">Display IOC's</a>
+                      </td>
+                    </tr>
+                    <tr hidden data-row-of="{{ loop.index }}">
+                      <td colspan="4" class="no-padding has-border-y">
+                        <table class="table">
+                          <tbody>
+                            {% for ioc in signature.iocs %}
+                              <tr>
+                                <td>{{ ioc.description }}</td>
+                                <td>{{ ioc.value }}</td>
+                                <td class="has-text-right">{{ ioc.process_id }}: {{ ioc.process }}</td>
+                              </tr>
+                            {% endfor %}
+                            <tr class="separator-bar">
+                              <td colspan="4">&nbsp;</td>
                             </tr>
-                          {% endfor %}
-                          <tr class="separator-bar">
-                            <td colspan="4">&nbsp;</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% endcall %}
-
-          {# Report.processes #}
-          {% call ui_box(title="Processes", has_padding=False) %}
-            <div class="tabbar has-background-transparent" data-enhance>
-              <p class="tabbar-label">View type</p>
-              <a href="#tab-process-table" class="tabbar-link">
-                <span class="icon">
-                  <i class="fas fa-table"></i>
-                </span>
-                Table
-              </a>
-              <a href="#tab-process-nodes" class="tabbar-link">
-                <span class="icon">
-                  <i class="fas fa-project-diagram"></i>
-                </span>
-                Nodes
-              </a>
-              <a href="#tab-process-tree" class="tabbar-link is-active">
-                <span class="icon">
-                  <i class="fas fa-sitemap"></i>
-                </span>
-                Tree
-              </a>
-            </div>
-            <div id="tab-process-table" hidden>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th class="is-small">PID</th>
-                    <th class="is-mini">Duration</th>
-                    <th>Name/image</th>
-                    <th class="is-mini">State</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {% for process in report.processes %}
-                  <tr>
-                    <td class="is-monospace has-text-center">
-                      <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
-                      <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
-                    </td>
-                    <td class="has-text-center">
-                      {{ process.start_ts }}<br />
-                      <span class="has-half-opacity">&darr;</span><br />
-                      {% if process.end_ts %}
-                        {{ process.end_ts }}
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
-                    <td>
-                      {{ process.name }}
-                      <p class="has-half-opacity has-text-small">{{ process.image }}</p>
-                      <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
-                    </td>
-                    <td>{{ process.state }}</td>
-                  </tr>
-                {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div>
-            <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
-          {% endcall %}
-
-        </div>
-
-        {# Report.machine #}
-        <div id="tab-machine" hidden>
-          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-            {{ render_dict(machine) }}
-          {% endcall %}
-        </div>
-
-        {# Report.misp #}
-        {% if report.misp %}
-          <div id="tab-misp" hidden>
-            {% call ui_box(title="MISP", has_padding=False, collapsed=False) %}
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>IOC</th>
-                    <th>Description</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for m in report.misp %}
-                    <tr>
-                      <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
-                      <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
-                      <td>{{ m.description }}</td>
-                      <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+                          </tbody>
+                        </table>
+                      </td>
                     </tr>
                   {% endfor %}
                 </tbody>
               </table>
             {% endcall %}
-          </div>
-        {% endif %}
 
-        {# Report.cfgextr #}
-        {% if report.cfgextr %}
-          <div id="tab-cfgextr" hidden>
-            {% call ui_box(title="Configuration Extraction", has_padding=False) %}
-              {% for item in report.cfgextr %}
-                {% for key in item.keys() %}
-                    <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
-                    {% if key == 'keys' %}
-                      {% for k in item[key] %}
-                        <div class="box has-background-light">
-                          <h4 class="no-margin has-text-weight-normal">
-                            <span class="icon">
-                              <i class="fas fa-key"></i>
-                            </span>
-                            {{ k.keytype }}
-                          </h4>
-                          <pre class="code-block has-padding"><code>{{ k.value }}</code></pre>
-                        </div>
-                      {% endfor %}
-                    {% elif item[key] is string %}
-                      <p class="has-padding">{{ item[key] }}</p>
-                    {% elif item[key] is iterable %}
-                      <table class="table has-border no-border-x has-sticky-header">
-                        <thead>
-                          {% if item[key][0] is not string %}
-                            <tr>
-                              {% for v in item[key][0] %}
-                                <th>{{ v }}</th>
-                              {% endfor %}
-                            </tr>
-                          {% endif %}
-                        </thead>
-                        <tbody>
-                          {% for v in item[key] %}
-                            <tr>
-                              {% if v is string %}
-                                <td>{{ v }}</td>
-                              {% elif v is iterable %}
-                                {% for k in v %}
-                                  <td>{{ v[k] }}</td>
-                                {% endfor %}
-                              {% endif %}
-                            </tr>
-                          {% endfor %}
-                      </tbody>
-                    </table>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
+            {# Report.processes #}
+            {% call ui_box(title="Processes", has_padding=False) %}
+              <div class="tabbar has-background-transparent" data-enhance>
+                <p class="tabbar-label">View type</p>
+                <a href="#tab-process-table" class="tabbar-link">
+                  <span class="icon">
+                    <i class="fas fa-table"></i>
+                  </span>
+                  Table
+                </a>
+                <a href="#tab-process-nodes" class="tabbar-link">
+                  <span class="icon">
+                    <i class="fas fa-project-diagram"></i>
+                  </span>
+                  Nodes
+                </a>
+                <a href="#tab-process-tree" class="tabbar-link is-active">
+                  <span class="icon">
+                    <i class="fas fa-sitemap"></i>
+                  </span>
+                  Tree
+                </a>
+              </div>
+              <div id="tab-process-table" hidden>
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th class="is-small">PID</th>
+                      <th class="is-mini">Duration</th>
+                      <th>Name/image</th>
+                      <th class="is-mini">State</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for process in report.processes %}
+                    <tr>
+                      <td class="is-monospace has-text-center">
+                        <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
+                        <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
+                      </td>
+                      <td class="has-text-center">
+                        {{ process.start_ts }}<br />
+                        <span class="has-half-opacity">&darr;</span><br />
+                        {% if process.end_ts %}
+                          {{ process.end_ts }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td>
+                        {{ process.name }}
+                        <p class="has-half-opacity has-text-small">{{ process.image }}</p>
+                        <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
+                      </td>
+                      <td>{{ process.state }}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div>
+              <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
+            {% endcall %}
+
+          </div>
+
+          {# Report.machine #}
+          <div id="tab-machine" hidden>
+            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+              {{ render_dict(machine) }}
             {% endcall %}
           </div>
-        {% endif %}
 
+          {# Report.misp #}
+          {% if report.misp %}
+            <div id="tab-misp" hidden>
+              {% call ui_box(title="MISP", has_padding=False, collapsed=False) %}
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>IOC</th>
+                      <th>Description</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for m in report.misp %}
+                      <tr>
+                        <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+                        <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
+                        <td>{{ m.description }}</td>
+                        <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% endcall %}
+            </div>
+          {% endif %}
+
+          {# Report.cfgextr #}
+          {% if report.cfgextr %}
+            <div id="tab-cfgextr" hidden>
+              {% call ui_box(title="Configuration Extraction", has_padding=False) %}
+                {% for item in report.cfgextr %}
+                  {% for key in item.keys() %}
+                      <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
+                      {% if key == 'keys' %}
+                        {% for k in item[key] %}
+                          <div class="box has-background-light">
+                            <h4 class="no-margin has-text-weight-normal">
+                              <span class="icon">
+                                <i class="fas fa-key"></i>
+                              </span>
+                              {{ k.keytype }}
+                            </h4>
+                            <pre class="code-block has-padding"><code>{{ k.value }}</code></pre>
+                          </div>
+                        {% endfor %}
+                      {% elif item[key] is string %}
+                        <p class="has-padding">{{ item[key] }}</p>
+                      {% elif item[key] is iterable %}
+                        <table class="table has-border no-border-x has-sticky-header">
+                          <thead>
+                            {% if item[key][0] is not string %}
+                              <tr>
+                                {% for v in item[key][0] %}
+                                  <th>{{ v }}</th>
+                                {% endfor %}
+                              </tr>
+                            {% endif %}
+                          </thead>
+                          <tbody>
+                            {% for v in item[key] %}
+                              <tr>
+                                {% if v is string %}
+                                  <td>{{ v }}</td>
+                                {% elif v is iterable %}
+                                  {% for k in v %}
+                                    <td>{{ v[k] }}</td>
+                                  {% endfor %}
+                                {% endif %}
+                              </tr>
+                            {% endfor %}
+                        </tbody>
+                      </table>
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+              {% endcall %}
+            </div>
+          {% endif %}
       </section>
     </div>
 

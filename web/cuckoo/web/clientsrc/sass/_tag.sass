@@ -19,6 +19,9 @@
   &.is-rounded
     border-radius: 5rem
 
+  &.is-big
+    font-size: 1.2em
+
   &.is-red
     background-color: tint($red, .75)
     border-color: $red
@@ -56,6 +59,10 @@
   @extend .is-vcenter
   @extend .has-padding-bottom
   height: auto
+  .label
+    margin-right: $gap
+    opacity: 1
+    color: $black
   .tag
     margin: $gap $gap/2 0 0
     &:first-child

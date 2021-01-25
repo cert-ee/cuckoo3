@@ -1617,6 +1617,9 @@ ul.process-tree .duration--inner {
 .tag.is-rounded {
   border-radius: 5rem;
 }
+.tag.is-big {
+  font-size: 1.2em;
+}
 .tag.is-red {
   background-color: #ffbfbf;
   border-color: #FF0000;
@@ -1654,6 +1657,11 @@ ul.process-tree .duration--inner {
 
 .tag-list {
   height: auto;
+}
+.tag-list .label {
+  margin-right: 0.75rem;
+  opacity: 1;
+  color: #000000;
 }
 .tag-list .tag {
   margin: 0.75rem 0.375rem 0 0;

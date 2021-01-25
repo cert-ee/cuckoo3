@@ -66,11 +66,11 @@
             {% for col in cols %}
               <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
                 {% if style[loop.index-1] == 'is-clickable' %}
-                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                  <a href="{{val[col]}}" class="is-link" target="_blank">{{ val[col] }}</a>
                 {% elif style[loop.index-1] == 'is-datetime' %}
-                  {{ entry[col]|formatisodatetime }}
+                  {{ val[col]|formatisodatetime }}
                 {% else %}
-                  {{ entry[col] }}
+                  {{ val[col] }}
                 {% endif %}
               </td>
             {% endfor %}
@@ -211,10 +211,5 @@
     <p class="is-danger">This file is most likely severely malicious.</p>
 
 #}
-{% macro color_class(score=1) %}
-  {% if score >= 8 %}
-    is-red
-  {% elif score >= 6 %}
-    is-yellow
-  {% endif %}
-{% endmacro %}
+{% macro color_class(s=1) %}{% if s>=8 %}is-red{% elif s>=6 %}is-yellow{% endif %}{% endmacro %}
+{% macro color_text(s=1) %}{% if s>=8 %}has-text-red{% elif s>=6 %}has-text-yellow{% endif %}{% endmacro %}

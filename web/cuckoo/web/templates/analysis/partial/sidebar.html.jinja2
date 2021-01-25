@@ -12,7 +12,19 @@
         <li>
           <a href="{{ url('Task/index', args=[analysis.id, t.id]) }}" class="{% if task and task.id == t.id %}is-active{% endif %}">
             {{ t.platform }} {{ t.os_version }}
-            <span class="tag has-margin-left is-right {{ color_class(t.score) }}">{{ t.score }}</span>
+            {% if t.state == 'reported' %}
+              <span class="tag has-margin-left is-right {{ color_class(t.score) }}">
+                <strong>{{ t.score }}</strong>
+              </span>
+            {% elif t.state == 'pending' %}
+              <span class="tag has-margin-left is-right">
+                <i class="fas fa-hourglass"></i>
+              </span>
+            {% elif t.state == 'fatal_error' %}
+              <span class="tag has-margin-left is-right">
+                <i class="fas fa-exclamation"></i>
+              </span>
+            {% endif %}
           </a>
           {% if report %}
             <ul class="has-text-small">
@@ -28,6 +40,7 @@
               {% endif %}
             </ul>
           {% endif %}
+        </li>
       {% endfor %}
       </ul>
     {% endif %}
