@@ -12,4 +12,4 @@ class FamilyTracker:
         return list(self._families)
 
     def add_family(self, family):
-        self._families.add(famliy)
+        self._families.add(family)

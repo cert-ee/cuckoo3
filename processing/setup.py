@@ -45,7 +45,7 @@ setuptools.setup(
         "oletools>=0.56, <0.57"
         "cryptography>=3.2, <3.3",
         "hyperscan>=0.1.5, <0.2",
-        "yara-python>=4.0.2. <4.1",
+        "yara-python>=4.0.2, <4.1",
         "roach>=0.3, <0.4"
     ],
 )

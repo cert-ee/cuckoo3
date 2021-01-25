@@ -27,7 +27,9 @@ class ProcMemCfgExtract(Processor):
             if not ConfigMemdump.valid_name(dumppath):
                 continue
 
-            with ConfigMemdump(dumppath) as confdump:
+            with ConfigMemdump(
+                    TaskPaths.procmem_dump(self.ctx.task.id, dumppath)
+            ) as confdump:
 
                 try:
                     extracted = Extractor.search(confdump)
