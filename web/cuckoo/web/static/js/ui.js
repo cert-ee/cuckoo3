@@ -179,7 +179,7 @@ function handlePageTabs(tabContext) {
         target.removeAttribute('hidden');
         link.classList.add('is-active');
       }
-    })
+    });
   });
 
 }

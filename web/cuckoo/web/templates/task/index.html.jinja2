@@ -35,7 +35,7 @@
 
         <div class="tabbar has-background-transparent" data-enhance id="taskReport">
           <a href="#tab-task" class="tabbar-link">Task</a>
-          <a href="#tab-report" class="tabbar-link">Task report</a>
+          <a href="#tab-report" class="tabbar-link is-active">Task report</a>
           <a href="#tab-machine" class="tabbar-link">Machine</a>
         </div>
 
@@ -44,7 +44,7 @@
             {{ render_dict(task) }}
           {% endcall %} #}
         </div>
-        <div id="tab-report" hidden>
+        <div id="tab-report">
 
           {# {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(report) }}
@@ -223,27 +223,59 @@
                   {% endfor %}
                 </tbody>
               </table>
-              {# {{ render_table(
-                   data = report.misp,
-                   cols = ["id","ioc","url","description","datetime"],
-                   labels = ["ID", "IOC", "URL", "Description", "Date"],
-                   style = ["has-text-right is-monospace", "is-monospace has-auto-width", "is-clickable", null, "is-datetime"],
-                   types = [null, null, null, null, null]
-                 )
-              }} #}
             {% endcall %}
           </div>
         {% endif %}
 
         {# Report.cfgextr #}
         {% if report.cfgextr %}
-          <div id="tab-cfgextr">
-            {% call ui_box(title="Configuration Extraction") %}
-              <div class="box has-background-light">
-                {% for extr in report.cfgextr %}
-
+          <div id="tab-cfgextr" hidden>
+            {% call ui_box(title="Configuration Extraction", has_padding=False) %}
+              {% for item in report.cfgextr %}
+                {% for key in item.keys() %}
+                    <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
+                    {% if key == 'keys' %}
+                      {% for k in item[key] %}
+                        <div class="box has-background-light">
+                          <h4 class="no-margin has-text-weight-normal">
+                            <span class="icon">
+                              <i class="fas fa-key"></i>
+                            </span>
+                            {{ k.keytype }}
+                          </h4>
+                          <pre class="code-block has-padding"><code>{{ k.value }}</code></pre>
+                        </div>
+                      {% endfor %}
+                    {% elif item[key] is string %}
+                      <p class="has-padding">{{ item[key] }}</p>
+                    {% elif item[key] is iterable %}
+                      <table class="table has-border no-border-x has-sticky-header">
+                        <thead>
+                          {% if item[key][0] is not string %}
+                            <tr>
+                              {% for v in item[key][0] %}
+                                <th>{{ v }}</th>
+                              {% endfor %}
+                            </tr>
+                          {% endif %}
+                        </thead>
+                        <tbody>
+                          {% for v in item[key] %}
+                            <tr>
+                              {% if v is string %}
+                                <td>{{ v }}</td>
+                              {% elif v is iterable %}
+                                {% for k in v %}
+                                  <td>{{ v[k] }}</td>
+                                {% endfor %}
+                              {% endif %}
+                            </tr>
+                          {% endfor %}
+                      </tbody>
+                    </table>
+                  {% endif %}
                 {% endfor %}
-              </div>
+              {% endfor %}
             {% endcall %}
           </div>
         {% endif %}
