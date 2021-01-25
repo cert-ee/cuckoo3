@@ -5,39 +5,6 @@
 
 {% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
 
-{% block page_script %}
-  <script type="text/javascript">
-
-    // scroll to ioc result in av table when clicking a tag
-    (function scrollToIOC() {
-
-      const ioc = document.querySelector('#box-IOCs');
-      const avs = document.querySelector('#box-Antivirus-Engines .table');
-
-      function compromiseStickyHeader() {
-        if(!avs.classList.contains('has-sticky-header'))
-          return 0;
-        else
-          return avs.querySelector('thead').offsetHeight;
-      }
-
-      [...ioc.querySelectorAll('.tag')].forEach(tag => {
-        tag.addEventListener('click', ev => {
-          ev.preventDefault();
-          const result = avs.querySelector('tr' + tag.getAttribute('href'));
-          if(result) {
-            let pos = result.getBoundingClientRect().top + window.scrollY;
-            window.scroll(0, pos - compromiseStickyHeader());
-            setTimeout(() => blink(result), 500);
-          }
-        });
-      });
-
-    }());
-
-  </script>
-{% endblock %}
-
 {% block body %}
   <div class="container is-fixed">
     <div class="columns is-divided is-vtop">
@@ -244,27 +211,6 @@
 
         {# tab: static.virustotal #}
         <div id="tab-virus-total" hidden>
-
-          {# Antivirus detected IOC's #}
-          {% call ui_box(title="IOCs") %}
-            <div id="ioc-tags" class="no-margin">
-              {% for signature in pre.signatures %}
-                  <h4 class="no-margin-bottom">{{ signature.name }}: {{ signature.description }}</h4>
-                  {% if signature.iocs %}
-                    <div class="tag-list">
-                      {% for ioc in signature.iocs %}
-                        <a href="#av-engine-{{ioc}}" class="tag">{{ ioc }}</a>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <p class="no-margin">No IOC's.</p>
-                  {% endif %}
-                {% else %}
-                <p class="no-margin">No Data.</p>
-              {% endfor %}
-            </div>
-          {% endcall %}
-
           {# Antivirus result list #}
           {% call ui_box(title="Antivirus Engines", has_padding=False) %}
             {{ render_table(

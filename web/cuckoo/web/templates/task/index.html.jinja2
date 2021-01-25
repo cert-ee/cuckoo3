@@ -2,7 +2,7 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box, render_table, color_class, color_text %}
+{% from 'macros.html.jinja2' import render_dict, ui_box, error_box, render_table, color_class, color_text %}
 
 {% block page_script %}
   <script>
@@ -48,6 +48,12 @@
                 {{ render_dict(task) }}
               {% endcall %}
             #}
+
+            {% if task.errors.errors|length > 0 %}
+              {% call error_box(task.errors.errors) %}
+                <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
+              {% endcall %}
+            {% endif %}
 
             {% call ui_box(title="Task") %}
               <div class="columns has-padding is-divided">
@@ -236,7 +242,11 @@
                   </tr>
                   <tr>
                     <td class="has-text-right"><strong>Platform</strong></td>
-                    <td>{{ machine.platform }} {{ machine.os_version }}</td>
+                    <td>{{ machine.platform }}</td>
+                  </tr>
+                  <tr>
+                    <td class="has-text-right"><strong></strong></td>
+                    <td>{{ machine.os_version }}</td>
                   </tr>
                   <tr>
                     <td class="has-text-right"><strong>Machinery name</strong></td>

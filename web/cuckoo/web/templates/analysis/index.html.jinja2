@@ -3,7 +3,7 @@
 {% set report_page = "sample" %}
 {% set title = "Analysis" %}
 
-{% from 'macros.html.jinja2' import ui_box, color_class, color_text, render_dict %}
+{% from 'macros.html.jinja2' import ui_box, error_box, color_class, color_text, render_dict %}
 
 {% block page_script %}
   <script src="{{ static('js/report.task.js') }}"></script>
@@ -28,6 +28,12 @@
             {{ render_dict(pre) }}
           {% endcall %}
         #}
+
+        {% if analysis.errors.errors|length > 0 %}
+          {% call error_box(analysis.errors.errors) %}
+            <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
+          {% endcall %}
+        {% endif %}
 
         {% call ui_box(title="Target") %}
           <div class="columns has-padding is-divided">

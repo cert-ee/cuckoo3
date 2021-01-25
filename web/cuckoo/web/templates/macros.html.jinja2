@@ -199,6 +199,28 @@
 {% endmacro %}
 
 {#
+  Renders an error display from an array of errors
+
+    errors  List  array containing all the error messages
+#}
+{% macro error_box(errors) %}
+  <div class="box has-background-white has-shadow no-padding has-border">
+    <h3 class="box-title is-red">
+      <span class="icon has-text-red">
+        <i class="fas fa-exclamation"></i>
+      </span> Errors</h3>
+    {% if caller %}{{ caller() }}{% endif %}
+    <div class="has-padding">
+      {% for err in errors %}
+        <div class="banner no-margin-top is-danger has-padding">
+          <p class="has-padding-x">{{ err }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endmacro %}
+
+{#
 
   Provides the translation from a score from 1-10 to a color class representation.
 
