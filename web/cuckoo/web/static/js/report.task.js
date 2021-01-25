@@ -123,7 +123,31 @@ const processes = (function() {
     return parseDOM(`
       <div class="columns is-divided is-vcenter">
         <div class="column is-auto">
-          <span class="pid">${process.procid}</span>
+          &nbsp;
+        </div>
+        <div class="column">
+          <p title="${process.image}">
+            <span class="icon has-half-opacity">
+              <i class="fas fa-tag"></i>
+            </span>
+            <span class="tag">${process.procid}</span>
+            ${process.name}
+          </p>
+          <p>
+            <span class="icon has-half-opacity">
+              <i class="fas fa-terminal"></i>
+            </span>
+            <code class="code">${process.commandline}</code>
+          </p>
+          <div class="has-margin-y">
+            <span class="icon has-half-opacity">
+              <i class="fas fa-stopwatch"></i>
+            </span>
+            <div class="duration">
+              <div class="duration--inner" style="width: ${meta.duration.length}%; left: ${meta.duration.offset}%;"></div>
+            </div>
+            ${process.state}
+          </div>
         </div>
         ${(process.children.length > 0) ? `
           <div class="column is-auto">
@@ -132,26 +156,6 @@ const processes = (function() {
             </span>
           </div>
         ` : ''}
-        <div class="column">
-          <p title="${process.image}">
-            <span class="icon">
-              <i class="fas fa-tag"></i>
-            </span>
-            ${process.name}
-          </p>
-          <p>
-            <span class="icon">
-              <i class="fas fa-terminal"></i>
-            </span>
-            <code class="code">${process.commandline}</code>
-          </p>
-          <div class="duration">
-            <div class="duration--inner" style="
-              width: ${meta.duration.length}%;
-              left: ${meta.duration.offset}%;"
-            ></div>
-          </div>
-        </div>
       </div>
     `);
   }
@@ -171,9 +175,13 @@ const processes = (function() {
 
       let id = 'process-'+p.pid;
       let item = document.createElement('li');
+
       let content = template(p, {
         duration: getDuration(p)
       });
+
+      // enable tooltips
+      // content.querySelectorAll('[data-tooltip]').forEach(handleTooltip);
 
       if(p.children.length) {
 

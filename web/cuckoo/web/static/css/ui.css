@@ -1321,13 +1321,15 @@ ul.process-tree .pid {
 }
 ul.process-tree .duration {
   position: relative;
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   width: 15rem;
   max-width: 15rem;
   height: 0.5rem;
   background-color: #CCCCCC;
   overflow: hidden;
   border-radius: 4rem;
+  margin-right: 0.75rem;
 }
 ul.process-tree .duration--inner {
   position: absolute;
