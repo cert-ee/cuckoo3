@@ -131,15 +131,8 @@
                 </thead>
                 <tbody>
                   {% for signature in report.signatures|sort(attribute='score',reverse=True) %}
-                    {% if signature.score > 6 %}
-                      {% set score_class = 'is-red' %}
-                    {% elif signature.score > 4 %}
-                      {% set score_class = 'is-yellow' %}
-                    {% elif signature.score > 0 %}
-                      {% set score_class = '' %}
-                    {% endif %}
                     <tr data-row="{{ loop.index }}">
-                      <td><span class="tag {{ score_class }}">{{ signature.score }}</span></td>
+                      <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
                       <td>{{ signature.short_description }}</td>
                       <td>{{ signature.description }}</td>
                       <td class="no-text-wrap">
@@ -289,31 +282,33 @@
                             <pre class="code-block has-padding"><code>{{ k.value }}</code></pre>
                           </div>
                         {% endfor %}
+                      {% elif key == 'c2s' %}
+                        {{ render_table(data=item[key], cols=["address"], labels=["Address"], has_sticky_header=True) }}
                       {% elif item[key] is string %}
                         <p class="has-padding">{{ item[key] }}</p>
                       {% elif item[key] is iterable %}
                         <table class="table has-border no-border-x has-sticky-header">
                           <thead>
-                            {% if item[key][0] is not string %}
-                              <tr>
-                                {% for v in item[key][0] %}
-                                  <th>{{ v }}</th>
-                                {% endfor %}
-                              </tr>
-                            {% endif %}
+                          {% if item[key][0] is not string %}
+                            <tr>
+                              {% for v in item[key][0] %}
+                                <th>{{ v }}</th>
+                              {% endfor %}
+                            </tr>
+                          {% endif %}
                           </thead>
                           <tbody>
-                            {% for v in item[key] %}
-                              <tr>
-                                {% if v is string %}
-                                  <td>{{ v }}</td>
-                                {% elif v is iterable %}
-                                  {% for k in v %}
-                                    <td>{{ v[k] }}</td>
-                                  {% endfor %}
-                                {% endif %}
-                              </tr>
-                            {% endfor %}
+                          {% for v in item[key] %}
+                            <tr>
+                              {% if v is string %}
+                                <td>{{ v }}</td>
+                              {% elif v is iterable %}
+                                {% for k in v %}
+                                  <td>{{ v[k] }}</td>
+                                {% endfor %}
+                              {% endif %}
+                            </tr>
+                          {% endfor %}
                         </tbody>
                       </table>
                     {% endif %}
