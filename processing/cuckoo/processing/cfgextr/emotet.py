@@ -47,13 +47,16 @@ class Emotet(ConfigExtractor):
     }"""
 
     @classmethod
-    def search(cls, cfg_memdump):
+    def search(cls, cfg_memdump, extracted_tracker):
         rule = yara.compile(source=cls.YARA)
         matches = rule.match(data=cfg_memdump.buf)
-        if matches:
-            return cls._extract(matches, cfg_memdump)
 
-        return None
+        if not matches:
+            return
+
+        config = cls._extract(matches, cfg_memdump)
+        if config:
+            extracted_tracker.add_config(config)
 
     @classmethod
     def _extract(cls, matches, cfg_memdump):
@@ -78,12 +81,12 @@ class Emotet(ConfigExtractor):
                                      - cfg_memdump.base_address:][:106]
         except struct.error as e:
             raise UnexpectedDataError(
-                f"Invalid rsakey address or xorkey bytes: {e}"
+                f"Invalid rsakey address: {e}"
             )
 
         except IndexError:
             raise UnexpectedDataError(
-                "rsakey or xorkey address causes out of bounds read"
+                "rsakey address causes out of bounds read"
             )
 
         key = Key(

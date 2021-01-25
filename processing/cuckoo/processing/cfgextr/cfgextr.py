@@ -112,6 +112,9 @@ class C2(ExtractedDataType):
 
         return d
 
+    def __eq__(self, other):
+        return self.address == other
+
     def __hash__(self):
         return hash(self.address)
 
@@ -130,6 +133,9 @@ class Key(ExtractedDataType):
             "value": self.value
         }
 
+    def __eq__(self, other):
+        return self.keytype + self.value == other
+
     def __hash__(self):
         return hash(self.keytype + self.value)
 
@@ -144,6 +150,21 @@ class ExtractedConfig:
     def add_extracted(self, extracted_data):
         self.values.setdefault(extracted_data.KEY, set()).add(extracted_data)
 
+    def merge(self, extracted_config):
+        if extracted_config.family != self.family:
+            raise ConfigExtractionError(
+                f"Cannot merge configurations from different families: "
+                f"{extracted_config.family} {self.family}"
+            )
+
+        self.sources.update(extracted_config.sources)
+        for key, values in extracted_config.values.items():
+            existing = self.values.get(key)
+            if existing:
+                existing.update(values)
+            else:
+                self.values[key] = values
+
     def to_dict(self):
         d = {
             key: list(value.to_dict() for value in values)
@@ -156,6 +177,22 @@ class ExtractedConfig:
 
         return d
 
+class ExtractedConfigTracker:
+
+    def __init__(self):
+        self._configs = {}
+
+    @property
+    def configs(self):
+        return list(self._configs.values())
+
+    def add_config(self, extracted_config):
+        existing = self._configs.get(extracted_config.family)
+        if existing:
+            existing.merge(extracted_config)
+        else:
+            self._configs[extracted_config.family] = extracted_config
+
 class Extractor:
 
     extractors = []
@@ -167,13 +204,11 @@ class Extractor:
         )
 
     @classmethod
-    def search(cls, config_memdump):
+    def search(cls, config_memdump, extracted_tracker):
         for extractor in cls.extractors:
             try:
-                config = extractor.search(config_memdump)
+                extractor.search(config_memdump, extracted_tracker)
             except UnexpectedDataError as e:
                 raise UnexpectedDataError(
                     f"Unexpected data during extraction by {extractor}. {e}"
                 )
-            if config:
-                return config
