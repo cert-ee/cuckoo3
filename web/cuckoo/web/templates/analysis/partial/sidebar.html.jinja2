@@ -26,7 +26,7 @@
               </span>
             {% endif %}
           </a>
-          {% if report %}
+          {% if report and task.id == t.id %}
             <ul class="has-text-small">
               {% if report.misp %}
                 <li>
