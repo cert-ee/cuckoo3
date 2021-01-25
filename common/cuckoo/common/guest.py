@@ -456,7 +456,7 @@ class TmStage(StagerHelper):
             # A timeout is important when delivering the payload in case the
             # agent stops responding.
             stdout, stderr = self.agent.execute(
-                command, cwd=tmpdir, timeout=20 # TODO use task timeout?
+                command, cwd=tmpdir, timeout=60 # TODO use task timeout?
             )
         except AgentError as e:
             raise StagerError(f"Failed to execute stager: {e}")

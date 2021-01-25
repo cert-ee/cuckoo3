@@ -2,6 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from pathlib import Path
+
 from cuckoo.common.packages import enumerate_plugins
 
 from ..abtracts import ConfigExtractor
@@ -133,17 +135,26 @@ class Key(ExtractedDataType):
 
 class ExtractedConfig:
 
-    def __init__(self, family):
+    def __init__(self, family, filename):
         self.family = family
         self.values = {}
+        self.sources = set()
+        self.sources.add(filename)
 
     def add_extracted(self, extracted_data):
         self.values.setdefault(extracted_data.KEY, set()).add(extracted_data)
 
     def to_dict(self):
-        return {
-            key: list(values) for key, values in self.values.items()
+        d = {
+            key: list(value.to_dict() for value in values)
+            for key, values in self.values.items()
         }
+        d.update({
+            "family": self.family,
+            "sources": list(self.sources)
+        })
+
+        return d
 
 class Extractor:
 
