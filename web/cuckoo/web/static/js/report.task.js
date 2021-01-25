@@ -127,13 +127,17 @@ const processes = (function() {
         </div>
         <div class="column">
           <p title="${process.image}">
-            <span class="icon has-half-opacity">
+            <span class="icon has-half-opacity" title="Process name">
               <i class="fas fa-tag"></i>
             </span>
-            <span class="tag">${process.procid}</span>
+            <span class="is-monospace has-margin-right" title="Process identifier">
+              <span class="is-uppercase has-half-opacity">process</span>
+              <strong>${process.procid}</strong>
+              &mdash;
+            </span>
             ${process.name}
           </p>
-          <p>
+          <p title="Executed command">
             <span class="icon has-half-opacity">
               <i class="fas fa-terminal"></i>
             </span>
@@ -143,10 +147,10 @@ const processes = (function() {
             <span class="icon has-half-opacity">
               <i class="fas fa-stopwatch"></i>
             </span>
-            <div class="duration">
+            <div class="duration" title="Process duration">
               <div class="duration--inner" style="width: ${meta.duration.length}%; left: ${meta.duration.offset}%;"></div>
             </div>
-            ${process.state}
+            <span title="Process state">${process.state}</span>
           </div>
         </div>
         ${(process.children.length > 0) ? `

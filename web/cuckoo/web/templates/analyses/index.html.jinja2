@@ -2,6 +2,8 @@
 {% set active_page = "analyses" %}
 {% set title = "Analyses" %}
 
+{% from 'macros.html.jinja2' import color_class %}
+
 {% block page_script %}
 <script type="text/javascript">
   (function() {
@@ -54,18 +56,22 @@
         {# Create link based on state (go to manual settings or report) #}
         {% if analysis.state == 'waiting_manual' %}
           {% set href = url('Submit/settings', args=[analysis.id])  %}
-        {% elif analysis.state == 'finished' %}
+        {% elif analysis.state == 'tasks_pending' or analysis.state == 'fatal_error' or analysis.state == 'finished' %}
           {% set href = url('Analysis/index', args=[analysis.id])  %}
         {% else %}
-          {% set href = "#" %}
+          {% set href = False %}
         {% endif %}
-        <tr>
-          <td><a href="{{ href }}">{{ analysis.created_on | formatdatetime }}</a></td>
+        <tr {% if not href %}class="has-half-opacity"{% endif %}>
+          <td><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.created_on | formatdatetime }}</a></td>
           <td class="is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
           <td>{{ analysis.target.target }}</td>
           <td>{{ analysis.target.media_type }}</td>
-          <td><a href="{{ href }}">{{ analysis.state | humanstate }}</a></td>
-          <td>{{ analysis.score }}</td>
+          <td><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.state|humanstate }}</a></td>
+          <td>
+            {% if analysis.score > 0 %}
+              <span class="tag {{ color_class(analysis.score) }}">{{ analysis.score }}</span>
+            {% endif %}
+          </td>
         </tr>
       {% endfor %}
       </tbody>
