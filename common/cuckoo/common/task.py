@@ -12,7 +12,10 @@ from . import db, machines
 
 log = CuckooGlobalLogger(__name__)
 
-class TaskCreationError(Exception):
+class TaskError(Exception):
+    pass
+
+class TaskCreationError(TaskError):
     def __init__(self, msg, reasons=[]):
         self.reasons = reasons
         super().__init__(msg)
@@ -26,12 +29,37 @@ class NoTasksCreatedError(TaskCreationError):
 class NotAllTasksCreatedError(TaskCreationError):
     pass
 
+class HumanStates:
+    PENDING = "Pending"
+    RUNNING = "Running"
+    PENDING_POST = "Pending post"
+    REPORTED = "Reported"
+    FATAL_ERROR = "Fatal error"
+
 class States:
     PENDING = "pending"
     RUNNING = "running"
     PENDING_POST = "pending_post"
     REPORTED = "reported"
     FATAL_ERROR = "fatal_error"
+
+    _HUMAN = {
+        PENDING: HumanStates.PENDING,
+        RUNNING: HumanStates.RUNNING,
+        PENDING_POST: HumanStates.PENDING_POST,
+        REPORTED: HumanStates.REPORTED,
+        FATAL_ERROR: HumanStates.FATAL_ERROR
+    }
+
+    @classmethod
+    def to_human(cls, state):
+        try:
+            return cls._HUMAN[state]
+        except KeyError:
+            raise TaskError(
+                f"No human readable version for state {state!r} exists"
+            )
+
 
 def _make_task_dirs(task_id):
     task_path = TaskPaths.path(task_id)
