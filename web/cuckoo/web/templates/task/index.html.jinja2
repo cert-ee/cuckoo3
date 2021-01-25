@@ -130,7 +130,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for signature in report.signatures %}
+                  {% for signature in report.signatures|sort(attribute='score',reverse=True) %}
                     {% if signature.score > 6 %}
                       {% set score_class = 'is-red' %}
                     {% elif signature.score > 4 %}

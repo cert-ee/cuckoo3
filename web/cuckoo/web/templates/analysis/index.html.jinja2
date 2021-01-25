@@ -82,7 +82,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% for signature in pre.signatures %}
+                {% for signature in pre.signatures|sort(attribute='score',reverse=True) %}
                   <tr data-row="{{ loop.index }}">
                     <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
                     <td>{{ signature.short_description }}</td>
