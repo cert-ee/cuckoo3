@@ -13,7 +13,7 @@
       <section class="column has-padding">
         {% call ui_box(title="Fatal error(s)") %}
           <p>One or more fatal errors caused this task to fail.</p>
-          {% for err in task.errors.fatal %}
+          {% for err in analysis.errors.fatal %}
             <div class="banner is-danger has-padding-x">
               <p>{{ err.error }}</p>
             </div>
