@@ -2,17 +2,21 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{% from 'macros.html.jinja2' import ui_box %}
+{% from 'macros.html.jinja2' import ui_box, render_dict %}
 
 {% block body %}
   <div class="container is-fixed">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
-        &nbsp;
+        {% include "analysis/partial/sidebar.html.jinja2" %}
       </aside>
       <section class="column has-padding">
         {% call ui_box(title="Fatal error") %}
-          <p>{{ task.errors.fatal.error }}</p>
+          {% for err in task.errors.fatal %}
+            <div class="banner is-danger has-padding-x">
+              <p>{{ err.error }}</p>
+            </div>
+          {% endfor %}
         {% endcall %}
       </section>
     </div>
