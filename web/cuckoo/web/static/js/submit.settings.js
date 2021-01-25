@@ -203,7 +203,7 @@
         if(error) {
           handleError(error);
         } else {
-          window.location = '/analyses';
+          window.location = '/analyses?submission='+analysis_id;
         }
       });
 
