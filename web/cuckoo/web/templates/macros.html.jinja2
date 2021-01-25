@@ -24,7 +24,7 @@
                   )
     }}
 #}
-{% macro render_table(data=[], cols=[], labels=[], style=[], has_sticky_header=False) %}
+{% macro render_table(data=[], cols=[], labels=[], style=[], types=[], has_sticky_header=False) %}
   <table class="table {% if has_sticky_header %}has-sticky-header{% endif %}">
     <thead>
       <tr>
@@ -47,6 +47,8 @@
               <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
                 {% if style[loop.index-1] == 'is-clickable' %}
                   <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                {% elif style[loop.index-1] == 'is-datetime' %}
+                  {{ entry[col]|formatisodatetime }}
                 {% else %}
                   {{ entry[col] }}
                 {% endif %}
@@ -65,6 +67,8 @@
               <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
                 {% if style[loop.index-1] == 'is-clickable' %}
                   <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                {% elif style[loop.index-1] == 'is-datetime' %}
+                  {{ entry[col]|formatisodatetime }}
                 {% else %}
                   {{ entry[col] }}
                 {% endif %}

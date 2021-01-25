@@ -673,7 +673,7 @@ a.button, .control.is-file a.file-trigger {
 .table th, .table td {
   padding: 0.75rem;
 }
-.table th.is-auto-width, .table td.is-auto-width {
+.table th.is-auto-width, .table th.is-datetime, .table td.is-auto-width, .table td.is-datetime {
   min-width: 1px;
   white-space: nowrap;
 }

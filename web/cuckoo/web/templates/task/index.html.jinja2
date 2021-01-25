@@ -2,7 +2,7 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box, color_class %}
+{% from 'macros.html.jinja2' import render_dict, ui_box, render_table, color_class %}
 
 {% block page_script %}
   <script>
@@ -35,30 +35,30 @@
 
         <div class="tabbar has-background-transparent" data-enhance id="taskReport">
           <a href="#tab-task" class="tabbar-link">Task</a>
-          <a href="#tab-report" class="tabbar-link is-active">Task report</a>
+          <a href="#tab-report" class="tabbar-link">Task report</a>
           <a href="#tab-machine" class="tabbar-link">Machine</a>
         </div>
 
         <div id="tab-task" hidden>
-
-          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+          {# {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(task) }}
-          {% endcall %}
-
+          {% endcall %} #}
         </div>
-        <div id="tab-report">
+        <div id="tab-report" hidden>
 
-          {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+          {# {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(report) }}
-          {% endcall %}
+          {% endcall %} #}
 
-          {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
+          {# {% call ui_box(title="Analysis", has_padding=False, collapsed=True) %}
             {{ render_dict(analysis) }}
-          {% endcall %}
+          {% endcall %} #}
 
+          {# Report.signatures #}
           {% call ui_box(title="Signatures", has_padding=False) %}
 
-            <div class="toggle-box has-padding-x">
+            <!-- @TODO -->
+            <!-- <div class="toggle-box has-padding-x">
               <label class="toggle" for="toggle-all">
                 <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
                 <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
@@ -75,7 +75,7 @@
                 <input type="checkbox" id="info" name="toggle-sig" />
                 <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
               </label>
-            </div>
+            </div> -->
 
             <table class="table">
               <thead>
@@ -126,8 +126,8 @@
             </table>
           {% endcall %}
 
+          {# Report.processes #}
           {% call ui_box(title="Processes", has_padding=False) %}
-
             <div class="tabbar has-background-transparent" data-enhance>
               <p class="tabbar-label">View type</p>
               <a href="#tab-process-table" class="tabbar-link">
@@ -149,7 +149,6 @@
                 Tree
               </a>
             </div>
-
             <div id="tab-process-table" hidden>
               <table class="table">
                 <thead>
@@ -189,22 +188,64 @@
             </div>
             <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div>
             <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
-
           {% endcall %}
 
         </div>
+
+        {# Report.machine #}
         <div id="tab-machine" hidden>
           {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
             {{ render_dict(machine) }}
           {% endcall %}
         </div>
 
+        {# Report.misp #}
         {% if report.misp %}
-          <div id="tab-misp" hidden>Mispies</div>
+          <div id="tab-misp" hidden>
+            {% call ui_box(title="MISP", has_padding=False, collapsed=False) %}
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>IOC</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in report.misp %}
+                    <tr>
+                      <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+                      <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
+                      <td>{{ m.description }}</td>
+                      <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {# {{ render_table(
+                   data = report.misp,
+                   cols = ["id","ioc","url","description","datetime"],
+                   labels = ["ID", "IOC", "URL", "Description", "Date"],
+                   style = ["has-text-right is-monospace", "is-monospace has-auto-width", "is-clickable", null, "is-datetime"],
+                   types = [null, null, null, null, null]
+                 )
+              }} #}
+            {% endcall %}
+          </div>
         {% endif %}
 
+        {# Report.cfgextr #}
         {% if report.cfgextr %}
-          <div id="tab-cfgextr" hidden>Configuratie extractie</div>
+          <div id="tab-cfgextr">
+            {% call ui_box(title="Configuration Extraction") %}
+              <div class="box has-background-light">
+                {% for extr in report.cfgextr %}
+
+                {% endfor %}
+              </div>
+            {% endcall %}
+          </div>
         {% endif %}
 
       </section>
