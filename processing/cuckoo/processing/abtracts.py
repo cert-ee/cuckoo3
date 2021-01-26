@@ -145,11 +145,3 @@ class EventConsumer:
 
     def cleanup(self):
         pass
-
-class ConfigExtractor:
-
-    FAMILY = ""
-
-    @classmethod
-    def search(cls, config_memdump, extracted_tracker):
-        pass
