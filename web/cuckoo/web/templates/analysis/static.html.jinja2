@@ -23,6 +23,9 @@
           {% if pre.virustotal %}
             <a class="tabbar-link is-active" href="#tab-virus-total">Antivirus</a>
           {% endif %}
+          {% if pre.misp %}
+            <a class="tabbar-link" href="#tab-misp">MISP</a>
+          {% endif %}
         </nav>
 
         {# tab: static.target/static.pe #}
@@ -225,6 +228,34 @@
                   labels=["Category","Name","Version","Method","Result"],
                   has_sticky_header=True
               )}}
+            {% endcall %}
+          </div>
+        {% endif %}
+        {# tab: static.misp #}
+        {% if pre.misp %}
+          <div id="tab-misp">
+            {% call ui_box(title="MISP", has_padding=False) %}
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>IOC</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in pre.misp %}
+                    <tr>
+                      <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+                      <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
+                      <td>{{ m.description }}</td>
+                      <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
             {% endcall %}
           </div>
         {% endif %}
