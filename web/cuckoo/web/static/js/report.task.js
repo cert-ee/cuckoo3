@@ -229,6 +229,12 @@ const processes = (function() {
   }
 
   signatures.querySelectorAll('.table tbody tr[data-row]').forEach(row => {
+
+    let toggle = row.querySelector('.toggle-ioc');
+    if(!toggle) return;
+
+    let oldContent = toggle.textContent;
+
     row.querySelector('.toggle-ioc').addEventListener('click', ev => {
       ev.preventDefault();
       let link = ev.currentTarget;
@@ -236,11 +242,11 @@ const processes = (function() {
 
       if(target.hasAttribute('hidden')) {
         target.removeAttribute('hidden');
-        link.textContent = 'Hide IOCs';
+        link.textContent = "Hide IOC's";
         row.classList.add('is-shown');
       } else {
         target.setAttribute('hidden', true);
-        link.textContent = 'Display IOCs';
+        link.textContent = oldContent;
         row.classList.remove('is-shown');
       }
 
