@@ -10,7 +10,7 @@
       <ul>
       {% for t in analysis.tasks %}
         <li>
-          <a href="{{ url('Task/index', args=[analysis.id, t.id]) }}" class="{% if task and task.id == t.id %}is-active{% endif %}">
+          <a {% if t.state != 'fatal_error' %}href="{{ url('Task/index', args=[analysis.id, t.id]) }}"{% endif %} class="{% if t.state != 'reported' %}has-half-opacity{% endif %} {% if task and task.id == t.id %}is-active{% endif %}">
             {{ t.platform }} {{ t.os_version }}
             {% if t.state == 'reported' %}
               <span class="tag has-margin-left is-right {{ color_class(t.score) }}">
@@ -18,7 +18,7 @@
               </span>
             {% elif t.state == 'pending' %}
               <span class="tag has-margin-left is-right">
-                <i class="fas fa-hourglass"></i>
+                <i class="far fa-hourglass"></i>
               </span>
             {% elif t.state == 'fatal_error' %}
               <span class="tag has-margin-left is-right">

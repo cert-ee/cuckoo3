@@ -107,26 +107,6 @@
             {# Report.signatures #}
             {% call ui_box(title="Signatures", has_padding=False) %}
 
-              <!-- @TODO -->
-              <!-- <div class="toggle-box has-padding-x">
-                <label class="toggle" for="toggle-all">
-                  <input type="radio" id="toggle-all" name="toggle-sig" value="all" checked />
-                  <p class="toggle-label">All <span class="has-half-opacity">14</span></p>
-                </label>
-                <label class="toggle" for="toggle-critical">
-                  <input type="checkbox" id="toggle-critical" name="toggle-sig" />
-                  <p class="toggle-label">Critical <span class="has-half-opacity">8</span></p>
-                </label>
-                <label class="toggle" for="suspicious">
-                  <input type="checkbox" id="suspicious" name="toggle-sig" />
-                  <p class="toggle-label">Suspicious <span class="has-half-opacity">5</span></p>
-                </label>
-                <label class="toggle" for="info">
-                  <input type="checkbox" id="info" name="toggle-sig" />
-                  <p class="toggle-label">Info <span class="has-half-opacity">1</span></p>
-                </label>
-              </div> -->
-
               <table class="table">
                 <thead>
                   <tr>
@@ -160,12 +140,14 @@
             {% call ui_box(title="Processes", has_padding=False) %}
               <div class="tabbar has-background-transparent" data-enhance>
                 <p class="tabbar-label">View type</p>
+                {#
                 <a href="#tab-process-table" class="tabbar-link">
                   <span class="icon">
                     <i class="fas fa-table"></i>
                   </span>
                   Table
                 </a>
+                #}
                 {# <a href="#tab-process-nodes" class="tabbar-link">
                   <span class="icon">
                     <i class="fas fa-project-diagram"></i>
@@ -179,43 +161,45 @@
                   Tree
                 </a>
               </div>
-              <div id="tab-process-table" hidden>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th class="is-small">PID</th>
-                      <th class="is-mini">Duration</th>
-                      <th>Name/image</th>
-                      <th class="is-mini">State</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  {% for process in report.processes %}
-                    <tr>
-                      <td class="is-monospace has-text-center">
-                        <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
-                        <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
-                      </td>
-                      <td class="has-text-center">
-                        {{ process.start_ts }}<br />
-                        <span class="has-half-opacity">&darr;</span><br />
-                        {% if process.end_ts %}
-                          {{ process.end_ts }}
-                        {% else %}
-                          -
-                        {% endif %}
-                      </td>
-                      <td>
-                        {{ process.name }}
-                        <p class="has-half-opacity has-text-small">{{ process.image }}</p>
-                        <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
-                      </td>
-                      <td>{{ process.state }}</td>
-                    </tr>
-                  {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+              {#
+                <div id="tab-process-table" hidden>
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th class="is-small">PID</th>
+                        <th class="is-mini">Duration</th>
+                        <th>Name/image</th>
+                        <th class="is-mini">State</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% for process in report.processes %}
+                      <tr>
+                        <td class="is-monospace has-text-center">
+                          <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
+                          <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
+                        </td>
+                        <td class="has-text-center">
+                          {{ process.start_ts }}<br />
+                          <span class="has-half-opacity">&darr;</span><br />
+                          {% if process.end_ts %}
+                            {{ process.end_ts }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>
+                          {{ process.name }}
+                          <p class="has-half-opacity has-text-small">{{ process.image }}</p>
+                          <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
+                        </td>
+                        <td>{{ process.state }}</td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              #}
               {# <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div> #}
               <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
             {% endcall %}
