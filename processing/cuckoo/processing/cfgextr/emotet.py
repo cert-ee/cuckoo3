@@ -7,8 +7,9 @@ import socket
 import struct
 import yara
 
-from ..abtracts import ConfigExtractor
-from .cfgextr import ExtractedConfig, C2, Key
+from .cfgextr import (
+    ExtractedConfig, C2, Key, UnexpectedDataError, ConfigExtractor
+)
 
 class Emotet(ConfigExtractor):
 
@@ -47,31 +48,24 @@ class Emotet(ConfigExtractor):
     }"""
 
     @classmethod
-    def search(cls, cfg_memdump, extracted_tracker):
+    def search(cls, cfg_memdump, extracted_config):
         rule = yara.compile(source=cls.YARA)
         matches = rule.match(data=cfg_memdump.buf)
 
         if not matches:
             return
 
-        config = cls._extract(matches, cfg_memdump)
-        if config:
-            extracted_tracker.add_config(config)
+        cls._extract(matches, cfg_memdump, extracted_config)
 
     @classmethod
-    def _extract(cls, matches, cfg_memdump):
-        extracted = ExtractedConfig(cls.FAMILY, cfg_memdump.name)
+    def _extract(cls, matches, cfg_memdump, extracted):
+        extracted.set_detected()
         for match in matches:
             for offset, name, data in match.strings:
                 if name == "$rsakey":
                     cls._read_rsakey(data, cfg_memdump, extracted)
                 elif name == "$enumips":
                     cls._read_enumips(data, cfg_memdump, extracted)
-
-        if extracted.values:
-            return extracted
-
-        return None
 
     @classmethod
     def _read_rsakey(cls, data, cfg_memdump, extracted):
@@ -89,10 +83,11 @@ class Emotet(ConfigExtractor):
                 "rsakey address causes out of bounds read"
             )
 
-        key = Key(
-            keytype="rsa_pubkey",
-            value=roach.rsa.import_key(rsakey).decode()
-        )
+        imported_key = roach.rsa.import_key(rsakey)
+        if not imported_key:
+            raise UnexpectedDataError("No RSA key could be read from value")
+
+        key = Key(keytype="rsa_pubkey", value=imported_key.decode())
         extracted.add_extracted(key)
 
     @classmethod

@@ -4,10 +4,6 @@
 
 from pathlib import Path
 
-from cuckoo.common.packages import enumerate_plugins
-
-from ..abtracts import ConfigExtractor
-
 class ConfigExtractionError(Exception):
     pass
 
@@ -146,9 +142,13 @@ class ExtractedConfig:
         self.values = {}
         self.sources = set()
         self.sources.add(filename)
+        self.detected = False
 
     def add_extracted(self, extracted_data):
         self.values.setdefault(extracted_data.KEY, set()).add(extracted_data)
+
+    def set_detected(self):
+        self.detected = True
 
     def merge(self, extracted_config):
         if extracted_config.family != self.family:
@@ -193,22 +193,28 @@ class ExtractedConfigTracker:
         else:
             self._configs[extracted_config.family] = extracted_config
 
-class Extractor:
+        return d
 
-    extractors = []
+class ExtractedConfigTracker:
+
+    def __init__(self):
+        self._configs = {}
+
+    @property
+    def configs(self):
+        return list(self._configs.values())
+
+    def add_config(self, extracted_config):
+        existing = self._configs.get(extracted_config.family)
+        if existing:
+            existing.merge(extracted_config)
+        else:
+            self._configs[extracted_config.family] = extracted_config
+
+class ConfigExtractor:
+
+    FAMILY = ""
 
     @classmethod
-    def init_once(cls):
-        cls.extractors = enumerate_plugins(
-            "cuckoo.processing.cfgextr", globals(), ConfigExtractor
-        )
-
-    @classmethod
-    def search(cls, config_memdump, extracted_tracker):
-        for extractor in cls.extractors:
-            try:
-                extractor.search(config_memdump, extracted_tracker)
-            except UnexpectedDataError as e:
-                raise UnexpectedDataError(
-                    f"Unexpected data during extraction by {extractor}. {e}"
-                )
+    def search(cls, config_memdump, extracted_config):
+        pass

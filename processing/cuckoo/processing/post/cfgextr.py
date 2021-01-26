@@ -4,14 +4,15 @@
 
 import os
 
+from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.storage import TaskPaths
 
-from ..signatures.signature import Scores
 from ..abtracts import Processor
 from ..cfgextr.cfgextr import (
-    Extractor, ConfigMemdump, ConfigExtractionError, UnexpectedDataError,
-    ExtractedConfigTracker
+    ConfigMemdump, ConfigExtractionError, ExtractedConfigTracker,
+    ExtractedConfig, ConfigExtractor, UnexpectedDataError
 )
+from ..signatures.signature import Scores
 
 class ProcMemCfgExtract(Processor):
 
@@ -19,7 +20,27 @@ class ProcMemCfgExtract(Processor):
 
     @classmethod
     def init_once(cls):
-        Extractor.init_once()
+        cls.extractors = enumerate_plugins(
+            "cuckoo.processing.cfgextr", globals(), ConfigExtractor
+        )
+
+    def _run_extractors(self, confdump, tracker):
+        for extractor in self.extractors:
+            extracted = ExtractedConfig(
+                extractor.FAMILY, confdump.name
+            )
+            try:
+                extractor.search(confdump, extracted)
+            except UnexpectedDataError as e:
+                self.ctx.log.warning(
+                    "Unexpected data during extraction", extractor=extractor,
+                    dump=confdump.name, error=e
+                )
+
+            if not extracted.detected:
+                continue
+
+            tracker.add_config(extracted)
 
     def start(self):
         dumps = os.listdir(TaskPaths.procmem_dump(self.ctx.task.id))
@@ -36,8 +57,8 @@ class ProcMemCfgExtract(Processor):
             ) as confdump:
 
                 try:
-                    Extractor.search(confdump, tracker)
-                except UnexpectedDataError as e:
+                    self._run_extractors(confdump, tracker)
+                except ConfigExtractionError as e:
                     self.ctx.log.warning(
                         "Failure during config extraction",
                         dumpname=confdump.name, error=e
@@ -47,14 +68,29 @@ class ProcMemCfgExtract(Processor):
             return
 
         for config in tracker.configs:
-            self.ctx.signature_tracker.add_signature(
-                Scores.KNOWN_BAD,
-                name=f"Malware configuration {config.family}",
-                short_description=f"Extracted malware configuration of "
-                                  f"known family: {config.family}",
-                family=config.family,
-                iocs=[{"dump": dump} for dump in config.sources]
-            )
+            if not config.values:
+                self.ctx.signature_tracker.add_signature(
+                    Scores.KNOWN_BAD,
+                    name=f"{config.family} malware data structure",
+                    short_description=f"Detected known malware family data "
+                                      f"structure in memory: {config.family}",
+                    family=config.family,
+                )
 
+            else:
+                self.ctx.signature_tracker.add_signature(
+                    Scores.KNOWN_BAD,
+                    name=f"Malware configuration {config.family}",
+                    short_description=f"Extracted malware configuration of "
+                                      f"known family: {config.family}",
+                    family=config.family,
+                    iocs=[{"dump": dump} for dump in config.sources]
+                )
 
-        return [config.to_dict() for config in tracker.configs]
+        configs = [
+            config.to_dict()
+            for config in tracker.configs if config.values
+        ]
+
+        if configs:
+            return configs
