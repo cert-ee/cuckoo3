@@ -202,6 +202,17 @@
   Renders an error display from an array of errors
 
     errors  List  array containing all the error messages
+
+  Example:
+
+    {{ error_box(['error 1', 'error 2']) }}
+
+  or
+
+    {% call error_box(['error 1', 'error 2']) %}
+      <p>Custom description label for this box.</p>
+    {% endcall %}
+
 #}
 {% macro error_box(errors) %}
   <div class="box has-background-white has-shadow no-padding has-border">
@@ -235,3 +246,50 @@
 #}
 {% macro color_class(s=1) %}{% if s>=8 %}is-red{% elif s>=6 %}is-yellow{% endif %}{% endmacro %}
 {% macro color_text(s=1) %}{% if s>=8 %}has-text-red{% elif s>=6 %}has-text-yellow{% endif %}{% endmacro %}
+
+{#
+
+  Repetitive UI model for signature views
+
+    signatures  List  Signatures (List of Dicts) to display
+
+  Example
+
+    {{ ui_signatures([{...},{...}]) }}
+
+#}
+{% macro ui_signatures(signatures=[]) %}
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th colspan="2">Description</th>
+        <th>&nbsp;</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for signature in signatures|sort(attribute='score',reverse=True) %}
+        {% set hasIOCs = signature.iocs and signature.iocs|length > 0 %}
+        <tr data-row="{{ loop.index }}">
+          <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
+          <td>{{ signature.short_description }}</td>
+          <td>{{ signature.description }}</td>
+          <td class="no-text-wrap">
+            {% if hasIOCs %}
+              <a class="is-link has-text-small toggle-ioc" href="#">{{ signature.iocs|length }} IOC's.</a>
+            {% endif %}
+          </td>
+        </tr>
+        <tr hidden data-row-of="{{ loop.index }}">
+          <td colspan="4" class="no-padding has-border-y">
+            {% if hasIOCs %}
+              {{ render_table(data = signature.iocs, cols = signature.iocs[0].keys()) }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endmacro %}

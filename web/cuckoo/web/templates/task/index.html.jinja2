@@ -2,7 +2,7 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box, error_box, render_table, color_class, color_text %}
+{% from 'macros.html.jinja2' import render_dict, ui_box, ui_signatures, error_box, render_table, color_class, color_text %}
 
 {% block page_script %}
   <script>
@@ -107,38 +107,7 @@
             {# Report.signatures #}
             {% call ui_box(title="Signatures", has_padding=False) %}
 
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>&nbsp;</th>
-                    <th>Detected signatures</th>
-                    <th>Events</th>
-                    <th>&nbsp;</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for signature in report.signatures|sort(attribute='score',reverse=True) %}
-                    {% set hasIOCs = signature.iocs and signature.iocs|length > 0 %}
-                    <tr data-row="{{ loop.index }}">
-                      <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
-                      <td>{{ signature.short_description }}</td>
-                      <td>{{ signature.description }}</td>
-                      <td class="no-text-wrap">
-                        {% if hasIOCs %}
-                          <a class="is-link has-text-small toggle-ioc" href="#">{{ signature.iocs|length }} IOC's.</a>
-                        {% endif %}
-                      </td>
-                    </tr>
-                    <tr hidden data-row-of="{{ loop.index }}">
-                      <td colspan="4" class="no-padding has-border-y">
-                        {% if hasIOCs %}
-                          {{ render_table(data = signature.iocs, cols = signature.iocs[0].keys()) }}
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              {{ ui_signatures(report.signatures) }}
 
             {% endcall %}
 
