@@ -10,6 +10,7 @@ from ..errors import DisablePluginError
 
 class MispInfoGather(Processor):
 
+    CATEGORY = ["file", "url"]
     KEY = "misp"
 
     @classmethod

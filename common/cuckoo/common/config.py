@@ -194,6 +194,16 @@ class Boolean(TypeLoader):
                 f"Expected type boolean, got {type(value).__name__}"
             )
 
+class HTTPUrl(String):
+
+    def constraints(self, value):
+        super().constraints(value)
+
+        if not value.lower().startswith(("http://", "https://")):
+            raise ConstraintViolationError(
+                "HTTP url must start with http:// or https://"
+            )
+
 class List(TypeLoader):
 
     IS_CONTAINER = True

@@ -38,7 +38,7 @@ typeloaders = {
     },
     "misp.yaml": {
         "enabled": config.Boolean(default_val=False),
-        "url": config.String(),
+        "url": config.HTTPUrl(),
         "verify_tls": config.Boolean(default_val=True),
         "key": config.String(sensitive=True),
         "timeout": config.Int(default_val=5, min_value=0),
@@ -70,8 +70,8 @@ typeloaders = {
         },
         "reporting": {
             "enabled": config.Boolean(default_val=False),
-            "min_score": config.Int(default_val=6, min_value=0, max_value=10),
-            "web_baseurl": config.String(allow_empty=True),
+            "min_score": config.Int(default_val=7, min_value=1, max_value=10),
+            "web_baseurl": config.HTTPUrl(allow_empty=True),
             "event": {
                 "distribution": config.Int(allow_empty=True),
                 "sharing_group": config.Int(allow_empty=True),
@@ -111,6 +111,31 @@ typeloaders = {
                     },
                 }
             }
+        }
+    }, "intelmq.yaml": {
+        "processing": {
+            "enabled": config.Boolean(default_val=False),
+            "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"]),
+            "index_name": config.String(),
+            "query_limit": config.Int(default_val=10, min_value=1),
+            "event_limit": config.Int(
+                default_val=1, min_value=1, max_value=10000
+            ),
+            "link_url": config.HTTPUrl(required=False)
+        },
+        "reporting": {
+            "enabled": config.Boolean(default_val=False),
+            "api_url": config.HTTPUrl(),
+            "verify_tls": config.Boolean(default_val=True),
+            "min_score": config.Int(default_val=7, min_value=1, max_value=10),
+            "web_baseurl": config.HTTPUrl(allow_empty=True),
+            "feed_accuracy": config.Int(
+                allow_empty=True, min_value=0, max_value=100
+            ),
+            "event_description": config.String(
+                default_val="Cuckoo Sandbox behavioral analysis",
+                allow_empty=True
+            )
         }
     }
 }

@@ -158,8 +158,9 @@ class MISP(Reporter):
         if self.attributes["mutexes"]["include"]:
             self._add_mutexes(event)
 
-        if self.attributes["sample_hashes"]["include"]:
-            self._add_sample(event)
+        if self.ctx.analysis.category == "file":
+            if self.attributes["sample_hashes"]["include"]:
+                self._add_sample(event)
 
         if self.event_settings["publish"]:
             event.set_published()

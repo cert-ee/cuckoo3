@@ -1,0 +1,47 @@
+
+processing:
+  enabled: {{ processing.enabled }}
+
+  # The IntelMQ Elasticsearch hosts. Should be one ore more host:port combinations.
+  hosts:
+  {% for host in processing.hosts %}
+    - {{ host }}
+  {% endfor %}
+
+  # The (wildcard) name of the index the IntelMQ events are stored in.
+  index_name: {{ processing.index_name }}
+
+  # The maximum amount of queries to perform per IOC type.
+  query_limit: {{ processing.query_limit }}
+
+  # The maximum amount of matching events for per IOC type that should
+  # be asked from the IntelMQ Elasticsearch.
+  event_limit: {{ processing.event_limit }}
+
+  # (optional) The base URL of a Elasticsearch host that will be used to
+  # create a link to the Elasticsearch document. These links are
+  # part of the report and UI. Do not include credentials.
+  link_url: {{ processing.link_url }}
+
+reporting:
+  enabled: {{ reporting.enabled }}
+
+  # The url of the host that runs the collector API.
+  api_url: {{ reporting.api_url }}
+
+  # Verify if the configured IntelMQ API is using a valid TLS certificate.
+  # Disable this your certificate is self-signed or no certificate is used.
+  verify_tls: {{ reporting.verify_tls }}
+
+  # The minimum Cuckoo score a task must have before discovered
+  # IOCs are reported to IntelMQ.
+  min_score: {{ reporting.min_score }}
+
+  # The base URL of your running Cuckoo web instance. This is used to create
+  # links to reported tasks in a event_description.url field.
+  web_baseurl: {{ reporting.web_baseurl }}
+
+  feed_accuracy: {{ reporting.feed_accuracy }}
+
+  # A event_description.text description that is added to each created event
+  event_description: {{ reporting.event_description }}
