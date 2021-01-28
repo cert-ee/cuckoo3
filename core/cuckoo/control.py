@@ -203,7 +203,6 @@ def handle_post_done(worktracker):
         return
 
     post = Post.from_file(report_path)
-    analyses.set_score(worktracker.analysis, post.score)
     worktracker.task.score = post.score
     worktracker.task.state = task.States.REPORTED
 
@@ -211,6 +210,9 @@ def handle_post_done(worktracker):
     worktracker.analysis.update_task(
         worktracker.task.id, score=post.score, state=worktracker.task.state
     )
+
+    # Update analysis score, tags, and detected families
+    worktracker.analysis.update_from_report(post)
 
     worktracker.log.info("Setting task to reported.")
     task.write_changes(worktracker.task)

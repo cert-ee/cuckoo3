@@ -44,7 +44,7 @@ class StrictContainer:
 
         self._load()
         self._updated = False
-        self._updated_fields = []
+        self._updated_fields = set()
 
     @property
     def was_updated(self):
@@ -56,7 +56,7 @@ class StrictContainer:
 
     def set_updated(self, fields=[]):
         self._updated = True
-        self._updated_fields.extend(fields)
+        self._updated_fields.update(set(fields))
         if self._parent:
             self._parent.set_updated()
 
@@ -381,7 +381,8 @@ class Post(StrictContainer):
         "score": int,
         "signatures": list,
         "ttps": list,
-        "tags": list
+        "tags": list,
+        "families": list
     }
 
 class Analysis(StrictContainer):
@@ -397,9 +398,11 @@ class Analysis(StrictContainer):
         "submitted": (SubmittedFile, SubmittedURL),
         "target": (TargetFile, TargetURL),
         "errors": Errors,
-        "tasks": list
+        "tasks": list,
+        "families": list,
+        "tags": list
     }
-    ALLOW_EMPTY = ("errors", "target", "score", "tasks")
+    ALLOW_EMPTY = ("errors", "target", "score", "tasks", "families", "tags")
 
     def update_task(self, task_id, score=None, state=""):
         for task in self.tasks:
@@ -413,6 +416,20 @@ class Analysis(StrictContainer):
 
                 self.set_updated(["tasks"])
                 break
+
+    def update_from_report(self, post):
+        if post.score > self.score:
+            self.score = post.score
+
+        for tag in post.tags:
+            if tag not in self.tags:
+                self.tags.append(tag)
+                self.set_updated(["tags"])
+
+        for family in post.families:
+            if family not in self.families:
+                self.families.append(family)
+                self.set_updated(["families"])
 
     def update_settings(self, **kwargs):
         self.settings.update(kwargs)
