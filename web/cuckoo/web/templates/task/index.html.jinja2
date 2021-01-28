@@ -2,6 +2,10 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
+{# these set the sidebar items to display #}
+{% set report_sidebar_components = ['misp','cfgextr','intelmq'] %}
+{% set report_sidebar_component_labels = [False, 'Configuration Extraction', 'IntelMQ'] %}
+
 {% from 'macros.html.jinja2' import render_dict, ui_box, ui_signatures, error_box, render_table, color_class, color_text %}
 
 {% block page_script %}
@@ -315,6 +319,15 @@
                     {% endif %}
                   {% endfor %}
                 {% endfor %}
+              {% endcall %}
+            </div>
+          {% endif %}
+
+          {# Report.intelmq #}
+          {% if report.intelmq %}
+            <div id="tab-intelmq" hidden>
+              {% call ui_box(title="IntelMQ") %}
+                <h3>IntelMQ display view</h3>
               {% endcall %}
             </div>
           {% endif %}
