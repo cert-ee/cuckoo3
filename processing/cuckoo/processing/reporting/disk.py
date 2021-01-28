@@ -45,7 +45,7 @@ class JSONDump(Reporter):
         Identification(**info).to_file(dump_path)
 
     def report_pre_analysis(self):
-        include_result = ["virustotal", "static", "misp"]
+        include_result = ["virustotal", "static", "misp", "intelmq"]
         static = {
             "analysis_id": self.ctx.analysis.id,
             "score": self.ctx.signature_tracker.score,
@@ -64,7 +64,7 @@ class JSONDump(Reporter):
         Pre(**static).to_file(AnalysisPaths.prejson(self.ctx.analysis.id))
 
     def report_post_analysis(self):
-        include_result = ["misp", "network", "cfgextr"]
+        include_result = ["misp", "network", "cfgextr", "intelmq"]
 
         post_report = {
             "task_id": self.ctx.task.id,

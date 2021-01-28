@@ -451,11 +451,27 @@ class URLMisp(SimpleSafelist):
 
     name = "url_misp"
     description = "URLs that should not be reported to MISP"
+    valuetype = "url"
 
 class IPMisp(IP):
 
     name = "ip_misp"
     description = "IP (networks) that should not be reported to MISP"
+
+class IPIntelMQ(IP):
+
+    name = "ip_intelmq"
+    description = "IP (networks) that should not be reported to IntelMQ"
+
+class DomainIntelMQ(Domain):
+
+    name = "domain_intelmq"
+    description = "Domains that should not be reported to IntelMQ"
+
+class URLIntelMQ(SimpleSafelist):
+
+    name = "url_intelmq"
+    description = "URLs that should not be reported to IntelMQ"
 
 
 class SafelistName:
@@ -465,6 +481,9 @@ class SafelistName:
     domain_misp = DomainMisp.name
     url_misp = URLMisp.name
     filehash_submission = FileHash.name
+    ip_intelmq = IPIntelMQ.name
+    domain_intelmq = DomainIntelMQ.name
+    url_intelmq = URLIntelMQ.name
 
 name_safelist = {
     SafelistName.ip_global: IP,
@@ -472,7 +491,10 @@ name_safelist = {
     SafelistName.ip_misp: IPMisp,
     SafelistName.domain_misp: DomainMisp,
     SafelistName.url_misp: URLMisp,
-    SafelistName.filehash_submission: FileHash
+    SafelistName.filehash_submission: FileHash,
+    SafelistName.ip_intelmq: IPIntelMQ,
+    SafelistName.domain_intelmq: DomainIntelMQ,
+    SafelistName.url_intelmq: URLIntelMQ
 }
 
 def import_csv_safelist(csv_path, safelist_class):
