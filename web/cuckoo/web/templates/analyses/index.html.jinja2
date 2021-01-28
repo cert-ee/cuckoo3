@@ -62,8 +62,8 @@
           {% set href = False %}
         {% endif %}
         <tr {% if not href %}class="has-half-opacity"{% endif %}>
-          <td><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.created_on | formatdatetime }}</a></td>
-          <td class="is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
+          <td class="is-nowrap"><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.created_on | formatdatetime }}</a></td>
+          <td class="is-nowrap is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
           <td>{{ analysis.target.target }}</td>
           <td>{{ analysis.target.media_type }}</td>
           <td><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.state|humanstate }}</a></td>

@@ -32,13 +32,13 @@
           </a>
           {% if report and task.id == t.id %}
             <ul class="has-text-small">
-              {% for component in report_sidebar_components %}
+              {% for component in report_components %}
                 {# only display if the report has the corresponding property #}
                 {% if report[component] %}
                   <li>
                     <a href="#tab-{{component}}" data-tabbar="#taskReport">
-                      {% if report_sidebar_component_labels[loop.index-1] %}
-                        {{ report_sidebar_component_labels[loop.index-1] }}
+                      {% if report_component_labels[loop.index-1] %}
+                        {{ report_component_labels[loop.index-1] }}
                       {% else %}
                         <span class="has-text-capitalized">{{ component }}</span>
                       {% endif %}

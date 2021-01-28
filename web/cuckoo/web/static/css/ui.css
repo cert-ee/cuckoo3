@@ -692,6 +692,9 @@ a.button, .control.is-file a.file-trigger {
 .table th.is-medium, .table td.is-medium {
   width: 15rem;
 }
+.table th.is-nowrap, .table td.is-nowrap {
+  white-space: nowrap;
+}
 .table th:not([class^=has-text-]), .table td:not([class^=has-text-]) {
   text-align: left;
 }
