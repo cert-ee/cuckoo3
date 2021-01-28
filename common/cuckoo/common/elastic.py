@@ -15,8 +15,8 @@ from elasticsearch.exceptions import ElasticsearchException, TransportError
 
 from .log import set_logger_level, CuckooGlobalLogger
 
-set_logger_level("elasticsearch", logging.WARNING)
-set_logger_level("urllib3.connectionpool", logging.WARNING)
+set_logger_level("elasticsearch", logging.ERROR)
+set_logger_level("urllib3.connectionpool", logging.ERROR)
 
 log = CuckooGlobalLogger(__name__)
 
@@ -93,7 +93,7 @@ class _ESManager:
     def verify(self):
         if not self.client.ping():
             raise ElasticSearchError(
-                f"Could not connect to Elasticsearch host(s) at {self._hosts}"
+                f"Could not connect to Elasticsearch host(s)"
             )
 
     def all_indices_exist(self):

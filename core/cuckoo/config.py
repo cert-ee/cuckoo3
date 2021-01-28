@@ -65,7 +65,7 @@ typeloaders = {
             },
             "timeout": config.Int(default_val=300),
             "max_result_window": config.Int(default_val=10000),
-            "hosts": config.List(config.String, ["http://127.0.0.1:9200"])
+            "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
         }
     }
 }
