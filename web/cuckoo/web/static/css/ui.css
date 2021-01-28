@@ -684,10 +684,13 @@ a.button, .control.is-file a.file-trigger {
   white-space: nowrap;
 }
 .table th.is-mini, .table td.is-mini {
-  min-width: 4rem;
+  width: 4rem;
 }
 .table th.is-small, .table td.is-small {
-  min-width: 7.5rem;
+  width: 7.5rem;
+}
+.table th.is-medium, .table td.is-medium {
+  width: 15rem;
 }
 .table th:not([class^=has-text-]), .table td:not([class^=has-text-]) {
   text-align: left;

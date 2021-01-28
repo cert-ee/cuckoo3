@@ -30,21 +30,10 @@
               </span>
             {% endif %}
           </a>
-
-          {#
-            Hardcoded list of integrated modules to display when they are available
-            from within a report dict.
-          #}
           {% if report and task.id == t.id %}
-
-            {#
-              {% set report_sidebar_components = ['misp','cfgextr','intelmq'] %}
-              {% set report_sidebar_component_labels = [False, 'Configuration Extraction', 'IntelMQ'] %}
-            #}
-
             <ul class="has-text-small">
               {% for component in report_sidebar_components %}
-                {# only display if the report has the correspinding property #}
+                {# only display if the report has the corresponding property #}
                 {% if report[component] %}
                   <li>
                     <a href="#tab-{{component}}" data-tabbar="#taskReport">
@@ -59,7 +48,6 @@
               {% endfor %}
             </ul>
           {% endif %}
-
         </li>
       {% endfor %}
       </ul>
