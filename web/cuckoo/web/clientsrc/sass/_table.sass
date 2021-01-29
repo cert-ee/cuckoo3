@@ -26,6 +26,12 @@
       width: 15rem
     &.is-nowrap
       white-space: nowrap
+    &.has-ellipsis
+      white-space: nowrap
+      overflow: hidden
+      max-width: 20rem
+      display: inline-block
+      text-overflow: ellipsis
     &:not([class^=has-text-])
       text-align: left
     padding: $gap
