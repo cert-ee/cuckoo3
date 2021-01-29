@@ -501,14 +501,16 @@ function handleClickToCopy(elem) {
   const body = elem.textContent;
   let tip;
   let copied = false;
+  let tipMargin = 10;
+
   elem.addEventListener('mouseenter', ev => {
     if(tip) return;
     tip = document.createElement('span');
     tip.classList.add('popover');
     tip.classList.add('in');
     tip.style.position = 'fixed';
-    tip.style.left = ev.clientX + 'px';
-    tip.style.top = ev.clientY + 'px';
+    tip.style.left = (ev.clientX + tipMargin) + 'px';
+    tip.style.top = (ev.clientY + tipMargin) + 'px';
     tip.style.transform = 'none';
 
     tip.textContent = body;
@@ -516,14 +518,12 @@ function handleClickToCopy(elem) {
 
     elem.appendChild(tip);
 
-    console.log(ev.clientX);
-    console.log(ev.clientY);
   });
 
   elem.addEventListener('mousemove', ev => {
     if(tip) {
-      tip.style.left = ev.clientX + 'px';
-      tip.style.top = ev.clientY + 'px';
+      tip.style.left = (ev.clientX + tipMargin) + 'px';
+      tip.style.top = (ev.clientY + tipMargin) + 'px';
     }
   });
 
@@ -550,13 +550,13 @@ function handleClickToCopy(elem) {
     const inp = document.createElement('input');
     inp.setAttribute('type', 'text');
     inp.classList.add('hidden');
-    inp.value = elem.textContent;
+    inp.value = body || elem.textContent;
     document.body.appendChild(inp);
     inp.select();
     document.execCommand('Copy');
 
     if(tip) {
-      tip.textContent = 'Copied to clipboard';
+      tip.textContent = 'Copied to clipboard.';
       setTimeout(() => {
         copied = false;
       }, 500);

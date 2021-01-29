@@ -1,8 +1,5 @@
 <div id="tab-intelmq" hidden>
   {% call ui_box(title="IntelMQ", has_padding=False, collapsible=False) %}
-
-    {# {{ render_dict({data: report.intelmq}) }} #}
-
     <table class="table has-sticky-header">
       <thead>
         <tr>
@@ -30,42 +27,5 @@
         {% endfor %}
       </tbody>
     </table>
-
-    {#
-      {% for result in report.intelmq %}
-        <div class="box has-background-light">
-          <table class="table has-border">
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Feed provider</td>
-              <td class="has-text-wrapped is-monospace">{{ result.feed_provider }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Feed name</td>
-              <td class="has-text-wrapped is-monospace">{{ result.feed_name }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Type</td>
-              <td class="has-text-wrapped is-monospace">{{ result.classification_type }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">IOC</td>
-              <td class="has-text-wrapped is-monospace">{{ result.ioc }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Taxonomy</td>
-              <td class="has-text-wrapped is-monospace">{{ result.classification_taxonomy }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Time source</td>
-              <td class="has-text-wrapped is-monospace">{{ result.time_source }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right has-text-bold is-medium">Time source</td>
-              <td class="has-text-wrapped is-monospace">{{ result.time_observation }}</td>
-            </tr>
-          </table>
-        </div>
-      {% endfor %}
-    #}
   {% endcall %}
 </div>
