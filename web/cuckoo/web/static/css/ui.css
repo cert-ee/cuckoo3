@@ -84,7 +84,7 @@ p {
   color: #0F485A;
   padding: 0.1875rem;
   vertical-align: middle;
-  word-wrap: break-word;
+  word-break: break-all;
   border-radius: 0.2rem;
 }
 .code-block {
@@ -694,6 +694,10 @@ a.button, .control.is-file a.file-trigger {
 }
 .table th.is-nowrap, .table td.is-nowrap {
   white-space: nowrap;
+}
+.table th.is-break, .table td.is-break {
+  word-wrap: break-word;
+  word-break: break-all;
 }
 .table th.has-ellipsis, .table td.has-ellipsis {
   white-space: nowrap;

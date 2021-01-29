@@ -498,7 +498,7 @@ function handleClickToCopy(elem) {
 
   // when hovered, display a box following the mouse to
   // indicate the copy handler
-  const body = elem.textContent;
+  const body = elem.dataset.value || elem.textContent;
   let tip;
   let copied = false;
   let tipMargin = 10;
@@ -513,7 +513,13 @@ function handleClickToCopy(elem) {
     tip.style.top = (ev.clientY + tipMargin) + 'px';
     tip.style.transform = 'none';
 
-    tip.textContent = body;
+    tip.textContent = (function() {
+      if(body.length > 2000) {
+        return body.substring(0, 2000) + "... (trimmed " + (body.length - 2000) + " characters for brevity.)";
+      } else {
+        return body;
+      }
+    }());
     tip.innerHTML += '<p class="no-margin-bottom has-text-small">Click to copy</p>'
 
     elem.appendChild(tip);

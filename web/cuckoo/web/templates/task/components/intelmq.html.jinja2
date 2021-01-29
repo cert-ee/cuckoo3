@@ -19,7 +19,7 @@
               <p class="no-margin-bottom has-text-small">{{ result.feed_name }}</p>
             </td>
             <td>{{ result.classification_type }}</td>
-            <td class="is-wrapped has-ellipsis" data-click-to-copy>{{ result.ioc }}</td>
+            <td class="is-wrapped has-ellipsis" data-click-to-copy data-value="{{ result.ioc }}">{{ result.ioc }}</td>
             <td>{{ result.classification_taxonomy }}</td>
             <td class="is-mini">{{ result.time_source|formatisodatetime }}</td>
             <td class="is-mini">{{ result.time_observation|formatisodatetime }}</td>

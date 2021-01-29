@@ -26,11 +26,13 @@
       width: 15rem
     &.is-nowrap
       white-space: nowrap
+    &.is-break
+      word-wrap: break-word
+      word-break: break-all
     &.has-ellipsis
       white-space: nowrap
       overflow: hidden
       max-width: 20rem
-      // display: inline-block
       text-overflow: ellipsis
     &:not([class^=has-text-])
       text-align: left
@@ -82,6 +84,9 @@
   // table-cell styles
   td
     font-size: .8em
+    // word-wrap: break-word
+    // word-break: break-all
+    // min-width: 10rem
 
   // table header styles
   thead

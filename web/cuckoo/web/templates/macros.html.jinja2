@@ -1,4 +1,43 @@
 {#
+  smart-cutting long lines of text, with optional initialization with
+  click-to-copy.
+
+    required:
+      str         String    The string value to shorten
+      max_chars   Integer   Maximum characters allowed before stripping
+
+    optional:
+      copy        Boolean   Set to True to enable click-to-copy
+      annotate    Boolean   Set to True
+
+    example:
+
+      <p>{{ trim_string(str="Hello world", max_chars=5, copy=True, annotate=True) }}</p>
+
+      output:
+
+      <p data-click-to-copy data-value="Hello world">Hello... (trimmed 5 characters)</p>
+#}
+{% macro trim_string(str="", max_chars=2000, copy=False, annotate=False) %}
+  {% set is_trimmed = False %}
+  {% set value = str %}
+  {% if str is string and str|length > max_chars %}
+    {% set value = value[0:max_chars] %}
+    {% set is_trimmed = True %}
+  {% endif %}
+  {% if is_trimmed %}
+    <span {% if copy %}data-click-to-copy data-value="{{str}}"{% endif %}>
+      {{ value }}...
+      {% if annotate %}
+        <small style="display: block; margin-top: .5rem">({{ str|length - max_chars }} characters trimmed. {% if copy %}Click to copy.{% endif %})</small>
+      {% endif %}
+    </span>
+  {% else %}
+    {{ str }}
+  {% endif %}
+{% endmacro %}
+
+{#
   renders a table. some configuration on ordering of property names have to be
   provided. Although it seems a bit complex, it can help a lot to maintain
   readability and quickly displaying data sets into the UI.
@@ -12,7 +51,7 @@
       style               Array            Cell styles, pass in any text modifier, as defined in _typography.sass.
                                            To apply multple, define the casses space separated. If no style has to be applied,
                                            leave None. Order is the same als column order.
-      has_sticky_header  Boolean           Wether or not to apply a sticky header experience.
+      has_sticky_header   Boolean          Wether or not to apply a sticky header experience.
 
   example:
 
@@ -44,13 +83,18 @@
         {% for entry in data %}
           <tr>
             {% for col in cols %}
-              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
+
+              {% if entry[col] is string and entry[col]|length > 200 %}
+                {% set apply_word_breaking = True %}
+              {% endif %}
+
+              <td class="{% if apply_word_breaking %}is-break{% endif %} {% if style[loop.index-1] %}{{ style[loop.index-1] }}{% endif %}">
                 {% if style[loop.index-1] == 'is-clickable' %}
-                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ entry[col] }}</a>
+                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ trim_string(entry[col], copy=True, annotate=True) }}</a>
                 {% elif style[loop.index-1] == 'is-datetime' %}
                   {{ entry[col]|formatisodatetime }}
                 {% else %}
-                  {{ entry[col] }}
+                  {{ trim_string(entry[col], copy=True, annotate=True) }}
                 {% endif %}
               </td>
             {% endfor %}
@@ -64,13 +108,16 @@
         {% for val in data.values() %}
           <tr>
             {% for col in cols %}
-              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>
+              {% if val[col] is string and val[col]|length > 200 %}
+                {% set apply_word_breaking = True %}
+              {% endif %}
+              <td class="{% if apply_word_breaking %}is-break{% endif %} {% if style[loop.index-1] %}{{ style[loop.index-1] }}{% endif %}">
                 {% if style[loop.index-1] == 'is-clickable' %}
-                  <a href="{{val[col]}}" class="is-link" target="_blank">{{ val[col] }}</a>
+                  <a href="{{val[col]}}" class="is-link" target="_blank">{{ trim_string(val[col], copy=True, annotate=True) }}</a>
                 {% elif style[loop.index-1] == 'is-datetime' %}
                   {{ val[col]|formatisodatetime }}
                 {% else %}
-                  {{ val[col] }}
+                  {{ trim_string(val[col], copy=True, annotate=True) }}
                 {% endif %}
               </td>
             {% endfor %}
