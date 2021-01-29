@@ -75,7 +75,17 @@
             {% call ui_box(title="PE Signatures", has_padding=False) %}
               {% for signature in pre.static.pe.signatures %}
                 <nav class="tabbar" data-enhance>
-                  <p class="tabbar-link has-half-opacity">{{ signature.issuer.commonName }}</p>
+                  <p class="tabbar-link has-half-opacity">
+                    {% if signature.issuer %}
+                      {% if signature.issuer.commonName %}
+                        {{ signature.issuer.commonName }}
+                      {% else %}
+                        Signature
+                      {% endif %}
+                    {% else %}
+                        Signature
+                    {% endif %}
+                  </p>
                   <a href="#pesig-results-{{loop.index}}" class="tabbar-link is-active">Results</a>
                   <a href="#pesig-raw-{{loop.index}}" class="tabbar-link">JSON</a>
                 </nav>
@@ -90,7 +100,7 @@
                           {% if signature.issuer %}
                             <tr>
                               <td class="is-auto-width has-text-right">
-                                <strong>Name</strong>
+                                <strong>Common name</strong>
                               </td>
                               <td>
                                 {% if signature.issuer.commonName %}
