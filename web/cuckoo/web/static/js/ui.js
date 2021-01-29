@@ -488,6 +488,87 @@ function handleTagInput(tagList) {
  }
 
 /**
+  * Handler to enable click-to-copy interactions
+  * @param {HTMLElement} elem - element to attach the copy handler to
+  *
+  * @example
+  *   <a data-click-to-copy>This text will be copied</a>
+  */
+function handleClickToCopy(elem) {
+
+  // when hovered, display a box following the mouse to
+  // indicate the copy handler
+  const body = elem.textContent;
+  let tip;
+  let copied = false;
+  elem.addEventListener('mouseenter', ev => {
+    if(tip) return;
+    tip = document.createElement('span');
+    tip.classList.add('popover');
+    tip.classList.add('in');
+    tip.style.position = 'fixed';
+    tip.style.left = ev.clientX + 'px';
+    tip.style.top = ev.clientY + 'px';
+    tip.style.transform = 'none';
+
+    tip.textContent = body;
+    tip.innerHTML += '<p class="no-margin-bottom has-text-small">Click to copy</p>'
+
+    elem.appendChild(tip);
+
+    console.log(ev.clientX);
+    console.log(ev.clientY);
+  });
+
+  elem.addEventListener('mousemove', ev => {
+    if(tip) {
+      tip.style.left = ev.clientX + 'px';
+      tip.style.top = ev.clientY + 'px';
+    }
+  });
+
+  elem.addEventListener('mouseleave', ev => {
+    if(tip && copied) {
+      setTimeout(() => {
+        tip.remove();
+        tip = null;
+      }, 500);
+    } else {
+      tip.remove();
+      tip = null;
+    }
+  });
+
+  // when clicked, copy the code to the users clipboard
+  elem.addEventListener('click', ev => {
+    ev.preventDefault();
+
+    copied = true;
+
+    // put value into an input field, then copy it into the users
+    // clipboard and trash the temporary input
+    const inp = document.createElement('input');
+    inp.setAttribute('type', 'text');
+    inp.classList.add('hidden');
+    inp.value = elem.textContent;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('Copy');
+
+    if(tip) {
+      tip.textContent = 'Copied to clipboard';
+      setTimeout(() => {
+        copied = false;
+      }, 500);
+    }
+    inp.remove();
+
+    blink(elem, '#82DB7A');
+  });
+
+}
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -510,4 +591,5 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
   applyHandler('[data-tooltip]', handleTooltip);
+  applyHandler('[data-click-to-copy]', handleClickToCopy);
 });
