@@ -64,8 +64,8 @@
         <tr {% if not href %}class="has-half-opacity"{% endif %}>
           <td class="is-nowrap"><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.created_on | formatdatetime }}</a></td>
           <td class="is-nowrap is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
-          <td>{{ analysis.target.target }}</td>
-          <td>{{ analysis.target.media_type }}</td>
+          <td class="is-break">{{ analysis.target.target }}</td>
+          <td class="is-break">{{ analysis.target.media_type }}</td>
           <td><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.state|humanstate }}</a></td>
           <td>
             {% if analysis.score > 0 %}

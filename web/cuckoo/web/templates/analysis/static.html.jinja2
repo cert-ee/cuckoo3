@@ -6,7 +6,7 @@
 {% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
 
 {% block body %}
-  <div class="container">
+  <div class="container is-portal-view">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
         {% include "analysis/partial/sidebar.html.jinja2" %}
@@ -87,30 +87,54 @@
                           <tr class="separator">
                             <td colspan="2">Issuer</td>
                           </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Name</strong>
-                            </td>
-                            <td>{{ signature.issuer.commonName }}</td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Unit name</strong>
-                            </td>
-                            <td>{{ signature.issuer.organizationalUnitName }}</td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Country</strong>
-                            </td>
-                            <td>{{ signature.issuer.countryName }}</td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Organization</strong>
-                            </td>
-                            <td>{{ signature.issuer.organizationName }}</td>
-                          </tr>
+                          {% if signature.issuer %}
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Name</strong>
+                              </td>
+                              <td>
+                                {% if signature.issuer.commonName %}
+                                  {{ signature.issuer.commonName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Unit name</strong>
+                              </td>
+                              <td>
+                                {% if signature.issuer.organizationalUnitName %}
+                                  {{ signature.issuer.organizationalUnitName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Country</strong>
+                              </td>
+                              <td>
+                                {% if signature.issuer.countryName %}
+                                  {{ signature.issuer.countryName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Organization</strong>
+                              </td>
+                              <td>
+                                {% if signature.issuer.organizationName %}
+                                  {{ signature.issuer.organizationName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                          {% else %}
+                            <tr>
+                              <td colspan="2">
+                                <p>No issuer</p>
+                              </td>
+                            </tr>
+                          {% endif %}
                         </tbody>
                       </table>
                     </div>
@@ -120,46 +144,54 @@
                           <tr class="separator">
                             <td colspan="2">Subject</td>
                           </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Name</strong>
-                            </td>
-                            <td>
-                              {% if signature.subject.commonName %}
-                                {{ signature.subject.commonName }}
-                              {% endif %}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Locality name</strong>
-                            </td>
-                            <td>
-                              {% if signature.subject.localityName %}
-                                {{ signature.subject.localityName }}
-                              {% endif %}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>State / Province name</strong>
-                            </td>
-                            <td>
-                              {% if signature.subject.stateOrProvinceName %}
-                                {{ signature.subject.stateOrProvinceName }}
-                              {% endif %}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="is-auto-width has-text-right">
-                              <strong>Country</strong>
-                            </td>
-                            <td>
-                              {% if signature.subject.countryName %}
-                                {{ signature.subject.countryName }}
-                              {% endif %}
-                            </td>
-                          </tr>
+                          {% if signature.subject %}
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Name</strong>
+                              </td>
+                              <td>
+                                {% if signature.subject.commonName %}
+                                  {{ signature.subject.commonName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Locality name</strong>
+                              </td>
+                              <td>
+                                {% if signature.subject.localityName %}
+                                  {{ signature.subject.localityName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>State / Province name</strong>
+                              </td>
+                              <td>
+                                {% if signature.subject.stateOrProvinceName %}
+                                  {{ signature.subject.stateOrProvinceName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="is-auto-width has-text-right">
+                                <strong>Country</strong>
+                              </td>
+                              <td>
+                                {% if signature.subject.countryName %}
+                                  {{ signature.subject.countryName }}
+                                {% endif %}
+                              </td>
+                            </tr>
+                          {% else %}
+                            <tr>
+                              <td colspan="2">
+                                <p>No subject</p>
+                              </td>
+                            </tr>
+                          {% endif %}
                         </tbody>
                       </table>
                     </div>

@@ -5,6 +5,9 @@
   width: calc(100vw - #{$gap * 3})
   margin: 0 auto
 
+  // a scalable centerized container that wraps content
+  // in a fixed-size container that uses breakpoints to
+  // scale based on browser width
   &.is-fixed
     @media screen and (min-width: $breakpoint-large)
       width: calc(#{$breakpoint-large} - #{$gap * 3})
@@ -18,6 +21,15 @@
     &.is-smol
       @media screen and (min-width: $breakpoint-medium)
         width: calc(#{$breakpoint-small} - #{$gap * 3})
+
+  // unlike the fixed-container view, this is optimized to be
+  // huge, although having a limit for clarity. Whereas the
+  // fixed container solves website-like layout problems, this
+  // container aims at solving a webapp-like layout, where the content
+  // gets to consume the biggest portion of the view possible.
+  &.is-portal-view
+    @media screen and (min-width: $breakpoint-large)
+      width: calc(#{$breakpoint-large} - #{$gap * 3})
 
   @media screen and (max-width: $breakpoint-mobile)
     width: 100vw !important

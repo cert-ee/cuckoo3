@@ -390,6 +390,11 @@ p {
     width: calc(60rem - 2.25rem);
   }
 }
+@media screen and (min-width: 90rem) {
+  .container.is-portal-view {
+    width: calc(90rem - 2.25rem);
+  }
+}
 @media screen and (max-width: 40rem) {
   .container {
     width: 100vw !important;
@@ -698,6 +703,7 @@ a.button, .control.is-file a.file-trigger {
 .table th.is-break, .table td.is-break {
   word-wrap: break-word;
   word-break: break-all;
+  min-width: 10rem;
 }
 .table th.has-ellipsis, .table td.has-ellipsis {
   white-space: nowrap;
@@ -1719,7 +1725,6 @@ ul.process-tree .duration--inner {
   transition: opacity 100ms linear, transform 100ms linear;
   max-width: 20rem;
   word-break: break-all;
-  white-space: pre-wrap;
 }
 .popover.in,
 .tooltip.in {
