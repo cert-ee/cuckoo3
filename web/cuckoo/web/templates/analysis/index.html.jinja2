@@ -16,15 +16,31 @@
     window.analysis = "{{ analysis.tasks | safe }}";
     (function() {
 
-      if(!window.Chart) return;
       const ctx = document.querySelector('canvas#threat-radar');
+      if(!window.Chart || !ctx) return;
+
+      const labels = {{ analysis.tags|tojson }};
+      const values = labels.map(() => Math.floor(Math.random() * 100));
+      const opacity = 1;
+      const colors = lib.shuffleArray([
+        'rgba(0,63,92, '+opacity+')',
+        'rgba(47,75,124, '+opacity+')',
+        'rgba(102,81,145, '+opacity+')',
+        'rgba(160,81,149, '+opacity+')',
+        'rgba(212,80,135, '+opacity+')',
+        'rgba(249,93,106, '+opacity+')',
+        'rgba(255,124,67, '+opacity+')',
+        'rgba(255,166,0, '+opacity+')'
+      ]);
+
       const chart = new Chart(ctx.getContext('2d'), {
-        type: 'radar',
+        type: 'polarArea',
         data: {
-          labels: ['ransomware','adware','spyware','trojan','worm','locker'],
+          labels,
           datasets: [{
             label: 'Threat map',
-            data: [30, 40, 50, 60, 70, 80]
+            data: values || [],
+            backgroundColor: colors
           }]
         },
         options: {
@@ -35,8 +51,14 @@
               max: 100,
               stepSize: 10
             }
-          }
-        }
+          },
+          legend: {
+            position: 'top'
+          },
+          animation: { duration: 0 },
+          hover: { animationDuration: 0 },
+          responsiveAnimationDuration: 0
+        },
       });
 
     }());
@@ -106,13 +128,27 @@
                   </span> {{ analysis.target.media_type }}
                 </li>
               </ul>
+              {% if analysis.tags|length %}
+                <div class="tag-list has-margin-top">
+                  <span class="label">Tags:</span>
+                  {% for tag in analysis.tags %}
+                    <span class="tag no-margin-top is-red">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
           </div>
         {% endcall %}
 
-        {% call ui_box(title="Threat radar") %}
-          <canvas id="threat-radar"></canvas>
-        {% endcall %}
+        {% if analysis.tags|length %}
+          {% call ui_box(title="Threat radar") %}
+            <div class="columns is-justified">
+              <div class="column is-full">
+                <canvas id="threat-radar"></canvas>
+              </div>
+            </div>
+          {% endcall %}
+        {% endif %}
 
         {% if pre %}
           {% call ui_box(title="Signatures", has_padding=False) %}
