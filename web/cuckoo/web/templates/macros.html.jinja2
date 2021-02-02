@@ -209,6 +209,7 @@
 
     title           String    Title of the UI container
     prefix          String    Attached to ID used for the collapsing functionality
+    id              String    Alternative ID when the title id will not work
     description     String    Description of content, [needs to prove its usage]
     display_title   Boolean   Whether or not to display the title. Also disables collapsibility.
     no_padding      Boolean   Whether or not to add an extra padding to the box content section
@@ -222,8 +223,12 @@
     {% endcall %}
 
 #}
-{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True, collapsible=True, collapsed=False) %}
-  {% set boxid = prefix + "-" + title|replace(" ","-") %}
+{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False) %}
+  {% if not id %}
+    {% set boxid = prefix + "-" + title|replace(" ","-") %}
+  {% else %}
+    {% set boxid = id %}
+  {% endif %}
   <div class="box has-background-white has-shadow no-padding has-border">
     {% if display_title == True and title %}
       <h3 class="box-title">{{ title }}
