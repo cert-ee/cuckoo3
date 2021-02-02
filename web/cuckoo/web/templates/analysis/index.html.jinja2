@@ -51,40 +51,56 @@
         return;
       }
 
-      const chart = new Chart(ctx.getContext('2d'), {
-        type,
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: ['rgba(249,93,106, '+opacity+')'],
-            pointRadius: 0
-          }]
-        },
-        options: {
-          scale: {
-            ticks: {
-              startAtZero: true,
-              min: 0,
-              max: 100,
-              stepSize: 10,
+      let chart;
+
+      function renderChart() {
+        if(chart)
+          chart.destroy();
+        chart = new Chart(ctx.getContext('2d'), {
+          type,
+          data: {
+            labels,
+            datasets: [{
+              data,
+              backgroundColor: ['rgba(249,93,106, '+opacity+')'],
+              pointRadius: 0
+            }]
+          },
+          options: {
+            scale: {
+              ticks: {
+                startAtZero: true,
+                min: 0,
+                max: 100,
+                stepSize: 10,
+                display: false
+              }
+            },
+            legend: {
               display: false
-            }
-          },
-          legend: {
-            display: false
-          },
-          tooltips: {
-            enabled: false
-          },
-          animation: {
-            duration: 0
-          },
-          hover: {
-            animationDuration: 0
-          },
-          responsiveAnimationDuration: 0
-        }
+            },
+            tooltips: {
+              enabled: false
+            },
+            animation: {
+              duration: 0
+            },
+            hover: {
+              animationDuration: 0
+            },
+            responsive: true,
+            maintainAspectRatio: true,
+            responsiveAnimationDuration: 0
+          }
+        });
+      }
+
+      renderChart();
+
+      let prevWidth;
+      window.addEventListener("resize", () => {
+        console.log("resize");
+        renderChart();
       });
 
     }());
@@ -314,13 +330,11 @@
           {% endmacro %}
 
           {% macro find_ttps(category) %}
-            <!-- <div class="can-scroll-horizontal"> -->
-              {% for ttp in analysis.ttps %}
-                {% if category in ttp.tactics %}
-                  {{ ttp_template(ttp) }}
-                {% endif %}
-              {% endfor %}
-            <!-- </div> -->
+            {% for ttp in analysis.ttps %}
+              {% if category in ttp.tactics %}
+                {{ ttp_template(ttp) }}
+              {% endif %}
+            {% endfor %}
           {% endmacro %}
 
           {% call ui_box(title="Mitre ATT&CK", has_padding=False) %}
@@ -367,11 +381,7 @@
 
         {% if analysis.tags|length %}
           {% call ui_box(title="Behavioral map") %}
-            <div class="columns is-justified">
-              <div class="column is-full">
-                <canvas id="behavior-map"></canvas>
-              </div>
-            </div>
+            <canvas id="behavior-map" width="100%"></canvas>
           {% endcall %}
         {% endif %}
 
