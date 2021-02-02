@@ -42,16 +42,16 @@
 
           <div id="tab-report">
 
-            {#
-              {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-                Report:
-                {{ render_dict(report) }}
-                Analysis:
-                {{ render_dict(analysis) }}
-                Task:
-                {{ render_dict(task) }}
-              {% endcall %}
-            #}
+
+            {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
+              Report:
+              {{ render_dict(report) }}
+              Analysis:
+              {{ render_dict(analysis) }}
+              Task:
+              {{ render_dict(task) }}
+            {% endcall %}
+
 
             {% if task.errors.errors|length > 0 %}
               {% call error_box(task.errors.errors) %}

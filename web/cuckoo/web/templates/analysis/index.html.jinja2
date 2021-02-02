@@ -10,37 +10,55 @@
 {% endblock %}
 
 {% block page_script %}
+
+  {#
+    not the most pretty solution; prevents a blinking UI component on render and does
+    sorting chart data inline, based on a hardcoded list of queries.
+  #}
+  {% set chart_labels = ['trojan','ransomware','stealer','spyware','keylogger','dropper','loader','evasion','rat'] %}
+  {% set chart_values = [] %}
+
+  {% if analysis.tags and analysis.tags|length %}
+    {% for tag in chart_labels %}
+      {% if tag in analysis.tags %}
+        {{ chart_values.append(90)|default("", True) }}
+      {% else %}
+        {{ chart_values.append(5)|default("", True) }}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
   <script type="text/javascript" src="{{ static('js/chart.bundle.min.js') }}"></script>
   <script src="{{ static('js/report.task.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
+
     (function() {
 
-      const ctx = document.querySelector('canvas#threat-radar');
+      const ctx = document.querySelector('canvas#behavior-map');
       if(!window.Chart || !ctx) return;
 
-      const labels = {{ analysis.tags|tojson }};
-      const values = labels.map(() => Math.floor(Math.random() * 100));
-      const opacity = 1;
-      const colors = lib.shuffleArray([
-        'rgba(0,63,92, '+opacity+')',
-        'rgba(47,75,124, '+opacity+')',
-        'rgba(102,81,145, '+opacity+')',
-        'rgba(160,81,149, '+opacity+')',
-        'rgba(212,80,135, '+opacity+')',
-        'rgba(249,93,106, '+opacity+')',
-        'rgba(255,124,67, '+opacity+')',
-        'rgba(255,166,0, '+opacity+')'
-      ]);
+      const tags = {{ analysis.tags|tojson }};
+      const labels = {{ chart_labels|tojson }};
+      const data = {{ chart_values|tojson }};
+      const opacity = .8;
+      const type = 'radar';
+
+      // remove the chart if the data is not sufficient to display anything
+      // that matches. Needs review to as if this behavior is wanted like this.
+      if(data.indexOf(90) == -1) {
+        lib.parent('.box', ctx).remove();
+        return;
+      }
 
       const chart = new Chart(ctx.getContext('2d'), {
-        type: 'polarArea',
+        type,
         data: {
           labels,
           datasets: [{
-            label: 'Threat map',
-            data: values || [],
-            backgroundColor: colors
+            data,
+            backgroundColor: ['rgba(249,93,106, '+opacity+')'],
+            pointRadius: 0
           }]
         },
         options: {
@@ -49,16 +67,24 @@
               startAtZero: true,
               min: 0,
               max: 100,
-              stepSize: 10
+              stepSize: 10,
+              display: false
             }
           },
           legend: {
-            position: 'top'
+            display: false
           },
-          animation: { duration: 0 },
-          hover: { animationDuration: 0 },
+          tooltips: {
+            enabled: false
+          },
+          animation: {
+            duration: 0
+          },
+          hover: {
+            animationDuration: 0
+          },
           responsiveAnimationDuration: 0
-        },
+        }
       });
 
     }());
@@ -66,6 +92,7 @@
 {% endblock %}
 
 {% block body %}
+
   <div class="container is-portal-view">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
@@ -77,7 +104,7 @@
         <p>Description and overview of target and submission configuration.</p>
 
         {#
-          {% call ui_box(title="Data") %}
+          {% call ui_box(title="Data",collapsed=True) %}
             <p>analysis</p>
             {{ render_dict(analysis) }}
             <p>pre</p>
@@ -128,11 +155,11 @@
                   </span> {{ analysis.target.media_type }}
                 </li>
               </ul>
-              {% if analysis.tags|length %}
+              {% if analysis.families|length %}
                 <div class="tag-list has-margin-top">
-                  <span class="label">Tags:</span>
-                  {% for tag in analysis.tags %}
-                    <span class="tag no-margin-top is-red">{{ tag }}</span>
+                  <span class="label">Detected families:</span>
+                  {% for family in analysis.families %}
+                    <span class="tag no-margin-top is-red">{{ family }}</span>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -140,17 +167,7 @@
           </div>
         {% endcall %}
 
-        {% if analysis.tags|length %}
-          {% call ui_box(title="Threat radar") %}
-            <div class="columns is-justified">
-              <div class="column is-full">
-                <canvas id="threat-radar"></canvas>
-              </div>
-            </div>
-          {% endcall %}
-        {% endif %}
-
-        {% if pre %}
+        {% if pre and pre.signatures|length %}
           {% call ui_box(title="Signatures", has_padding=False) %}
             {{ ui_signatures(pre.signatures) }}
           {% endcall %}
@@ -284,6 +301,16 @@
             </tbody>
           </table>
         {% endcall %}
+
+        {% if analysis.tags|length %}
+          {% call ui_box(title="Behavioral map") %}
+            <div class="columns is-justified">
+              <div class="column is-full">
+                <canvas id="behavior-map"></canvas>
+              </div>
+            </div>
+          {% endcall %}
+        {% endif %}
 
       </section>
     </div>

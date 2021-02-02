@@ -38,7 +38,7 @@
               <div class="column no-margin-left">
                 {% call ui_box(title="PE Timestamp",display_title=False) %}
                   <p class="label no-margin-top">PE Timestamp</p>
-                  <p class="is-monospace no-margin">{{ pre.static.pe.pe_timestamp }}</p>
+                  <p class="is-monospace no-margin">{{ pre.static.pe.pe_timestamp|formatisodatetime }}</p>
                 {% endcall %}
               </div>
               <div class="column no-margin-right">
