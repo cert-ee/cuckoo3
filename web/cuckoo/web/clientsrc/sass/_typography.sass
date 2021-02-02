@@ -137,5 +137,8 @@ p
 // use this selector only if parent elements override the default
 // link styles.
 .is-link
+  position: relative
   color: $blue
-  text-decoration: underline
+  text-decoration: underline !important
+  &.has-no-underline
+    text-decoration: none !important

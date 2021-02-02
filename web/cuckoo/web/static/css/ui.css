@@ -243,8 +243,12 @@ p {
 }
 
 .is-link {
+  position: relative;
   color: #2E94F1;
-  text-decoration: underline;
+  text-decoration: underline !important;
+}
+.is-link.has-no-underline {
+  text-decoration: none !important;
 }
 
 .view {
@@ -1870,7 +1874,6 @@ ul.process-tree .duration--inner {
 }
 .footer a,
 .footer .is-link {
-  text-decoration: none;
   font-weight: 500;
 }
 @media screen and (max-width: 40rem) {
