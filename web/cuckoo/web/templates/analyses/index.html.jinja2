@@ -31,6 +31,12 @@
 
     });
 
+    if(URLSearchParams && blink) {
+      const params = new URLSearchParams(location.search);
+      if(params.get('submission'))
+        blink(document.querySelector('tr#analysis-' + params.get('submission')), "#82DB7A")
+    }
+
   }());
 </script>
 {% endblock %}
@@ -61,7 +67,7 @@
         {% else %}
           {% set href = False %}
         {% endif %}
-        <tr {% if not href %}class="has-half-opacity"{% endif %}>
+        <tr {% if not href %}class="has-half-opacity"{% endif %} id="analysis-{{ analysis.id }}">
           <td class="is-nowrap"><a {% if href %}href="{{ href }}"{% endif %}>{{ analysis.created_on | formatdatetime }}</a></td>
           <td class="is-nowrap is-monospace"><a href="{{ href }}">{{ analysis.id }}</a></td>
           <td class="is-break">{{ analysis.target.target }}</td>
