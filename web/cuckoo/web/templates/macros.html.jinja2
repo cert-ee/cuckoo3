@@ -215,6 +215,8 @@
     no_padding      Boolean   Whether or not to add an extra padding to the box content section
     collapsible     Boolean   Toggles collapsing functionality on or off
     collapsed       Boolean   Default collapse state
+    hidden          Boolean   Hides the element by default, use this whenever the UI needs to wait
+                              on certain javascript handlers.
 
   example:
 
@@ -223,13 +225,13 @@
     {% endcall %}
 
 #}
-{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False) %}
+{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False, hidden=False) %}
   {% if not id %}
     {% set boxid = prefix + "-" + title|replace(" ","-") %}
   {% else %}
     {% set boxid = id %}
   {% endif %}
-  <div class="box has-background-white has-shadow no-padding has-border">
+  <div class="box has-background-white has-shadow no-padding has-border" {% if hidden %}hidden{% endif %}>
     {% if display_title == True and title %}
       <h3 class="box-title">{{ title }}
         {% if collapsible %}

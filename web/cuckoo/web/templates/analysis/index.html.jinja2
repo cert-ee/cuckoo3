@@ -49,6 +49,8 @@
       if(data.indexOf(90) == -1) {
         lib.parent('.box', ctx).remove();
         return;
+      } else {
+        lib.parent('.box', ctx).removeAttribute('hidden');
       }
 
       let chart;
@@ -377,7 +379,7 @@
         {% endif %}
 
         {% if analysis.tags|length %}
-          {% call ui_box(title="Behavioral map") %}
+          {% call ui_box(title="Behavioral map", hidden=True) %}
             <canvas id="behavior-map" width="100%"></canvas>
           {% endcall %}
         {% endif %}
