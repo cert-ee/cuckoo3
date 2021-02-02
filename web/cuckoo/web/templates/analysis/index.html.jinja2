@@ -61,7 +61,7 @@
         chart = new Chart(ctx.getContext('2d'), {
           type,
           data: {
-            labels,
+            labels: labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())),
             datasets: [{
               data,
               backgroundColor: ['rgba(249,93,106, '+opacity+')'],

@@ -244,16 +244,16 @@ p {
 
 .is-link {
   color: #2E94F1;
-  text-decoration: underline !important;
+  text-decoration: underline;
 }
 
 .view {
   min-height: 100%;
-  margin-bottom: -14rem;
+  margin-bottom: -10rem;
 }
 @media screen and (max-width: 40rem) {
   .view {
-    margin-bottom: -21rem;
+    margin-bottom: -15rem;
   }
 }
 
@@ -1837,7 +1837,7 @@ ul.process-tree .duration--inner {
   color: #000000;
 }
 .footer, .footer-push {
-  height: 14rem;
+  height: 10rem;
 }
 .footer .logo {
   margin-bottom: 0.75rem;
@@ -1868,12 +1868,17 @@ ul.process-tree .duration--inner {
   opacity: 0.5;
   font-weight: 700;
 }
+.footer a,
+.footer .is-link {
+  text-decoration: none;
+  font-weight: 500;
+}
 @media screen and (max-width: 40rem) {
   .footer {
-    height: 21rem;
+    height: 15rem;
   }
   .footer-push {
-    height: 21rem;
+    height: 15rem;
   }
   .footer .columns, .footer .field.is-inline, .footer .banner, .footer .tabbar, .footer .tabbar > .container, .footer .tag-list {
     flex-direction: row;

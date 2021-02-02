@@ -217,12 +217,12 @@
                 </div>
                 <div id="pesig-raw-{{loop.index}}" hidden>
                   <div class="box has-background-light has-inset-shadow has-padding no-radius">
-                    <div class="buttons-conjoined has-margin-x has-text-small has-hover-fadein">
-                      <button class="button is-beveled" data-tooltip="Use dark syntax theme"><i class="fas fa-adjust  button-icon"></i></button>
-                      <button class="button is-beveled" data-tooltip="Switch font style"><i class="fas fa-font button-icon"></i></button>
-                      <button class="button is-beveled" data-tooltip="Expand all sections"><i class="fas fa-plus-square button-icon"></i></button>
-                      <button class="button is-beveled" data-tooltip="Collapse all sections"><i class="fas fa-minus-square button-icon"></i></button>
-                    </div>
+                    {# <div class="buttons-conjoined has-margin-x has-text-small has-hover-fadein">
+                        <button class="button is-beveled" data-tooltip="Use dark syntax theme"><i class="fas fa-adjust  button-icon"></i></button>
+                        <button class="button is-beveled" data-tooltip="Switch font style"><i class="fas fa-font button-icon"></i></button>
+                        <button class="button is-beveled" data-tooltip="Expand all sections"><i class="fas fa-plus-square button-icon"></i></button>
+                        <button class="button is-beveled" data-tooltip="Collapse all sections"><i class="fas fa-minus-square button-icon"></i></button>
+                      </div> #}
                     {{ render_dict(signature) }}
                   </div>
                 </div>
