@@ -9,28 +9,36 @@
   <div class="container is-portal-view">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
-        {% include "analysis/partial/sidebar.html.jinja2" %}
+        {% include "partial/analysis-index.html.jinja2" %}
       </aside>
       <section class="column has-padding">
 
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance>
+        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-virus-total,tab-pefiles">
           {% if pre.static.pe %}
             <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
           {% endif %}
           {% if pre.virustotal %}
-            <a class="tabbar-link is-active" href="#tab-virus-total">Antivirus</a>
+            <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
           {% endif %}
           {% if pre.misp %}
             <a class="tabbar-link" href="#tab-misp">MISP</a>
           {% endif %}
         </nav>
 
+        {#
+        {% call ui_box(title="Static data",has_padding=False,collapsed=True) %}
+          <h3>analysis</h3>
+          {{ render_dict(analysis) }}
+          <h3>pre</h3>
+          {{ render_dict(pre) }}
+        {% endcall %}
+        #}
+
         {# tab: static.target/static.pe #}
         {% if pre.static.pe %}
-
           <div id="tab-pefiles" hidden>
 
             {# PE Timestamp / imphash #}
@@ -261,8 +269,7 @@
         {% endif %}
         {# tab: static.virustotal #}
         {% if pre.virustotal %}
-          <div id="tab-virus-total">
-            {# Antivirus result list #}
+          <div id="tab-virus-total" hidden>
             {% call ui_box(title="Antivirus Engines", has_padding=False) %}
               {{ render_table(
                   data=pre.virustotal.avs,
@@ -275,7 +282,7 @@
         {% endif %}
         {# tab: static.misp #}
         {% if pre.misp %}
-          <div id="tab-misp">
+          <div id="tab-misp" hidden>
             {% call ui_box(title="MISP", has_padding=False) %}
               <table class="table">
                 <thead>
