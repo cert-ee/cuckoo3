@@ -220,6 +220,10 @@ const processes = (function() {
 (function signatureFilters() {
 
   const signatures  = document.querySelector('#box-Signatures');
+  
+  if(!signatures)
+    return;
+
   const table       = signatures.querySelector('.table');
   const filters     = [...signatures.querySelectorAll('[name="toggle-sig"]')];
 

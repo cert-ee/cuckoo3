@@ -182,6 +182,25 @@ function handlePageTabs(tabContext) {
     });
   });
 
+  // if there is not a defined active tab, activate the first one
+  let hasActiveTab = () => links.find(link => link.classList.contains('is-active'));
+  let prioritized = tabContext.dataset.priority;
+
+  // if <data-priority="..."> is set, run through the list of prioritized tabs
+  // and make them open accordingly.
+  if(prioritized) {
+    prioritized.split(",").forEach(id => {
+      let results = links.filter(link => link.getAttribute('href').replace('#','') == id);
+      if(results.length > 0 && !hasActiveTab()) {
+        results.forEach(result => result.dispatchEvent(new Event("click")));
+      }
+    })
+  }
+
+  if(!hasActiveTab() && links.length > 0) {
+    links[0].dispatchEvent(new Event("click"));
+  }
+
 }
 
 /**
