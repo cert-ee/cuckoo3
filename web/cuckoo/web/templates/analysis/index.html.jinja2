@@ -118,14 +118,14 @@
         <h2>Analysis</h2>
         <p>Description and overview of target and submission configuration.</p>
 
-        {#
-          {% call ui_box(title="Data",collapsed=True) %}
-            <p>analysis</p>
+        {% if debug_template_data %}
+          {% call ui_box(title="Template data", has_padding=False, collapsed=True) %}
+            <h3 class="has-margin-x">Analysis</h3>
             {{ render_dict(analysis) }}
-            <p>pre</p>
+            <h3 class="has-margin-x">Pre</h3>
             {{ render_dict(pre) }}
           {% endcall %}
-        #}
+        {% endif %}
 
         {% if analysis.errors.errors|length > 0 %}
           {% call error_box(analysis.errors.errors) %}

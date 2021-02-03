@@ -40,18 +40,19 @@
             <a href="#tab-machine" class="tabbar-link">Machine</a>
           </div>
 
-          <div id="tab-report">
+          {% if debug_template_data %}
+            {% call ui_box(title="Template data", has_padding=False, collapsed=True) %}
+              <h3 class="has-margin-x">Report:</h3>
+              {{ render_dict(report) }}
+              <h3 class="has-margin-x">Analysis:</h3>
+              {{ render_dict(analysis) }}
+              <h3 class="has-margin-x">Task:</h3>
+              {{ render_dict(task) }}
+            {% endcall %}
+          {% endif %}
 
-            {#
-              {% call ui_box(title="Data", has_padding=False, collapsed=True) %}
-                Report:
-                {{ render_dict(report) }}
-                Analysis:
-                {{ render_dict(analysis) }}
-                Task:
-                {{ render_dict(task) }}
-              {% endcall %}
-            #}
+
+          <div id="tab-report">
 
             {% if task.errors.errors|length > 0 %}
               {% call error_box(task.errors.errors) %}

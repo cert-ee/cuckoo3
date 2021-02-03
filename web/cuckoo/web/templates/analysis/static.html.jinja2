@@ -28,14 +28,14 @@
           {% endif %}
         </nav>
 
-        {#
-        {% call ui_box(title="Static data",has_padding=False,collapsed=True) %}
-          <h3>analysis</h3>
-          {{ render_dict(analysis) }}
-          <h3>pre</h3>
-          {{ render_dict(pre) }}
-        {% endcall %}
-        #}
+        {% if debug_template_data %}
+          {% call ui_box(title="Template data", has_padding=False, collapsed=True) %}
+            <h3 class="has-margin-x">Analysis</h3>
+            {{ render_dict(analysis) }}
+            <h3 class="has-margin-x">Pre</h3>
+            {{ render_dict(pre) }}
+          {% endcall %}
+        {% endif %}
 
         {# tab: static.target/static.pe #}
         {% if pre.static.pe %}

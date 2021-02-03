@@ -555,7 +555,7 @@ function handleClickToCopy(elem) {
   elem.addEventListener('mouseleave', ev => {
     if(tip && copied) {
       setTimeout(() => {
-        tip.remove();
+        if(tip) tip.remove();
         tip = null;
       }, 500);
     } else {
