@@ -1,0 +1,9 @@
+# Remote storage usage is the retrieval of analysis reports etc from
+# a remote Cuckoo 'long term storage' host.
+remote_storage:
+  enabled: {{ remote_storage.enabled }}
+  api_url: {{ remote_storage.api_url }}
+  api_key: {{ remote_storage.api_key }}
+
+search:
+  enabled: {{ search.enabled }}
