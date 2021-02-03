@@ -853,6 +853,10 @@ a.button, .control.is-file a.file-trigger {
   position: relative;
   width: 100%;
 }
+.table.has-sticky-header thead {
+  position: relative;
+  z-index: 2;
+}
 .table.has-sticky-header thead th {
   position: sticky;
   top: 0;

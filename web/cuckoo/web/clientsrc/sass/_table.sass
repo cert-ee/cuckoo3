@@ -174,9 +174,12 @@
     width: 100%
 
   &.has-sticky-header
-    thead th
-      position: sticky
-      top: 0
+    thead
+      position: relative
+      z-index: 2
+      th
+        position: sticky
+        top: 0
 
   &.has-sticky-footer
     tfoot td
