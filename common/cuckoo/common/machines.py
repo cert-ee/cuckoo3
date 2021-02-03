@@ -39,6 +39,10 @@ class Machine:
         self.interface = ""
 
         self.machinery = machinery
+        if machinery:
+            self.machinery_name = machinery.name
+        else:
+            self.machinery_name = ""
 
         # Restorable information
         self.reserved = reserved
@@ -75,13 +79,6 @@ class Machine:
             return f"Machine is locked by: {self.locked_by}"
 
         return "Machine is unavailable for unknown reasons"
-
-    @property
-    def machinery_name(self):
-        if not self.machinery:
-            return ""
-
-        return self.machinery.name
 
     def lock(self, task_id):
         self.locked = True

@@ -7,7 +7,7 @@ import json
 
 import dateutil.parser
 
-from .storage import safe_json_dump
+from .storage import safe_json_dump, split_analysis_id
 
 def deserialize_disk_json(obj):
     if "__isodt__" in obj:
@@ -102,6 +102,12 @@ class StrictContainer:
         if errors:
             raise TypeError(f"{', '.join(errors)}")
 
+    def _parse_datetime_field(self, key, type_instance):
+        try:
+            self._loaded[key] = dateutil.parser.parse(type_instance)
+        except dateutil.parser.ParserError as e:
+            raise ValueError(f"Invalid datetime for key: {key}. {e}")
+
     def _verify_key_type(self, key, type_instance):
         # We only want to verify types for keys that have actually been defined
         # in the fields attribute. We don't care about other keys.
@@ -116,6 +122,14 @@ class StrictContainer:
         if not isinstance(type_instance, expected_type):
             if isinstance(expected_type, tuple):
                 expected_type = dict
+
+            # A datetime might be passed as a string. Try to parse it. This
+            # can happen when content comes from an API response.
+            elif issubclass(expected_type, datetime.datetime):
+                if isinstance(type_instance, str):
+                    self._parse_datetime_field(key, type_instance)
+                    return
+
             elif issubclass(expected_type, StrictContainer):
                 expected_type = dict
 
@@ -188,6 +202,15 @@ class StrictContainer:
                 loaded = json.load(
                     fp, object_hook=deserialize_disk_json
                 )
+        except json.decoder.JSONDecodeError as e:
+            raise ValueError(f"JSON decoding error: {e}")
+
+        return cls(**loaded)
+
+    @classmethod
+    def from_string(cls, stringdata):
+        try:
+            loaded = json.loads(stringdata, object_hook=deserialize_disk_json)
         except json.decoder.JSONDecodeError as e:
             raise ValueError(f"JSON decoding error: {e}")
 
@@ -434,3 +457,9 @@ class Analysis(StrictContainer):
     def update_settings(self, **kwargs):
         self.settings.update(kwargs)
         self.set_updated(["settings"])
+
+    def check_constraints(self):
+        # Verifies each part of the analysis id.
+        split_analysis_id(self.id)
+        if self.score < 0 or self.score > 10:
+            raise ValueError("Score cannot be lower than 0 or higher than 10")

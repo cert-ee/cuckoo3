@@ -10,6 +10,7 @@ from cuckoo.common import analyses, task, targets
 from cuckoo.common.config import cfg
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
+from cuckoo.common.importing import import_analysis, AnalysisImportError
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths
 from cuckoo.common.strictcontainer import (
@@ -26,6 +27,24 @@ _tracking_lock = threading.Lock()
 
 class StateControllerError(Exception):
     pass
+
+def import_importables(worktracker):
+    with _tracking_lock:
+        importables = os.listdir(Paths.importables())
+        if not importables:
+            return
+
+        for importable in importables:
+            if not importable.endswith(".zip"):
+                continue
+
+            path = Paths.importables(importable)
+            try:
+                analysis = import_analysis(path)
+                log.debug("Imported analysis", analysis=analysis.id)
+            except AnalysisImportError as e:
+                log.warning("Import failed", importable=path, error=e)
+                continue
 
 def track_untracked(worktracker):
     with _tracking_lock:
@@ -525,3 +544,20 @@ class StateController(UnixSocketServer):
 
         self.create_socket()
         self.start_accepting(select_timeout=1)
+
+class ImportController(StateController):
+    # Keep amount of worker to 1 for now to prevent db locking issues with
+    # sqlite. 1 thread should be enough. Also because not all steps, such
+    # as writing scores from tasks to analyses can cause race conditions.
+    NUM_STATE_CONTROLLER_WORKERS = 1
+
+    def __init__(self, controller_sock_path):
+        super().__init__(controller_sock_path)
+        self.workers = []
+        self.work_queue = queue.Queue()
+        self.subject_handler = {
+            "trackimportables": self.import_importables
+        }
+
+    def import_importables(self, **kwargs):
+        self.queue_call(import_importables)

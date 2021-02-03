@@ -228,8 +228,8 @@ def web(ctx, host, port, autoreload):
     )
     start_web(host, port, autoreload=autoreload)
 
-@web.command("djangocommand")
-@click.argument("django_args", nargs=-1)
+@web.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
+@click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def djangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
@@ -263,11 +263,12 @@ def api(ctx, host, port, autoreload):
     )
     start_api(host, port, autoreload=autoreload)
 
-@web.command("djangocommand")
-@click.argument("django_args", nargs=-1)
+@api.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
+@click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def djangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
+    print(django_args)
     from cuckoo.web.api.startup import(
         djangocommands, set_path_settings, init_api
     )
@@ -281,3 +282,28 @@ def djangocommand(ctx, django_args):
         set_path_settings()
 
     djangocommands(*django_args)
+
+@main.command()
+@click.pass_context
+def importmode(ctx):
+    """Start the Cuckoo import controller."""
+    if ctx.invoked_subcommand:
+        return
+
+    from cuckoo.common.startup import StartupError
+    from cuckoo.common.shutdown import (
+        register_shutdown, call_registered_shutdowns
+    )
+    from .startup import start_importmode
+
+    def _stopmsg():
+        print("Stopping import mode..")
+
+    register_shutdown(_stopmsg, order=1)
+
+    try:
+        start_importmode(ctx.parent.loglevel)
+    except StartupError as e:
+        exit_error(f"Failure during import mode startup: {e}")
+    finally:
+        call_registered_shutdowns()

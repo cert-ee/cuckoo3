@@ -19,6 +19,7 @@ _original_handlers = {
 }
 
 _call_original = False
+_currently_teardown = None
 
 def set_call_original_handlers(call_original):
     """Set call original to false or true. Causes the shutdown handler
@@ -42,9 +43,12 @@ def call_registered_shutdowns():
     if not _teardown_lock.acquire(blocking=False):
         return
 
+    global _currently_teardown
+
     # Sort the shutdown methods to be ascending by the 'order' value.
     _shutdown_methods.sort(key=lambda method: method[1])
     for shutmethod, _ in _shutdown_methods:
+        _currently_teardown = shutmethod
         try:
             shutmethod()
         except Exception as e:
@@ -55,6 +59,8 @@ def call_registered_shutdowns():
 
 def _wrap_call_registered_shutdowns(sig, frame):
     if _teardown_lock.locked():
+        if _currently_teardown:
+            print(f"Teardown is currently at: {_currently_teardown}")
         return
 
     # Delegate the actual handling of the signal to a new thread as IO

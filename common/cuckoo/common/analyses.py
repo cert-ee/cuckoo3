@@ -9,15 +9,16 @@ from . import db, machines, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import AnalysisPaths
-from .strictcontainer import (
-    Settings as _Settings, Analysis, Errors
-)
+from .strictcontainer import Settings as _Settings, Analysis, Errors
 from .utils import parse_bool
 
 log = CuckooGlobalLogger(__name__)
 
 class AnalysisError(Exception):
     pass
+
+class AnalysisLocation:
+    REMOTE = "remote"
 
 class HumanStates:
     UNTRACKED = "Untracked"
@@ -170,6 +171,43 @@ def track_analyses(analysis_ids):
 
     return tracked
 
+def track_imported(analysis):
+    if analysis.state != States.FINISHED:
+        raise AnalysisError(
+            f"Imported analyses can only have the finished state."
+        )
+
+    target_dict = {
+        "analysis_id": analysis.id,
+        "category": analysis.category
+
+    }
+    if analysis.category == targets.TargetCategories.URL:
+        target_dict["target"] = analysis.target.url
+    elif analysis.category == targets.TargetCategories.FILE:
+        target_dict.update({
+            "target": analysis.target.filename,
+            "media_type": analysis.target.media_type,
+            "md5": analysis.target.md5,
+            "sha1": analysis.target.sha1,
+            "sha256": analysis.target.sha256,
+            "sha512": ""
+        })
+
+    db_target = db.Target(**target_dict)
+    db_analysis = db.Analysis(
+        id=analysis.id, kind=Kinds.STANDARD, created_on=analysis.created_on,
+        priority=analysis.settings.priority, state=analysis.state,
+        score=analysis.score,
+    )
+    ses = db.dbms.session()
+    try:
+        ses.add(db_analysis)
+        ses.add(db_target)
+        ses.commit()
+    finally:
+        ses.close()
+
 def merge_target_settings(analysis, target):
     if analysis.settings.machines:
         return
@@ -246,7 +284,7 @@ def get_state(analysis_id):
     try:
         analysis = ses.query(
             db.Analysis.state
-        ).filter_by(id=analysis_id).one()
+        ).filter_by(id=analysis_id).first()
 
         if not analysis:
             return None
@@ -342,7 +380,19 @@ def get_fatal_errors(analysis_id):
 def db_find_state(state):
     ses = db.dbms.session()
     try:
-        return ses.query(db.Analysis).filter_by(state=state)
+        return ses.query(db.Analysis).filter_by(state=state).all()
+    finally:
+        ses.close()
+
+def db_find_location(analysis_id):
+    ses = db.dbms.session()
+    try:
+        analysis = ses.query(
+            db.Analysis.location
+        ).filter_by(id=analysis_id).first()
+        if not analysis:
+            return None
+        return analysis.location
     finally:
         ses.close()
 
@@ -381,3 +431,4 @@ def write_changes(analysis):
 
     if update_target:
         targets.update_target_row(analysis, analysis.target)
+

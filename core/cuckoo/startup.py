@@ -78,7 +78,7 @@ def start_processing_handler():
     shutdown.register_shutdown(started.processing_handler.stop)
     started.processing_handler.start()
 
-    while True:
+    while started.processing_handler.do_run:
         if started.processing_handler.setup_finished():
             break
 
@@ -262,6 +262,47 @@ def add_machine(machinery_name, name, label, ip, platform, os_version="",
         shutil.move(tmp_path, conf_path)
     finally:
         shutil.rmtree(tmpdir)
+
+def start_importcontroller():
+    from .control import ImportController
+    sockpath = Paths.unix_socket("importcontroller.sock")
+    if os.path.exists(sockpath):
+        raise StartupError(
+            f"Failed to start import controller: "
+            f"Unix socket path already exists: {sockpath}"
+        )
+
+    import_controller = ImportController(sockpath)
+    shutdown.register_shutdown(import_controller.stop)
+
+    # Check if any untracked analyses exist after starting
+    import_controller.import_importables()
+    import_controller.start()
+
+
+def start_importmode(loglevel):
+    from multiprocessing import set_start_method
+    set_start_method("spawn")
+
+    from cuckoo.common.config import MissingConfigurationFileError
+    from cuckoo.common.startup import (
+        init_database, load_configurations, init_global_logging
+    )
+    from .control import ImportController
+
+    # Initialize globing logging to cuckoo.log
+    init_global_logging(loglevel, Paths.log("importmode.log"))
+
+    log.info("Starting import mode")
+    log.info("Loading configurations")
+    try:
+        load_configurations()
+    except MissingConfigurationFileError as e:
+        raise StartupError(f"Missing configuration file: {e}")
+
+    log.info("Starting import controller")
+    start_importcontroller()
+
 
 def start_cuckoo(loglevel):
     from multiprocessing import set_start_method

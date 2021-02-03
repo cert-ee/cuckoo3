@@ -2,6 +2,10 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import requests
+import json.decoder
+from urllib.parse import urljoin
+
 from .ipc import (
     request_unix_socket, message_unix_socket, ResponseTimeoutError, IPCError
 )
@@ -9,10 +13,28 @@ from .ipc import (
 class ClientError(Exception):
     pass
 
+class ClientConnectionError(ClientError):
+    pass
+
 class ServerResponseError(ClientError):
     pass
 
 class ActionFailedError(ClientError):
+    pass
+
+class APIError(ClientError):
+    pass
+
+class APIServerError(APIError):
+    pass
+
+class APIBadRequestError(APIError):
+    pass
+
+class APIDoesNotExistError(APIError):
+    pass
+
+class APIPermissionDenied(APIError):
     pass
 
 
@@ -173,3 +195,154 @@ class StateControllerClient:
             raise ActionFailedError(
                 f"Failed to send settings to state controller. {e}"
             )
+
+class ImportControllerClient:
+
+    @staticmethod
+    def notify(sockpath):
+        """Send a ping to the import controller at the end of the given sock
+        path to ask it to import all stored importables. Newly submitted
+        stored importables will not be tracked until the import controller
+        receices a notify message."""
+        try:
+            message_unix_socket(sockpath, {"subject": "trackimportables"})
+        except IPCError as e:
+            raise ActionFailedError(f"Failed to notify state controller. {e}")
+
+class APIClient:
+
+    def __init__(self, api_host, api_key):
+        self._key = api_key
+        self._host = api_host
+
+    def _make_headers(self):
+        return {
+            "Authorization": f"token {self._key}"
+        }
+
+    def _raise_for_status(self, response, endpoint, expected_status=200):
+        try:
+            resjson = response.json()
+            error = resjson.get("error", resjson).get("detail")
+        except json.decoder.JSONDecodeError:
+            error = None
+
+        code = response.status_code
+        if code >= 500:
+            raise APIServerError(
+                f"API server error on endpoint: "
+                f"{endpoint}.{'' if not error else error}"
+            )
+        elif code == 400:
+            raise APIBadRequestError(
+                f"Bad request made to endpoint: {endpoint}"
+            )
+        elif code == 401:
+            raise APIPermissionDenied(
+                f"The given api key does not have permission to access "
+                f"endpoint: {endpoint}"
+            )
+        elif code == 404:
+            raise APIDoesNotExistError(
+                f"Requested resource does not exist. Endpoint {endpoint}"
+            )
+
+
+        raise APIError(
+            f"Expected status code: {expected_status}. Got {code} on "
+            f"endpoint: {endpoint}.{'' if not error else error}"
+        )
+
+    def _do_json_get(self, endpoint, expected_status=200):
+        url = urljoin(self._host, endpoint)
+        try:
+            res = requests.get(url, headers=self._make_headers())
+        except requests.exceptions.ConnectionError as e:
+            raise ClientConnectionError(
+                f"Failed to connect to API endpoint {self._host}. {e}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"API request failed: {e}")
+
+        if res.status_code != expected_status:
+            self._raise_for_status(res, endpoint, expected_status)
+
+        return res.json()
+
+    def _do_json_post(self, endpoint, expected_status=200, **kwargs):
+        url = urljoin(self._host, endpoint)
+        try:
+            res = requests.post(url, headers=self._make_headers(), json=kwargs)
+        except requests.exceptions.ConnectionError as e:
+            raise ClientConnectionError(
+                f"Failed to connect to API endpoint {self._host}. {e}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"API request failed: {e}")
+
+        if res.status_code != expected_status:
+            self._raise_for_status(res, endpoint, expected_status)
+
+        return res.json()
+
+    def analysis(self, analysis_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}", expected_status=200
+        )
+
+    def pre(self, analysis_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}/pre", expected_status=200
+        )
+
+
+    def identification(self, analysis_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}/identification", expected_status=200
+        )
+
+    def analysis_composite(self, analysis_id, retrieve=[]):
+        return self._do_json_post(
+            f"/analysis/{analysis_id}/composite", expected_status=200,
+            retrieve=retrieve
+        )
+
+    def task(self, analysis_id, task_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}/task/{task_id}", expected_status=200
+        )
+
+    def task_post(self, analysis_id, task_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}/task/{task_id}/post", expected_status=200
+        )
+
+    def task_machine(self, analysis_id, task_id):
+        return self._do_json_get(
+            f"/analysis/{analysis_id}/task/{task_id}/machine",
+            expected_status=200
+        )
+
+    def task_composite(self, analysis_id, task_id, retrieve=[]):
+        return self._do_json_post(
+            f"analysis/{analysis_id}/task/{task_id}/composite",
+            expected_status=200, retrieve=retrieve
+        )
+
+    def import_analysis(self, zip_fp):
+        endpoint = "/import/analysis"
+        url = urljoin(self._host, endpoint)
+        try:
+            res = requests.post(
+                url, headers=self._make_headers(), files={"file": zip_fp}
+            )
+        except requests.exceptions.ConnectionError as e:
+            raise ClientConnectionError(
+                f"Failed to connect to API endpoint {self._host}. {e}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"API request failed: {e}")
+
+        if res.status_code != 200:
+            self._raise_for_status(res, endpoint, 200)
+

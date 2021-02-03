@@ -329,7 +329,8 @@ class ProcessingWorkerHandler(threading.Thread):
 
         # If any workers have not stopped yet, stop them. Make a list of
         # generator so we can delete from workers dict while iterating.
-        for worker in list(self.connected_workers.values()):
+        workers = list(self.connected_workers.values()) + self.unready_workers
+        for worker in workers:
             try:
                 self.stop_worker(worker)
             except OSError:
