@@ -1,5 +1,22 @@
 {% extends "base.html.jinja2" %}
+{% set active_page = "analyses" %}
+{% set report_page = "compare" %}
+{% set title = "Compare tasks" %}
+
+{% from 'macros.html.jinja2' import color_class %}
 
 {% block body %}
-  
+<div class="container is-portal-view">
+  <div class="columns is-divided is-vtop">
+    <aside class="column is-auto has-padding is-sticky">
+      {% include "partial/analysis-index.html.jinja2" %}
+    </aside>
+    <section class="column has-padding">
+
+      <h2>Compare</h2>
+      <p>Let's compare some frick-in tasks</p>
+
+    </section>
+  </div>
+</div>
 {% endblock %}
