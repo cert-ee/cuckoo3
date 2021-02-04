@@ -5,6 +5,10 @@
 
 {% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
 
+{% block page_script %}
+
+{% endblock %}
+
 {% block body %}
   <div class="container is-portal-view">
     <div class="columns is-divided is-vtop">
@@ -18,7 +22,7 @@
 
         <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-pefiles,tab-virustotal">
           {% if pre.static.pe %}
-            <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
+            <a class="tabbar-link" href="#tab-pefiles">PE</a>
           {% endif %}
           {% if pre.virustotal %}
             <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
@@ -28,6 +32,9 @@
           {% endif %}
           {% if pre.intelmq %}
             <a class="tabbar-link" href="#tab-intelmq">IntelMQ</a>
+          {% endif %}
+          {% if pre.static.office %}
+            <a class="tabbar-link" href="#tab-office">Office</a>
           {% endif %}
         </nav>
 
@@ -233,7 +240,6 @@
                 <p class="has-padding no-margin">No signatures.</p>
               {% endfor %}
             {% endcall %}
-
             {# PE Imports & Exports #}
             <div class="columns is-divided">
               <div class="column no-margin-left">
@@ -267,7 +273,6 @@
                 {% endcall %}
               </div>
             </div>
-
           </div>
         {% endif %}
         {# tab: static.virustotal #}
@@ -344,8 +349,52 @@
             {% endcall %}
           </div>
         {% endif %}
-
-
+        {% if pre.static.office %}
+          <div id="tab-office" hidden>
+            {% call ui_box(title="Extracted macros", has_padding=False) %}
+              <table class="table has-border no-border-x">
+                <tbody>
+                  {% for macro in pre.static.office.macros %}
+                    <tr>
+                      <td>
+                        <p class="label has-text-small">Stream:</p>
+                        <code>{{ macro.stream }}</code>
+                      </td>
+                      <td>
+                        <p class="label has-text-small">File name:</p>
+                        <code>{{ macro.filename }}</code>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" class="no-padding-x no-padding-top">
+                        <details class="details box no-radius no-margin-y has-border-bottom">
+                          <summary class="has-padding">
+                            <p>View original code</p>
+                          </summary>
+                          {% if macro.orig_code %}
+                            <pre class="code has-padding"><code>{{ macro.orig_code }}</code></pre>
+                          {% else %}
+                            <p class="has-half-opacity"><em>Empty</em></p>
+                          {% endif %}
+                        </details>
+                        <details class="details box has-shadow no-radius no-margin-y has-border-bottom">
+                          <summary>
+                            <p>View deobfuscated code</p>
+                          </summary>
+                          {% if macro.deobf %}
+                            <pre class="code has-padding"><code>{{ macro.deobf }}</code></pre>
+                          {% else %}
+                            <p class="has-half-opacity"><em>No deobfuscated code</em></p>
+                          {% endif %}
+                        </details>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% endcall %}
+          </div>
+        {% endif %}
       </section>
     </div>
   </div>
