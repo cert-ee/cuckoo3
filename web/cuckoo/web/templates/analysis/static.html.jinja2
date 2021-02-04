@@ -16,7 +16,7 @@
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-virus-total,tab-pefiles">
+        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-pefiles,tab-virustotal">
           {% if pre.static.pe %}
             <a class="tabbar-link" href="#tab-pefiles">PE Files</a>
           {% endif %}
@@ -25,6 +25,9 @@
           {% endif %}
           {% if pre.misp %}
             <a class="tabbar-link" href="#tab-misp">MISP</a>
+          {% endif %}
+          {% if pre.intelmq %}
+            <a class="tabbar-link" href="#tab-intelmq">IntelMQ</a>
           {% endif %}
         </nav>
 
@@ -304,10 +307,44 @@
                   {% endfor %}
                 </tbody>
               </table>
-
             {% endcall %}
           </div>
         {% endif %}
+        {# tab: pre.intelmq #}
+        {% if pre.intelmq %}
+          <div id="tab-intelmq" hidden>
+            {% call ui_box(title="IntelMQ", has_padding=False) %}
+              <table class="table has-sticky-header">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th>Type</th>
+                    <th>IOC</th>
+                    <th>Taxonomy</th>
+                    <th>Time Source</th>
+                    <th>Time Observation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for result in pre.intelmq %}
+                    <tr>
+                      <td>
+                        <p class="has-text-weight-heavy no-margin-y has-text-small">{{ result.feed_provider }}</p>
+                        <p class="no-margin-bottom has-text-small">{{ result.feed_name }}</p>
+                      </td>
+                      <td>{{ result.classification_type }}</td>
+                      <td class="is-wrapped has-ellipsis" data-click-to-copy data-value="{{ result.ioc }}">{{ result.ioc }}</td>
+                      <td>{{ result.classification_taxonomy }}</td>
+                      <td class="is-mini">{{ result.time_source|formatisodatetime }}</td>
+                      <td class="is-mini">{{ result.time_observation|formatisodatetime }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% endcall %}
+          </div>
+        {% endif %}
+
 
       </section>
     </div>
