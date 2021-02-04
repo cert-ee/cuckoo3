@@ -846,6 +846,11 @@ a.button, .control.is-file a.file-trigger {
   border-top: 0.0625rem solid #CCCCCC;
   border-bottom: 0.0625rem solid #CCCCCC;
 }
+.table tbody tr.separator.is-beveled {
+  background: linear-gradient(180deg, #EEEEEE 23.44%, #eaf4fe 100%);
+  box-shadow: inset 0px -2px 0px #CCCCCC, inset 0px 2px 0px #FFFFFF;
+  text-shadow: 0 0.0625rem 0 white;
+}
 .table tbody tr.separator:hover {
   background-color: #FFFFFF;
 }
