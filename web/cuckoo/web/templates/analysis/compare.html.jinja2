@@ -6,15 +6,7 @@
 {% from 'macros.html.jinja2' import color_class, ui_box %}
 
 {% block page_script %}
-  <script>
-
-    (function() {
-
-      // task1.querySelectorAll('option')[0].selected = true;
-
-    }());
-
-  </script>
+  <script src="{{ static('js/analysis.compare.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -64,7 +56,10 @@
               <td class="has-text-small has-text-left" colspan="3">Signatures:</td>
             </tr>
             <tr>
-              <td>Modifies service</td>
+              <td>
+                <strong>Modifies service</strong>
+                <p class="no-margin-bottom has-text-small">Hier kan een mooie description</p>
+              </td>
               <td class="has-text-center">
                 <span class="icon is-big has-text-weight-heavy">
                   <span>&check;</span>
@@ -77,7 +72,9 @@
               </td>
             </tr>
             <tr>
-              <td>Checks system information in the registry</td>
+              <td>
+                <strong>Checks system information in the registry</strong>
+              </td>
               <td class="has-text-center">
                 <span class="icon is-big has-text-weight-heavy">
                   <span>&times;</span>
@@ -90,7 +87,9 @@
               </td>
             </tr>
             <tr>
-              <td>Modifies system certificate store</td>
+              <td>
+                <strong>Modifies system certificate store</strong>
+              </td>
               <td class="has-text-center">
                 <span class="icon is-big has-text-weight-heavy">
                   <span>&check;</span>
@@ -102,11 +101,14 @@
                 </span>
               </td>
             </tr>
+            <!-- <tr class="separator is-beveled">
+              <td class="has-text-small has-text-left" colspan="3">Platform:</td>
+            </tr> -->
             <tr class="separator is-beveled">
               <td class="has-text-small has-text-left" colspan="3">Values:</td>
             </tr>
             <tr>
-              <td>Score</td>
+              <td><strong>Score</strong></td>
               <td class="has-text-center">
                 <span class="tag is-red">10</span>
               </td>
@@ -115,7 +117,7 @@
               </td>
             </tr>
             <tr>
-              <td>File size</td>
+              <td><strong>File size</strong></td>
               <td class="has-text-center is-monospace">400kB</td>
               <td class="has-text-center is-monospace">317kB</td>
             </tr>
