@@ -10,7 +10,7 @@ from .filters import filters
 
 _globals = {
     "static": staticfiles_storage.url,
-    "url": reverse
+    "url": reverse,
 }
 
 def environment(**kwargs):

@@ -7,7 +7,12 @@ from datetime import datetime
 import dateutil.parser
 
 from cuckoo.common.analyses import States as AnalysisStates
+from cuckoo.common.config import cfg
 from cuckoo.common.task import States as TaskStates
+
+_enabled_navs = {
+    "search": cfg("reporting", "elasticsearch", "enabled")
+}
 
 def do_formatdatetime(value, fmt="%Y-%m-%d %H:%M"):
     return value.strftime(fmt)
@@ -24,9 +29,13 @@ def do_humanstate(value):
 def do_taskstatehuman(value):
     return TaskStates.to_human(value)
 
+def nav_enabled(name):
+    return _enabled_navs.get(name, True)
+
 filters = {
     "formatdatetime": do_formatdatetime,
     "formatisodatetime": do_formatisodatetime,
     "humanstate": do_humanstate,
-    "taskstatehuman": do_taskstatehuman
+    "taskstatehuman": do_taskstatehuman,
+    "nav_enabled": nav_enabled
 }
