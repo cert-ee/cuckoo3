@@ -31,6 +31,9 @@ class APIServerError(APIError):
 class APIBadRequestError(APIError):
     pass
 
+class APIResourceConfictError(APIBadRequestError):
+    pass
+
 class APIDoesNotExistError(APIError):
     pass
 
@@ -181,7 +184,20 @@ class StateControllerClient:
         try:
             message_unix_socket(sockpath, {"subject": "tracknew"})
         except IPCError as e:
-            raise ActionFailedError(f"Failed to notify state controller. {e}")
+            raise ActionFailedError(
+                f"Failed to notify state controller of new analyses. {e}"
+            )
+
+    @staticmethod
+    def notify_exports(sockpath):
+        """Ask the state controller at the end of the given sock path to
+        set all analysis ids in cwd/exported to location 'remote'"""
+        try:
+            message_unix_socket(sockpath, {"subject": "setremote"})
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to notify state controller of exported analyses. {e}"
+            )
 
     @staticmethod
     def manual_set_settings(sockpath, analysis_id, settings_dict):
@@ -223,7 +239,9 @@ class APIClient:
     def _raise_for_status(self, response, endpoint, expected_status=200):
         try:
             resjson = response.json()
-            error = resjson.get("error", resjson).get("detail")
+            error = resjson.get("error")
+            if not error:
+                error = resjson.get("detail")
         except json.decoder.JSONDecodeError:
             error = None
 
@@ -235,7 +253,8 @@ class APIClient:
             )
         elif code == 400:
             raise APIBadRequestError(
-                f"Bad request made to endpoint: {endpoint}"
+                f"Bad request made to endpoint: "
+                f"{endpoint}.{'' if not error else error}"
             )
         elif code == 401:
             raise APIPermissionDenied(
@@ -246,7 +265,11 @@ class APIClient:
             raise APIDoesNotExistError(
                 f"Requested resource does not exist. Endpoint {endpoint}"
             )
-
+        elif code == 409:
+            raise APIResourceConfictError(
+                f"Conflict, resource already exists. "
+                f"Endpoint: {endpoint}. {'' if not error else error}"
+            )
 
         raise APIError(
             f"Expected status code: {expected_status}. Got {code} on "
@@ -346,3 +369,17 @@ class APIClient:
         if res.status_code != 200:
             self._raise_for_status(res, endpoint, 200)
 
+    def import_notify(self):
+        endpoint = "/import/analysis"
+        url = urljoin(self._host, endpoint)
+        try:
+            res = requests.put(url, headers=self._make_headers())
+        except requests.exceptions.ConnectionError as e:
+            raise ClientConnectionError(
+                f"Failed to connect to API endpoint {self._host}. {e}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"API request failed: {e}")
+
+        if res.status_code != 200:
+            self._raise_for_status(res, endpoint, 200)

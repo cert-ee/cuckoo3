@@ -10,6 +10,7 @@ import random
 import shutil
 import string
 import uuid
+from tempfile import gettempdir
 from datetime import datetime
 
 from .packages import find_cuckoo_packages, get_cwdfiles_dir
@@ -21,6 +22,24 @@ class CWDNotSetError(Exception):
 
 class InvalidCWDError(Exception):
     pass
+
+_allowed_deletion_dirs = set()
+
+def _add_deletion_dir(path):
+    realpath = os.path.realpath(path)
+    if realpath == "/":
+        raise OSError("Root path deletion not allowed")
+
+    _allowed_deletion_dirs.add(realpath)
+
+def _remove_deletion_dir(path):
+    _allowed_deletion_dirs.discard(os.path.realpath(path))
+
+def _deletion_allowed(path):
+    return os.path.realpath(path).startswith(tuple(_allowed_deletion_dirs))
+
+if not _allowed_deletion_dirs:
+    _add_deletion_dir(gettempdir())
 
 class _CuckooCWD:
 
@@ -64,8 +83,12 @@ class _CuckooCWD:
                 f"required. One or more permissions is missing on {path}."
             )
 
+        if self._dir:
+            _remove_deletion_dir(self._dir)
+
         self._dir = path
         os.environ["CUCKOO_CWD"] = str(path)
+        _add_deletion_dir(self._dir)
 
     @staticmethod
     def create(path):
@@ -76,7 +99,8 @@ class _CuckooCWD:
         for dirname in ("storage", "conf", "operational", "log"):
             os.makedirs(os.path.join(path, dirname))
 
-        for dirname in ("analyses", "binaries", "untracked", "importables"):
+        for dirname in ("analyses", "binaries", "untracked",
+                        "importables", "exported"):
             os.mkdir(os.path.join(path, "storage", dirname))
 
         for dirname in ("sockets", "generated"):
@@ -150,6 +174,11 @@ def split_task_id(task_id):
     date, analysis = split_analysis_id(analysis_id_tasknumber[0])
     return date, analysis, analysis_id_tasknumber[1]
 
+def task_to_analysis_id(task_id):
+    date, analysis, _ = split_task_id(task_id)
+    return f"{date}-{analysis}"
+
+
 def make_task_id(analysis_id, task_number):
     return f"{analysis_id}_{task_number}"
 
@@ -205,6 +234,10 @@ class AnalysisPaths:
     @staticmethod
     def analyses(*args):
         return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+
+    @staticmethod
+    def day(day):
+        return AnalysisPaths.analyses(day)
 
 class TaskPaths:
 
@@ -301,6 +334,14 @@ class Paths(object):
                 cuckoocwd.root, "storage", "importables", filename
             )
         return os.path.join(cuckoocwd.root, "storage", "importables")
+
+    @staticmethod
+    def exported(filename=None):
+        if filename:
+            return os.path.join(
+                cuckoocwd.root, "storage", "exported", filename
+            )
+        return os.path.join(cuckoocwd.root, "storage", "exported")
 
     @staticmethod
     def binaries():
@@ -403,10 +444,13 @@ def create_analysis_folder(day, identifier):
     return analysis, analysis_path
 
 
+def todays_daydir():
+    return datetime.utcnow().date().strftime("%Y%m%d")
+
 def make_analysis_folder():
     """Generates today's day dir and a unique analysis id and its dir and
     returns the analysis id and path to its directory"""
-    today = datetime.utcnow().date().strftime("%Y%m%d")
+    today = todays_daydir()
 
     identifier = ''.join(
         random.choices(
@@ -784,3 +828,30 @@ def enumerate_files(path):
 
                 if os.path.isfile(filepath):
                     yield filepath
+
+def delete_dirtree(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    shutil.rmtree(path, ignore_errors=False)
+
+def delete_dir(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    os.rmdir(path)
+
+def delete_file(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    os.unlink(path)

@@ -12,7 +12,7 @@ from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.importing import import_analysis, AnalysisImportError
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
-from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths
+from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, delete_file
 from cuckoo.common.strictcontainer import (
     Analysis, Task, Identification, Pre, Post
 )
@@ -27,6 +27,17 @@ _tracking_lock = threading.Lock()
 
 class StateControllerError(Exception):
     pass
+
+def set_location_remote(worktracker):
+    exported_ids = os.listdir(Paths.exported())
+    if not exported_ids:
+        return
+
+    analyses.db_set_remote(exported_ids)
+
+    for analysis_id in exported_ids:
+        delete_file(Paths.exported(analysis_id))
+
 
 def import_importables(worktracker):
     with _tracking_lock:
@@ -61,7 +72,7 @@ def track_untracked(worktracker):
 
         # Remove all analysis id files from the untracked dir.
         for analysis_id in analysis_ids:
-            os.unlink(Paths.untracked(analysis_id))
+            delete_file(Paths.untracked(analysis_id))
 
 def handle_identification_done(worktracker):
     analysis = worktracker.analysis
@@ -432,6 +443,7 @@ class StateController(UnixSocketServer):
         self.work_queue = queue.Queue()
         self.subject_handler = {
             "tracknew": self.track_new_analyses,
+            "setremote": self.set_remote,
             "workdone": self.work_done,
             "workfail": self.work_failed,
             "taskrundone": self.task_done,
@@ -498,6 +510,9 @@ class StateController(UnixSocketServer):
 
     def track_new_analyses(self, **kwargs):
         self.queue_call(track_untracked)
+
+    def set_remote(self, **kwargs):
+        self.queue_call(set_location_remote)
 
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))

@@ -8,7 +8,9 @@ import os
 from . import db, machines, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
-from .storage import AnalysisPaths
+from .storage import (
+    AnalysisPaths, delete_dirtree, delete_dir, split_analysis_id, todays_daydir
+)
 from .strictcontainer import Settings as _Settings, Analysis, Errors
 from .utils import parse_bool
 
@@ -171,6 +173,29 @@ def track_analyses(analysis_ids):
 
     return tracked
 
+def db_set_remote(analyses):
+    remote_analyses = []
+    for analysis_id in analyses:
+
+        # Ignore if not a valid analysis id
+        try:
+            split_analysis_id(analysis_id)
+        except ValueError:
+            continue
+
+        remote_analyses.append({
+            "id": analysis_id,
+            "location": AnalysisLocation.REMOTE
+        })
+
+    ses = db.dbms.session()
+    try:
+        ses.bulk_update_mappings(db.Analysis, remote_analyses)
+        ses.commit()
+    finally:
+        ses.close()
+
+
 def track_imported(analysis):
     if analysis.state != States.FINISHED:
         raise AnalysisError(
@@ -322,10 +347,23 @@ def get_filetree_dict(analysis_id):
     finally:
         fp.close()
 
-def list_analyses(limit=None, offset=None, desc=True):
+def list_analyses(limit=None, offset=None, desc=True,
+                  older_than=None, state=None, remote=None):
     ses = db.dbms.session()
     try:
         query = ses.query(db.Analysis)
+
+        if older_than:
+            query = query.filter(db.Analysis.created_on < older_than)
+
+        if remote is not None:
+            location = None
+            if remote:
+                location = AnalysisLocation.REMOTE
+            query = query.filter_by(location=location)
+
+        if state:
+            query = query.filter_by(state=state)
 
         if desc:
             query = query.order_by(db.Analysis.created_on.desc())
@@ -432,3 +470,15 @@ def write_changes(analysis):
     if update_target:
         targets.update_target_row(analysis, analysis.target)
 
+
+def delete_analysis_disk(analysis_id):
+    daypart, _ = split_analysis_id(analysis_id)
+    delete_dirtree(AnalysisPaths.path(analysis_id))
+
+    # If the daydir is empty and it is not today, delete it.
+    if daypart == todays_daydir():
+        return
+
+    daydir = AnalysisPaths.day(daypart)
+    if len(os.listdir(daydir)) < 1:
+        delete_dir(daydir)

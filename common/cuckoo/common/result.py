@@ -438,7 +438,7 @@ class ResultRetriever:
         except APIError as e:
             raise ResultError(e)
 
-        return RemoteAnalysis(analysis_id, data)
+        return RemoteAnalysis(analysis_id, data, include)
 
     def get_analysis(self, analysis_id, include):
         if not isinstance(include, list):

@@ -12,11 +12,17 @@ from . import analyses
 from .clients import ImportControllerClient, ActionFailedError
 from .storage import (
     AnalysisPaths, split_analysis_id, create_analysis_folder, Binaries, File,
-    Paths, move_file
+    Paths, move_file, delete_file
 )
 from .strictcontainer import Analysis
 
 class AnalysisImportError(Exception):
+    pass
+
+class AnalysisExistsError(Exception):
+    pass
+
+class AnalysisZippingError(AnalysisImportError):
     pass
 
 def read_analysisjson(zipped_analysis, passwordbytes=None):
@@ -87,11 +93,20 @@ class AnalysisZipper:
         self.id = analysis_id
         self._rootfiles = []
         self._tasks = {}
+        self._check_valid()
         self._discover()
+
+    def _check_valid(self):
+        try:
+            Analysis.from_file(AnalysisPaths.analysisjson(self.id))
+        except (FileNotFoundError, KeyError, ValueError, TypeError) as e:
+            raise AnalysisZippingError(
+                f"Invalid analysis JSON. Cannot zip analysis: {e}"
+            )
 
     def make_zip(self, zip_path, ignore_task_dirs=[], ignore_task_files=[]):
         if os.path.exists(zip_path):
-            raise AnalysisImportError(f"Zip path already exists")
+            raise AnalysisZippingError(f"Zip path already exists")
 
         zippables = []
         zippables.extend(self._rootfiles)
@@ -222,7 +237,7 @@ class ZippedAnalysis:
 
     def delete(self):
         with self._lock:
-            os.remove(self._path)
+            delete_file(self._path)
 
     def __enter__(self):
         return self
@@ -293,8 +308,15 @@ def store_importable(zip_path):
         raise AnalysisImportError("File must have a .zip extension")
 
     analysis_id = ZippedAnalysis(zip_path).analysis.id
+    importable_path = Paths.importables(f"{analysis_id}.zip")
+    if analyses.exists(analysis_id) or os.path.exists(importable_path):
+        raise AnalysisExistsError(
+            f"Analysis {analysis_id} already exists or is still in the "
+            f"importables directory"
+        )
+
     try:
-        move_file(zip_path, Paths.importables(f"{analysis_id}.zip"))
+        move_file(zip_path, importable_path)
     except OSError as e:
         raise AnalysisImportError(
             f"Failed to write importable zip to Cuckoo cwd: {e}"
