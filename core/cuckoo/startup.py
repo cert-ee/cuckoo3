@@ -303,6 +303,7 @@ def start_importmode(loglevel):
 
     # Initialize globing logging to importmode.log
     init_global_logging(loglevel, Paths.log("importmode.log"))
+    init_database()
 
     log.info("Starting import mode")
     log.info("Loading configurations")
