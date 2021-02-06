@@ -393,8 +393,8 @@ class ResultRetriever:
             )
 
         try:
-            data = self.api_client.analysis_composite(
-                analysis_id, retrieve=include
+            data = self.api_client.task_composite(
+                analysis_id, task_id, retrieve=include
             )
         except APIDoesNotExistError:
             raise ResultDoesNotExistError(f"Task {task_id} not found")
