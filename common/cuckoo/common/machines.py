@@ -25,7 +25,7 @@ class Machine:
                   snapshot=None, mac_address="", machinery=None,
                  state="UNKNOWN",  locked=False, locked_by="", reserved=False,
                  reserved_by="", disabled=False, disabled_reason="",
-                 errors=[]):
+                 machinery_name="", errors=[]):
 
         # Configuration information
         self.name = name
@@ -42,7 +42,7 @@ class Machine:
         if machinery:
             self.machinery_name = machinery.name
         else:
-            self.machinery_name = ""
+            self.machinery_name = machinery_name
 
         # Restorable information
         self.reserved = reserved
@@ -157,7 +157,7 @@ class Machine:
             state=d["state"], locked=d["locked"], locked_by=d["locked_by"],
             reserved=d["reserved"], reserved_by=d["reserved_by"],
             disabled=d["disabled"], disabled_reason=d["disabled_reason"],
-            errors=d["errors"]
+            errors=d["errors"], machinery_name=d["machinery_name"]
         )
 
 # Machine object instances mapping to their machine name. This module
