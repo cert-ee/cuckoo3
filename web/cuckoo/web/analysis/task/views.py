@@ -6,17 +6,22 @@ from django.http import HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import render
 
 from cuckoo.common.task import States
-from cuckoo.common.storage import TaskPaths, AnalysisPaths
-from cuckoo.common.machines import Machine
-from cuckoo.common.strictcontainer import Analysis, Task, Post
+from cuckoo.common.result import (
+    retriever, Results, ResultDoesNotExistError, InvalidResultDataError
+)
 
 def index(request, analysis_id, task_id):
     try:
-        analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
-        task = Task.from_file(TaskPaths.taskjson(task_id))
-    except FileNotFoundError:
+        result = retriever.get_task(
+            analysis_id, task_id,
+            include=[Results.ANALYSIS, Results.TASK,
+                     Results.POST, Results.MACHINE]
+        )
+        analysis = result.analysis
+        task = result.task
+    except ResultDoesNotExistError:
         return HttpResponseNotFound()
-    except (ValueError, KeyError, TypeError) as e:
+    except InvalidResultDataError as e:
         return HttpResponseServerError(str(e))
 
     if task.state == States.FATAL_ERROR:
@@ -30,11 +35,11 @@ def index(request, analysis_id, task_id):
         )
 
     try:
-        postreport = Post.from_file(TaskPaths.report(task_id))
-        machine = Machine.from_file(TaskPaths.machinejson(task_id))
-    except FileNotFoundError:
+        postreport = result.post
+        machine = result.machine
+    except ResultDoesNotExistError:
         return HttpResponseNotFound()
-    except (ValueError, KeyError, TypeError) as e:
+    except InvalidResultDataError as e:
         return HttpResponseServerError(str(e))
 
     return render(

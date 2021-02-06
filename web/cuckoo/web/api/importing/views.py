@@ -9,7 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 
 from cuckoo.common.importing import (
-    store_importable, AnalysisImportError, list_importables, notify
+    store_importable, AnalysisImportError, list_importables, notify,
+    AnalysisExistsError
 )
 
 class AnalysisImport(serializers.Serializer):
@@ -29,6 +30,8 @@ class ImportAnalysis(APIView):
 
         try:
             store_importable(uploaded.temporary_file_path())
+        except AnalysisExistsError as e:
+            return Response({"error": str(e)}, status=409)
         except AnalysisImportError as e:
             return Response({"error": str(e)}, status=400)
 
