@@ -423,9 +423,12 @@ class Analysis(StrictContainer):
         "errors": Errors,
         "tasks": list,
         "families": list,
-        "tags": list
+        "tags": list,
+        "ttps": list
     }
-    ALLOW_EMPTY = ("errors", "target", "score", "tasks", "families", "tags")
+    ALLOW_EMPTY = (
+        "errors", "target", "score", "tasks", "families", "tags", "ttps"
+    )
 
     def update_task(self, task_id, score=None, state=""):
         for task in self.tasks:
@@ -453,6 +456,13 @@ class Analysis(StrictContainer):
             if family not in self.families:
                 self.families.append(family)
                 self.set_updated(["families"])
+
+        if post.ttps:
+            ttps = [ttp["id"] for ttp in self.ttps]
+            for ttp in post.ttps:
+                if ttp["id"] not in ttps:
+                    self.ttps.append(ttp)
+            self.set_updated(["ttps"])
 
     def update_settings(self, **kwargs):
         self.settings.update(kwargs)
