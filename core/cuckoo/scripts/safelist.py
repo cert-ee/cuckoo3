@@ -4,8 +4,8 @@
 
 import os
 import click
-import platform
 import logging
+from tabulate import tabulate
 
 from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common import safelist
@@ -40,8 +40,17 @@ def listnames():
         f"{ColorText.bold('Name'):<28} {ColorText.bold('Value type'):<20} "
         f"{ColorText.bold('Description'):<100}"
     )
+    safelists = []
     for name, slclass in safelist.name_safelist.items():
-        print(f"{name:<28}  {slclass.valuetype:<20} {slclass.description:<100}")
+        safelists.append((name, slclass.valuetype, slclass.description))
+
+    print(
+        tabulate(
+            safelists, headers=("Name", "Value type", "Description"),
+            tablefmt="github"
+        )
+    )
+
 
 @main.command("csvdump")
 @click.argument("name", type=str)
@@ -107,16 +116,23 @@ def show_safelist(name):
     except safelist.SafelistError as e:
         exit_error(f"Error retrieving safelist: {e}")
 
+
+
     print(
         f"{'ID':<5} {'Value type':<12} {'regex':4} {'platform':<8} "
           f"{'value':<30} {'Description':<20} {'Source':30}"
     )
+    values = []
     for entry in entries:
-        print(
-            f"{entry.id:<5} {entry.valuetype:<12} {entry.regex:<4} "
-            f"{entry.platform:<8} {entry.value:<30} {entry.description:<20} "
-            f"{entry.source:<30}"
-        )
+        values.append((
+            entry.id, entry.valuetype, entry.regex, entry.platform,
+            entry.value, entry.description, entry.source
+        ))
+
+    headers = (
+        "ID", "Type", "Regex", "Platform", "Value", "Description", "Source"
+    )
+    print(tabulate(values, headers, tablefmt="github"))
 
 @main.command("add")
 @click.argument("name", type=str)

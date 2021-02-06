@@ -1,21 +1,17 @@
+# Copyright (C) 2020 - 2021 Cuckoo Foundation.
+# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
+# See the file 'docs/LICENSE' for copying permission.
+
 import os
+from pathlib import Path
 
 from cuckoo.common.storage import Paths
 
-from django.utils.crypto import get_random_string
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-# The current value is meant for development and changes every time the
-# project is started.
-SECRET_KEY = get_random_string(
-    50, "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
-)
 
 # It seems this value is not used by Django at all. If a file upload limit
 # is required, it must currently be solved with a server such as nginx.
@@ -33,13 +29,11 @@ FILE_UPLOAD_HANDLERS = [
 # Application definition
 
 INSTALLED_APPS = [
-    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    "rest_framework"
+    'django.contrib.staticfiles'
 ]
 
 MIDDLEWARE = [
@@ -81,25 +75,6 @@ WSGI_APPLICATION = 'cuckoo.web.web.wsgi.application'
 
 DATABASES = {}
 
-# Password validation
-# https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -120,11 +95,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Additional locations of static files
-STATICFILES_DIRS = (
-    os.path.join(os.getcwd(), "static"),
-)
+STATICFILES_DIRS = (Path(os.getcwd()).joinpath("static"),)
 
-cwd_local_settings = Paths.web("web_local_settings.py")
-if os.path.isfile(cwd_local_settings):
+cwd_local_settings = Path(Paths.web("web_local_settings.py"))
+if cwd_local_settings.is_file():
     with open(cwd_local_settings, "r") as fp:
         exec(fp.read(), globals(), locals())

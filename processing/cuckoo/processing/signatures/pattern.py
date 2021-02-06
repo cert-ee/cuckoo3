@@ -2,16 +2,13 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-
 import re
-
 import hyperscan
 import yaml
 
 from cuckoo.common.strictcontainer import StrictContainer
 
 from cuckoo.processing.signatures.signature import Levels
-
 
 class PatternSignatureError(Exception):
     pass
@@ -80,6 +77,9 @@ class TriggerSafelist:
         else:
             key = eventkind
 
+        if not isinstance(regex, bytes):
+            regex = regex.encode()
+
         try:
             regex = re.compile(regex, _SAFELIST_PYREGEX_FLAGS)
         except re.error as e:
@@ -90,8 +90,18 @@ class TriggerSafelist:
         self._eventkind_regex.setdefault(key, []).append(regex)
 
     def should_ignore(self, matchctx):
+        if not self._eventkind_regex:
+            return False
+
+        matched_val = matchctx.matched_str
+        # TODO think of a more clean way to do this. Most values are
+        # strings, used regexes are loaded as bytes.
+        if isinstance(matched_val, str):
+            # Ignore decoding errors for now.
+            matched_val = matched_val.encode(errors="ignore")
+
         for regex in self._eventkind_regex.get(matchctx.kind, []):
-            if regex.match(matchctx.matched_str):
+            if regex.match(matched_val):
                 return True
 
         subtype = matchctx.subtype
@@ -100,11 +110,50 @@ class TriggerSafelist:
 
         kind_subtype = f"{matchctx.kind} {subtype}"
         for regex in self._eventkind_regex.get(kind_subtype, []):
-            if regex.match(matchctx.matched_str):
+            if regex.match(matched_val):
                 return True
 
         return False
 
+def _check_trigger(pattern_dict):
+    if not isinstance(pattern_dict, dict):
+        raise TypeError(
+            "Triggers and safelists must be dictionaries. "
+            f"Value {pattern_dict!r} is of type {type(pattern_dict)}"
+        )
+
+    for event_type, vals in pattern_dict.items():
+        if not isinstance(event_type, str):
+            raise TypeError(
+                "Event type must be a string. Event type "
+                f"{event_type!r} is {type(event_type)}"
+            )
+
+        if event_type == "safelist":
+            _check_trigger(vals)
+            continue
+
+        invalid = False
+        if isinstance(vals, str):
+            continue
+        elif isinstance(vals, list):
+            for val in vals:
+                if not isinstance(val, str):
+                    invalid = True
+                    vals = val
+                    break
+        else:
+            invalid = True
+
+        if not invalid:
+            continue
+
+        raise PatternSignatureError(
+            "The values of a trigger and safelist entries must be a "
+            f"list of strings or a single string. "
+            f"Entry: {event_type!r} with value {vals!r} is of "
+            f"type: {type(vals)}"
+        )
 
 class LoadedSignature(StrictContainer):
 
@@ -130,47 +179,40 @@ class LoadedSignature(StrictContainer):
             self.description = self.short_description
 
     def check_constraints(self):
-        def _check_trigger(pattern_dict):
-            if not isinstance(pattern_dict, dict):
-                raise TypeError(
-                    "Triggers and safelists must be dictionaries. "
-                    f"Value {pattern_dict!r} is of type {type(pattern_dict)}"
-                )
-
-            for event_type, vals in pattern_dict.items():
-                if not isinstance(event_type, str):
-                    raise TypeError(
-                        "Event type must be a string. Event type "
-                        f"{event_type!r} is {type(event_type)}"
-                    )
-
-                if event_type == "safelist":
-                    _check_trigger(vals)
-                    continue
-
-                invalid = False
-                if isinstance(vals, str):
-                    continue
-                elif isinstance(vals, list):
-                    for val in vals:
-                        if not isinstance(val, str):
-                            invalid = True
-                            vals = val
-                            break
-                else:
-                    invalid = True
-
-                if not invalid:
-                    continue
-
-                raise PatternSignatureError(
-                    "The values of a trigger and safelist entries must be a "
-                    f"list of strings or a single string. "
-                    f"Entry: {event_type!r} with value {vals!r} is of "
-                    f"type: {type(vals)}"
-                )
-
         for trigger in self.triggers:
+            _check_trigger(trigger)
+
+def _check_indicatorsdict(indicatorsdict):
+    if not isinstance(indicatorsdict, dict):
+        raise TypeError(
+            "Indicators must be a dictionary of name keys"
+        )
+
+    for key, indicatordict in indicatorsdict.items():
+        if not isinstance(indicatordict, dict):
+            raise TypeError(
+                f"Invalid indicator: {key!r}. Got a non-dictionary value. "
+                "Expected a dictionary with a 'triggers' key.\n"
+                "Each indicators entry must consist of name key, that has a "
+                "triggers key. The triggers key must contain one or more "
+                "'eventtype:valueslist' dictionaries"
+                f"\n\nGot: {type(indicatordict)}. "
+                f"Value: {indicatordict!r}"
+            )
+
+        triggers = indicatordict.get("triggers")
+        if not triggers:
+            raise KeyError(
+                f"Missing 'triggers' dictionary list for indicator {name!r}"
+            )
+
+        if not isinstance(triggers, list):
+            raise TypeError(
+                "The value of 'triggers' must be a list of dictionaries. "
+                f"Got {type(triggers)}. Values: {triggers!r}"
+            )
+
+        for trigger in triggers:
             _check_trigger(trigger)
 
 
@@ -402,6 +444,12 @@ class LoadedSignatures:
         as a list of triggers with a label. They can globally be used in
         signatures and other indicators."""
         for name, indicatordict in indicatorsdict.items():
+            if not isinstance(indicatordict, dict):
+                raise ValueError(
+                    f"Indicator triggers must be dictionaries. "
+                    f"Got {type(indicatordict)}. {indicatordict}."
+                )
+
             triggers = indicatordict.get("triggers")
             if not triggers:
                 raise KeyError(
@@ -490,14 +538,11 @@ class LoadedSignatures:
 
     def _load_sigfile_dict(self, sigfiledict):
         # Load indicators first, if there are any in this dictionary.
-        indicatordict = sigfiledict.get("indicators")
-        if indicatordict:
-            if not isinstance(indicatordict, dict):
-                raise TypeError(
-                    "Indicators must be a dictionary of indicators"
-                )
+        indicatorsdict = sigfiledict.get("indicators")
+        if indicatorsdict:
+            _check_indicatorsdict(indicatorsdict)
 
-            self._load_indicators(indicatordict)
+            self._load_indicators(indicatorsdict)
 
         sigsdict = sigfiledict.get("signatures")
         if not sigsdict:
@@ -511,7 +556,10 @@ class LoadedSignatures:
     def load_from_file(self, file_path):
         """Load a signature YAML file"""
         with open(file_path, "r") as fp:
-            sigfiledict = yaml.safe_load(fp)
+            try:
+                sigfiledict = yaml.safe_load(fp)
+            except yaml.YAMLError as e:
+                raise PatternSignatureError(f"YAML error: {e}")
 
         self._load_sigfile_dict(sigfiledict)
 

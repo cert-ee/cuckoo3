@@ -10,6 +10,7 @@ import random
 import shutil
 import string
 import uuid
+from tempfile import gettempdir
 from datetime import datetime
 
 from .packages import find_cuckoo_packages, get_cwdfiles_dir
@@ -21,6 +22,24 @@ class CWDNotSetError(Exception):
 
 class InvalidCWDError(Exception):
     pass
+
+_allowed_deletion_dirs = set()
+
+def _add_deletion_dir(path):
+    realpath = os.path.realpath(path)
+    if realpath == "/":
+        raise OSError("Root path deletion not allowed")
+
+    _allowed_deletion_dirs.add(realpath)
+
+def _remove_deletion_dir(path):
+    _allowed_deletion_dirs.discard(os.path.realpath(path))
+
+def _deletion_allowed(path):
+    return os.path.realpath(path).startswith(tuple(_allowed_deletion_dirs))
+
+if not _allowed_deletion_dirs:
+    _add_deletion_dir(gettempdir())
 
 class _CuckooCWD:
 
@@ -64,8 +83,12 @@ class _CuckooCWD:
                 f"required. One or more permissions is missing on {path}."
             )
 
+        if self._dir:
+            _remove_deletion_dir(self._dir)
+
         self._dir = path
         os.environ["CUCKOO_CWD"] = str(path)
+        _add_deletion_dir(self._dir)
 
     @staticmethod
     def create(path):
@@ -76,7 +99,8 @@ class _CuckooCWD:
         for dirname in ("storage", "conf", "operational", "log"):
             os.makedirs(os.path.join(path, dirname))
 
-        for dirname in ("analyses", "binaries", "untracked"):
+        for dirname in ("analyses", "binaries", "untracked",
+                        "importables", "exported"):
             os.mkdir(os.path.join(path, "storage", dirname))
 
         for dirname in ("sockets", "generated"):
@@ -110,17 +134,30 @@ cuckoocwd = _CuckooCWD()
 
 _ANALYSIS_ID_LEN = 6
 
-def _split_analysis_id(analysis_id):
+def split_analysis_id(analysis_id):
         date_analysis = analysis_id.split("-", 1)
         if len(date_analysis) != 2:
             raise ValueError(
-                "Invalid analysis ID given. Format must be YYYYMMDD-analysis."
+                "Invalid analysis ID given. Format must be "
+                f"YYYYMMDD-identifier. Given: {analysis_id}"
+            )
+
+        if len(date_analysis[1]) != _ANALYSIS_ID_LEN:
+            raise ValueError(
+                f"Invalid identifier length. Must be {_ANALYSIS_ID_LEN} "
+                f"characters. Given: {date_analysis[1]}"
             )
 
         if not date_analysis[1].isalnum():
             raise ValueError(
                 "Invalid analysis ID given. ID part can only contain "
-                "A-Z and 0-9."
+                f"A-Z and 0-9. Given {date_analysis[1]}"
+            )
+
+        if len(date_analysis[0]) != len("YYYYMMDD"):
+            raise ValueError(
+                "Date part must be in YYYYMMDD format. "
+                f"Given: {date_analysis[0]}"
             )
 
         return date_analysis
@@ -130,11 +167,17 @@ def split_task_id(task_id):
     analysis_id_tasknumber = task_id.split("_", 1)
     if len(analysis_id_tasknumber) != 2:
         raise ValueError(
-            "Invalid task ID given. Format must be analysisid_tasknumber"
+            f"Invalid task ID given. Format must be "
+            f"analysisid_tasknumber. Not: {task_id}"
         )
 
-    date, analysis = _split_analysis_id(analysis_id_tasknumber[0])
+    date, analysis = split_analysis_id(analysis_id_tasknumber[0])
     return date, analysis, analysis_id_tasknumber[1]
+
+def task_to_analysis_id(task_id):
+    date, analysis, _ = split_task_id(task_id)
+    return f"{date}-{analysis}"
+
 
 def make_task_id(analysis_id, task_number):
     return f"{analysis_id}_{task_number}"
@@ -143,7 +186,7 @@ class AnalysisPaths:
 
     @staticmethod
     def _path(analysis_id, *args):
-        date, analysis = _split_analysis_id(analysis_id)
+        date, analysis = split_analysis_id(analysis_id)
         return os.path.join(
             cuckoocwd.root, "storage", "analyses", date, analysis, *args
         )
@@ -191,6 +234,10 @@ class AnalysisPaths:
     @staticmethod
     def analyses(*args):
         return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+
+    @staticmethod
+    def day(day):
+        return AnalysisPaths.analyses(day)
 
 class TaskPaths:
 
@@ -281,6 +328,22 @@ class Paths(object):
         return os.path.join(cuckoocwd.root, "storage", "untracked")
 
     @staticmethod
+    def importables(filename=None):
+        if filename:
+            return os.path.join(
+                cuckoocwd.root, "storage", "importables", filename
+            )
+        return os.path.join(cuckoocwd.root, "storage", "importables")
+
+    @staticmethod
+    def exported(filename=None):
+        if filename:
+            return os.path.join(
+                cuckoocwd.root, "storage", "exported", filename
+            )
+        return os.path.join(cuckoocwd.root, "storage", "exported")
+
+    @staticmethod
     def binaries():
         return os.path.join(cuckoocwd.root, "storage", "binaries")
 
@@ -366,33 +429,40 @@ def cwd(*args, **kwargs):
     return os.path.join(cuckoocwd.root, *args)
 
 
-def make_analysis_folder():
-    """Creates day dir, analysis dir, and returns the analysis id and path
-    to its folder"""
-    today = datetime.utcnow().date().strftime("%Y%m%d")
-
+def create_analysis_folder(day, identifier):
     try:
-        os.mkdir(cwd(day=today))
+        os.mkdir(cwd(day=day))
     except FileExistsError:
         # Don't handle, as this means it was already created before or at the
         # same time of the mkdir call.
         pass
+
+    analysis = f"{day}-{identifier}"
+    analysis_path = AnalysisPaths.path(analysis)
+    os.mkdir(analysis_path)
+
+    return analysis, analysis_path
+
+
+def todays_daydir():
+    return datetime.utcnow().date().strftime("%Y%m%d")
+
+def make_analysis_folder():
+    """Generates today's day dir and a unique analysis id and its dir and
+    returns the analysis id and path to its directory"""
+    today = todays_daydir()
 
     identifier = ''.join(
         random.choices(
             string.ascii_uppercase + string.digits, k=_ANALYSIS_ID_LEN
         )
     )
-    analysis = f"{today}-{identifier}"
-    analysis_path = cwd(analysis=analysis)
     try:
-        os.mkdir(analysis_path)
+        return create_analysis_folder(today, identifier)
     except FileExistsError:
         return make_analysis_folder()
 
     # TODO create potential subdirs
-
-    return analysis, analysis_path
 
 
 def safe_copyfile(source, destination):
@@ -414,6 +484,25 @@ def safe_copyfile(source, destination):
 
     try:
         open(destination, "x").close()
+        os.replace(tmp_path, destination)
+    except (OSError, FileExistsError):
+        os.unlink(tmp_path)
+        raise
+
+def move_file(source, destination):
+    if os.path.exists(destination):
+        raise FileExistsError(f"Destination file exists: {destination}")
+
+    dst_dir = os.path.dirname(destination)
+    if shutil.disk_usage(dst_dir).free <= os.path.getsize(source):
+        raise IOError("Destination does not have enough space to store source")
+
+    tmp_path = os.path.join(dst_dir, f".{uuid.uuid4()}")
+
+    # Move file
+    os.rename(source, tmp_path)
+
+    try:
         os.replace(tmp_path, destination)
     except (OSError, FileExistsError):
         os.unlink(tmp_path)
@@ -739,3 +828,30 @@ def enumerate_files(path):
 
                 if os.path.isfile(filepath):
                     yield filepath
+
+def delete_dirtree(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    shutil.rmtree(path, ignore_errors=False)
+
+def delete_dir(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    os.rmdir(path)
+
+def delete_file(path):
+    if not _deletion_allowed(path):
+        raise OSError(
+            f"Given path {path} is not a part of directories that Cuckoo is "
+            f"allowed to delete from: {_allowed_deletion_dirs}"
+        )
+
+    os.unlink(path)

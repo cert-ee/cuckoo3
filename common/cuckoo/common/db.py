@@ -29,6 +29,7 @@ class Analysis(CuckooDBDTable):
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     priority = sqlalchemy.Column(sqlalchemy.Integer, default=1, nullable=False)
     score = sqlalchemy.Column(sqlalchemy.Integer, default=0, nullable=False)
+    location = sqlalchemy.Column(sqlalchemy.String(32), nullable=True)
     target = relationship("Target", uselist=False, lazy="selectin")
 
     def __repr__(self):

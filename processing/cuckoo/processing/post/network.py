@@ -25,8 +25,10 @@ class Pcapreader(Processor):
     def init_once(cls):
         cls.ip_sl = safelist.IP()
         cls.domain_sl = safelist.Domain()
+        cls.dnsserver_sl = safelist.DNSServerIP()
         cls.ip_sl.load_safelist()
         cls.domain_sl.load_safelist()
+        cls.dnsserver_sl.load_safelist()
 
     def init(self):
         self.ip_sl.clear_temp()
@@ -131,6 +133,10 @@ class Pcapreader(Processor):
 
             host = flow[host_index]
             if host == self.ctx.machine.ip:
+                continue
+
+            # If the DNS server is safelisted, do not add it to the hosts list.
+            if proto == "dns" and self.dnsserver_sl.is_safelisted(host):
                 continue
 
             results["host"].add(host)

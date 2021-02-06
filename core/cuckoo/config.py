@@ -50,6 +50,17 @@ typeloaders = {
         },
         "state_control": {
             "cancel_unidentified": config.Boolean(default_val=False)
+        },
+        "processing": {
+            "worker_amount": {
+                "identification": config.Int(default_val=1, min_value=1),
+                "pre": config.Int(default_val=1, min_value=1),
+                "post": config.Int(default_val=1, min_value=1),
+            }
+        },
+        "remote_storage": {
+            "api_url": config.HTTPUrl(allow_empty=True),
+            "api_key": config.String(sensitive=True, allow_empty=True)
         }
 
     },

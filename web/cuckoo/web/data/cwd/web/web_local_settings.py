@@ -2,14 +2,26 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-# Override default secret key stored in $CWD/web/.secret_key
-# Make this unique, and don't share it with anybody.
-# SECRET_KEY = "YOUR_RANDOM_KEY"
+from cuckoo.common.storage import Paths
+
+from django.utils.crypto import get_random_string
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = "en-us"
 
+# Override default secret key stored in $CWD/web/.apisecret
+# Make this unique, and don't share it with anybody.
+# SECURITY WARNING: keep the secret key used in production secret!
+secret_path = Path(Paths.web(".websecret"))
+if not secret_path.exists():
+    secret_path.write_text(
+        get_random_string(
+            50, "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
+        )
+    )
+
+SECRET_KEY = secret_path.read_text()
 ADMINS = (
     # ("Your Name", "your_email@example.com"),
 )
@@ -17,8 +29,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 # Allow verbose debug error message in case of application fault.
-# It's strongly suggested to set it to False if you are serving the
-# web application from a web server front-end (i.e. Apache).
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 DEBUG404 = False
 

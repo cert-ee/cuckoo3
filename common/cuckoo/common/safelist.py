@@ -442,6 +442,12 @@ class IP(Safelist):
         except ValueError as e:
             raise SafelistError(f"Invalid IPv4 network {value}. Error: {e}")
 
+class DNSServerIP(IP):
+
+    name = "dns_server"
+    description = "IPs of DNS servers that should not be considered a " \
+                  "contacted host"
+
 class DomainMisp(Domain):
 
     name = "domain_misp"
@@ -472,11 +478,13 @@ class URLIntelMQ(SimpleSafelist):
 
     name = "url_intelmq"
     description = "URLs that should not be reported to IntelMQ"
+    valuetype = "url"
 
 
 class SafelistName:
     ip_global = IP.name
     domain_global = Domain.name
+    ip_dnsserver = DNSServerIP.name
     ip_misp = IPMisp.name
     domain_misp = DomainMisp.name
     url_misp = URLMisp.name
@@ -488,6 +496,7 @@ class SafelistName:
 name_safelist = {
     SafelistName.ip_global: IP,
     SafelistName.domain_global: Domain,
+    SafelistName.ip_dnsserver: DNSServerIP,
     SafelistName.ip_misp: IPMisp,
     SafelistName.domain_misp: DomainMisp,
     SafelistName.url_misp: URLMisp,

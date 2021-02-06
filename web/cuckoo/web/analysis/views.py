@@ -8,15 +8,19 @@ from django.http import HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import render
 
 from cuckoo.common.analyses import States
-from cuckoo.common.storage import AnalysisPaths
-from cuckoo.common.strictcontainer import Analysis, Pre
+from cuckoo.common.result import (
+    retriever, Results, ResultDoesNotExistError, InvalidResultDataError
+)
 
 def index(request, analysis_id):
     try:
-        analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
-    except FileNotFoundError:
+        result = retriever.get_analysis(
+            analysis_id, include=[Results.ANALYSIS, Results.PRE]
+        )
+        analysis = result.analysis
+    except ResultDoesNotExistError:
         return HttpResponseNotFound()
-    except (ValueError, KeyError, TypeError) as e:
+    except InvalidResultDataError as e:
         return HttpResponseServerError(str(e))
 
     if analysis.state == States.FATAL_ERROR:
@@ -29,10 +33,10 @@ def index(request, analysis_id):
         )
 
     try:
-        pre = Pre.from_file(AnalysisPaths.prejson(analysis_id))
-    except FileNotFoundError:
+        pre = result.pre
+    except ResultDoesNotExistError:
         return HttpResponseNotFound()
-    except (ValueError, KeyError, TypeError) as e:
+    except InvalidResultDataError as e:
         return HttpResponseServerError(str(e))
 
     return render(
@@ -46,11 +50,14 @@ def index(request, analysis_id):
 
 def static(request, analysis_id):
     try:
-        analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
-        pre = Pre.from_file(AnalysisPaths.prejson(analysis_id))
-    except FileNotFoundError:
+        result = retriever.get_analysis(
+            analysis_id, include=[Results.ANALYSIS, Results.PRE]
+        )
+        analysis = result.analysis
+        pre = result.pre
+    except ResultDoesNotExistError:
         return HttpResponseNotFound()
-    except (ValueError, KeyError, TypeError) as e:
+    except InvalidResultDataError as e:
         return HttpResponseServerError(str(e))
 
     return render(

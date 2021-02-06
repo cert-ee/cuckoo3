@@ -65,7 +65,8 @@ class PatternFinder(EventConsumer):
             except PatternSignatureError as e:
                 raise PluginError(
                     f"Failed to compile signatures for platform: {platform}. "
-                    f"Error: {e}"
+                    f"Invalid Hyperscan regex in database. "
+                    f"Hyperscan error: {e}"
                 )
 
     def init(self):

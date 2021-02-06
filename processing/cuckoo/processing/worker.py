@@ -368,6 +368,7 @@ class PostProcessingRunner:
             self.taskctx.log.exception(
                 "Fatal error during event usage", error=e
             )
+            self.taskctx.errtracker.fatal_exception(e)
             self.taskctx.set_failed()
             return
         finally:

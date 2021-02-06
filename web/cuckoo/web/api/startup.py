@@ -5,7 +5,10 @@
 import os
 import sys
 
+import django
 from django.core.management import execute_from_command_line
+from django.db.migrations.executor import MigrationExecutor
+from django.db import connections, DEFAULT_DB_ALIAS
 
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error
@@ -15,13 +18,34 @@ from cuckoo.common.startup import (
 )
 from cuckoo.common.storage import cuckoocwd
 from cuckoo.common.submit import load_machines_dump
+from cuckoo.common.result import retriever
+from cuckoo.common.clients import APIClient
+from cuckoo.common.config import cfg
 
 import cuckoo.web.api
+
+def load_app():
+    set_path_settings()
+    django.setup()
+
+def _djangodb_migrations_required():
+    connection = connections[DEFAULT_DB_ALIAS]
+    connection.prepare_database()
+    executor = MigrationExecutor(connection)
+    targets = executor.loader.graph.leaf_nodes()
+    return executor.migration_plan(targets)
 
 def set_path_settings():
     os.chdir(cuckoo.web.api.__path__[0])
     sys.path.insert(0, cuckoo.web.api.__path__[0])
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.api.settings")
+
+def _init_remote_storage():
+    api = APIClient(
+        cfg("web.yaml", "remote_storage", "api_url", subpkg="web"),
+        cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
+    )
+    retriever.set_api_client(api)
 
 def init_api(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
@@ -32,20 +56,29 @@ def init_api(cuckoo_cwd, loglevel, logfile=""):
         )
 
     cuckoocwd.set(cuckoo_cwd)
+    load_app()
 
     # Ensure any existing signal handlers for SIGINT/TERM are called after
     # any Cuckoo specific shutdown handlers.
     shutdown.set_call_original_handlers(call_original=True)
+    if _djangodb_migrations_required():
+        exit_error(
+            "Django database migrations required. "
+            "Run 'cuckoo api djangocommand migrate' to perform the migration."
+        )
+
     try:
         init_global_logging(loglevel, logfile, warningsonly=["asyncio"])
         load_machines_dump(default={})
         load_configurations()
         init_database()
+        if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
+            _init_remote_storage()
         init_elasticsearch(create_missing_indices=False)
     except StartupError as e:
         exit_error(f"Failed to initialize Cuckoo API. {e}")
 
-    set_path_settings()
+
 
 def start_api(host="127.0.0.1", port=8000, autoreload=False):
     args = ("cuckoo", "runserver", f"{host}:{port}")

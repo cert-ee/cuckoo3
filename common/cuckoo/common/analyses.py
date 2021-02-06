@@ -8,16 +8,19 @@ import os
 from . import db, machines, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
-from .storage import AnalysisPaths
-from .strictcontainer import (
-    Settings as _Settings, Analysis, Errors
+from .storage import (
+    AnalysisPaths, delete_dirtree, delete_dir, split_analysis_id, todays_daydir
 )
+from .strictcontainer import Settings as _Settings, Analysis, Errors
 from .utils import parse_bool
 
 log = CuckooGlobalLogger(__name__)
 
 class AnalysisError(Exception):
     pass
+
+class AnalysisLocation:
+    REMOTE = "remote"
 
 class HumanStates:
     UNTRACKED = "Untracked"
@@ -170,6 +173,66 @@ def track_analyses(analysis_ids):
 
     return tracked
 
+def db_set_remote(analyses):
+    remote_analyses = []
+    for analysis_id in analyses:
+
+        # Ignore if not a valid analysis id
+        try:
+            split_analysis_id(analysis_id)
+        except ValueError:
+            continue
+
+        remote_analyses.append({
+            "id": analysis_id,
+            "location": AnalysisLocation.REMOTE
+        })
+
+    ses = db.dbms.session()
+    try:
+        ses.bulk_update_mappings(db.Analysis, remote_analyses)
+        ses.commit()
+    finally:
+        ses.close()
+
+
+def track_imported(analysis):
+    if analysis.state != States.FINISHED:
+        raise AnalysisError(
+            f"Imported analyses can only have the finished state."
+        )
+
+    target_dict = {
+        "analysis_id": analysis.id,
+        "category": analysis.category
+
+    }
+    if analysis.category == targets.TargetCategories.URL:
+        target_dict["target"] = analysis.target.url
+    elif analysis.category == targets.TargetCategories.FILE:
+        target_dict.update({
+            "target": analysis.target.filename,
+            "media_type": analysis.target.media_type,
+            "md5": analysis.target.md5,
+            "sha1": analysis.target.sha1,
+            "sha256": analysis.target.sha256,
+            "sha512": ""
+        })
+
+    db_target = db.Target(**target_dict)
+    db_analysis = db.Analysis(
+        id=analysis.id, kind=Kinds.STANDARD, created_on=analysis.created_on,
+        priority=analysis.settings.priority, state=analysis.state,
+        score=analysis.score,
+    )
+    ses = db.dbms.session()
+    try:
+        ses.add(db_analysis)
+        ses.add(db_target)
+        ses.commit()
+    finally:
+        ses.close()
+
 def merge_target_settings(analysis, target):
     if analysis.settings.machines:
         return
@@ -246,7 +309,7 @@ def get_state(analysis_id):
     try:
         analysis = ses.query(
             db.Analysis.state
-        ).filter_by(id=analysis_id).one()
+        ).filter_by(id=analysis_id).first()
 
         if not analysis:
             return None
@@ -284,10 +347,23 @@ def get_filetree_dict(analysis_id):
     finally:
         fp.close()
 
-def list_analyses(limit=None, offset=None, desc=True):
+def list_analyses(limit=None, offset=None, desc=True,
+                  older_than=None, state=None, remote=None):
     ses = db.dbms.session()
     try:
         query = ses.query(db.Analysis)
+
+        if older_than:
+            query = query.filter(db.Analysis.created_on < older_than)
+
+        if remote is not None:
+            location = None
+            if remote:
+                location = AnalysisLocation.REMOTE
+            query = query.filter_by(location=location)
+
+        if state:
+            query = query.filter_by(state=state)
 
         if desc:
             query = query.order_by(db.Analysis.created_on.desc())
@@ -342,7 +418,19 @@ def get_fatal_errors(analysis_id):
 def db_find_state(state):
     ses = db.dbms.session()
     try:
-        return ses.query(db.Analysis).filter_by(state=state)
+        return ses.query(db.Analysis).filter_by(state=state).all()
+    finally:
+        ses.close()
+
+def db_find_location(analysis_id):
+    ses = db.dbms.session()
+    try:
+        analysis = ses.query(
+            db.Analysis.location
+        ).filter_by(id=analysis_id).first()
+        if not analysis:
+            return None
+        return analysis.location
     finally:
         ses.close()
 
@@ -381,3 +469,16 @@ def write_changes(analysis):
 
     if update_target:
         targets.update_target_row(analysis, analysis.target)
+
+
+def delete_analysis_disk(analysis_id):
+    daypart, _ = split_analysis_id(analysis_id)
+    delete_dirtree(AnalysisPaths.path(analysis_id))
+
+    # If the daydir is empty and it is not today, delete it.
+    if daypart == todays_daydir():
+        return
+
+    daydir = AnalysisPaths.day(daypart)
+    if len(os.listdir(daydir)) < 1:
+        delete_dir(daydir)

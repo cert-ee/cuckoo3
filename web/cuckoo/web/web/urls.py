@@ -22,4 +22,5 @@ urlpatterns = [
     path("submit/", include("cuckoo.web.submit.urls")),
     path("search/", include("cuckoo.web.search.urls")),
     path("api/", include("cuckoo.web.uiapi.urls")),
+    path("compare/", include("cuckoo.web.compare.urls"))
 ]

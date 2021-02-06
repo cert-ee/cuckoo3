@@ -39,16 +39,6 @@ def main(ctx, cwd, debug, quiet):
         )
 
     cuckoocwd.set(cwd)
-    if not os.path.exists(Paths.monitor()):
-        if ctx.invoked_subcommand == "getmonitor":
-            return
-
-        exit_error(
-            "No monitor and stager binaries are present yet. "
-            "Use 'cuckoo getmonitor <zip path>' to unpack and use monitor "
-            "and stagers from a Cuckoo monitor zip."
-        )
-
     if quiet:
         ctx.loglevel = logging.WARNING
     elif debug:
@@ -58,6 +48,13 @@ def main(ctx, cwd, debug, quiet):
 
     if ctx.invoked_subcommand:
         return
+
+    if not os.path.exists(Paths.monitor()):
+        exit_error(
+            "No monitor and stager binaries are present yet. "
+            "Use 'cuckoo getmonitor <zip path>' to unpack and use monitor "
+            "and stagers from a Cuckoo monitor zip."
+        )
 
     from cuckoo.common.startup import StartupError
     from cuckoo.common.shutdown import (
@@ -228,8 +225,8 @@ def web(ctx, host, port, autoreload):
     )
     start_web(host, port, autoreload=autoreload)
 
-@web.command("djangocommand")
-@click.argument("django_args", nargs=-1)
+@web.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
+@click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def djangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
@@ -263,8 +260,38 @@ def api(ctx, host, port, autoreload):
     )
     start_api(host, port, autoreload=autoreload)
 
-@web.command("djangocommand")
-@click.argument("django_args", nargs=-1)
+@api.command("token")
+@click.option("-l", "--list", is_flag=True, help="List all current API tokens and their owners")
+@click.option("-c", "--create", type=str, help="Create a new API token for a given owner name")
+@click.option("--admin", is_flag=True, help="Grant admin priviles to API token being created")
+@click.option("-d", "--delete", type=int, help="Delete the specified token by its token ID")
+@click.option("--clear", is_flag=True, help="Delete all API tokens")
+def apitoken(list, create, admin, delete, clear):
+    """List, create, and delete API tokens."""
+    from cuckoo.web.api.startup import load_app
+    load_app()
+    from cuckoo.web.api import apikey
+    if list:
+        apikey.print_api_keys()
+    elif create:
+        try:
+            key, identifier = apikey.create_key(create, admin)
+            print_info(f"Created key {key} with ID: {identifier}")
+        except apikey.APIKeyError as e:
+            exit_error(f"API token creation failed: {e}")
+    elif delete:
+        if apikey.delete_key(delete):
+            print_info(f"Deleted key with ID {delete}")
+    elif clear:
+        if click.confirm("Delete all API tokens?"):
+            count = apikey.delete_all()
+            print_info(f"Deleted {count} API tokens")
+    else:
+        with click.Context(apitoken) as ctx:
+            print(apitoken.get_help(ctx))
+
+@api.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
+@click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def djangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
@@ -281,3 +308,28 @@ def djangocommand(ctx, django_args):
         set_path_settings()
 
     djangocommands(*django_args)
+
+@main.command()
+@click.pass_context
+def importmode(ctx):
+    """Start the Cuckoo import controller."""
+    if ctx.invoked_subcommand:
+        return
+
+    from cuckoo.common.startup import StartupError
+    from cuckoo.common.shutdown import (
+        register_shutdown, call_registered_shutdowns
+    )
+    from .startup import start_importmode
+
+    def _stopmsg():
+        print("Stopping import mode..")
+
+    register_shutdown(_stopmsg, order=1)
+
+    try:
+        start_importmode(ctx.parent.loglevel)
+    except StartupError as e:
+        exit_error(f"Failure during import mode startup: {e}")
+    finally:
+        call_registered_shutdowns()

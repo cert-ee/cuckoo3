@@ -56,7 +56,7 @@ def load_machines_dump(default=None):
     before being able to create new submissions."""
     dump_path = Path(Paths.machinestates())
     if not dump_path.is_file():
-        if default:
+        if default is not None:
             set_machines_dump(default)
             return
 

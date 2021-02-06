@@ -15,6 +15,9 @@ from cuckoo.common.startup import (
 )
 from cuckoo.common.storage import cuckoocwd
 from cuckoo.common.submit import load_machines_dump
+from cuckoo.common.result import retriever
+from cuckoo.common.clients import APIClient
+from cuckoo.common.config import cfg
 
 import cuckoo.web
 
@@ -22,6 +25,13 @@ def set_path_settings():
     os.chdir(cuckoo.web.__path__[0])
     sys.path.insert(0, cuckoo.web.__path__[0])
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.web.settings")
+
+def _init_remote_storage():
+    api = APIClient(
+        cfg("web.yaml", "remote_storage", "api_url", subpkg="web"),
+        cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
+    )
+    retriever.set_api_client(api)
 
 def init_web(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
@@ -41,6 +51,8 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
         load_machines_dump(default={})
         load_configurations()
         init_database()
+        if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
+            _init_remote_storage()
         init_elasticsearch(create_missing_indices=False)
     except StartupError as e:
         exit_error(f"Failed to initialize Cuckoo web. {e}")

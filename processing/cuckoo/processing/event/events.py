@@ -2,6 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import base64
+
 class Kinds:
     FILE = "file"
     PROCESS = "process"
@@ -278,14 +280,25 @@ class Registry(NormalizedEvent):
             self.path_normalized, self.path, self, self.kind,
             event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action)
         )
-        # Don't scan binary set value events since pattern scans values
-        # must be strings.
-        if self.action == RegistryActions.SET_VALUE and \
-                self.valuetype != RegistryValueTypes.BINARY:
-            strval = str(self.value)
+
+        if self.action == RegistryActions.SET_VALUE:
+            value = None
+            humanval = None
+            # Cast ints to strings, as the scan engine wants strings or bytes
+            if self.valuetype == RegistryValueTypes.INTEGER:
+                value = str(self.value)
+                humanval = value
+
+            # Encode the value that will be presented with base64, so it
+            # can be used in a JSON report and the original value can be
+            # decoded if needed.
+            if self.valuetype == RegistryValueTypes.BINARY:
+                humanval = base64.b64encode(self.value).decode()
+
             pattern_scanner.scan(
-                strval, strval, self, self.kind,
-                event_subtype="value"
+                value if value is not None else self.value,
+                humanval if humanval is not None else self.value,
+                self, self.kind, event_subtype="value"
             )
 
 
