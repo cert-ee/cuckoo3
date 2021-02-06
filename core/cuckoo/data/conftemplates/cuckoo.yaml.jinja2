@@ -48,3 +48,22 @@ platform:
 state_control:
   # Cancel an analysis if the file was not identified during the identification stage.
   cancel_unidentified: {{ state_control.cancel_unidentified }}
+
+processing:
+  # Processing workers are the dedicated processes that perform the processing
+  # of submitted target and collected data.
+  worker_amount:
+    # Identification is responsible for unpacking and identifying a submitted target.
+    identification: {{ processing.worker_amount.identification }}
+    # Pre workers are responsible for all pre-processing and more extensive static analysis.
+    # that is performed before tasks are created.
+    pre: {{ processing.worker_amount.pre }}
+    # Post workers are responsible for the processing of data collected during each task.
+    post: {{ processing.worker_amount.post }}
+
+remote_storage:
+  api_url: {{ remote_storage.api_url }}
+
+  # API key needs to have administrator privileges to export to
+  # a remote Cuckoo.
+  api_key: {{ remote_storage.api_key }}

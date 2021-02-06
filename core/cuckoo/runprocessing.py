@@ -271,12 +271,6 @@ class _ProcessingJob:
 
 class ProcessingWorkerHandler(threading.Thread):
 
-    MAX_WORKERS = {
-        "identification": 2,
-        "pre": 2,
-        "post": 2
-    }
-
     def __init__(self):
         super().__init__()
         self.do_run = True
@@ -293,6 +287,12 @@ class ProcessingWorkerHandler(threading.Thread):
         self._workers_started = False
         self._workers_fail = False
 
+        self._max_workers = {
+            "identification": 1,
+            "pre": 1,
+            "post": 1
+        }
+
     def identify(self, analysis_id):
         self.queues["identification"].append(_ProcessingJob(
             "identification", analysis_id
@@ -308,9 +308,16 @@ class ProcessingWorkerHandler(threading.Thread):
             "post", analysis_id, task_id
         ))
 
+    def set_worker_amount(self, identification=1, pre=1, post=1):
+        self._max_workers = {
+            "identification": identification,
+            "pre": pre,
+            "post": post
+        }
+
     def run(self):
         log.debug("Starting processing workers")
-        for worktype, max_workers in self.MAX_WORKERS.items():
+        for worktype, max_workers in self._max_workers.items():
             for worker_number in range(max_workers):
                 self.start_worker(f"{worktype}{worker_number}", worktype)
 
@@ -340,7 +347,7 @@ class ProcessingWorkerHandler(threading.Thread):
         if not self._workers_started:
             return False
 
-        max_workers = sum(self.MAX_WORKERS.values())
+        max_workers = sum(self._max_workers.values())
         workers = list(self.connected_workers.values()) + self.unready_workers
         for worker in workers:
             if not worker["state"] or worker["state"] == States.SETUP:

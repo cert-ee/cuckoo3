@@ -76,6 +76,15 @@ def start_processing_handler():
     started.processing_handler = ProcessingWorkerHandler()
     started.processing_handler.daemon = True
     shutdown.register_shutdown(started.processing_handler.stop)
+
+    started.processing_handler.set_worker_amount(
+        identification=config.cfg(
+            "cuckoo.yaml", "processing", "worker_amount", "identification"
+        ),
+        pre=config.cfg("cuckoo.yaml", "processing", "worker_amount", "pre"),
+        post=config.cfg("cuckoo.yaml", "processing", "worker_amount", "post")
+    )
+
     started.processing_handler.start()
 
     while started.processing_handler.do_run:
@@ -101,6 +110,10 @@ def start_statecontroller():
 
     # Check if any untracked analyses exist after starting
     started.state_controller.track_new_analyses()
+
+    # Check if there are any analyses that have been exported and for
+    # which their location has not been updated yet.
+    started.state_controller.set_remote()
 
     state_th = Thread(target=started.state_controller.start)
     state_th.start()
@@ -279,7 +292,6 @@ def start_importcontroller():
     import_controller.import_importables()
     import_controller.start()
 
-
 def start_importmode(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
@@ -288,9 +300,8 @@ def start_importmode(loglevel):
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
-    from .control import ImportController
 
-    # Initialize globing logging to cuckoo.log
+    # Initialize globing logging to importmode.log
     init_global_logging(loglevel, Paths.log("importmode.log"))
 
     log.info("Starting import mode")
