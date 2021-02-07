@@ -8,7 +8,6 @@
     <ul>
       <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Overview</a></li>
       <li><a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a></li>
-      <li><a class="{% if report_page == 'compare' %}is-active{% endif %}" href="{{ url('Analysis/compare', args=[analysis_id]) }}">Compare</a></li>
     </ul>
     {% if analysis %}
       <p class="label">Tasks</p>

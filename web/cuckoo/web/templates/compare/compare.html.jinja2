@@ -1,10 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html.jinja2" %}
+{% set active_page = "compare" %}
+{% set title = "Compare tasks" %}
 
-</body>
-</html>
+{% from 'macros.html.jinja2' import color_class, ui_box %}
+
+{% block page_script %}
+  <script src="{{ static('js/analysis.compare.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="container is-portal-view">
+  <div class="columns is-divided is-vtop">
+    <section class="column has-padding">
+      {% call ui_box(title="Compare", has_padding=False, collapsible=False) %}
+        <div class="has-padding no-padding-bottom">
+          <p>The compare tool allows to compare multiple tasks in their behavior and triggered signatures.</p>
+        </div>
+        <table class="table has-border no-border-x">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="is-medium">
+                <div class="field-block">
+                  <div class="control is-select">
+                    <select class="input is-rounded" id="task1">
+                      <option value="{{ lefttask.task.id }}" selected>{{ lefttask.task.id }}</option>
+                    </select>
+                  </div>
+                </div>
+              </th>
+              <th class="is-medium">
+                <div class="field-block">
+                  <div class="control is-select">
+                    <select class="input" id="task2">
+                      <option value="{{ righttask.task.id }}" selected>{{ righttask.task.id }}</option>
+                    </select>
+                  </div>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if comparison.signatures|length %}
+              <tr class="separator is-beveled">
+                <td class="has-text-small has-text-left" colspan="3">Signatures:</td>
+              </tr>
+              {% for sig in comparison.signatures %}
+                <tr>
+                  <td>
+                    <strong>{{ sig.value }}</strong>
+                    {% if sig.description %}
+                      <p class="no-margin-bottom has-text-small">{{ sig.description }}</p>
+                    {% endif %}
+                  </td>
+                  {% for v in sig.tasks.values() %}
+                    <td class="has-text-center">
+                      <span class="icon is-big has-text-weight-heavy">
+                        {% if v == True %}
+                          <span>&check;</span>
+                        {% else %}
+                          <span>&times;</span>
+                        {% endif %}
+                      </span>
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            {% endif %}
+            {% if comparison.family|length %}
+              <tr class="separator is-beveled">
+                <td class="has-text-small has-text-left" colspan="3">Family:</td>
+              </tr>
+              {% for fam in comparison.family %}
+                <td>
+                  <strong>{{ fam.value }}</strong>
+                  {% if fam.description %}
+                    <p class="no-margin-bottom has-text-small">{{ fam.description }}</p>
+                  {% endif %}
+                </td>
+                {% for v in fam.tasks.values() %}
+                  <td class="has-text-center">
+                    <span class="icon is-big has-text-weight-heavy">
+                      {% if v == True %}
+                        <span>&check;</span>
+                      {% else %}
+                        <span>&times;</span>
+                      {% endif %}
+                    </span>
+                  </td>
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      {% endcall %}
+    </section>
+  </div>
+</div>
+{% endblock %}
