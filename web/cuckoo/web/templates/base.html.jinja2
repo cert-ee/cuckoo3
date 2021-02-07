@@ -1,3 +1,6 @@
+{# Set this to true to display inline template data output (debugging) #}
+{% set debug_template_data = False %}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="{{ static('/css/fontawesome.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ static('/css/ui.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ static('/css/theme.css') }}" />
+    {% block page_styles %}{% endblock %}
     <title>Cuckoo Sandbox {% if title %}- {{ title }}{% endif %}</title>
   </head>
   <body>

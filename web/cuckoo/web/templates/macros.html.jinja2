@@ -1,4 +1,43 @@
 {#
+  smart-cutting long lines of text, with optional initialization with
+  click-to-copy.
+
+    required:
+      str         String    The string value to shorten
+      max_chars   Integer   Maximum characters allowed before stripping
+
+    optional:
+      copy        Boolean   Set to True to enable click-to-copy
+      annotate    Boolean   Set to True
+
+    example:
+
+      <p>{{ trim_string(str="Hello world", max_chars=5, copy=True, annotate=True) }}</p>
+
+      output:
+
+      <p data-click-to-copy data-value="Hello world">Hello... (trimmed 5 characters)</p>
+#}
+{% macro trim_string(str="", max_chars=2000, copy=False, annotate=False) %}
+  {% set is_trimmed = False %}
+  {% set value = str %}
+  {% if str is string and str|length > max_chars %}
+    {% set value = value[0:max_chars] %}
+    {% set is_trimmed = True %}
+  {% endif %}
+  {% if is_trimmed %}
+    <span {% if copy %}data-click-to-copy data-value="{{str}}"{% endif %}>
+      {{ value }}...
+      {% if annotate %}
+        <small style="display: block; margin-top: .5rem">({{ str|length - max_chars }} characters trimmed. {% if copy %}Click to copy.{% endif %})</small>
+      {% endif %}
+    </span>
+  {% else %}
+    {{ str }}
+  {% endif %}
+{% endmacro %}
+
+{#
   renders a table. some configuration on ordering of property names have to be
   provided. Although it seems a bit complex, it can help a lot to maintain
   readability and quickly displaying data sets into the UI.
@@ -12,7 +51,7 @@
       style               Array            Cell styles, pass in any text modifier, as defined in _typography.sass.
                                            To apply multple, define the casses space separated. If no style has to be applied,
                                            leave None. Order is the same als column order.
-      has_sticky_header  Boolean           Wether or not to apply a sticky header experience.
+      has_sticky_header   Boolean          Wether or not to apply a sticky header experience.
 
   example:
 
@@ -24,7 +63,7 @@
                   )
     }}
 #}
-{% macro render_table(data=[], cols=[], labels=[], style=[], has_sticky_header=False) %}
+{% macro render_table(data=[], cols=[], labels=[], style=[], types=[], has_sticky_header=False) %}
   <table class="table {% if has_sticky_header %}has-sticky-header{% endif %}">
     <thead>
       <tr>
@@ -44,24 +83,48 @@
         {% for entry in data %}
           <tr>
             {% for col in cols %}
-              <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %}>{{ entry[col] }}</td>
+
+              {% if entry[col] is string and entry[col]|length > 200 %}
+                {% set apply_word_breaking = True %}
+              {% endif %}
+
+              <td class="{% if apply_word_breaking %}is-break{% endif %} {% if style[loop.index-1] %}{{ style[loop.index-1] }}{% endif %}">
+                {% if style[loop.index-1] == 'is-clickable' %}
+                  <a href="{{entry[col]}}" class="is-link" target="_blank">{{ trim_string(entry[col], copy=True, annotate=True) }}</a>
+                {% elif style[loop.index-1] == 'is-datetime' %}
+                  {{ entry[col]|formatisodatetime }}
+                {% else %}
+                  {{ trim_string(entry[col], copy=True, annotate=True) }}
+                {% endif %}
+              </td>
             {% endfor %}
           </tr>
         {% else %}
           <tr>
-            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
+            <td colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% else %}
         {% for val in data.values() %}
           <tr>
             {% for col in cols %}
-              <td>{{ val[col] }}</td>
+              {% if val[col] is string and val[col]|length > 200 %}
+                {% set apply_word_breaking = True %}
+              {% endif %}
+              <td class="{% if apply_word_breaking %}is-break{% endif %} {% if style[loop.index-1] %}{{ style[loop.index-1] }}{% endif %}">
+                {% if style[loop.index-1] == 'is-clickable' %}
+                  <a href="{{val[col]}}" class="is-link" target="_blank">{{ trim_string(val[col], copy=True, annotate=True) }}</a>
+                {% elif style[loop.index-1] == 'is-datetime' %}
+                  {{ val[col]|formatisodatetime }}
+                {% else %}
+                  {{ trim_string(val[col], copy=True, annotate=True) }}
+                {% endif %}
+              </td>
             {% endfor %}
           </tr>
         {% else %}
           <tr>
-            <td {% if style[loop.index-1] %} class="{{ style[loop.index-1] }}"{% endif %} colspan="{{ cols|length }}">No data</td>
+            <td colspan="{{ cols|length }}">No data</td>
           </tr>
         {% endfor %}
       {% endif %}
@@ -146,11 +209,14 @@
 
     title           String    Title of the UI container
     prefix          String    Attached to ID used for the collapsing functionality
+    id              String    Alternative ID when the title id will not work
     description     String    Description of content, [needs to prove its usage]
     display_title   Boolean   Whether or not to display the title. Also disables collapsibility.
     no_padding      Boolean   Whether or not to add an extra padding to the box content section
     collapsible     Boolean   Toggles collapsing functionality on or off
     collapsed       Boolean   Default collapse state
+    hidden          Boolean   Hides the element by default, use this whenever the UI needs to wait
+                              on certain javascript handlers.
 
   example:
 
@@ -159,9 +225,13 @@
     {% endcall %}
 
 #}
-{% macro ui_box(title="page", prefix="box", description="", display_title=True, has_padding=True, collapsible=True, collapsed=False) %}
-  {% set boxid = prefix + "-" + title|replace(" ","-") %}
-  <div class="box has-background-white has-shadow no-padding has-border">
+{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False, hidden=False) %}
+  {% if not id %}
+    {% set boxid = prefix + "-" + title|replace(" ","-") %}
+  {% else %}
+    {% set boxid = id %}
+  {% endif %}
+  <div class="box has-background-white has-shadow no-padding has-border" {% if hidden %}hidden{% endif %}>
     {% if display_title == True and title %}
       <h3 class="box-title">{{ title }}
         {% if collapsible %}
@@ -180,4 +250,100 @@
       {{ caller() }}
     </div>
   </div>
+{% endmacro %}
+
+{#
+  Renders an error display from an array of errors
+
+    errors  List  array containing all the error messages
+
+  Example:
+
+    {{ error_box(['error 1', 'error 2']) }}
+
+  or
+
+    {% call error_box(['error 1', 'error 2']) %}
+      <p>Custom description label for this box.</p>
+    {% endcall %}
+
+#}
+{% macro error_box(errors) %}
+  <div class="box has-background-white has-shadow no-padding has-border">
+    <h3 class="box-title is-red">
+      <span class="icon has-text-red">
+        <i class="fas fa-exclamation"></i>
+      </span> Errors</h3>
+    {% if caller %}{{ caller() }}{% endif %}
+    <div class="has-padding">
+      {% for err in errors %}
+        <div class="banner no-margin-top is-danger has-padding">
+          <p class="has-padding-x">{{ err }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endmacro %}
+
+{#
+
+  Provides the translation from a score from 1-10 to a color class representation.
+
+    score   Number  The score to translate into a color class
+
+  Example:
+
+    <p class="{{ color_class(analysis.score) }}">{{ analysis.verdict }}</p>
+    <!-- could be rendered as: -->
+    <p class="is-danger">This file is most likely severely malicious.</p>
+
+#}
+{% macro color_class(s=1) %}{% if s>=8 %}is-red{% elif s>=6 %}is-yellow{% endif %}{% endmacro %}
+{% macro color_text(s=1) %}{% if s>=8 %}has-text-red{% elif s>=6 %}has-text-yellow{% endif %}{% endmacro %}
+
+{#
+
+  Repetitive UI model for signature views
+
+    signatures  List  Signatures (List of Dicts) to display
+
+  Example
+
+    {{ ui_signatures([{...},{...}]) }}
+
+#}
+{% macro ui_signatures(signatures=[]) %}
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th colspan="2">Description</th>
+        <th>&nbsp;</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for signature in signatures|sort(attribute='score',reverse=True) %}
+        {% set hasIOCs = signature.iocs and signature.iocs|length > 0 %}
+        <tr data-row="{{ loop.index }}">
+          <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
+          <td>{{ signature.short_description }}</td>
+          <td>{{ signature.description }}</td>
+          <td class="no-text-wrap">
+            {% if hasIOCs %}
+              <a class="is-link has-text-small toggle-ioc" href="#">{{ signature.iocs|length }} IOC's.</a>
+            {% endif %}
+          </td>
+        </tr>
+        <tr hidden data-row-of="{{ loop.index }}">
+          <td colspan="4" class="no-padding has-border-y">
+            {% if hasIOCs %}
+              {{ render_table(data = signature.iocs, cols = signature.iocs[0].keys()) }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
 {% endmacro %}

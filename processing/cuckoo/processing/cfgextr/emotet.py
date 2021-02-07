@@ -84,7 +84,6 @@ class Emotet(ConfigExtractor):
             )
 
         imported_key = roach.rsa.import_key(rsakey)
-
         if not imported_key:
             raise UnexpectedDataError("No RSA key could be read from value")
 

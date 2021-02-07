@@ -1,0 +1,61 @@
+<div id="tab-cfgextr" hidden>
+  {% call ui_box(title="Configuration Extraction", has_padding=False) %}
+    {# display family atop the other properties, the family property gets skipped in the loop #}
+    {% for item in report.cfgextr %}
+      <div class="box has-background-red no-radius has-text-center no-margin-top">
+        <h3 class="has-text-black has-text-uppercased has-text-weight-900">Detected Family</h3>
+        <h1 class="has-text-white has-text-huge">{{ item.family }}</h1>
+      </div>
+      {% for key in item.keys() %}
+          {% if key == 'keys' %}
+            <h3 class="has-padding-x has-half-opacity">Keys</h3>
+            {% for k in item[key] %}
+              <div class="box has-background-light">
+                <h4 class="no-margin has-text-weight-normal">
+                  <span class="icon">
+                    <i class="fas fa-key"></i>
+                  </span>
+                  {{ k.keytype }}
+                </h4>
+                <pre class="code-block has-padding"><code>{{ k.value }}</code></pre>
+              </div>
+            {% endfor %}
+          {% elif key == 'c2s' %}
+            <h3 class="has-padding-x has-half-opacity">c2s</h3>
+            {{ render_table(data=item[key], cols=["address"], labels=["Address"], has_sticky_header=True) }}
+          {% elif key == 'family' %}
+
+          {% elif item[key] is string %}
+            <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
+            <p class="has-padding">{{ item[key] }}</p>
+          {% elif item[key] is iterable %}
+            <h3 class="has-padding-x has-half-opacity">{{ key }}</h3>
+            <table class="table has-border no-border-x has-sticky-header">
+              <thead>
+              {% if item[key][0] is not string %}
+                <tr>
+                  {% for v in item[key][0] %}
+                    <th>{{ v }}</th>
+                  {% endfor %}
+                </tr>
+              {% endif %}
+              </thead>
+              <tbody>
+              {% for v in item[key] %}
+                <tr>
+                  {% if v is string %}
+                    <td>{{ v }}</td>
+                  {% elif v is iterable %}
+                    {% for k in v %}
+                      <td>{{ v[k] }}</td>
+                    {% endfor %}
+                  {% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  {% endcall %}
+</div>

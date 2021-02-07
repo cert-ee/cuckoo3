@@ -4,8 +4,6 @@
 
 from pathlib import Path
 
-from cuckoo.common.packages import enumerate_plugins
-
 class ConfigExtractionError(Exception):
     pass
 
@@ -176,6 +174,24 @@ class ExtractedConfig:
             "family": self.family,
             "sources": list(self.sources)
         })
+
+        return d
+
+class ExtractedConfigTracker:
+
+    def __init__(self):
+        self._configs = {}
+
+    @property
+    def configs(self):
+        return list(self._configs.values())
+
+    def add_config(self, extracted_config):
+        existing = self._configs.get(extracted_config.family)
+        if existing:
+            existing.merge(extracted_config)
+        else:
+            self._configs[extracted_config.family] = extracted_config
 
         return d
 

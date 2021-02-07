@@ -1,8 +1,8 @@
 {% set topleft_nav = [
   ('Dashboard', 'dashboard', 'Dashboard'),
   ('Analyses/index', 'analyses', 'Analyses'),
-  ('Submit/submitfile', 'submit', 'Submit'),
-  ('Search/index', 'search', 'Search')
+  ('Compare/index', 'compare', 'Compare'),
+  ('Submit/submitfile', 'submit', 'Submit')
 ] -%}
 {% set active_page = active_page|default('Dashboard') -%}
 
@@ -22,8 +22,9 @@
       <a href="{{ url(href) }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
     {% endfor %}
   </div>
-  {# <div class="navbar-end">
-    <a class="navbar-link {% if page == 'settings' %}is-active{% endif %}" href="/settings">Settings</a>
-    <a class="navbar-link {% if page == 'overview' %}is-active{% endif %}" href="/overview">UI Overview</a>
-  </div> #}
+  {% if "search" | nav_enabled %}
+    <div class="navbar-end">
+      <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="{{ url('Search/index') }}">Search</a>
+    </div>
+  {% endif %}
 </nav>

@@ -5,17 +5,42 @@
   width: 100%
   border-collapse: collapse
 
-  // shared styles for cells and column headers
-  th, td
-    text-align: left
-    padding: $gap
-    a
-      color: inherit
-      text-decoration: none
-
   &.has-border
     td
       border-bottom: 1px solid $border
+
+  &.has-layout-fixed
+    table-layout: fixed
+
+  // shared styles for cells and column headers
+  th, td
+    padding: $gap
+    &.is-auto-width,
+    &.is-datetime
+      min-width: 1px
+      white-space: nowrap
+    &.is-mini
+      width: 4rem
+    &.is-small
+      width: 7.5rem
+    &.is-medium
+      width: 15rem
+    &.is-nowrap
+      white-space: nowrap
+    &.is-break
+      word-wrap: break-word
+      word-break: break-all
+      min-width: 10rem
+    &.has-ellipsis
+      white-space: nowrap
+      overflow: hidden
+      max-width: 20rem
+      text-overflow: ellipsis
+    &:not(.has-text-right):not(.has-text-center)
+      text-align: left
+    a
+      color: inherit
+      text-decoration: none
 
   // table cell (heading) styles, including support for sorting indication
   thead th,
@@ -60,10 +85,9 @@
   // table-cell styles
   td
     font-size: .8em
-
-    &.is-auto-width
-      width: 1px
-      white-space: nowrap
+    // word-wrap: break-word
+    // word-break: break-all
+    // min-width: 10rem
 
   // table header styles
   thead
@@ -88,6 +112,9 @@
           &.is-desc a:after
             border-color: $white transparent transparent transparent
 
+    // @TODO suggestion for one alternative table head styles for embedded tables.
+    // dark is too much, and white is not distiniguishable enough.
+
   tfoot
     tr td
       box-shadow: inset 0 1px 0 $border
@@ -96,7 +123,7 @@
   // tbody-specific styles
   tbody
     tr
-      &:nth-child(odd)
+      &:nth-child(odd):not([class^="separator-"])
         background-color: $row-odd
         &:hover
           background-color: mix($row-odd, $yellow, 95%)
@@ -110,6 +137,15 @@
         &:hover
           background-color: shade($red, .1)
 
+      &.is-shown
+        background-color: $blue !important
+        color: $white
+        a, .is-link
+          color: inherit
+        td
+          background-color: transparent
+          font-weight: 700
+
       &.separator
         background-color: $white
         font-size: .9em
@@ -119,6 +155,20 @@
         border-bottom: 0.0625rem solid $border
         border: 0
         text-align: center
+
+        &-bar
+          td
+            background: linear(white, $border, 50%)
+            padding: 0
+            box-shadow: inset 0 .1rem 0 rgba($white, .5)
+            border-top: 0.0625rem solid $border
+            border-bottom: 0.0625rem solid $border
+
+        &.is-beveled
+          background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .9) 100%)
+          box-shadow: inset 0px -2px 0px $border, inset 0px 2px 0px #FFFFFF
+          text-shadow: 0 0.0625rem 0 rgba($white, 1)
+
         &:hover
           background-color: $white
 
@@ -129,9 +179,12 @@
     width: 100%
 
   &.has-sticky-header
-    thead th
-      position: sticky
-      top: 0
+    thead
+      position: relative
+      z-index: 2
+      th
+        position: sticky
+        top: 0
 
   &.has-sticky-footer
     tfoot td

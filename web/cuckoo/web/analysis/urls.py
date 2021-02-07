@@ -16,6 +16,8 @@ urlpatterns = [
         "<analysis_id:analysis_id>/static", views.static,
         name="Analysis/static"
     ),
+    path("<analysis_id:analysis_id>/task/", include("cuckoo.web.analysis.task.urls")),
+    path("<analysis_id:analysis_id>/compare", views.compare, name="Analysis/compare"),
     path(
         "<analysis_id:analysis_id>/task/",
         include("cuckoo.web.analysis.task.urls")

@@ -138,15 +138,31 @@ function handleListTree(list) {
  * Enhances in-page tab behavior. Clicking tab links will hide or show the
  * referenced elements
  * @param {HTMLElement} tabContext
+ *
+ * if tabContext is an element containing the class '.tabbar', it initializes
+ * all tabbar-links within the bar.
+ * if tabContext is an element containing the class '.tabbar-link', it will hook
+ * that link to the target tab context - if the appropriate ID has been set
+ * explicitly for the target tabs.
  */
 function handlePageTabs(tabContext) {
 
-  const links = [...tabContext.querySelectorAll('.tabbar-link')];
-  const refs = links.map(link => document.querySelector(link.getAttribute('href')));
+  let tabbar;
+  if(tabContext.classList.contains('tabbar')) {
+    tabbar = tabContext;
+  } else if(tabContext.classList.contains('tabbar-link')) {
+    tabbar = document.querySelector(tabContext.dataset.tabbar);
+  }
+
+  let links = [
+    ...tabContext.querySelectorAll('.tabbar-link'),
+    ...document.querySelectorAll('[data-tabbar="#'+tabbar.getAttribute('id')+'"]')
+  ];
 
   // hides all the referenced tabs before displaying the new one
   function hideAllRelatedTabs() {
     links.forEach(link => link.classList.remove('is-active'));
+    let refs = links.map(link => document.querySelector(link.getAttribute('href')));
     refs.forEach(ref => {
       if(ref)
         ref.setAttribute('hidden', true);
@@ -159,12 +175,31 @@ function handlePageTabs(tabContext) {
       const href = ev.currentTarget.getAttribute('href');
       const target = document.querySelector(href);
       if(target) {
-        hideAllRelatedTabs();
+        hideAllRelatedTabs(tabContext);
         target.removeAttribute('hidden');
         link.classList.add('is-active');
       }
-    })
+    });
   });
+
+  // if there is not a defined active tab, activate the first one
+  let hasActiveTab = () => links.find(link => link.classList.contains('is-active'));
+  let prioritized = tabContext.dataset.priority;
+
+  // if <data-priority="..."> is set, run through the list of prioritized tabs
+  // and make them open accordingly.
+  if(prioritized) {
+    prioritized.split(",").forEach(id => {
+      let results = links.filter(link => link.getAttribute('href').replace('#','') == id);
+      if(results.length > 0 && !hasActiveTab()) {
+        results.forEach(result => result.dispatchEvent(new Event("click")));
+      }
+    })
+  }
+
+  if(!hasActiveTab() && links.length > 0) {
+    links[0].dispatchEvent(new Event("click"));
+  }
 
 }
 
@@ -472,6 +507,93 @@ function handleTagInput(tagList) {
  }
 
 /**
+  * Handler to enable click-to-copy interactions
+  * @param {HTMLElement} elem - element to attach the copy handler to
+  *
+  * @example
+  *   <a data-click-to-copy>This text will be copied</a>
+  */
+function handleClickToCopy(elem) {
+
+  // when hovered, display a box following the mouse to
+  // indicate the copy handler
+  const body = elem.dataset.value || elem.textContent;
+  let tip;
+  let copied = false;
+  let tipMargin = 10;
+
+  elem.addEventListener('mouseenter', ev => {
+    if(tip) return;
+    tip = document.createElement('span');
+    tip.classList.add('popover');
+    tip.classList.add('in');
+    tip.style.position = 'fixed';
+    tip.style.left = (ev.clientX + tipMargin) + 'px';
+    tip.style.top = (ev.clientY + tipMargin) + 'px';
+    tip.style.transform = 'none';
+
+    tip.textContent = (function() {
+      if(body.length > 2000) {
+        return body.substring(0, 2000) + "... (trimmed " + (body.length - 2000) + " characters for brevity.)";
+      } else {
+        return body;
+      }
+    }());
+    tip.innerHTML += '<p class="no-margin-bottom has-text-small">Click to copy</p>'
+
+    elem.appendChild(tip);
+
+  });
+
+  elem.addEventListener('mousemove', ev => {
+    if(tip) {
+      tip.style.left = (ev.clientX + tipMargin) + 'px';
+      tip.style.top = (ev.clientY + tipMargin) + 'px';
+    }
+  });
+
+  elem.addEventListener('mouseleave', ev => {
+    if(tip && copied) {
+      setTimeout(() => {
+        if(tip) tip.remove();
+        tip = null;
+      }, 500);
+    } else {
+      tip.remove();
+      tip = null;
+    }
+  });
+
+  // when clicked, copy the code to the users clipboard
+  elem.addEventListener('click', ev => {
+    ev.preventDefault();
+
+    copied = true;
+
+    // put value into an input field, then copy it into the users
+    // clipboard and trash the temporary input
+    const inp = document.createElement('input');
+    inp.setAttribute('type', 'text');
+    inp.classList.add('hidden');
+    inp.value = body || elem.textContent;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('Copy');
+
+    if(tip) {
+      tip.textContent = 'Copied to clipboard.';
+      setTimeout(() => {
+        copied = false;
+      }, 500);
+    }
+    inp.remove();
+
+    blink(elem, '#82DB7A');
+  });
+
+}
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -494,4 +616,5 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
   applyHandler('[data-tooltip]', handleTooltip);
+  applyHandler('[data-click-to-copy]', handleClickToCopy);
 });

@@ -7,6 +7,10 @@
   border-radius: $radius
   background-color: $white
 
+  &.is-inline
+    display: inline-block
+    vertical-align: middle
+
   &.is-big
     padding: $gap*2
 
@@ -108,11 +112,17 @@
 
   &-title
     font-size: 1.1em
-    border-bottom: 1px solid shade($light, .1)
+    border-bottom: .065rem solid shade($light, .1)
+    border-radius: $radius $radius 0 0
     background-color: $light
     margin: 0
     padding: $gap
     color: $dark
+
+    &.is-red
+      background-color: tint($red, .75)
+      border: .065rem solid $red
+      color: $black
 
   // &-header
   //   background-color: $dark

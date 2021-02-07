@@ -3,50 +3,237 @@
 {% set report_page = "sample" %}
 {% set title = "Analysis" %}
 
-{% from 'macros.html.jinja2' import ui_box %}
+{% from 'macros.html.jinja2' import ui_box, ui_signatures, error_box, color_class, color_text, render_dict %}
+
+{% block page_styles %}
+  <link rel="stylesheet" type="text/css" href="{{ static('/css/chart.min.css') }}" />
+{% endblock %}
+
+{% block page_script %}
+
+  {#
+    not the most pretty solution; prevents a blinking UI component on render and does
+    sorting chart data inline, based on a hardcoded list of queries.
+  #}
+  {% set chart_labels = ['trojan','ransomware','stealer','spyware','keylogger','dropper','loader','evasion','rat'] %}
+  {% set chart_values = [] %}
+
+  {% if analysis.tags and analysis.tags|length %}
+    {% for tag in chart_labels %}
+      {% if tag in analysis.tags %}
+        {{ chart_values.append(90)|default("", True) }}
+      {% else %}
+        {{ chart_values.append(5)|default("", True) }}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <script type="text/javascript" src="{{ static('js/chart.bundle.min.js') }}"></script>
+  <script src="{{ static('js/analysis.task.js') }}"></script>
+  <script>
+    window.analysis = "{{ analysis.tasks | safe }}";
+    // threat radar chart
+    (function() {
+
+      const ctx = document.querySelector('canvas#behavior-map');
+      if(!window.Chart || !ctx) return;
+
+      const tags = {{ analysis.tags|tojson }};
+      const labels = {{ chart_labels|tojson }};
+      const data = {{ chart_values|tojson }};
+      const opacity = .8;
+      const type = 'radar';
+
+      // remove the chart if the data is not sufficient to display anything
+      // that matches. Needs review to as if this behavior is wanted like this.
+      if(data.indexOf(90) == -1) {
+        lib.parent('.box', ctx).remove();
+        return;
+      } else {
+        lib.parent('.box', ctx).removeAttribute('hidden');
+      }
+
+      let chart;
+
+      function renderChart() {
+        if(chart)
+          chart.destroy();
+        chart = new Chart(ctx.getContext('2d'), {
+          type,
+          data: {
+            labels: labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())),
+            datasets: [{
+              data,
+              backgroundColor: ['rgba(249,93,106, '+opacity+')'],
+              pointRadius: 0
+            }]
+          },
+          options: {
+            scale: {
+              ticks: {
+                startAtZero: true,
+                min: 0,
+                max: 100,
+                stepSize: 10,
+                display: false
+              }
+            },
+            legend: {
+              display: false
+            },
+            tooltips: {
+              enabled: false
+            },
+            animation: {
+              duration: 0
+            },
+            hover: {
+              animationDuration: 0
+            },
+            responsive: true,
+            maintainAspectRatio: true,
+            responsiveAnimationDuration: 0
+          }
+        });
+      }
+
+      renderChart();
+
+      let prevWidth;
+      window.addEventListener("resize", renderChart);
+
+    }());
+
+    // comparison form
+    (function() {
+
+      const compareForm = document.querySelector('form#compare-tasks')
+      if(compareForm) {
+
+        const submit = compareForm.querySelector('input[type="submit"]');
+        const checkboxes = compareForm.querySelectorAll('input[type="checkbox"]');
+        const checked = () => [...checkboxes].filter(checkbox => checkbox.checked);
+
+        compareForm.addEventListener('submit', ev => {
+          ev.preventDefault();
+          const ids = checked().map(checkbox => checkbox.value);
+          window.location = '/compare/' + ids.join('/');
+        });
+
+        // limits selectable tasks to max 2
+        function checkValidity() {
+
+          if(checked().length == 2) {
+            submit.disabled = false;
+            checkboxes.forEach(cb => {
+              if(cb.checked == false)
+                cb.disabled = true;
+            })
+          } else {
+            submit.disabled = true;
+            checkboxes.forEach(cb => {
+              cb.disabled = false
+            });
+          }
+        }
+
+        checkboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', checkValidity)
+        });
+
+        // in the case of browser-cached ticked checkboxes, make sure
+        // the rules listen to that too.
+        setTimeout(checkValidity, 20);
+
+      }
+
+    }());
+  </script>
+{% endblock %}
 
 {% block body %}
-  <div class="container is-fixed">
+
+  <div class="container is-portal-view">
     <div class="columns is-divided is-vtop">
       <aside class="column is-auto has-padding is-sticky">
-        {% include "analysis/partial/sidebar.html.jinja2" %}
+        {% include "partial/analysis-index.html.jinja2" %}
       </aside>
       <section class="column has-padding">
 
-        <h2>Sample analysis</h2>
-        <p>Description and overview of sample and submission configuration.</p>
+        <h2>Analysis</h2>
+        <p>Description and overview of target and submission configuration.</p>
 
-        {% call ui_box(title="Target") %}
-          <div class="columns has-padding is-divided">
-            {# <div class="column is-auto">
-              <div class="ratio-1-1">
-                <div class="ratio-content">
-                  <p class="has-text-red has-text-huge no-margin"><strong>7</strong><sub class="has-text-light">/10</sub></p>
-                </div>
-                <div class="ratio-content is-bottom">
-                  <span class="tag is-red">Emotet</span>
-                </div>
-              </div>
-            </div> #}
-            <div class="column">
-              <h3 class="has-line-break"><i class="fas fa-file-archive"></i> {{ analysis.target.filename }}</h3>
-              <h4 class="has-half-opacity no-margin-bottom"><i class="fas fa-hashtag"></i> {{ analysis.id }}</h4>
-              <ul class="list is-horizontal no-margin-bottom">
-                <li>reported on {{ analysis.created_on | formatdatetime }}</li>
-                <li>{{ analysis.target.size | filesizeformat }}</li>
-                <li class="is-monospace">{{ analysis.target.media_type }}</li>
-              </ul>
-            </div>
-          </div>
-        {% endcall %}
+        {% if debug_template_data %}
+          {% call ui_box(title="Template data", has_padding=False, collapsed=True) %}
+            <h3 class="has-margin-x">Analysis</h3>
+            {{ render_dict(analysis) }}
+            <h3 class="has-margin-x">Pre</h3>
+            {{ render_dict(pre) }}
+          {% endcall %}
+        {% endif %}
 
-        {% call ui_box(title="Target summary", has_padding=False) %}
+        {% if analysis.errors.errors|length > 0 %}
+          {% call error_box(analysis.errors.errors) %}
+            <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
+          {% endcall %}
+        {% endif %}
+
+        {% call ui_box(title="Summary", has_padding=False) %}
           <div class="tabbar" data-enhance>
+            <a href="#analysis" class="tabbar-link is-active">Analysis</a>
+            <a href="#file-analysis" class="tabbar-link">Target</a>
             <a href="#submission" class="tabbar-link">Submission</a>
             <a href="#settings" class="tabbar-link">Settings</a>
-            <a href="#file-analysis" class="tabbar-link is-active">Target</a>
           </div>
 
+          <div id="analysis">
+            <div class="columns has-padding is-divided">
+              <div class="column is-auto">
+                <div class="ratio-1-1">
+                  <div class="ratio-content">
+                    <p class="{{ color_text(analysis.score) }} has-text-huge no-margin"><strong>{{ analysis.score }}</strong><sub class="has-text-light">/10</sub></p>
+                  </div>
+                  <div class="ratio-content is-bottom has-text-small has-half-opacity">Analysis score</div>
+                </div>
+              </div>
+              <div class="column">
+                <h3 class="no-margin-bottom is-monospace">
+                  <strong>{{ analysis.id }}</strong>
+                  <span class="pull-right has-half-opacity">{{ analysis.state|humanstate }}</span>
+                </h3>
+                <p class="has-line-break has-text-small">
+                  <span class="icon">
+                    <i class="far fa-file"></i>
+                  </span> {{ analysis.target.filename }}
+                </p>
+                <ul class="list is-horizontal no-margin-bottom has-text-small">
+                  <li title="Date of creation">
+                    <span class="icon">
+                      <i class="far fa-calendar"></i>
+                    </span> {{ analysis.created_on | formatdatetime }}
+                  </li>
+                  <li>
+                    <span class="icon">
+                      <i class="fas fa-compact-disc"></i>
+                    </span> {{ analysis.target.size | filesizeformat }}
+                  </li>
+                  <li class="is-monospace">
+                    <span class="icon">
+                      <i class="fas fa-terminal"></i>
+                    </span> {{ analysis.target.media_type }}
+                  </li>
+                </ul>
+                {% if analysis.families|length %}
+                  <div class="tag-list has-margin-top">
+                    <span class="label">Detected families:</span>
+                    {% for family in analysis.families %}
+                      <span class="tag no-margin-top is-red">{{ family }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
           <table class="table" id="submission" hidden>
             <thead>
               <tr>
@@ -111,31 +298,25 @@
               </tr>
               <tr>
                 <td class="no-line-break"><strong>Platforms</strong></td>
-                <td class="has-line-break">{{ analysis.settings.platforms }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Machines</strong></td>
-                <td class="has-line-break">{{ analysis.settings.machines }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Memory dump</strong></td>
-                <td class="has-line-break">{{ analysis.settings.dump_memory }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Options</strong></td>
-                <td class="has-line-break">{{ analysis.settings.options }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Enforce timeout</strong></td>
-                <td class="has-line-break">{{ analysis.settings.enforce_timeout }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Extracted path</strong></td>
-                <td class="has-line-break">{{ analysis.settings.extrpath }}</td>
+                <td class="has-line-break">
+                  {# analysis.settings.platforms #}
+                  {% if analysis.settings.platforms|length %}
+                    {% for p in analysis.settings.platforms %}
+                      <div class="tag-list no-margin-y">
+                        <code class="no-margin-y has-margin-right">{{ p.platform }} {{ p.os_version }}</code>
+                        {% if p.tags|length > 0 %}
+                          {% for t in p.tags %}
+                            <div class="tag no-margin-y has-margin-bottom">{{ t }}</div>
+                          {% endfor %}
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                </td>
               </tr>
             </tbody>
           </table>
-          <table class="table" id="file-analysis">
+          <table class="table" id="file-analysis" hidden>
             <thead>
               <tr>
                 <th>Property</th>
@@ -174,6 +355,96 @@
             </tbody>
           </table>
         {% endcall %}
+
+        {% if pre and pre.signatures|length %}
+          {% call ui_box(title="Signatures", has_padding=False) %}
+            {{ ui_signatures(pre.signatures) }}
+          {% endcall %}
+        {% endif %}
+
+        {% if analysis and analysis.ttps|length %}
+
+          {% macro ttp_template(ttp) %}
+            <span class="box is-inline has-background-blue has-text-center has-margin-right" style="margin-top: .25rem; margin-bottom: .25rem;">
+              <span class="tag is-white has-margin-right">{{ ttp.id }}</span>
+              <a title="View on attack.mitre.org" href="{{ ttp.reference }}" target="_blank">
+                <strong>{{ ttp.name }}</strong>
+              </a>
+            </span>
+          {% endmacro %}
+
+          {% macro find_ttps(category) %}
+            {% for ttp in analysis.ttps %}
+              {% if category in ttp.tactics %}
+                {{ ttp_template(ttp) }}
+              {% endif %}
+            {% endfor %}
+          {% endmacro %}
+
+          {% call ui_box(title="Mitre ATT&CK", id="mitre", has_padding=False) %}
+            <table class="table">
+              <tr>
+                <th class="has-text-small has-text-right">Reconnaissance</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Reconnaissance') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Resource Development</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Resource Development') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Initial Access</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Initial Access') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Execution</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Execution') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Persistence</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Persistence') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Privilege Escalation</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Privilege Escalation') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Defense Evasion</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Defense Evasion') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Credential Access</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Credential Access') }}</td>
+              </tr>
+              <tr>
+                <th class="has-text-small has-text-right">Discovery</th>
+                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Discovery') }}</td>
+              </tr>
+            </table>
+          {% endcall %}
+        {% endif %}
+
+        {% if analysis.tags|length %}
+          {% call ui_box(title="Behavioral map", hidden=True) %}
+            <canvas id="behavior-map" width="100%"></canvas>
+          {% endcall %}
+        {% endif %}
+
+        {% if analysis.tasks|length and analysis.tasks|length > 1 %}
+          {% call ui_box(title="Compare") %}
+            <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
+            <form class="form" method="POST" id="compare-tasks">
+              {% for task in analysis.tasks %}
+                <div class="control is-checkbox">
+                  <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" />
+                  <label class="label" for="{{ task.id }}">{{ task.id }}</label>
+                </div>
+              {% endfor %}
+              <div class="control">
+                <input type="submit" value="Compare" class="button is-blue" disabled />
+              </div>
+            </form>
+          {% endcall %}
+        {% endif %}
 
       </section>
     </div>

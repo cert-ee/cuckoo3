@@ -39,6 +39,13 @@
         bottom: -.15rem
         left: 0
 
+  &-label
+    font-size: .9em
+    font-weight: 700
+    text-transform: uppercase
+    opacity: .25
+    margin-left: 1rem
+
   // when a container is used to wrap the links, make sure it's
   // an extension of the initial tab bar.
   & > .container
@@ -58,3 +65,19 @@
   &.is-rs-static
     & > .tabbar-link:not(.is-active)
       display: none
+
+  // additional styles for tab-like navigation in a different fashion
+  &.is-rounded
+    background: transparent
+    border-bottom: 0
+
+    .tabbar-link
+      background-color: $white
+      border-radius: 2rem
+      &:hover
+        background-color: $light
+      &.is-active
+        background-color: $blue
+        color: $white
+        &:after
+          display: none
