@@ -252,7 +252,7 @@ class SimpleSafelist(Safelist):
 
     def _check_regex_safelist(self, value):
         for entry in self._entries_regex:
-            if entry.loadedvalue.match(value):
+            if entry.loadedvalue.fullmatch(value):
                 return entry
 
         return None
