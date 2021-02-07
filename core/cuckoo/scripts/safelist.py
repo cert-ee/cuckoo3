@@ -36,10 +36,7 @@ def main(ctx, cwd):
 
 @main.command()
 def listnames():
-    print(
-        f"{ColorText.bold('Name'):<28} {ColorText.bold('Value type'):<20} "
-        f"{ColorText.bold('Description'):<100}"
-    )
+    """Show all existing safelists and their types."""
     safelists = []
     for name, slclass in safelist.name_safelist.items():
         safelists.append((name, slclass.valuetype, slclass.description))
@@ -116,12 +113,6 @@ def show_safelist(name):
     except safelist.SafelistError as e:
         exit_error(f"Error retrieving safelist: {e}")
 
-
-
-    print(
-        f"{'ID':<5} {'Value type':<12} {'regex':4} {'platform':<8} "
-          f"{'value':<30} {'Description':<20} {'Source':30}"
-    )
     values = []
     for entry in entries:
         values.append((
