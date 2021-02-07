@@ -21,40 +21,8 @@
           <table class="table has-border no-border-x">
             <thead>
               <tr>
-                <th>
-                  Task 1
-                  {#
-                  <div class="field-block">
-                    <div class="control is-select">
-                      <select class="input is-rounded" id="task1">
-                        <option selected disabled>Select Task</option>
-                        {% if analysis %}
-                          {% for task in analysis.tasks %}
-                            <option value="{{ task.id }}">{{ task.id }}</option>
-                          {% endfor %}
-                        {% endif %}
-                      </select>
-                    </div>
-                  </div>
-                  #}
-                </th>
-                <th colspan="2">
-                  Task 2
-                  {#
-                  <div class="field-block">
-                    <div class="control is-select">
-                      <select class="input" id="task2">
-                        <option selected disabled>Select Task</option>
-                        {% if analysis %}
-                          {% for task in analysis.tasks %}
-                            <option value="{{ task.id }}">{{ task.id }}</option>
-                          {% endfor %}
-                        {% endif %}
-                      </select>
-                    </div>
-                  </div>
-                  #}
-                </th>
+                <th>Task 1</th>
+                <th colspan="2">Task 2</th>
               </tr>
             </thead>
             <tbody>

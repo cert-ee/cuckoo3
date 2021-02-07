@@ -32,7 +32,7 @@
   <script src="{{ static('js/analysis.task.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
-
+    // threat radar chart
     (function() {
 
       const ctx = document.querySelector('canvas#behavior-map');
@@ -101,6 +101,51 @@
 
       let prevWidth;
       window.addEventListener("resize", renderChart);
+
+    }());
+
+    // comparison form
+    (function() {
+
+      const compareForm = document.querySelector('form#compare-tasks')
+      if(compareForm) {
+
+        const submit = compareForm.querySelector('input[type="submit"]');
+        const checkboxes = compareForm.querySelectorAll('input[type="checkbox"]');
+        const checked = () => [...checkboxes].filter(checkbox => checkbox.checked);
+
+        compareForm.addEventListener('submit', ev => {
+          ev.preventDefault();
+          const ids = checked().map(checkbox => checkbox.value);
+          window.location = '/compare/' + ids.join('/');
+        });
+
+        // limits selectable tasks to max 2
+        function checkValidity() {
+
+          if(checked().length == 2) {
+            submit.disabled = false;
+            checkboxes.forEach(cb => {
+              if(cb.checked == false)
+                cb.disabled = true;
+            })
+          } else {
+            submit.disabled = true;
+            checkboxes.forEach(cb => {
+              cb.disabled = false
+            });
+          }
+        }
+
+        checkboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', checkValidity)
+        });
+
+        // in the case of browser-cached ticked checkboxes, make sure
+        // the rules listen to that too.
+        setTimeout(checkValidity, 20);
+
+      }
 
     }());
   </script>
@@ -381,6 +426,23 @@
         {% if analysis.tags|length %}
           {% call ui_box(title="Behavioral map", hidden=True) %}
             <canvas id="behavior-map" width="100%"></canvas>
+          {% endcall %}
+        {% endif %}
+
+        {% if analysis.tasks|length and analysis.tasks|length > 1 %}
+          {% call ui_box(title="Compare") %}
+            <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
+            <form class="form" method="POST" id="compare-tasks">
+              {% for task in analysis.tasks %}
+                <div class="control is-checkbox">
+                  <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" />
+                  <label class="label" for="{{ task.id }}">{{ task.id }}</label>
+                </div>
+              {% endfor %}
+              <div class="control">
+                <input type="submit" value="Compare" class="button is-blue" disabled />
+              </div>
+            </form>
           {% endcall %}
         {% endif %}
 
