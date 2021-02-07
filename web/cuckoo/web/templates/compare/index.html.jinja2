@@ -16,114 +16,70 @@
       {% call ui_box(title="Compare", has_padding=False, collapsible=False) %}
         <div class="has-padding no-padding-bottom">
           <p>The compare tool allows to compare multiple tasks in their behavior and triggered signatures.</p>
-          <p class="has-half-opacity"><small>Please note that this is not functioning yet, all data is static and everything is design/ux phase.</small></p>
         </div>
-        <table class="table has-border no-border-x">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th class="is-medium">
-                <div class="field-block">
-                  <div class="control is-select">
-                    <select class="input is-rounded" id="task1">
-                      <option selected disabled>Select Task</option>
-                      {% if analysis %}
-                        {% for task in analysis.tasks %}
-                          <option value="{{ task.id }}">{{ task.id }}</option>
-                        {% endfor %}
-                      {% endif %}
-                    </select>
+        <form method="post" id="compare-form">
+          <table class="table has-border no-border-x">
+            <thead>
+              <tr>
+                <th>
+                  Task 1
+                  {#
+                  <div class="field-block">
+                    <div class="control is-select">
+                      <select class="input is-rounded" id="task1">
+                        <option selected disabled>Select Task</option>
+                        {% if analysis %}
+                          {% for task in analysis.tasks %}
+                            <option value="{{ task.id }}">{{ task.id }}</option>
+                          {% endfor %}
+                        {% endif %}
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </th>
-              <th class="is-medium">
-                <div class="field-block">
-                  <div class="control is-select">
-                    <select class="input" id="task2">
-                      <option selected disabled>Select Task</option>
-                      {% if analysis %}
-                        {% for task in analysis.tasks %}
-                          <option value="{{ task.id }}">{{ task.id }}</option>
-                        {% endfor %}
-                      {% endif %}
-                    </select>
+                  #}
+                </th>
+                <th colspan="2">
+                  Task 2
+                  {#
+                  <div class="field-block">
+                    <div class="control is-select">
+                      <select class="input" id="task2">
+                        <option selected disabled>Select Task</option>
+                        {% if analysis %}
+                          {% for task in analysis.tasks %}
+                            <option value="{{ task.id }}">{{ task.id }}</option>
+                          {% endfor %}
+                        {% endif %}
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="separator is-beveled">
-              <td class="has-text-small has-text-left" colspan="3">Signatures:</td>
-            </tr>
-            <tr>
-              <td>
-                <strong>Modifies service</strong>
-                <p class="no-margin-bottom has-text-small">Hier kan een mooie description</p>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&check;</span>
-                </span>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&times;</span>
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <strong>Checks system information in the registry</strong>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&times;</span>
-                </span>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&times;</span>
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <strong>Modifies system certificate store</strong>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&check;</span>
-                </span>
-              </td>
-              <td class="has-text-center">
-                <span class="icon is-big has-text-weight-heavy">
-                  <span>&check;</span>
-                </span>
-              </td>
-            </tr>
-            <!-- <tr class="separator is-beveled">
-              <td class="has-text-small has-text-left" colspan="3">Platform:</td>
-            </tr> -->
-            <tr class="separator is-beveled">
-              <td class="has-text-small has-text-left" colspan="3">Values:</td>
-            </tr>
-            <tr>
-              <td><strong>Score</strong></td>
-              <td class="has-text-center">
-                <span class="tag is-red">10</span>
-              </td>
-              <td class="has-text-center">
-                <span class="tag is-yellow">7</span>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>File size</strong></td>
-              <td class="has-text-center is-monospace">400kB</td>
-              <td class="has-text-center is-monospace">317kB</td>
-            </tr>
-          </tbody>
-        </table>
+                  #}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="field-block">
+                    <div class="control">
+                      <input type="text" class="input" placeholder="Task ID 1" id="task-left" />
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="field-block">
+                    <div class="control">
+                      <input type="text" class="input" placeholder="Task ID 2" id="task-right" />
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <input type="submit" class="button is-big" value="Compare" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </form>
       {% endcall %}
     </section>
   </div>

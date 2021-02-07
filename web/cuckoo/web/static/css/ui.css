@@ -715,7 +715,7 @@ a.button, .control.is-file a.file-trigger {
   max-width: 20rem;
   text-overflow: ellipsis;
 }
-.table th:not([class^=has-text-]), .table td:not([class^=has-text-]) {
+.table th:not(.has-text-right):not(.has-text-center), .table td:not(.has-text-right):not(.has-text-center) {
   text-align: left;
 }
 .table th a, .table td a {

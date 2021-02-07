@@ -14,6 +14,7 @@
 
   // shared styles for cells and column headers
   th, td
+    padding: $gap
     &.is-auto-width,
     &.is-datetime
       min-width: 1px
@@ -35,9 +36,8 @@
       overflow: hidden
       max-width: 20rem
       text-overflow: ellipsis
-    &:not([class^=has-text-])
+    &:not(.has-text-right):not(.has-text-center)
       text-align: left
-    padding: $gap
     a
       color: inherit
       text-decoration: none
