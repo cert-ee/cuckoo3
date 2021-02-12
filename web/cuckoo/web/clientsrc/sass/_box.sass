@@ -6,14 +6,11 @@
   margin: $gap 0
   border-radius: $radius
   background-color: $white
-
   &.is-inline
     display: inline-block
     vertical-align: middle
-
   &.is-big
     padding: $gap*2
-
   &.is-grouped
     border-radius: 0
     border-top-left-radius: $radius
@@ -42,7 +39,6 @@
   // underlying boxes will create darker shades to indicate leveling.
   &.has-background-stack-shade
     background-color: rgba($black, .075)
-
     color: $black
   &.has-background-blue,
   &.has-background-info
@@ -123,39 +119,3 @@
       background-color: tint($red, .75)
       border: .065rem solid $red
       color: $black
-
-  // &-header
-  //   background-color: $dark
-  //   color: $white
-  //   margin-top: -$gap
-  //   margin-left: -$gap
-  //   margin-right: -$gap
-  //   padding: $gap $gap $gap/2
-  //   border-bottom: .0625rem solid $border
-  //   border-top-left-radius: $radius
-  //   border-top-right-radius: $radius
-  //
-  //   .is-big > &
-  //     margin-top: -#{$gap*2}
-  //     margin-left: -#{$gap*2}
-  //     margin-right: -#{$gap*2}
-  //     padding: ($gap*2) ($gap*2) $gap
-  //
-  //   &.is-light
-  //     background-color: $light
-  //     color: $dark
-  //
-  //   &.is-white
-  //     background-color: $white
-  //     color: $black
-  //
-  //   &.is-black
-  //     background-color: $black
-  //     color: $white
-
-  .separator
-    border-width: 0.065rem
-    border-color: $border
-    border-style: solid
-    opacity: .5
-    margin-bottom: $gap*2
