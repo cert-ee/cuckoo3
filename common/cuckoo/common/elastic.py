@@ -93,7 +93,7 @@ class _ESManager:
     def verify(self):
         if not self.client.ping():
             raise ElasticSearchError(
-                f"Could not connect to Elasticsearch host(s)"
+                "Could not connect to Elasticsearch host(s)"
             )
 
     def all_indices_exist(self):

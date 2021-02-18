@@ -112,7 +112,7 @@ class IntelMQEventMaker:
 
     def add_dst_url(self, url):
         self._add_event(
-            {Fields.DESTINATION_FQDN: domain},
+            {Fields.DESTINATION_URL: url},
             taxonomy="malicous-code", classification_type="infected-system"
         )
 
@@ -157,7 +157,7 @@ class IntelMQElastic:
     def verify(self):
         if not self._es.ping():
             raise IntelMQElasticError(
-                f"Could not connect to IntelMQ Elasticsearch host(s)"
+                "Could not connect to IntelMQ Elasticsearch host(s)"
             )
 
         if not self._es.indices.exists(

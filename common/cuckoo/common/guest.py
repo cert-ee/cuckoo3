@@ -329,6 +329,7 @@ class StagerHelper:
 
         return version
 
+    @classmethod
     def find_stager_binary(cls, platform, archirecture, version=""):
         base = Path(Paths.monitor(platform, archirecture))
         # Find 'latest' version hash from latest_stager file.
@@ -341,6 +342,7 @@ class StagerHelper:
 
         return stager_path
 
+    @classmethod
     def find_monitor_binary(cls, platform, archirecture, version=""):
         base = Path(Paths.monitor(platform, archirecture))
         # Find 'latest' version hash from latest_monitor file.
@@ -432,7 +434,7 @@ class TmStage(StagerHelper):
 
     def deliver_payload(self):
         if not self.payload:
-            raise ValueError(f"No payload set to deliver")
+            raise ValueError("No payload set to deliver")
 
         # Delete the agent Python file. It can remain running without the file
         try:
@@ -480,7 +482,7 @@ class TmStage(StagerHelper):
         except AgentError as e:
             # A failing kill is not fatal, we can still continue. It can
             # indicate permission problems, however. So we do log it.
-            self.log.warning(f"Failed to kill agent.", error=e)
+            self.log.warning("Failed to kill agent.", error=e)
 
 _stagers = {
     "windows": TmStage

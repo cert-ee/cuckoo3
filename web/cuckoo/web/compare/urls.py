@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from django.urls import path, register_converter, include
+from django.urls import path, register_converter
 
 from cuckoo.web import converters
 

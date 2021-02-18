@@ -2,13 +2,10 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
-
 from django.http import HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import render
 
 from cuckoo.common.storage import task_to_analysis_id
-from cuckoo.common.analyses import States
 from cuckoo.common.compare import ComparePostReports, CompareError
 from cuckoo.common.result import (
     retriever, Results, ResultDoesNotExistError, InvalidResultDataError

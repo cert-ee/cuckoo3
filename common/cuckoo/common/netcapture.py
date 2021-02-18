@@ -192,8 +192,8 @@ class TCPDump:
             read_stderr = True
         except subprocess.TimeoutExpired:
             log.error(
-                f"Timeout expired waiting for tcpdump process to stop. "
-                f"Sending sigkill", pid=self._proc.pid
+                "Timeout expired waiting for tcpdump process to stop. "
+                "Sending sigkill", pid=self._proc.pid
             )
             self.force_stop()
         except ValueError as e:

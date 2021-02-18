@@ -8,8 +8,6 @@ from pathlib import Path
 from datetime import datetime
 from urllib.parse import urljoin
 
-import json
-
 class MispError(Exception):
     pass
 

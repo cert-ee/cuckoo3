@@ -35,7 +35,7 @@ def start_export(older_than_days, loglevel, without_confirm=False):
 
     if not api_url or not api_key:
         raise StartupError(
-            f"Remote storage API url or API key not set in cuckoo.conf"
+            "Remote storage API url or API key not set in cuckoo.conf"
         )
 
     init_database()

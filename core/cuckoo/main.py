@@ -228,7 +228,7 @@ def web(ctx, host, port, autoreload):
 @web.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
 @click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def djangocommand(ctx, django_args):
+def webdjangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
     from cuckoo.web.web.startup import(
         djangocommands, set_path_settings, init_web
@@ -293,7 +293,7 @@ def apitoken(list, create, admin, delete, clear):
 @api.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
 @click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def djangocommand(ctx, django_args):
+def apidjangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
     from cuckoo.web.api.startup import(
         djangocommands, set_path_settings, init_api

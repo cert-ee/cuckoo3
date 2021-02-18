@@ -108,7 +108,7 @@ class WorkReceiver(UnixSocketServer):
             load_configurations()
         except MissingConfigurationFileError as e:
             log.fatal_error(
-                f"Missing configuration file.", error=e, includetrace=False
+                "Missing configuration file.", error=e, includetrace=False
             )
 
         self.initialize_workrunners()
@@ -347,7 +347,6 @@ class ProcessingWorkerHandler(threading.Thread):
         if not self._workers_started:
             return False
 
-        max_workers = sum(self._max_workers.values())
         workers = list(self.connected_workers.values()) + self.unready_workers
         for worker in workers:
             if not worker["state"] or worker["state"] == States.SETUP:
@@ -374,7 +373,7 @@ class ProcessingWorkerHandler(threading.Thread):
         if os.path.exists(sockpath):
             # TODO use pidfile to determine if a sockpath can be removed
             log.warning(
-                f"Unix socket path still exists. Removing it.",
+                "Unix socket path still exists. Removing it.",
                 sockpath=sockpath
             )
             os.unlink(sockpath)

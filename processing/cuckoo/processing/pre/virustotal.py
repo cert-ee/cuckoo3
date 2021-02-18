@@ -80,8 +80,8 @@ class Virustotal(Processor):
             self.ctx.signature_tracker.add_signature(
                 name="virustotal",
                 score=score,
-                short_description=f"Virustotal sources report this target as "
-                                  f"malicious",
+                short_description="Virustotal sources report this target as "
+                                  "malicious",
                 description=f"{malicious_count} Virustotal antivirus engines "
                             f"detect this target as malicious",
                 iocs=avs

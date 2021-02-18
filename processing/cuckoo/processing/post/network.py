@@ -2,12 +2,11 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import ipaddress
 import logging
 import os
 
 from cuckoo.common.log import set_logger_level
-from cuckoo.common.storage import TaskPaths, Paths
+from cuckoo.common.storage import TaskPaths
 from cuckoo.common import safelist
 from httpreplay import reader, protohandlers, udpprotoparsers, transport
 

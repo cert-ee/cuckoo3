@@ -103,7 +103,7 @@ class DetermineTarget(Processor):
         treepath = AnalysisPaths.filetree(self.ctx.analysis.id)
         if not os.path.isfile(treepath):
             raise CancelProcessing(
-                f"Filetree.json not found. Cannot continue."
+                "Filetree.json not found. Cannot continue."
             )
 
         with open(treepath, "r") as fp:

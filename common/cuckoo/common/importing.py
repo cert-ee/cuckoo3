@@ -34,14 +34,14 @@ def read_analysisjson(zipped_analysis, passwordbytes=None):
         analysisfile = zip_file.getinfo("analysis.json")
     except KeyError:
         raise AnalysisImportError(
-            f"Invalid analysis zip. Missing file analysis.json"
+            "Invalid analysis zip. Missing file analysis.json"
         )
 
     # Ignore analysis.json if larger than 50MB. It should never be
     # that big. It is a relatively small JSON structure. We are not
     # even going to try and parse something that large.
     if analysisfile.file_size > 50 * 1024 * 1024:
-        raise AnalysisImportError(f"Analysis.json exceeds 50MB")
+        raise AnalysisImportError("Analysis.json exceeds 50MB")
 
     try:
         return Analysis.from_string(zip_file.read("analysis.json"))
@@ -106,7 +106,7 @@ class AnalysisZipper:
 
     def make_zip(self, zip_path, ignore_task_dirs=[], ignore_task_files=[]):
         if os.path.exists(zip_path):
-            raise AnalysisZippingError(f"Zip path already exists")
+            raise AnalysisZippingError("Zip path already exists")
 
         zippables = []
         zippables.extend(self._rootfiles)
@@ -254,7 +254,7 @@ def _import_targetfile(analysis):
 
     try:
         file_helper = File(binary)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise AnalysisImportError("Missing binary from imported analysis")
 
     try:

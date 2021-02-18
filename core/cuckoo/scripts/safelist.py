@@ -2,14 +2,12 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
 import click
-import logging
 from tabulate import tabulate
 
 from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common import safelist
-from cuckoo.common.log import exit_error, print_info, ColorText
+from cuckoo.common.log import exit_error, print_info
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")

@@ -24,7 +24,7 @@ if __name__ == "__main__":
      args = argsp.parse_args()
 
      if not os.path.exists(args.path):
-         sys.exit(f"Path does not exist.")
+         sys.exit("Path does not exist.")
 
      loadedsigs = LoadedSignatures()
      loadedsigs.load_from_file(args.path)

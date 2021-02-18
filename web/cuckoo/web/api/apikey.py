@@ -4,12 +4,9 @@
 
 import secrets
 import string
-import django
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from tabulate import tabulate
-
-from .startup import set_path_settings
 
 class APIKeyError(Exception):
     pass
@@ -38,7 +35,7 @@ def create_key(owner, admin=False):
         user = User.objects.create_user(
             username=owner, password=passw, is_staff=admin
         )
-    except IntegrityError as e:
+    except IntegrityError:
         raise APIKeyError(f"Owner {owner} already exists.")
 
     token = Token.objects.create(user=user)

@@ -384,6 +384,7 @@ class PEFile:
         except (pefile.PEFormatError, IndexError):
             return None
 
+    @classmethod
     def _load_pe_sigdb(cls):
         if cls._peid_sigdb:
             return

@@ -55,7 +55,7 @@ def load_machineries(machinery_classes, machine_states={}):
         machine_conf = cfg(machinery_class.name, subpkg="machineries")
 
         log.debug(
-            f"Loading machinery and its machines.",
+            "Loading machinery and its machines.",
             machinery=machinery_class.name
         )
         try:
@@ -94,7 +94,7 @@ def load_machineries(machinery_classes, machine_states={}):
 
         _machineries[machinery.name] = machinery
 
-    log.info(f"Loaded analysis machines", amount=machines.count())
+    log.info("Loaded analysis machines", amount=machines.count())
 
 def acquire_available(task_id, name="", platform="", os_version="",
                       tags=set()):
@@ -381,7 +381,7 @@ class MachineryWorker(threading.Thread):
                     work.start_wait()
                 else:
                     work.work_success()
-            except NotImplementedError as e:
+            except NotImplementedError:
                 log.error(
                     "Machinery does not support work type.",
                     machine=work.machine.name,
@@ -390,7 +390,7 @@ class MachineryWorker(threading.Thread):
                 )
                 work.work_failed()
 
-            except errors.MachineStateReachedError as e:
+            except errors.MachineStateReachedError:
                 # Machine already has the state the executed work should put
                 # it in. Log as warning for now. These errors should only occur
                 # when stopping a machine, not when starting.

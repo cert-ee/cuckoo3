@@ -86,7 +86,7 @@ class StrictContainer:
                     elif issubclass(expected_type, StrictContainer):
                         self._loaded[key] = {}
                     else:
-                        self._loaded[key]= self.FIELDS[key]()
+                        self._loaded[key] = self.FIELDS[key]()
 
         if missing:
             raise KeyError(f"Missing one ore more keys: {', '.join(missing)}")

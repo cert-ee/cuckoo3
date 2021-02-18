@@ -193,24 +193,6 @@ class ExtractedConfigTracker:
         else:
             self._configs[extracted_config.family] = extracted_config
 
-        return d
-
-class ExtractedConfigTracker:
-
-    def __init__(self):
-        self._configs = {}
-
-    @property
-    def configs(self):
-        return list(self._configs.values())
-
-    def add_config(self, extracted_config):
-        existing = self._configs.get(extracted_config.family)
-        if existing:
-            existing.merge(extracted_config)
-        else:
-            self._configs[extracted_config.family] = extracted_config
-
 class ConfigExtractor:
 
     FAMILY = ""

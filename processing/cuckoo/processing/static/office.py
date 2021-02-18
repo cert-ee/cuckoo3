@@ -84,7 +84,7 @@ class OfficeDocument:
                     "orig_code": c,
                     "deobf": _deobfuscate(c),
                 }
-        except ValueError as e:
+        except ValueError:
             pass
 
     def to_dict(self):

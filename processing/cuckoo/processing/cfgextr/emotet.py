@@ -7,9 +7,7 @@ import socket
 import struct
 import yara
 
-from .cfgextr import (
-    ExtractedConfig, C2, Key, UnexpectedDataError, ConfigExtractor
-)
+from .cfgextr import C2, Key, UnexpectedDataError, ConfigExtractor
 
 class Emotet(ConfigExtractor):
 
@@ -99,7 +97,6 @@ class Emotet(ConfigExtractor):
                 f"Invalid enumips start address bytes: {e}"
             )
 
-        ip_ports = set()
         for _ in range(1024):
             try:
                 ip = socket.inet_ntoa(

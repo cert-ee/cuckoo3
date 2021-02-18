@@ -55,18 +55,18 @@ class IntelMQ(Reporter):
     def _add_domains(self, maker):
         network = self.ctx.result.get("network", {}).get("summary", {})
         for domain in network.get("domain", []):
-            if self.domain_sl.is_safelisted(ip, self.ctx.machine.platform):
+            if self.domain_sl.is_safelisted(domain, self.ctx.machine.platform):
                 continue
 
-            maker.add_dst_domain(ip)
+            maker.add_dst_domain(domain)
 
     def _add_urls(self, maker):
         network = self.ctx.result.get("network", {}).get("summary", {})
         for url in network.get("url", []):
-            if self.url_sl.is_safelisted(ip, self.ctx.machine.platform):
+            if self.url_sl.is_safelisted(url, self.ctx.machine.platform):
                 continue
 
-            maker.add_dst_url(ip)
+            maker.add_dst_url(url)
 
     def _add_file_target(self, maker):
         target = self.ctx.analysis.target
@@ -96,4 +96,4 @@ class IntelMQ(Reporter):
         try:
             maker.submit(self.api_url, verify_tls=self.verify_tls)
         except IntelMQError as e:
-            self.ctx.log.warning(f"IntelMQ events creation failed.", error=e)
+            self.ctx.log.warning("IntelMQ events creation failed.", error=e)

@@ -2,8 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from datetime import datetime
-
 import dateutil.parser
 
 from cuckoo.common.analyses import States as AnalysisStates

@@ -136,7 +136,7 @@ def _check_trigger(pattern_dict):
         invalid = False
         if isinstance(vals, str):
             continue
-        elif isinstance(vals, list):
+        if isinstance(vals, list):
             for val in vals:
                 if not isinstance(val, str):
                     invalid = True
@@ -203,7 +203,7 @@ def _check_indicatorsdict(indicatorsdict):
         triggers = indicatordict.get("triggers")
         if not triggers:
             raise KeyError(
-                f"Missing 'triggers' dictionary list for indicator {name!r}"
+                f"Missing 'triggers' dictionary list for indicator {key!r}"
             )
 
         if not isinstance(triggers, list):

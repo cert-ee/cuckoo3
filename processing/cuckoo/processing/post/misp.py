@@ -88,6 +88,7 @@ class MispInfoGather(Processor):
 
         return events
 
+    # TODO support this when we have dropped files.
     def _search_dropped_files(self, query_limit):
         pass
 

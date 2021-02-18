@@ -6,6 +6,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from cuckoo.common import submit
 
@@ -15,8 +16,10 @@ class FileSubmission(serializers.Serializer):
 
 class SubmitFile(APIView):
 
+    permission_classes = (IsAuthenticated,)
     serializer_class = FileSubmission
     parser_classes = [MultiPartParser]
+
     def post(self, request):
         serializer = FileSubmission(data=request.data)
         if not serializer.is_valid():

@@ -3,19 +3,14 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import csv
-import re
 import ipaddress
-import os.path
-
+import re
 import sqlalchemy
-
-from datetime import datetime
 from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.pool import NullPool
 
 from cuckoo.common.db import DBMS
 from cuckoo.common.utils import parse_bool
+
 
 class SafelistError(Exception):
     pass
@@ -306,7 +301,7 @@ class SimpleSafelist(Safelist):
             return
 
         try:
-            compiled_regex = re.compile(value)
+            re.compile(value)
         except re.error as e:
             raise SafelistError(f"Regex compilation error: {e}")
 
@@ -389,7 +384,7 @@ class IP(Safelist):
         except ValueError as e:
             raise SafelistError(
                 f"Failed to load safelist: '{cls.name}' Not a valid IPv4 "
-                f"or IPv6 network: {entry.value!r}. Error: {e}"
+                f"or IPv6 network: {ip_network_str!r}. Error: {e}"
             )
 
     def _search_networks(self, ip, networks):
@@ -401,7 +396,9 @@ class IP(Safelist):
         try:
             ip = ipaddress.ip_address(ip_address)
         except ValueError as e:
-            raise SafelistError(f"Invalid IP address: {ip!r}. Error: {e}")
+            raise SafelistError(
+                f"Invalid IP address: {ip_address!r}. Error: {e}"
+            )
 
         network = self._search_networks(ip, self._networks)
         if network and _matches_platform(network, platform):
@@ -438,7 +435,7 @@ class IP(Safelist):
     @classmethod
     def validate(cls, value, regex, platform, description, source):
         try:
-            ipnetwork = ipaddress.ip_network(value)
+            ipaddress.ip_network(value)
         except ValueError as e:
             raise SafelistError(f"Invalid IPv4 network {value}. Error: {e}")
 
@@ -508,7 +505,7 @@ name_safelist = {
 
 def import_csv_safelist(csv_path, safelist_class):
     if not issubclass(safelist_class, Safelist):
-        raise SafelistError(f"Safelist class must be subclass of Safelist")
+        raise SafelistError("Safelist class must be subclass of Safelist")
 
     entries = []
     with open(csv_path, "r") as fp:
@@ -547,7 +544,7 @@ def import_csv_safelist(csv_path, safelist_class):
 
 def dump_safelist_csv(csv_path, safelist_class):
     if not issubclass(safelist_class, Safelist):
-        raise SafelistError(f"Safelist class must be subclass of Safelist")
+        raise SafelistError("Safelist class must be subclass of Safelist")
 
     ses = safelistdb.session()
     try:

@@ -125,7 +125,7 @@ class Int(TypeLoader):
 
         try:
             return int(value)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             raise IncorrectTypeError(
                 f"Expected type integer, got {type(value).__name__}"
             )
@@ -133,7 +133,7 @@ class Int(TypeLoader):
     def constraints(self, value):
         try:
             value = int(value)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             raise IncorrectTypeError(
                 f"Expected type integer, got {type(value).__name__}"
             )

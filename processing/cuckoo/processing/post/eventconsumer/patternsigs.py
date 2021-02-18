@@ -88,6 +88,9 @@ class PatternFinder(EventConsumer):
         event.pattern_scan(self.scanner)
 
     def finalize(self):
+        if not self.match_tracker:
+            return
+
         matched_patternsigs = self.match_tracker.get_matches()
         for match in matched_patternsigs:
 

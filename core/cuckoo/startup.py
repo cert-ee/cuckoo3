@@ -329,7 +329,7 @@ def start_cuckoo(loglevel):
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
 
-    log.info(f"Starting Cuckoo.", cwd=cuckoocwd.root)
+    log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
     log.info("Loading configurations")
     try:
         load_configurations()

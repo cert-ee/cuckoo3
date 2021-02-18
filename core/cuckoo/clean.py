@@ -7,13 +7,13 @@ import tempfile
 import os.path
 from pathlib import Path
 
-from cuckoo.common.storage import delete_file, delete_dirtree, Paths
+from cuckoo.common.storage import  delete_dirtree, Paths
 from cuckoo.common.importing import (
-    AnalysisZipper, AnalysisImportError, AnalysisZippingError
+    AnalysisZipper, AnalysisZippingError
 )
 from cuckoo.common.clients import (
-    APIError, APIPermissionDenied, APIBadRequestError, ClientError,
-    APIResourceConfictError, StateControllerClient
+    APIBadRequestError, ClientError, APIResourceConfictError,
+    StateControllerClient
 )
 from cuckoo.common import analyses
 from cuckoo.common.log import CuckooGlobalLogger
@@ -101,7 +101,7 @@ class AnalysisRemoteExporter:
             zipped_analysis = self._zip_analysis(analysis_id)
         except AnalysisZippingError as e:
             log.warning(
-                f"Failed to zip analysis. Skipping export",
+                "Failed to zip analysis. Skipping export",
                 analysis_id=analysis_id, error=e
             )
             return False
@@ -125,11 +125,11 @@ class AnalysisRemoteExporter:
                 Path(Paths.exported(analysis_id)).touch(exist_ok=True)
             except APIResourceConfictError as e:
                 log.warning(
-                    f"Export already exists on remote host",
+                    "Export already exists on remote host",
                     analysis_id=analysis_id, error=e
                 )
             except APIBadRequestError as e:
-                log.warning(f"Export failed", analysis_id=analysis_id, error=e)
+                log.warning("Export failed", analysis_id=analysis_id, error=e)
             except ClientError as e:
                 raise CleanerError(f"Export of {analysis_id} failed. {e}")
 

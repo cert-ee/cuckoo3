@@ -3,7 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 from . import analyses
-from .storage import AnalysisPaths, TaskPaths, split_task_id
+from .storage import AnalysisPaths, TaskPaths
 from .strictcontainer import (
     Analysis, Task, Identification, Pre, Post, StrictContainer
 )

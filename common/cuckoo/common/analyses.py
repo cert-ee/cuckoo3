@@ -199,7 +199,7 @@ def db_set_remote(analyses):
 def track_imported(analysis):
     if analysis.state != States.FINISHED:
         raise AnalysisError(
-            f"Imported analyses can only have the finished state."
+            "Imported analyses can only have the finished state."
         )
 
     target_dict = {

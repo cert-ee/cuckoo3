@@ -231,7 +231,7 @@ class Libvirt(Machinery):
 
         if normalized_state == machines.States.PAUSED \
                 and reason not in allowed_pauses:
-            err = f"Unexpected machine paused state"
+            err = "Unexpected machine paused state"
             machine.add_error(err)
             raise errors.MachineryUnhandledStateError(err)
 

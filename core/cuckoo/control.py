@@ -6,7 +6,7 @@ import os
 import queue
 import threading
 
-from cuckoo.common import analyses, task, targets
+from cuckoo.common import analyses, task
 from cuckoo.common.config import cfg
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter

@@ -2,9 +2,10 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from cuckoo.common.storage import Paths
-
 from django.utils.crypto import get_random_string
+from pathlib import Path
+
+from cuckoo.common.storage import Paths
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
