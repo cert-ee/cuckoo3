@@ -11,6 +11,7 @@ class Kinds:
     PROCESS_INJECTION = "process_injection"
     NETFLOW = "networkflow"
     MUTANT = "mutant"
+    SUSPICIOUS_EVENT = "suspicious_event"
 
 class NormalizedEvent:
 
@@ -395,4 +396,71 @@ class Mutant(NormalizedEvent):
         pattern_scanner.scan(
             self.path, self.path, self, "mutant",
             event_subtype=_MUTANT_ACTION_SIMPLIFIED.get(self.action)
+        )
+
+
+class SuspiciousEvents:
+    UNMAPMAINIMAGE = "UnmapMainImage"
+    NTCREATETHREADEX_HIDE_FROM_DEBUGGER = "NtCreateThreadExHideFromDebugger"
+    NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER = \
+        "NtSetInformationThreadHideFromDebugger"
+    NTCREATEPROCESS_OTHER_PARENT_PROCESS = "NtCreateProcessOtherParentProcess"
+    NTCREATEPROCESSEX_OTHER_PARENT_PROCESS = \
+        "NtCreateProcessExOtherParentProcess"
+    NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS = \
+        "NtCreateUserProcessOtherParentProcess"
+    SETWINDOWSHOOKAW = "SetWindowsHookAW"
+    SETWINDOWSHOOKEX = "SetWindowsHookEx"
+    ADJUSTPRIVILEGETOKEN = "AdjustPrivilegeToken"
+    DELETES_ITSELF = "DeletesItself"
+    LOADS_DROPPED_DLL = "LoadsDroppedDLL"
+    EXECUTES_DROPPED_EXE = "ExecutesDroppedEXE"
+    WRITEPROCESSMEMORY = "WriteProcessMemory"
+    SETTHREADCONTEXT = "SetThreadContext"
+    ENUMERATES_PROCESSES = "EnumeratesProcesses"
+    MAPVIEWOFSECTION = "MapViewOfSection"
+    LOADSDRIVER = "LoadsDriver"
+
+
+
+SUSPICIOUS_EVENT_DESCRIPTION = {
+    SuspiciousEvents.UNMAPMAINIMAGE: "Process unmapped its own process image.",
+    SuspiciousEvents.NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER: "Set HIDE_FROM_DEBUGGER flag for a thread.",
+    SuspiciousEvents.NTCREATETHREADEX_HIDE_FROM_DEBUGGER: "Created thread with HIDE_FROM_DEBUGGER flag.",
+    SuspiciousEvents.NTCREATEPROCESS_OTHER_PARENT_PROCESS: "Created a process with a different parent than the creating process.",
+    SuspiciousEvents.NTCREATEPROCESSEX_OTHER_PARENT_PROCESS: "Created a process with a different parent than the creating process.",
+    SuspiciousEvents.NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS: "Created a process with a different parent than the creating process.",
+    SuspiciousEvents.SETWINDOWSHOOKAW: "A new event hook was created. Often used by malware to log key strokes or to check for user interaction as part of anti-VM tactics.",
+    SuspiciousEvents.SETWINDOWSHOOKEX: "A new event hook was created. Often used by malware to log key strokes or to check for user interaction as part of anti-VM tactics.",
+    SuspiciousEvents.ADJUSTPRIVILEGETOKEN: "A privilege for an access token was adjusted. Windows uses the token to control the ability of the user to perform various system-related operations.",
+    SuspiciousEvents.DELETES_ITSELF: "The process deleted its own executable",
+    SuspiciousEvents.LOADS_DROPPED_DLL: "A dropped DLL was loaded.",
+    SuspiciousEvents.EXECUTES_DROPPED_EXE: "A process was created using a dropped executable.",
+    SuspiciousEvents.WRITEPROCESSMEMORY: "A process wrote data to an area of memory in another process.",
+    SuspiciousEvents.SETTHREADCONTEXT: "",
+    SuspiciousEvents.ENUMERATES_PROCESSES: "Enumerates processes. Could be anti-VM behavior.",
+    SuspiciousEvents.MAPVIEWOFSECTION: "",
+    SuspiciousEvents.LOADSDRIVER: "A driver was loaded."
+}
+
+
+class SuspiciousEvent(NormalizedEvent):
+
+    __slots__ = ("name", "pid", "procid", "args")
+    dictdump = NormalizedEvent.dictdump + __slots__
+    kind = Kinds.SUSPICIOUS_EVENT
+
+    def __init__(self, ts, eventname, pid, procid, args):
+        self.ts = ts
+        self.name = eventname
+        self.pid = pid
+        self.procid = procid
+        self.args = args
+
+        self.description = SUSPICIOUS_EVENT_DESCRIPTION.get(eventname, "")
+        self.effect = ""
+
+    def pattern_scan(self, pattern_scanner):
+        pattern_scanner.scan(
+            self.name.lower(), self.name, self, "suspicious_event"
         )
