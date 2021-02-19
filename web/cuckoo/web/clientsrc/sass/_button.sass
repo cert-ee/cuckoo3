@@ -86,7 +86,8 @@ a.button
       background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .7) 100%)
 
 
-  &.is-disabled
+  &.is-disabled,
+  &[disabled]
     pointer-events: none
     background-color: $border
     color: rgba($black, .75)

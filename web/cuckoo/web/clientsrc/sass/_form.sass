@@ -19,7 +19,7 @@
 // input control wrapper
 .control
   position: relative
-  height: 2rem
+  min-height: 2rem
   border-radius: 2px
   .label
     display: inline-block
@@ -51,6 +51,7 @@
       opacity: 1
     input[type="file"]
       @extend .hidden
+  
   &.is-checkable
     padding: $gap/2 0
     .label
@@ -114,28 +115,37 @@
   @extend .is-divided
   @extend .is-vcenter
   @extend .is-gapless
-  @extend .no-margin-y
   @extend .input
-  @extend .no-padding-y
   & > .control,
   & > .label,
   & > .field-end
     @extend .column
-    @extend .no-margin-y
   & > .field-end,
   & > .label
     @extend .is-auto
+    margin: 0 $gap
+    &:last-child
+      margin-right: 0
+    &:first-child
+      margin-left: 0
   & > .control
-    @extend .has-padding-x
+    @extend .columns
+    @extend .is-vcenter
     & > .input
+      line-height: 1.2rem
       &,
-      &:focus,
       &:active
         border-color: transparent
         background: transparent
+      &:focus
+        background: $light
+        border-color: $border
+        border-radius: $radius
 
 
 // redoing the entirety of a field. This is a much more simplified way.
+// @update Nope! This is bulky, I will remove this ASAP in favor of achieving
+// the same with inline forms using one or two modifiers
 .field-block
   padding: $gap
   border: 0.0625rem solid $border

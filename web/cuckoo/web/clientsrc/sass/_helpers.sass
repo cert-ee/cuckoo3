@@ -127,6 +127,7 @@ input[disabled],
 select[disabled],
 textarea[disabled],
 button[disabled]
+  touch-events: none
   opacity: .5
   cursor: not-allowed !important
 
@@ -150,13 +151,3 @@ button[disabled]
 .is-sticky
   position: sticky
   top: 0
-
-.can-scroll
-  overflow: auto
-  &-horizontal
-    overflow-x: auto
-    overflow-y: hidden
-    white-space: nowrap
-  &-vertical
-    overflow-x: hidden
-    overflow-y: auto

@@ -116,7 +116,6 @@ const processes = (function() {
   const { mapped }      = processes;
   const tree            = document.createElement('ul');
 
-  tree.classList.add('list');
   tree.classList.add('process-tree');
 
   function template(process, meta) {
@@ -220,7 +219,7 @@ const processes = (function() {
 (function signatureFilters() {
 
   const signatures  = document.querySelector('#box-Signatures');
-  
+
   if(!signatures)
     return;
 
