@@ -53,11 +53,17 @@ class _PEx509Cert:
 
     @property
     def subject_dict(self):
-        return {attr.oid._name: attr.value for attr in self._cert.subject}
+        try:
+            return {attr.oid._name: attr.value for attr in self._cert.subject}
+        except ValueError:
+            return {}
 
     @property
     def issuer_dict(self):
-        return {attr.oid._name: attr.value for attr in self._cert.issuer}
+        try:
+            return {attr.oid._name: attr.value for attr in self._cert.issuer}
+        except ValueError:
+            return {}
 
     def _ext_subjkeyidentifier(self, extension, extensions):
         # oid 2.5.29.14 - subjectKeyIdentifier
