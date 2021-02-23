@@ -5,6 +5,7 @@
 import time
 from pathlib import Path
 
+import aiohttp
 import vt
 import vt.error
 
@@ -28,6 +29,8 @@ def _make_results(avs, stats):
 def _do_info_request(client, request_str):
     try:
         return client.get_object(request_str)
+    except aiohttp.ClientError as e:
+        raise VirustotalError(f"Virustotal connection error: {e}")
     except vt.error.APIError as e:
         if e.code == "NotFoundError":
             return None
@@ -70,6 +73,8 @@ def submit_file(path):
         with open(path, "rb") as fp:
             try:
                 vt_submission = client.scan_file(fp, wait_for_completion=False)
+            except aiohttp.ClientError as e:
+                raise VirustotalError(f"Virustotal connection error: {e}")
             except vt.error.APIError as e:
                 if e.code == "BadRequestError":
                     raise VirustotalError(f"Invalid request made: {e.message}")
