@@ -10,7 +10,8 @@ class Levels:
 
 
 class Scores:
-    NOTHING_DETECTED = 1
+    NOTHING_DETECTED = 0
+    INFORMATIONAL = 1
     SUSPICIOUS = 6
     LIKELY_MALICIOUS = 8
     MALICIOUS = 9

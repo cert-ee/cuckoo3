@@ -280,7 +280,8 @@ def _translate_suspicious_event(threemon_suspicious, ctx):
     if threemon_suspicious.arg2:
         args.append(threemon_suspicious.arg2)
 
-    if normalized == SuspiciousEvents.EXECUTES_DROPPED_EXE:
+    if normalized in (SuspiciousEvents.EXECUTES_DROPPED_EXE,
+                      SuspiciousEvents.LOADS_DROPPED_DLL):
         args[0] = ctx.file_ids.get_path(threemon_suspicious.arg1)
 
     return SuspiciousEvent(

@@ -134,6 +134,13 @@ class ProcessTracker:
     def lookup_procid(self, pid):
         return self._pid_procid.get(pid)
 
+    def process_by_pid(self, pid):
+        procid = self.lookup_procid(pid)
+        if not procid:
+            return None
+
+        return self.lookup_process(procid)
+
     def set_tracked(self, pid):
         proc_id = self.lookup_procid(pid)
         if not proc_id:
