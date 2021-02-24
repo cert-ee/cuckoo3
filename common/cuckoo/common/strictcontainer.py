@@ -8,6 +8,9 @@ import json
 import dateutil.parser
 
 from .storage import safe_json_dump, split_analysis_id
+from .log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
 
 def deserialize_disk_json(obj):
     if "__isodt__" in obj:
@@ -24,12 +27,16 @@ def serialize_disk_json(obj):
         return obj.decode()
     if isinstance(obj, datetime.datetime):
         return {"__isodt__": obj.isoformat()}
-    return obj
+
+    log.warning("Unhandled object type in JSON disk serialization", object=obj)
+    return str(obj)
 
 def serialize_api_json(obj):
     if isinstance(obj, datetime.datetime):
         return obj.isoformat()
-    return obj
+
+    log.warning("Unhandled object type in api JSON serialization", object=obj)
+    return str(obj)
 
 class StrictContainer:
 

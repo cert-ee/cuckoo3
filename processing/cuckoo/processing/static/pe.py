@@ -123,7 +123,8 @@ class _PEx509Cert:
             if isinstance(name.value, bytes):
                 altnames.append(base64.b64encode(name.value).decode())
             else:
-                altnames.append(name.value)
+                for i, nameattr in enumerate(name.value):
+                    altnames.append(nameattr.value)
 
         extensions[extension.oid._name] = altnames
 
