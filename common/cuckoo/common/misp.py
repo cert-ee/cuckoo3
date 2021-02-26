@@ -3,6 +3,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import pymisp
+import requests.exceptions
 
 from pathlib import Path
 from datetime import datetime
@@ -144,7 +145,7 @@ class MispClient:
             self._client = pymisp.PyMISP(
                 url=misp_url, key=api_key, ssl=verify_tls
             )
-        except pymisp.PyMISPError as e:
+        except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(
                 f"Failed to create MISP client. Error: {e}"
             ).with_traceback(e.__traceback__)
@@ -155,10 +156,10 @@ class MispClient:
                 value=value, type_attribute=type_attribute, limit=limit,
                 metadata=True, return_format="json", object_name=None
             )
-        except pymisp.PyMISPError as e:
+        except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(
-                f"Event query failed for value f'{value}'. "
-                f"Type: f'{type_attribute}'. Error: {e}"
+                f"Event query failed for value '{value}'. "
+                f"Type: '{type_attribute}'. Error: {e}"
             ).with_traceback(e.__traceback__)
 
         try:
@@ -217,5 +218,5 @@ class MispClient:
                     f"Failed to create new MISP event. "
                     f"Error: {errors[1]}"
                 )
-        except pymisp.PyMISPError as e:
+        except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(f"Failed to create new MISP event. Error: {e}")
