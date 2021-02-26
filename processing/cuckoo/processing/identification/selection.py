@@ -7,6 +7,7 @@ import logging
 import os
 
 import sflock
+import sflock.exception
 
 from cuckoo.common.config import cfg
 from cuckoo.common.log import set_logger_level
@@ -46,8 +47,9 @@ def _write_filemap(analysis_id, filemap):
         json.dump(filemap, fp)
 
 def _make_ident_filename(f):
-    if f.extension and not f.filename.endswith(f.extension):
+    if f.extension and not f.filename.lower().endswith(f.extension):
         return f"{f.filename}.{f.extension}"
+
     return f.filename
 
 class Identify(Processor):
@@ -69,18 +71,17 @@ class Identify(Processor):
         # folder.
         original_filename = self.ctx.analysis.submitted.filename
 
-        # TODO properly handle and propagate as Sflock errors in Sflock.
         try:
             f = sflock.unpack(submitted_file, filename=original_filename)
         except Exception as e:
-            self.ctx.log.exception("Sflock unpacking failure", error=e)
-            raise CancelProcessing(f"Sflock unpacking failure. {e}")
-
-
-        if f.error:
-            self.ctx.errtracker.add_error(
-                f"Sflock unpack error: {f.error}.", self
+            self.ctx.log.exception(
+                "Unexpected Sflock unpacking failure", error=e
             )
+            raise CancelProcessing(f"Unexpected Sflock unpacking failure. {e}")
+
+        if f.mode:
+            raise CancelProcessing(f"Failed to unpack file: {f.error}")
+
 
         selected = []
         find_selected(f, selected)
