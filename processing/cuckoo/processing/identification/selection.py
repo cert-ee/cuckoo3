@@ -80,8 +80,9 @@ class Identify(Processor):
             raise CancelProcessing(f"Unexpected Sflock unpacking failure. {e}")
 
         if f.mode:
-            raise CancelProcessing(f"Failed to unpack file: {f.error}")
-
+            raise CancelProcessing(
+                f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
+            )
 
         selected = []
         find_selected(f, selected)

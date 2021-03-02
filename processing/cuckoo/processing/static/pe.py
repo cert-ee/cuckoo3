@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization.pkcs7 import (
     load_der_pkcs7_certificates
 )
-from cryptography.x509 import extensions as x509extensions
+from cryptography.x509 import extensions as x509extensions, general_name
 from cuckoo.common.storage import Paths
 from sflock import magic as sflockmagic
 
@@ -73,7 +73,10 @@ class _PEx509Cert:
 
     def _ext_authoritykeyidentifier(self, extension, extensions):
         # oid 2.5.29.35 - authorityKeyIdentifier
-        extensions[extension.oid._name] =  base64.b64encode(
+        if not extension.value.key_identifier:
+            return ""
+
+        extensions[extension.oid._name] = base64.b64encode(
             extension.value.key_identifier
         ).decode()
 
@@ -101,6 +104,9 @@ class _PEx509Cert:
         # oid 2.5.29.31 - cRLDistributionPoints
         crl_points = []
         for i, point in enumerate(extension.value):
+            if not point.full_name:
+                continue
+
             for full_name in point.full_name:
                 crl_points.append(full_name.value)
 
@@ -120,11 +126,15 @@ class _PEx509Cert:
         # oid 2.5.29.17 - subjectAltName
         altnames = []
         for i, name in enumerate(extension.value._general_names):
-            if isinstance(name.value, bytes):
-                altnames.append(base64.b64encode(name.value).decode())
-            else:
+            if isinstance(name, str):
+                altnames.append(name)
+            elif isinstance(name, general_name.DirectoryName):
                 for i, nameattr in enumerate(name.value):
                     altnames.append(nameattr.value)
+            elif isinstance(name.value, bytes):
+                altnames.append(base64.b64encode(name.value).decode())
+            else:
+                altnames.append(name.value)
 
         extensions[extension.oid._name] = altnames
 
@@ -166,10 +176,15 @@ class _PEx509Cert:
         }
 
         extensions = {}
-        for extension in self._cert.extensions:
-            ext_helper = ext_helpers.get(extension.oid._name)
-            if ext_helper:
-                ext_helper(extension, extensions)
+        try:
+            for extension in self._cert.extensions:
+                ext_helper = ext_helpers.get(extension.oid._name)
+                if ext_helper:
+                    ext_helper(extension, extensions)
+        except ValueError:
+            # Catch ValueError for now. Cryptography raises it in iterator
+            # if there is a x509 extension violation.
+            return {}
 
         return extensions
 
@@ -224,7 +239,14 @@ class PEFile:
         except ValueError:
             return []
 
-        return [_PEx509Cert(cert).to_dict() for cert in allcerts]
+        try:
+            return [_PEx509Cert(cert).to_dict() for cert in allcerts]
+        except ValueError as e:
+            # Catch unhandled/unknown case value errors here and propagate
+            # them as an error of this module.
+            raise StaticAnalysisError(
+                f"Unhandled PE x509 certificate error: {e}"
+            )
 
     def get_imported_symbols(self):
         """Return a list of dictionaries of imported symbols"""
