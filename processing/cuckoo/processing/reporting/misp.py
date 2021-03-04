@@ -75,7 +75,7 @@ class MISP(Reporter):
             event.add_mitre_attack(ttp)
 
     def _add_ips(self, event):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
 
         for ip in network.get("host", []):
             if self.ip_sl.is_safelisted(ip, self.ctx.machine.platform):
@@ -86,7 +86,7 @@ class MISP(Reporter):
             )
 
     def _add_domains(self, event):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
 
         for domain in network.get("domain", []):
             if self.domain_sl.is_safelisted(domain, self.ctx.machine.platform):
@@ -97,9 +97,13 @@ class MISP(Reporter):
             )
 
     def _add_urls(self, event):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
 
-        for url in network.get("url", []):
+        for http in network.get("http", []):
+            url = http.get("request", {}).get("url")
+            if not url:
+                continue
+
             if self.url_sl.is_safelisted(url, self.ctx.machine.platform):
                 continue
 

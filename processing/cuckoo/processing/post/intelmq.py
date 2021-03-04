@@ -51,7 +51,7 @@ class IntelMQInfoGather(Processor):
             )
 
     def _search_ips(self, query_limit=10):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
         queries = 0
         events = []
         for ip in network.get("host", []):
@@ -64,7 +64,7 @@ class IntelMQInfoGather(Processor):
         return events
 
     def _search_domains(self, query_limit=10):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
         queries = 0
         events = []
         for domain in network.get("domain", []):
@@ -77,12 +77,16 @@ class IntelMQInfoGather(Processor):
         return events
 
     def _search_urls(self, query_limit=10):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
         queries = 0
         events = []
-        for url in network.get("url", []):
+        for http in network.get("http", []):
             if query_limit is not None and queries >= query_limit:
                 break
+
+            url = http.get("request", {}).get("url")
+            if not url:
+                continue
 
             queries += 1
             events.extend(self.intelmq.find_url(url))
