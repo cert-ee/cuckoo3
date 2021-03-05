@@ -4,21 +4,26 @@
 
 import logging
 import os
-
-from dpkt import http
-
-from cuckoo.common.log import set_logger_level
-from cuckoo.common.storage import TaskPaths
-from cuckoo.common import safelist
+from dpkt import http as dpkthttp
 from httpreplay import (
     reader, protohandlers, udpprotoparsers, transport, protoparsers,
     guess
+)
+
+from cuckoo.common import safelist
+from cuckoo.common.log import set_logger_level, CuckooGlobalLogger
+from cuckoo.common.storage import TaskPaths, Paths
+from cuckoo.processing.errors import PluginError
+from cuckoo.processing.signatures.pattern import (
+    PatternScanner, PatternSignatureError
 )
 
 from ..abtracts import Processor
 
 set_logger_level("httpreplay.transport", logging.ERROR)
 set_logger_level("httpreplay.protoparsers", logging.ERROR)
+
+log = CuckooGlobalLogger(__name__)
 
 class Pcapreader(Processor):
 
@@ -111,11 +116,11 @@ class Pcapreader(Processor):
             if not httpdata:
                 continue
 
-            if isinstance(httpdata, http.Request):
+            if isinstance(httpdata, dpkthttp.Request):
                 data["request"] = self._make_http_request(
                      dst, protocol, httpdata
                 )
-            elif isinstance(httpdata, http.Response):
+            elif isinstance(httpdata, dpkthttp.Response):
                 data["response"] = self._make_http_response(
                     protocol, httpdata
                 )
@@ -344,3 +349,173 @@ class Pcapreader(Processor):
                     hosts.append(host)
 
         return results
+
+
+class NetworkPatternSignatures(Processor):
+
+    @classmethod
+    def enabled(cls):
+        return len(os.listdir(Paths.pattern_signatures("network"))) > 0
+
+    @classmethod
+    def init_once(cls):
+        cls.scanner = None
+        # Read all network pattern signature yml files.
+        networksigs_dir = Paths.pattern_signatures("network")
+        for sigfile in os.listdir(networksigs_dir):
+            if not sigfile.endswith((".yml", ".yaml")):
+                continue
+
+            sigfile_path = os.path.join(networksigs_dir, sigfile)
+            log.debug("Loading network signature file", filepath=sigfile_path)
+            if not cls.scanner:
+                cls.scanner = PatternScanner()
+
+            try:
+                cls.scanner.load_sigfile(sigfile_path)
+            except (ValueError, TypeError,
+                    KeyError, PatternSignatureError) as e:
+                raise PluginError(
+                    f"Failed to load network signature file: {sigfile_path}. "
+                    f"Error: {e}"
+                ).with_traceback(e.__traceback__)
+
+        # Ask the scanner to compile the loaded patterns into a hyperscan
+        # database. It is so possible to show what regex caused the compile
+        # error, as this information is not made available by Hyperscan.
+        try:
+            cls.scanner.compile()
+        except PatternSignatureError as e:
+            raise PluginError(
+                "Failed to compile network signatures. Invalid hyperscan "
+                f"regex in one of the signatures. Hyperscan error: {e}"
+            )
+
+    def init(self):
+        if not self.scanner:
+            return
+
+        self.match_tracker = self.scanner.new_tracker()
+
+    def _scan_http(self):
+        network = self.ctx.result.get("network", {})
+        for http in network.get("http", []):
+            request = http.get("request", {})
+            response = http.get("response", {})
+
+            url = request.get("url")
+            if url:
+                self.scanner.scan(
+                    scan_str=url, orig_str=url, event=None,
+                    event_kind="http_url"
+                )
+
+            for header in request.get("headers", []):
+                combined = f"{header['key']}: {header['value']}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="http_header", event_subtype="request"
+                )
+
+            for header in response.get("headers", []):
+                combined = f"{header['key']}: {header['value']}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="http_header", event_subtype="response"
+                )
+
+    def _scan_smtp(self):
+        network = self.ctx.result.get("network", {})
+
+        for smtp in network.get("smtp", []):
+            request = smtp.get("request", {})
+
+            hostname = request.get("hostname")
+            if hostname:
+                self.scanner.scan(
+                    scan_str=hostname, orig_str=hostname, event=None,
+                    event_kind="smtp_hostname"
+                )
+
+            for mailfrom in request.get("mail_from", []):
+                self.scanner.scan(
+                    scan_str=mailfrom, orig_str=mailfrom, event=None,
+                    event_kind="smtp_mailfrom"
+                )
+
+            for mailto in request.get("mail_to", []):
+                self.scanner.scan(
+                    scan_str=mailto, orig_str=mailto, event=None,
+                    event_kind="smtp_rcptto"
+                )
+
+            for name, value in request.get("headers", {}).items():
+                combined = f"{name}: {value}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="smtp_header"
+                )
+
+            message = request.get("message")
+            if message:
+                self.scanner.scan(
+                    scan_str=message, orig_str=message, event=None,
+                    event_kind="smtp_message"
+                )
+
+    def _scan_dns(self):
+        dns = self.ctx.result.get("network", {}).get("dns", {})
+
+        for q in dns.get("query", []):
+            self.scanner.scan(
+                scan_str=q["name"], orig_str=q["name"], event=None,
+                event_kind="dns_q", event_subtype=q["type"].lower()
+            )
+
+        for r in dns.get("response", []):
+            self.scanner.scan(
+                scan_str=r["data"], orig_str=r["data"], event=None,
+                event_kind="dns_r", event_subtype=r["type"].lower()
+            )
+
+    def _scan_host(self):
+        network = self.ctx.result.get("network", {})
+        for host in network.get("host", []):
+            self.scanner.scan(
+                scan_str=host, orig_str=host, event=None,
+                event_kind="ip"
+            )
+
+    def start(self):
+        if not self.scanner:
+            return
+
+        self._scan_http()
+        self._scan_smtp()
+        self._scan_dns()
+        self._scan_host()
+
+        for match in self.match_tracker.get_matches():
+
+            iocs = []
+            for matchctx in match.get_iocs():
+                duplicate = False
+                for ioc in iocs:
+                    if ioc["value"] == matchctx.orig_str:
+                        duplicate = True
+                        break
+
+                if duplicate:
+                    continue
+
+                iocs.append({"value": matchctx.orig_str})
+
+            self.ctx.signature_tracker.add_signature(
+                name=match.name, short_description=match.short_description,
+                description=match.description, score=match.score, iocs=iocs,
+                family=match.family, tags=match.tags, ttps=match.ttps
+            )
+
+    def cleanup(self):
+        if self.scanner:
+            self.scanner.clear()
