@@ -20,22 +20,8 @@
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-pefiles,tab-virustotal">
-          {% if pre.static.pe %}
-            <a class="tabbar-link" href="#tab-pefiles">PE</a>
-          {% endif %}
-          {% if pre.virustotal %}
-            <a class="tabbar-link" href="#tab-virus-total">Antivirus</a>
-          {% endif %}
-          {% if pre.misp %}
-            <a class="tabbar-link" href="#tab-misp">MISP</a>
-          {% endif %}
-          {% if pre.intelmq %}
-            <a class="tabbar-link" href="#tab-intelmq">IntelMQ</a>
-          {% endif %}
-          {% if pre.static.office %}
-            <a class="tabbar-link" href="#tab-office">Office</a>
-          {% endif %}
+        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-pefiles,tab-virustotal" id="staticReport">
+          <a class="tabbar-link" href="#tab-summary">Summary</a>
         </nav>
 
         {% if debug_template_data %}
@@ -46,6 +32,10 @@
             {{ render_dict(pre) }}
           {% endcall %}
         {% endif %}
+
+        <div id="tab-summary">
+
+        </div>
 
         {# tab: static.target/static.pe #}
         {% if pre.static.pe %}
