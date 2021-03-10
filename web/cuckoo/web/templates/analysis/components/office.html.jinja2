@@ -1,0 +1,46 @@
+{% call ui_box(title="Extracted macros", has_padding=False) %}
+  <table class="table has-border no-border-x">
+    <tbody>
+      {% for macro in pre.static.office.macros %}
+        <tr>
+          <td>
+            <p class="label has-text-small">Stream:</p>
+            <code>{{ macro.stream }}</code>
+          </td>
+          <td>
+            <p class="label has-text-small">File name:</p>
+            <code>{{ macro.filename }}</code>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" class="no-padding-x no-padding-top">
+            <details class="details box no-radius no-margin-y has-border-bottom">
+              <summary class="has-padding">
+                <p>View original code</p>
+              </summary>
+              {% if macro.orig_code %}
+                <pre class="code has-padding"><code>{{ macro.orig_code }}</code></pre>
+              {% else %}
+                <p class="has-half-opacity"><em>Empty</em></p>
+              {% endif %}
+            </details>
+            <details class="details box has-shadow no-radius no-margin-y has-border-bottom">
+              <summary>
+                <p>View deobfuscated code</p>
+              </summary>
+              {% if macro.deobf %}
+                <pre class="code has-padding"><code>{{ macro.deobf }}</code></pre>
+              {% else %}
+                <p class="has-half-opacity"><em>No deobfuscated code</em></p>
+              {% endif %}
+            </details>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td>No data</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}

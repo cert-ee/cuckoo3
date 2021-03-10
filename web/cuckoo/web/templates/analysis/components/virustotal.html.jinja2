@@ -1,0 +1,8 @@
+{% call ui_box(title="Antivirus Engines", has_padding=False) %}
+  {{ render_table(
+      data=pre.virustotal.avs,
+      cols=["category","engine_name","engine_version","method","result"],
+      labels=["Category","Name","Version","Method","Result"],
+      has_sticky_header=True
+  )}}
+{% endcall %}

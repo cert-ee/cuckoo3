@@ -218,7 +218,7 @@ const processes = (function() {
 // tap through various levels of signature severities
 (function signatureFilters() {
 
-  const signatures  = document.querySelector('#box-Signatures');
+  const signatures  = document.querySelector('#box-Static-signatures');
 
   if(!signatures)
     return;

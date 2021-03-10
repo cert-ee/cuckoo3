@@ -62,6 +62,9 @@
               stateIcon.classList.remove('fa-spin');
               stateIcon.classList.add('fa-ban');
               stateIcon.classList.add('is-red')
+
+              // @TODO redirect to analysis page with the id, the error is rendered
+              // on that page.
             } else {
               // display the current state description and time a new poll.
               stateMessage.textContent = state_desc;
@@ -70,6 +73,7 @@
           });
       }
 
+      // @TODO poll or poll(), idk
       setTimeout(poll(), 5000);
     });
   </script>

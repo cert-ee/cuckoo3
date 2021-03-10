@@ -3,7 +3,11 @@
 {% set report_page = "sample" %}
 {% set title = "Analysis" %}
 
-{% from 'macros.html.jinja2' import ui_box, ui_signatures, error_box, color_class, color_text, render_dict %}
+{% from 'macros.html.jinja2' import
+  ui_box, ui_signatures, error_box,
+  color_class, color_text,
+  render_dict, render_table
+%}
 
 {% block page_styles %}
   <link rel="stylesheet" type="text/css" href="{{ static('/css/chart.min.css') }}" />
@@ -163,6 +167,10 @@
         <h2>Analysis</h2>
         <p>Description and overview of target and submission configuration.</p>
 
+        <nav class="tabbar has-background-transparent" data-enhance id="analysisReport">
+          <a class="tabbar-link is-active" href="#tab-overview">Overview</a>
+        </nav>
+
         {% if debug_template_data %}
           {% call ui_box(title="Template data", has_padding=False, collapsed=True) %}
             <h3 class="has-margin-x">Analysis</h3>
@@ -172,278 +180,65 @@
           {% endcall %}
         {% endif %}
 
+        {# handles errors #}
         {% if analysis.errors.errors|length > 0 %}
           {% call error_box(analysis.errors.errors) %}
             <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
           {% endcall %}
         {% endif %}
 
-        {% call ui_box(title="Summary", has_padding=False) %}
-          <div class="tabbar" data-enhance>
-            <a href="#analysis" class="tabbar-link is-active">Analysis</a>
-            <a href="#file-analysis" class="tabbar-link">Target</a>
-            <a href="#submission" class="tabbar-link">Submission</a>
-            <a href="#settings" class="tabbar-link">Settings</a>
+        <div id="tab-overview">
+          {% include "analysis/components/summary.html.jinja2" %}
+
+          {# include components if they exist inside the template scope #}
+          {% if pre and pre.signatures|length %}
+            {% include "analysis/components/static-signatures.html.jinja2" %}
+          {% endif %}
+
+          {% if analysis and analysis.ttps|length %}
+            {% include "analysis/components/mitre.html.jinja2" %}
+          {% endif %}
+
+          {% if analysis.tags|length %}
+            {% include "analysis/components/behavioral-map.html.jinja2" %}
+          {% endif %}
+
+          {% if analysis.tasks|length and analysis.tasks|length > 1 %}
+            {% include "analysis/components/compare-tasks.html.jinja2" %}
+          {% endif %}
+        </div>
+
+        {# tab: static.target/static.pe #}
+        {% if pre.static.pe %}
+          <div id="tab-pefiles" hidden>
+            {% include "analysis/components/pefiles.html.jinja2" %}
           </div>
+        {% endif %}
 
-          <div id="analysis">
-            <div class="columns has-padding is-divided">
-              <div class="column is-auto">
-                <div class="ratio-1-1">
-                  <div class="ratio-content">
-                    <p class="{{ color_text(analysis.score) }} has-text-huge no-margin"><strong>{{ analysis.score }}</strong><sub class="has-text-light">/10</sub></p>
-                  </div>
-                  <div class="ratio-content is-bottom has-text-small has-half-opacity">Analysis score</div>
-                </div>
-              </div>
-              <div class="column">
-                <h3 class="no-margin-bottom is-monospace">
-                  <strong>{{ analysis.id }}</strong>
-                  <span class="pull-right has-half-opacity">{{ analysis.state|humanstate }}</span>
-                </h3>
-                <p class="has-line-break has-text-small">
-                  <span class="icon">
-                    <i class="far fa-file"></i>
-                  </span> {{ analysis.target.filename }}
-                </p>
-                <ul class="list is-horizontal no-margin-bottom has-text-small">
-                  <li title="Date of creation">
-                    <span class="icon">
-                      <i class="far fa-calendar"></i>
-                    </span> {{ analysis.created_on | formatdatetime }}
-                  </li>
-                  <li>
-                    <span class="icon">
-                      <i class="fas fa-compact-disc"></i>
-                    </span> {{ analysis.target.size | filesizeformat }}
-                  </li>
-                  <li class="is-monospace">
-                    <span class="icon">
-                      <i class="fas fa-terminal"></i>
-                    </span> {{ analysis.target.media_type }}
-                  </li>
-                </ul>
-                {% if analysis.families|length %}
-                  <div class="tag-list has-margin-top">
-                    <span class="label">Detected families:</span>
-                    {% for family in analysis.families %}
-                      <span class="tag no-margin-top is-red">{{ family }}</span>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-            </div>
+        {# tab: static.virustotal #}
+        {% if pre.virustotal %}
+          <div id="tab-virus-total" hidden>
+            {% include "analysis/components/virustotal.html.jinja2" %}
           </div>
-          <table class="table" id="submission" hidden>
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="no-line-break"><strong>Category</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.category }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>File name</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.filename }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Size</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.size | filesizeformat }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Type</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.type }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Media Type</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.media_type }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>MD5</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.md5 }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>SHA1</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.sha1 }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>SHA256</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.sha256 }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>SHA512</strong></td>
-                <td class="has-line-break">{{ analysis.submitted.sha512 }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <table class="table" id="settings" hidden>
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="no-line-break"><strong>Timeout</strong></td>
-                <td class="has-line-break">{{ analysis.settings.timeout }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Priority</strong></td>
-                <td class="has-line-break">{{ analysis.settings.priority }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Platforms</strong></td>
-                <td class="has-line-break">
-                  {# analysis.settings.platforms #}
-                  {% if analysis.settings.platforms|length %}
-                    {% for p in analysis.settings.platforms %}
-                      <div class="tag-list no-margin-y">
-                        <code class="no-margin-y has-margin-right">{{ p.platform }} {{ p.os_version }}</code>
-                        {% if p.tags|length > 0 %}
-                          {% for t in p.tags %}
-                            <div class="tag no-margin-y has-margin-bottom">{{ t }}</div>
-                          {% endfor %}
-                        {% endif %}
-                      </div>
-                    {% endfor %}
-                  {% endif %}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <table class="table" id="file-analysis" hidden>
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="no-line-break"><strong>File name</strong></td>
-                <td class="has-line-break">{{ analysis.target.filename }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Size</strong></td>
-                <td class="has-line-break">{{ analysis.target.size | filesizeformat }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Type</strong></td>
-                <td class="has-line-break">{{ analysis.target.filetype }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>Media Type</strong></td>
-                <td class="has-line-break">{{ analysis.target.media_type }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>MD5</strong></td>
-                <td class="has-line-break">{{ analysis.target.md5 }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>SHA1</strong></td>
-                <td class="has-line-break">{{ analysis.target.sha1 }}</td>
-              </tr>
-              <tr>
-                <td class="no-line-break"><strong>SHA256</strong></td>
-                <td class="has-line-break">{{ analysis.target.sha256 }}</td>
-              </tr>
-            </tbody>
-          </table>
-        {% endcall %}
-
-        {% if pre and pre.signatures|length %}
-          {% call ui_box(title="Signatures", has_padding=False) %}
-            {{ ui_signatures(pre.signatures) }}
-          {% endcall %}
         {% endif %}
 
-        {% if analysis and analysis.ttps|length %}
-
-          {% macro ttp_template(ttp) %}
-            <span class="box is-inline has-background-blue has-text-center has-margin-right" style="margin-top: .25rem; margin-bottom: .25rem;">
-              <span class="tag is-white has-margin-right">{{ ttp.id }}</span>
-              <a title="View on attack.mitre.org" href="{{ ttp.reference }}" target="_blank">
-                <strong>{{ ttp.name }}</strong>
-              </a>
-            </span>
-          {% endmacro %}
-
-          {% macro find_ttps(category) %}
-            {% for ttp in analysis.ttps %}
-              {% if category in ttp.tactics %}
-                {{ ttp_template(ttp) }}
-              {% endif %}
-            {% endfor %}
-          {% endmacro %}
-
-          {% call ui_box(title="Mitre ATT&CK", id="mitre", has_padding=False) %}
-            <table class="table">
-              <tr>
-                <th class="has-text-small has-text-right">Reconnaissance</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Reconnaissance') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Resource Development</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Resource Development') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Initial Access</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Initial Access') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Execution</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Execution') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Persistence</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Persistence') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Privilege Escalation</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Privilege Escalation') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Defense Evasion</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Defense Evasion') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Credential Access</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Credential Access') }}</td>
-              </tr>
-              <tr>
-                <th class="has-text-small has-text-right">Discovery</th>
-                <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Discovery') }}</td>
-              </tr>
-            </table>
-          {% endcall %}
+        {% if pre.misp %}
+          <div id="tab-misp" hidden>
+            {% include "analysis/components/misp.html.jinja2" %}
+          </div>
         {% endif %}
 
-        {% if analysis.tags|length %}
-          {% call ui_box(title="Behavioral map", hidden=True) %}
-            <canvas id="behavior-map" width="100%"></canvas>
-          {% endcall %}
+        {# tab: pre.intelmq #}
+        {% if pre.intelmq %}
+          <div id="tab-intelmq" hidden>
+            {% include "analysis/components/intelmq.html.jinja2" %}
+          </div>
         {% endif %}
 
-        {% if analysis.tasks|length and analysis.tasks|length > 1 %}
-          {% call ui_box(title="Compare") %}
-            <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
-            <form class="form" method="POST" id="compare-tasks">
-              {% for task in analysis.tasks %}
-                <div class="control is-checkbox">
-                  <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" />
-                  <label class="label" for="{{ task.id }}">{{ task.id }}</label>
-                </div>
-              {% endfor %}
-              <div class="control">
-                <input type="submit" value="Compare" class="button is-blue" disabled />
-              </div>
-            </form>
-          {% endcall %}
+        {% if pre.static.office %}
+          <div id="tab-office" hidden>
+            {% include "analysis/components/office.html.jinja2" %}
+          </div>
         {% endif %}
 
       </section>
