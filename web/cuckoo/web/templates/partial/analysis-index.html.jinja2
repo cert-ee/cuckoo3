@@ -9,6 +9,7 @@
       <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Overview</a></li>
       <li>
         <a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a>
+        {# @TODO; These tabbar-links will need to be dynamic too, like taskReport #}
         {% if report_page == 'static' %}
         <ul>
           {% if pre.static.pe %}

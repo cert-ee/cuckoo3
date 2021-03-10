@@ -3,7 +3,7 @@
 {% set report_page = "static" %}
 {% set title = "Analysis - static analysis" %}
 
-{% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class %}
+{% from 'macros.html.jinja2' import render_table, render_dict, ui_box, color_class, color_text %}
 
 {% block page_script %}
 
@@ -20,7 +20,7 @@
         <h2>Static analysis</h2>
         <p>Cuckoo static analysis and an overview from the results of other analysis providers.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-pefiles,tab-virustotal" id="staticReport">
+        <nav class="tabbar has-background-transparent" data-enhance {# data-priority="tab-pefiles,tab-virustotal" #} id="staticReport">
           <a class="tabbar-link" href="#tab-summary">Summary</a>
         </nav>
 
@@ -33,8 +33,56 @@
           {% endcall %}
         {% endif %}
 
+        {# tab: summary of static analysis #}
         <div id="tab-summary">
-
+          {% call ui_box(title="Summary") %}
+            <div class="columns has-padding is-divided">
+              <div class="column is-auto">
+                <div class="ratio-1-1">
+                  <div class="ratio-content">
+                    <p class="{{ color_text(analysis.score) }} has-text-huge no-margin"><strong>{{ analysis.score }}</strong><sub class="has-text-light">/10</sub></p>
+                  </div>
+                  <div class="ratio-content is-bottom has-text-small has-half-opacity">Analysis score</div>
+                </div>
+              </div>
+              <div class="column">
+                <h3 class="no-margin-bottom is-monospace">
+                  <strong>{{ analysis.id }}</strong>
+                  <span class="pull-right has-half-opacity">{{ analysis.state|humanstate }}</span>
+                </h3>
+                <p class="has-line-break has-text-small">
+                  <span class="icon">
+                    <i class="far fa-file"></i>
+                  </span> {{ analysis.target.filename }}
+                </p>
+                <ul class="list is-horizontal no-margin-bottom has-text-small">
+                  <li title="Date of creation">
+                    <span class="icon">
+                      <i class="far fa-calendar"></i>
+                    </span> {{ analysis.created_on | formatdatetime }}
+                  </li>
+                  <li>
+                    <span class="icon">
+                      <i class="fas fa-compact-disc"></i>
+                    </span> {{ analysis.target.size | filesizeformat }}
+                  </li>
+                  <li class="is-monospace">
+                    <span class="icon">
+                      <i class="fas fa-terminal"></i>
+                    </span> {{ analysis.target.media_type }}
+                  </li>
+                </ul>
+                {% if analysis.families|length %}
+                  <div class="tag-list has-margin-top">
+                    <span class="label">Detected families:</span>
+                    {% for family in analysis.families %}
+                      <span class="tag no-margin-top is-red">{{ family }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endcall %}
         </div>
 
         {# tab: static.target/static.pe #}
