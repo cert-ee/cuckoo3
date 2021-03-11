@@ -165,9 +165,9 @@
       <section class="column has-padding">
 
         <h2>Analysis</h2>
-        <p>Description and overview of target and submission configuration.</p>
+        <p>Static and file analysis results. The sidebar on the left reflects any additional results by component.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance id="analysisReport">
+        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-overview" id="analysisReport" hidden>
           <a class="tabbar-link is-active" href="#tab-overview">Overview</a>
         </nav>
 
@@ -222,6 +222,7 @@
           </div>
         {% endif %}
 
+        {# tab: pre.misp #}
         {% if pre.misp %}
           <div id="tab-misp" hidden>
             {% include "analysis/components/misp.html.jinja2" %}
@@ -235,6 +236,7 @@
           </div>
         {% endif %}
 
+        {# tab: pre.static.office #}
         {% if pre.static.office %}
           <div id="tab-office" hidden>
             {% include "analysis/components/office.html.jinja2" %}
