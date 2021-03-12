@@ -56,15 +56,16 @@
             stateMessage.classList.toggle('has-text-red', error != undefined);
             if(error) {
               // do not start a new poll as we received a fatal error.
-              stateMessage.textContent = state_desc;
-              stateDescription.textContent = error;
-              stateIcon.classList.remove('fa-spinner');
-              stateIcon.classList.remove('fa-spin');
-              stateIcon.classList.add('fa-ban');
-              stateIcon.classList.add('is-red')
+              // stateMessage.textContent = state_desc;
+              // stateDescription.textContent = error;
+              // stateIcon.classList.remove('fa-spinner');
+              // stateIcon.classList.remove('fa-spin');
+              // stateIcon.classList.add('fa-ban');
+              // stateIcon.classList.add('is-red');
 
               // @TODO redirect to analysis page with the id, the error is rendered
               // on that page.
+              window.location = '/analysis/{{analysis_id}}';
             } else {
               // display the current state description and time a new poll.
               stateMessage.textContent = state_desc;
