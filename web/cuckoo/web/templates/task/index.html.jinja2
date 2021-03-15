@@ -110,7 +110,7 @@
             {% endcall %}
 
             {# Report.signatures #}
-            {% call ui_box(title="Signatures", has_padding=False) %}
+            {% call ui_box(title="Signatures", has_padding=False, id="signatures") %}
               {{ ui_signatures(report.signatures) }}
             {% endcall %}
 
