@@ -11,8 +11,8 @@
         {% include "partial/analysis-index.html.jinja2" %}
       </aside>
       <section class="column has-padding">
-        {% call ui_box(title="Fatal error(s)") %}
-          <p>One or more fatal errors caused this task to fail.</p>
+        {% call ui_box(title="Fatal error(s)", id="fatal-error") %}
+          <p>One or more fatal error(s) caused this task to fail.</p>
           {% for err in task.errors.fatal %}
             <div class="banner is-danger has-padding-x">
               <p>{{ err.error }}</p>
