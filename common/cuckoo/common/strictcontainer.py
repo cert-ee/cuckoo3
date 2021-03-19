@@ -69,7 +69,7 @@ class StrictContainer:
 
     def clear_updated(self):
         self._updated = False
-        self._updated_fields = []
+        self._updated_fields = set()
         if self._parent:
             self._parent.clear_updated()
 

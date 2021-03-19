@@ -4,16 +4,26 @@
 
 import logging
 import os
+from dpkt import http as dpkthttp
+from httpreplay import (
+    reader, protohandlers, udpprotoparsers, transport, protoparsers,
+    guess
+)
 
-from cuckoo.common.log import set_logger_level
-from cuckoo.common.storage import TaskPaths
 from cuckoo.common import safelist
-from httpreplay import reader, protohandlers, udpprotoparsers, transport
+from cuckoo.common.log import set_logger_level, CuckooGlobalLogger
+from cuckoo.common.storage import TaskPaths, Paths
+from cuckoo.processing.errors import PluginError
+from cuckoo.processing.signatures.pattern import (
+    PatternScanner, PatternSignatureError
+)
 
 from ..abtracts import Processor
 
 set_logger_level("httpreplay.transport", logging.ERROR)
 set_logger_level("httpreplay.protoparsers", logging.ERROR)
+
+log = CuckooGlobalLogger(__name__)
 
 class Pcapreader(Processor):
 
@@ -39,16 +49,247 @@ class Pcapreader(Processor):
             587: protohandlers.smtp_handler,
             8000: protohandlers.http_handler,
             8080: protohandlers.http_handler,
-            "generic": protohandlers.forward_handler
+            "generic": guess.tcp_guessprotocol
         }
-
-        def dns_handler():
-            return udpprotoparsers.DNS()
 
         self.udp_handlers = {
-            53: dns_handler,
+            53: protohandlers.DNS,
             "generic": protohandlers.forward_handler
         }
+
+    def _make_http_headers(self, httpdata):
+        headers = []
+        if not httpdata.headers:
+            return headers
+
+        for name, content in httpdata.headers.items():
+            # Limit on 20 headers
+            if len(headers) >= 20:
+                break
+
+            if not isinstance(content, list):
+                content = [content]
+
+            for value in content:
+                # Limit header and content to 1MB
+                mb1 = 1 * 1024 * 1024
+                if len(name) > mb1 or len(content) > mb1:
+                    continue
+
+                headers.append({
+                    "key": name,
+                    "value": value
+                })
+
+        return headers
+
+    def _make_http_request(self, dst, protocol, request):
+        dstip, dstport = dst
+        hoststr  = request.headers.get("host", dstip)
+        portstr = ""
+        if dstport not in (80, 443):
+            portstr = f":{dstport}"
+
+        url = f"{protocol}://{hoststr}{portstr}{request.uri}"
+
+        return {
+            "version": request.version,
+            "url": url,
+            "protocol": protocol,
+            "method": request.method,
+            "headers": self._make_http_headers(request),
+            "length": len(request.body)
+        }
+
+    def _make_http_response(self, protocol, response):
+        return {
+            "version": response.version,
+            "protocol": protocol,
+            "status": int(response.status),
+            "headers": self._make_http_headers(response),
+            "length": len(response.body)
+        }
+
+    def _add_http_entry(self, ts, src, dst, protocol, sent, recv, tracker):
+        data = {}
+        for httpdata in (sent, recv):
+            if not httpdata:
+                continue
+
+            if isinstance(httpdata, dpkthttp.Request):
+                data["request"] = self._make_http_request(
+                     dst, protocol, httpdata
+                )
+            elif isinstance(httpdata, dpkthttp.Response):
+                data["response"] = self._make_http_response(
+                    protocol, httpdata
+                )
+
+        if not data:
+            return
+
+        srcip, srcport = src
+        dstip, dstport = dst
+        data.update({
+            "ts": ts,
+            "srcip": srcip,
+            "srcport": srcport,
+            "dstip": dstip,
+            "dstport": dstport
+        })
+        tracker.setdefault("http", []).append(data)
+
+    def _add_smtp(self, ts, src, dst, sent, recv, tracker):
+        data = {}
+        for smtpdata in (sent, recv):
+            if isinstance(smtpdata, protoparsers.SmtpRequest):
+                data["request"] = {
+                    "hostname": smtpdata.hostname,
+                    "mail_from": smtpdata.mail_from,
+                    "mail_to": smtpdata.mail_to,
+                    "auth_type": smtpdata.auth_type,
+                    "username": smtpdata.username,
+                    "password": smtpdata.password,
+                    "headers": smtpdata.headers,
+                    "mail_body": smtpdata.message
+                }
+            elif isinstance(smtpdata, protoparsers.SmtpReply):
+                data["response"] = {
+                    "banner": smtpdata.ready_message
+                }
+
+        if not data:
+            return
+
+        srcip, srcport = src
+        dstip, dstport = dst
+        data.update({
+            "ts": ts,
+            "srcip": srcip,
+            "srcport": srcport,
+            "dstip": dstip,
+            "dstport": dstport
+        })
+        tracker.setdefault("smtp", []).append(data)
+
+    def _add_tcp(self, ts, src, dst, proto, sent, recv, tracker):
+        srcip, srcport = src
+        dstip, dstport = dst
+        tcp = {
+            "ts": ts,
+            "dstip": dstip,
+            "dstport": dstport,
+            "srcip": srcip,
+            "srcport": srcport
+        }
+        if sent:
+            tcp["tx_size"] = len(sent)
+        if recv:
+            tcp["rx_size"] = len(recv)
+
+        tracker.setdefault("tcp", []).append(tcp)
+
+        if proto in ("http", "https"):
+            self._add_http_entry(ts, src, dst, proto, sent, recv, tracker)
+        elif proto == "smtp":
+            self._add_smtp(ts, src, dst, sent, recv, tracker)
+
+    def _add_dns(self, ts, src, dst, proto, data, tracker):
+        srcip, srcport = src
+        dstip, dstport = dst
+
+        dns = tracker.setdefault("dns", {})
+        if isinstance(data, udpprotoparsers.DNSQueries):
+            # Only use domain safelist if used DNS server is safelisted.
+            usesafelist = self.dnsserver_sl.is_safelisted(
+                dstip, platform=self.ctx.machine.platform
+            )
+
+            queries = dns.setdefault("query", [])
+            for q in data.queries:
+                if usesafelist and self.domain_sl.is_safelisted(
+                        q.name, self.ctx.machine.platform
+                ):
+                    continue
+
+                queries.append({
+                    "ts": ts,
+                    "dstip": dstip,
+                    "dstport": dstport,
+                    "srcip": srcip,
+                    "srcport": srcport,
+                    "type": q.type,
+                    "name": q.name,
+                })
+
+        elif isinstance(data, udpprotoparsers.DNSResponses):
+            # Only use domain safelist if used DNS server is safelisted.
+            usesafelist = self.dnsserver_sl.is_safelisted(
+                srcip, platform=self.ctx.machine.platform
+            )
+
+            answers = dns.setdefault("response", [])
+            domains = tracker.setdefault("domain", [])
+            safelisted_domains = []
+            for q in data.queries:
+                if not q.type in ("A", "AAAA"):
+                    continue
+
+                if usesafelist and self.domain_sl.is_safelisted(q.name):
+                    safelisted_domains.append(q.name)
+                elif not q.name in domains:
+                    domains.append(q.name)
+
+            for r in data.responses:
+                if usesafelist and safelisted_domains:
+                    # Temporarily safelist IP from resolved safelisted domain.
+                    if r.type in ("A", "AAAA"):
+                        try:
+                            self.ip_sl.add_temp_entry(
+                                r.data,
+                                platform=self.ctx.machine.platform,
+                                description="Auto safelist based on "
+                                            "safelisted domain",
+                                source=f"Safelisted domain(s):"
+                                       f" {', '.join(safelisted_domains)}"
+                            )
+                        except safelist.SafelistError as e:
+                            self.ctx.log.warning(
+                                "Failed to add IP to temporary safelist for "
+                                "safelisted domain", error=e,
+                                domain=safelisted_domains[0]
+                            )
+
+                    continue
+
+                ans = {
+                    "ts": ts,
+                    "dstip": dstip,
+                    "dstport": dstport,
+                    "srcip": srcip,
+                    "srcport": srcport,
+                    "type": r.type,
+                    "data": r.data
+                }
+                if r.fields:
+                    ans["fields"] = r.fields
+
+                answers.append(ans)
+
+    def _add_udp(self, ts, src, dst, proto, data, tracker):
+        srcip, srcport = src
+        dstip, dstport = dst
+
+        tracker.setdefault("udp", []).append({
+            "ts": ts,
+            "dstip": dstip,
+            "dstport": dstport,
+            "srcip": srcip,
+            "srcport": srcport,
+            "size": len(data)
+        })
+        if proto == "dns":
+            self._add_dns(ts, src, dst, proto, data, tracker)
 
     def start(self):
         pcap_path = TaskPaths.pcap(self.ctx.task.id)
@@ -60,86 +301,221 @@ class Pcapreader(Processor):
         r.set_tcp_handler(transport.TCPPacketStreamer(r, self.tcp_handlers))
         r.set_udp_handler(transport.UDPPacketStreamer(r, self.udp_handlers))
 
-        results = {
-            "host": set(),
-            "http_request": set(),
-            "url": set(),
-            "smtp": set(),
-            "dns_query": set(),
-            "dns_answer": set(),
-            "domain": set()
-        }
-
+        results = {}
+        hosts = results.setdefault("host", [])
         for flow, ts, proto, sent, recv in r.process():
-
-            host_index = 2
-
-            # Read sender as dst host if DNS. We use DNS replies for the DNS
-            # query and answer at the moment.TODO change this.
-            if proto == "dns":
-                host_index = 0
-
-            if self.ip_sl.is_safelisted(flow[host_index]):
-                continue
-
-            if proto == "http":
-                host = sent.headers.get('host', flow[2])
-                port = ""
-                if flow[3] != 80:
-                    port = f":{flow[3]}"
-
-                url = f"http://{host}{port}{sent.uri}"
-                request = f"{sent.method} {url}"
-                results["http_request"].add(request)
-                results["url"].add(url)
-
-            elif proto == "smtp":
-                results["smtp"].add(" ".join(sent.raw))
-
-            elif proto == "dns":
-
-                safelist_reply = False
-                source_domain = ""
-                for dns_r in sent:
-                    if dns_r.type in ("A", "AAAA"):
-                        if self.domain_sl.is_safelisted(
-                                    dns_r.name, self.ctx.machine.platform
-                        ):
-                            safelist_reply = True
-                            source_domain = dns_r.name
-                            continue
-
-                    results["dns_query"].add(f"{dns_r.type} {dns_r.name}")
-                    results["domain"].add(dns_r.name)
-
-
-                for dns_a in recv:
-                    if safelist_reply:
-                        if dns_a.type in ("A", "AAAA"):
-                            self.ip_sl.add_temp_entry(
-                                dns_a.data,
-                                platform=self.ctx.machine.platform,
-                                description="Auto safelist based on domain",
-                                source=f"Safelisted domain: {source_domain}"
-                            )
+            src_host = flow[0]
+            dst_host = flow[2]
+            # Non-dns destination IP is safelisted for the current platform.
+            # Ignore completely.
+            if proto != "dns":
+                is_safelisted = False
+                for host in (src_host, dst_host):
+                    if host == self.ctx.machine.ip:
                         continue
 
-                    results["dns_answer"].add(
-                        f"{dns_a.type} {dns_a.data} "
-                        f"{','.join(dns_a.fields.values())}"
-                    )
+                    if self.ip_sl.is_safelisted(
+                            host, self.ctx.machine.platform
+                    ):
+                        is_safelisted = True
+
+                # Src or dst IP is part of a safelisted network. Skip this
+                # traffic.
+                if is_safelisted:
+                    continue
+
+            if proto in ("tls", "tcp", "http", "https", "smtp"):
+                self._add_tcp(
+                    ts, (flow[0], flow[1]), (flow[2], flow[3]), proto,
+                    sent, recv, results
+                )
+            elif proto in ("udp", "dns"):
+                self._add_udp(
+                    ts, (flow[0], flow[1]), (flow[2], flow[3]), proto, sent,
+                    results
+                )
+
+            for host in (src_host, dst_host):
+
+                # Do not log the machine IP as a contacted host
+                if host == self.ctx.machine.ip:
+                    continue
+
+                # Do not log a safelisted DNS server as a contacted host.
+                if proto == "dns" and self.dnsserver_sl.is_safelisted(host):
+                    continue
+
+                if not host in hosts:
+                    hosts.append(host)
+
+        return results
 
 
-            host = flow[host_index]
-            if host == self.ctx.machine.ip:
+class NetworkPatternSignatures(Processor):
+
+    @classmethod
+    def enabled(cls):
+        return len(os.listdir(Paths.pattern_signatures("network"))) > 0
+
+    @classmethod
+    def init_once(cls):
+        cls.scanner = None
+        # Read all network pattern signature yml files.
+        networksigs_dir = Paths.pattern_signatures("network")
+        for sigfile in os.listdir(networksigs_dir):
+            if not sigfile.endswith((".yml", ".yaml")):
                 continue
 
-            # If the DNS server is safelisted, do not add it to the hosts list.
-            if proto == "dns" and self.dnsserver_sl.is_safelisted(host):
-                continue
+            sigfile_path = os.path.join(networksigs_dir, sigfile)
+            log.debug("Loading network signature file", filepath=sigfile_path)
+            if not cls.scanner:
+                cls.scanner = PatternScanner()
 
-            results["host"].add(host)
+            try:
+                cls.scanner.load_sigfile(sigfile_path)
+            except (ValueError, TypeError,
+                    KeyError, PatternSignatureError) as e:
+                raise PluginError(
+                    f"Failed to load network signature file: {sigfile_path}. "
+                    f"Error: {e}"
+                ).with_traceback(e.__traceback__)
 
-        return {
-            "summary": {k:list(v) for k, v in results.items()}
-        }
+        # Ask the scanner to compile the loaded patterns into a hyperscan
+        # database. It is so possible to show what regex caused the compile
+        # error, as this information is not made available by Hyperscan.
+        try:
+            cls.scanner.compile()
+        except PatternSignatureError as e:
+            raise PluginError(
+                "Failed to compile network signatures. Invalid hyperscan "
+                f"regex in one of the signatures. Hyperscan error: {e}"
+            )
+
+    def init(self):
+        if not self.scanner:
+            return
+
+        self.match_tracker = self.scanner.new_tracker()
+
+    def _scan_http(self):
+        network = self.ctx.result.get("network", {})
+        for http in network.get("http", []):
+            request = http.get("request", {})
+            response = http.get("response", {})
+
+            url = request.get("url")
+            if url:
+                self.scanner.scan(
+                    scan_str=url, orig_str=url, event=None,
+                    event_kind="http_url"
+                )
+
+            for header in request.get("headers", []):
+                combined = f"{header['key']}: {header['value']}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="http_header", event_subtype="request"
+                )
+
+            for header in response.get("headers", []):
+                combined = f"{header['key']}: {header['value']}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="http_header", event_subtype="response"
+                )
+
+    def _scan_smtp(self):
+        network = self.ctx.result.get("network", {})
+
+        for smtp in network.get("smtp", []):
+            request = smtp.get("request", {})
+
+            hostname = request.get("hostname")
+            if hostname:
+                self.scanner.scan(
+                    scan_str=hostname, orig_str=hostname, event=None,
+                    event_kind="smtp_hostname"
+                )
+
+            for mailfrom in request.get("mail_from", []):
+                self.scanner.scan(
+                    scan_str=mailfrom, orig_str=mailfrom, event=None,
+                    event_kind="smtp_mailfrom"
+                )
+
+            for mailto in request.get("mail_to", []):
+                self.scanner.scan(
+                    scan_str=mailto, orig_str=mailto, event=None,
+                    event_kind="smtp_rcptto"
+                )
+
+            for name, value in request.get("headers", {}).items():
+                combined = f"{name}: {value}"
+                self.scanner.scan(
+                    scan_str=combined, orig_str=combined, event=None,
+                    event_kind="smtp_header"
+                )
+
+            message = request.get("message")
+            if message:
+                self.scanner.scan(
+                    scan_str=message, orig_str=message, event=None,
+                    event_kind="smtp_message"
+                )
+
+    def _scan_dns(self):
+        dns = self.ctx.result.get("network", {}).get("dns", {})
+
+        for q in dns.get("query", []):
+            self.scanner.scan(
+                scan_str=q["name"], orig_str=q["name"], event=None,
+                event_kind="dns_q", event_subtype=q["type"].lower()
+            )
+
+        for r in dns.get("response", []):
+            self.scanner.scan(
+                scan_str=r["data"], orig_str=r["data"], event=None,
+                event_kind="dns_r", event_subtype=r["type"].lower()
+            )
+
+    def _scan_host(self):
+        network = self.ctx.result.get("network", {})
+        for host in network.get("host", []):
+            self.scanner.scan(
+                scan_str=host, orig_str=host, event=None,
+                event_kind="ip"
+            )
+
+    def start(self):
+        if not self.scanner:
+            return
+
+        self._scan_http()
+        self._scan_smtp()
+        self._scan_dns()
+        self._scan_host()
+
+        for match in self.match_tracker.get_matches():
+
+            iocs = []
+            for matchctx in match.get_iocs():
+                duplicate = False
+                for ioc in iocs:
+                    if ioc["value"] == matchctx.orig_str:
+                        duplicate = True
+                        break
+
+                if duplicate:
+                    continue
+
+                iocs.append({"value": matchctx.orig_str})
+
+            self.ctx.signature_tracker.add_signature(
+                name=match.name, short_description=match.short_description,
+                description=match.description, score=match.score, iocs=iocs,
+                family=match.family, tags=match.tags, ttps=match.ttps
+            )
+
+    def cleanup(self):
+        if self.scanner:
+            self.scanner.clear()

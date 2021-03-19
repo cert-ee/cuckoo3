@@ -91,24 +91,85 @@ class ElasticSearch(Reporter):
                         subtype=subtype
                     )
 
-    def _store_network_events(self):
-        network = self.ctx.result.get("network", {})
+    def _make_hosts(self, network):
+        return [(network.get("host", []), "host")]
 
-        for subtype, requests in network.get("summary", {}).items():
-            if not requests:
+    def _make_domain(self, network):
+        return [(network.get("domain", []), "domain")]
+
+    def _make_dns(self, network):
+        queries = set()
+        responses = set()
+
+        for r in network.get("dns", {}).get("response", []):
+            responses.add(
+                f"{r['type']} {r['data']} "
+                f"{','.join(r.get('fields', {}).values())}"
+            )
+
+        for q in network.get("dns", {}).get("query", []):
+            queries.add(f"{q['type']} {q['name']}")
+
+        return [
+            (list(queries), "dns_query"), (list(responses), "dns_response")
+        ]
+
+    def _make_http_request(self, network):
+        requests = set()
+        urls = set()
+
+        for http in network.get("http", []):
+            request = http.get("request")
+            if not request:
                 continue
 
-            try:
-                index_events(
-                    analysis_id=self.ctx.analysis.id, eventtype="network",
-                    subtype=subtype, values=requests,
-                    task_id=self.ctx.task.id
-                )
-            except ElasticSearchError as e:
-                self.ctx.log.warning(
-                    "Failed to index events.", error=e, type="network",
-                    subtype=subtype
-                )
+            urls.add(request.get('url', ''))
+            requests.add(
+                f"{request.get('method', '')} {request.get('url', '')}"
+            )
+
+        return [(list(requests), "http_request"), (list(urls), "url")]
+
+    def _make_smtp(self, network):
+        smtp = []
+        for smtp in network.get("smtp", []):
+            request = smtp.get("request")
+            if not request:
+                continue
+
+            smtp.append(
+                f"{request.get('hostname', '')} {request.get('mail_body', '')}"
+            )
+
+        return [(smtp, "smtp")]
+
+    def _store_network_events(self):
+        network = self.ctx.result.get("network", {})
+        if not network:
+            return
+
+        formatters = [
+            self._make_hosts, self._make_domain, self._make_dns,
+            self._make_http_request, self._make_smtp
+        ]
+
+        for formatter in formatters:
+            data_subtypes = formatter(network)
+            for data, subtype in data_subtypes:
+                if not data:
+                    continue
+
+                try:
+                    index_events(
+                        analysis_id=self.ctx.analysis.id, eventtype="network",
+                        subtype=subtype, values=data,
+                        task_id=self.ctx.task.id
+                    )
+                except ElasticSearchError as e:
+                    self.ctx.log.warning(
+                        "Failed to index events.", error=e, type="network",
+                        subtype=subtype
+                    )
 
     def report_post_analysis(self):
         self._store_behavioral_events()

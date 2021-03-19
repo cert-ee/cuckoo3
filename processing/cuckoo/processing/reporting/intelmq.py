@@ -44,7 +44,7 @@ class IntelMQ(Reporter):
         cls.url_sl.load_safelist()
 
     def _add_ips(self, maker):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
         for ip in network.get("host", []):
             if self.ip_sl.is_safelisted(ip, self.ctx.machine.platform):
                 continue
@@ -53,7 +53,7 @@ class IntelMQ(Reporter):
 
 
     def _add_domains(self, maker):
-        network = self.ctx.result.get("network", {}).get("summary", {})
+        network = self.ctx.result.get("network", {})
         for domain in network.get("domain", []):
             if self.domain_sl.is_safelisted(domain, self.ctx.machine.platform):
                 continue
@@ -61,8 +61,12 @@ class IntelMQ(Reporter):
             maker.add_dst_domain(domain)
 
     def _add_urls(self, maker):
-        network = self.ctx.result.get("network", {}).get("summary", {})
-        for url in network.get("url", []):
+        network = self.ctx.result.get("network", {})
+        for http in network.get("http", []):
+            url = http.get("request", {}).get("url")
+            if not url:
+                continue
+
             if self.url_sl.is_safelisted(url, self.ctx.machine.platform):
                 continue
 

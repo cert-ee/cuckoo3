@@ -18,7 +18,8 @@ log = CuckooGlobalLogger(__name__)
 
 class PatternFinder(EventConsumer):
 
-    event_types = (Kinds.FILE, Kinds.REGISTRY, Kinds.PROCESS, Kinds.MUTANT)
+    event_types = (Kinds.FILE, Kinds.REGISTRY, Kinds.PROCESS,
+                   Kinds.MUTANT, Kinds.SUSPICIOUS_EVENT)
 
     platform_scanner = {}
 
@@ -45,12 +46,15 @@ class PatternFinder(EventConsumer):
         # for each platform.
         patternsigs_dir = Paths.pattern_signatures()
         for platform in os.listdir(patternsigs_dir):
+            if platform == "network":
+                continue
+
             platform_path = os.path.join(patternsigs_dir, platform)
             if not os.path.isdir(platform_path):
                 continue
 
             for sigfile in os.listdir(platform_path):
-                if not sigfile.endswith(".yml"):
+                if not sigfile.endswith((".yml", ".yaml")):
                     continue
 
                 add_sigfile_platform(
