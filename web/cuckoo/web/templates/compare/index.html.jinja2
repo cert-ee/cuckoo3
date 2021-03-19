@@ -2,54 +2,49 @@
 {% set active_page = "compare" %}
 {% set title = "Compare tasks" %}
 
-{% from 'macros.html.jinja2' import color_class, ui_box %}
+{% from 'macros.html.jinja2' import color_class, ui_box, render_dict %}
 
 {% block page_script %}
   <script src="{{ static('js/analysis.compare.js') }}"></script>
 {% endblock %}
 
 {% block body %}
-
-<div class="container is-portal-view">
-  <div class="columns is-divided is-vtop">
-    <section class="column has-padding">
-      {% call ui_box(title="Compare", has_padding=False, collapsible=False) %}
-        <div class="has-padding no-padding-bottom">
-          <p>The compare tool allows to compare multiple tasks in their behavior and triggered signatures.</p>
-        </div>
-        <form method="post" id="compare-form">
-          <table class="table has-border no-border-x">
-            <thead>
-              <tr>
-                <th>Task 1</th>
-                <th colspan="2">Task 2</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <div class="field-block">
+  <div class="container is-portal-view">
+    <div class="columns is-divided is-vtop">
+      <section class="column has-padding">
+        {% call ui_box(title="Compare", has_padding=False, collapsible=False) %}
+          <div class="has-padding no-padding-bottom">
+            <p>The compare tool allows to compare multiple tasks in their behavior and triggered signatures.</p>
+          </div>
+          <form method="post" id="compare-form">
+            <table class="table has-border no-border-x">
+              <thead>
+                <tr>
+                  <th>Task 1</th>
+                  <th colspan="2">Task 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
                     <div class="control">
                       <input type="text" class="input" placeholder="Task ID 1" id="task-left" />
                     </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="field-block">
+                  </td>
+                  <td>
                     <div class="control">
                       <input type="text" class="input" placeholder="Task ID 2" id="task-right" />
                     </div>
-                  </div>
-                </td>
-                <td>
-                  <input type="submit" class="button is-big" value="Compare" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </form>
-      {% endcall %}
-    </section>
+                  </td>
+                  <td class="is-mini has-text-right">
+                    <input type="submit" class="button" value="Compare" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        {% endcall %}
+      </section>
+    </div>
   </div>
-</div>
 {% endblock %}

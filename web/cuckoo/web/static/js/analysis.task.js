@@ -218,10 +218,9 @@ const processes = (function() {
 // tap through various levels of signature severities
 (function signatureFilters() {
 
-  const signatures  = document.querySelector('#box-Static-signatures');
+  const signatures  = document.querySelector('#signatures');
 
-  if(!signatures)
-    return;
+  if(!signatures) return;
 
   const table       = signatures.querySelector('.table');
   const filters     = [...signatures.querySelectorAll('[name="toggle-sig"]')];

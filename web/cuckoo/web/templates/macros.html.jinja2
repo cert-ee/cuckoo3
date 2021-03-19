@@ -226,10 +226,10 @@
 
 #}
 {% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False, hidden=False) %}
-  {% if not id %}
-    {% set boxid = prefix + "-" + title|replace(" ","-") %}
-  {% else %}
+  {% if id %}
     {% set boxid = id %}
+  {% else %}
+    {% set boxid = prefix + "-" + title|replace(" ","-")|escape %}
   {% endif %}
   <div class="box has-background-white has-shadow no-padding has-border" {% if hidden %}hidden{% endif %}>
     {% if display_title == True and title %}
@@ -313,7 +313,6 @@
 
 #}
 {% macro ui_signatures(signatures=[]) %}
-
   <table class="table">
     <thead>
       <tr>
@@ -345,5 +344,4 @@
       {% endfor %}
     </tbody>
   </table>
-
 {% endmacro %}

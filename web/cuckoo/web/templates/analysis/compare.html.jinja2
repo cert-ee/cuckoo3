@@ -26,27 +26,23 @@
             <tr>
               <th>Description</th>
               <th class="is-medium">
-                <div class="field-block">
-                  <div class="control is-select">
-                    <select class="input is-rounded" id="task1">
-                      <option selected disabled>Select Task</option>
-                      {% for task in analysis.tasks %}
-                        <option value="{{ task.id }}">{{ task.id }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
+                <div class="control is-select">
+                  <select class="input is-rounded" id="task1">
+                    <option selected disabled>Select Task</option>
+                    {% for task in analysis.tasks %}
+                      <option value="{{ task.id }}">{{ task.id }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </th>
               <th class="is-medium">
-                <div class="field-block">
-                  <div class="control is-select">
-                    <select class="input" id="task2">
-                      <option selected disabled>Select Task</option>
-                      {% for task in analysis.tasks %}
-                        <option value="{{ task.id }}">{{ task.id }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
+                <div class="control is-select">
+                  <select class="input" id="task2">
+                    <option selected disabled>Select Task</option>
+                    {% for task in analysis.tasks %}
+                      <option value="{{ task.id }}">{{ task.id }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </th>
             </tr>
