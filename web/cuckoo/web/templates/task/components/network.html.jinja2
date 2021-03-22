@@ -29,13 +29,15 @@
 
 {% call ui_box(title="Network analysis", collapsed=False, has_padding=False) %}
   <nav class="tabbar no-margin-bottom" data-enhance>
-    {% for key in report.network %}
+    {% for key in network_view_configuration %}
       {% set view = network_view_configuration[key] | default({}) %}
       <a class="tabbar-link {% if view.is_active %}is-active{% endif %}" href="#network-analysis-{{ key }}">{{ view.ui_label | default(key) }}</a>
     {% endfor %}
   </nav>
-  <div id="network-analysis-host" {% if not network_view_configuration.host.is_active %}hidden{% endif %}>
-    {{ network_view_configuration.host.ui_label }}
+  <div class="box no-margin-y has-background-light" id="network-analysis-host" {% if not network_view_configuration.host.is_active %}hidden{% endif %}>
+    {% for host in report.network.host %}
+      <p class="box has-background-white has-shadow is-monospace">{{ host }}</p>
+    {% endfor %}
   </div>
   <div class="box no-margin-y has-background-light" id="network-analysis-udp" {% if not network_view_configuration.udp.is_active %}hidden{% endif %}>
     {% for udp in report.network.udp %}
@@ -85,8 +87,10 @@
       {% endfor %}
     </details>
   </div>
-  <div id="network-analysis-domain" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
-    {{ network_view_configuration.domain.ui_label }}
+  <div class="box no-margin-y has-background-light" id="network-analysis-domain" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
+    {% for domain in report.network.domain %}
+      <p class="box has-background-white has-shadow is-monospace">{{ domain }}</p>
+    {% endfor %}
   </div>
   <div class="box no-margin-y has-background-light" id="network-analysis-tcp" {% if not network_view_configuration.tcp.is_active %}hidden{% endif %}>
     {% for tcp in report.network.tcp %}
