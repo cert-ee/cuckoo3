@@ -2,7 +2,27 @@
 {% set active_page = "analyses" %}
 {% set title = "Task" %}
 
-{# these set the sidebar items to display #}
+{#
+  report components are displayed in the tabbar on the left-hand side of the view.
+  use the report_components list to define all includable components. The components
+  are loaded as individual templates for brevity (in task/components). these files
+  should have the same names as defined per-component and will be wrapped in an
+  individual tab page, eg:
+
+  {% set report_components = ['component-a','component-b']; %}
+  {% set report_component_labels = ['A','B']; }
+
+  should have corresponding files like:
+
+  task/components/component-a.html.jinja2
+  task/components/component-b.html/jinja2
+
+  The components are referenced in the UI by their labels (if defined):
+
+  <a class="tabbar-link" href="#tab-component-a">A</a>
+  <a class="tabbar-link" href="#tab-component-b">B</a>
+
+#}
 {% set report_components = ['misp','cfgextr','intelmq'] %}
 {% set report_component_labels = ['MISP', 'Configuration Extraction', 'IntelMQ'] %}
 
@@ -51,191 +71,30 @@
             {% endcall %}
           {% endif %}
 
-
           <div id="tab-report">
-
             {% if task.errors.errors|length > 0 %}
               {% call error_box(task.errors.errors) %}
                 <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
               {% endcall %}
             {% endif %}
-
-            {% call ui_box(title="Task") %}
-              <div class="columns has-padding is-divided">
-                <div class="column is-auto">
-                  <div class="ratio-1-1">
-                    <div class="ratio-content">
-                      <p class="{{ color_text(report.score) }} has-text-huge no-margin"><strong>{{ report.score }}</strong><sub class="has-text-light">/10</sub></p>
-                    </div>
-                    <div class="ratio-content is-bottom has-text-small has-half-opacity">Task score</div>
-                  </div>
-                </div>
-                <div class="column">
-                  <h3 class="no-margin-bottom is-monospace">
-                    <strong>{{ report.task_id }}</strong>
-                    <span class="pull-right has-half-opacity">{{ task.state|taskstatehuman }}</span>
-                  </h3>
-                  <p class="has-line-break has-text-small">
-                    <span class="icon">
-                      <i class="far fa-file"></i>
-                    </span> {{ analysis.target.filename }}
-                  </p>
-                  <ul class="list is-horizontal no-margin-bottom has-text-small">
-                    <li title="Date of creation">
-                      <span class="icon">
-                        <i class="far fa-calendar"></i>
-                      </span> {{ analysis.created_on | formatdatetime }}
-                    </li>
-                    <li>
-                      <span class="icon">
-                        <i class="fas fa-compact-disc"></i>
-                      </span> {{ analysis.target.size | filesizeformat }}
-                    </li>
-                    <li class="is-monospace">
-                      <span class="icon">
-                        <i class="fas fa-terminal"></i>
-                      </span> {{ analysis.target.media_type }}
-                    </li>
-                  </ul>
-                  {% if report.families|length %}
-                    <div class="tag-list has-margin-top">
-                      <span class="label">Detected families:</span>
-                      {% for family in report.families %}
-                        <span class="tag no-margin-top is-red">{{ family }}</span>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endcall %}
-
+            {# Report.task #}
+            {% include "task/components/task.html.jinja2" %}
             {# Report.signatures #}
-            {% call ui_box(title="Signatures", has_padding=False, id="signatures") %}
-              {{ ui_signatures(report.signatures) }}
-            {% endcall %}
-
+            {% include "task/components/signatures.html.jinja2" %}
             {# Report.processes #}
-            {% call ui_box(title="Processes", has_padding=False) %}
-              <div class="tabbar has-background-transparent" data-enhance>
-                <p class="tabbar-label">View type</p>
-                {#
-                <a href="#tab-process-table" class="tabbar-link">
-                  <span class="icon">
-                    <i class="fas fa-table"></i>
-                  </span>
-                  Table
-                </a>
-                #}
-                {# <a href="#tab-process-nodes" class="tabbar-link">
-                  <span class="icon">
-                    <i class="fas fa-project-diagram"></i>
-                  </span>
-                  Nodes
-                </a> #}
-                <a href="#tab-process-tree" class="tabbar-link is-active">
-                  <span class="icon">
-                    <i class="fas fa-sitemap"></i>
-                  </span>
-                  Tree
-                </a>
-              </div>
-              {#
-                <div id="tab-process-table" hidden>
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th class="is-small">PID</th>
-                        <th class="is-mini">Duration</th>
-                        <th>Name/image</th>
-                        <th class="is-mini">State</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    {% for process in report.processes %}
-                      <tr>
-                        <td class="is-monospace has-text-center">
-                          <span class="has-half-opacity">{{ process.ppid }} &rarr;</span> {{ process.pid }}<br />
-                          <span class="has-half-opacity">{{ process.parent_procid }} &rarr;</span> {{ process.procid }}
-                        </td>
-                        <td class="has-text-center">
-                          {{ process.start_ts }}<br />
-                          <span class="has-half-opacity">&darr;</span><br />
-                          {% if process.end_ts %}
-                            {{ process.end_ts }}
-                          {% else %}
-                            -
-                          {% endif %}
-                        </td>
-                        <td>
-                          {{ process.name }}
-                          <p class="has-half-opacity has-text-small">{{ process.image }}</p>
-                          <pre class="code no-margin is-content-break"><code>{{ process.commandline }}</code></pre>
-                        </td>
-                        <td>{{ process.state }}</td>
-                      </tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              #}
-              {# <div class="has-padding-x has-text-small" id="tab-process-nodes" hidden><!-- report.task.js:45 --></div> #}
-              <div class="has-text-small" id="tab-process-tree"><!-- report.task.js:105 --></div>
-            {% endcall %}
-
+            {% include "task/components/processes.html.jinja2" %}
           </div>
 
           {# Report.machine #}
           <div id="tab-machine" hidden>
-            {% call ui_box(title="Machine information", has_padding=False) %}
-              {# {{ render_dict(machine) }} #}
-              <table class="table">
-                <body>
-                  <tr>
-                    <td class="has-text-right"><strong>Name</strong></td>
-                    <td>{{ machine.name }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>Label</strong></td>
-                    <td>{{ machine.label }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>IP</strong></td>
-                    <td class="is-monospace">{{ machine.ip }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>Platform</strong></td>
-                    <td>{{ machine.platform }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>OS Version</strong></td>
-                    <td>{{ machine.os_version }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>Machinery name</strong></td>
-                    <td>{{ machine.machinery_name }}</td>
-                  </tr>
-                  <tr>
-                    <td class="has-text-right"><strong>Tags</strong></td>
-                    <td>
-                      <div class="tag-list">
-                        {% for tag in machine.tags %}
-                          <span class="tag">{{ tag }}</span>
-                        {% endfor %}
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            {% endcall %}
+            {% include "task/components/machine.html.jinja2" %}
           </div>
 
-          {#
-            loop through defined report modules and include the ones that
-            are available inside the report.
-          #}
           {% for component in report_components %}
             {% if report[component] %}
-              {% include "task/components/"+component+".html.jinja2" %}
+              <div id="tab-{{ component }}" hidden>
+                {% include "task/components/"+component+".html.jinja2" %}
+              </div>
             {% endif %}
           {% endfor %}
 

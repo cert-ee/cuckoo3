@@ -11,14 +11,12 @@
     <link rel="stylesheet" type="text/css" href="{{ static('/css/ui.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ static('/css/theme.css') }}" />
     {% block page_styles %}{% endblock %}
-    <title>Cuckoo Sandbox {% if title %}- {{ title }}{% endif %}</title>
+    <title>Cuckoo Sandbox{% if title %} - {{ title }}{% endif %}</title>
   </head>
   <body>
     <div class="view">
       {% include "partial/navbar.html.jinja2" %}
-      <main>
-        {% block body %}{% endblock %}
-      </main>
+      <main>{% block body %}{% endblock %}</main>
       <div class="footer-push"></div>
     </div>
     {% include "partial/footer.html.jinja2" %}
