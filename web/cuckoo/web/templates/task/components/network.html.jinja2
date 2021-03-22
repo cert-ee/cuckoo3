@@ -1,3 +1,55 @@
-{% call ui_box(title="Network analysis", collapsed=False) %}
-  <p>Network analysis results</p>
+{#
+  Data-To-View pluralization. This dictionary ensures some control over dynamically
+  rendered data views.
+
+  set is_active: True for the active page to initialize on
+  set ui_label to replace original key name with a humanized version
+#}
+{% set network_view_configuration = {
+  'host': {
+    'is_active': True,
+    'ui_label': 'Host'
+  },
+  'udp': {
+    'ui_label': 'UDP'
+  },
+  'dns': {
+    'ui_label': 'DNS'
+  },
+  'domain': {
+    'ui_label': 'Domain'
+  },
+  'tcp': {
+    'ui_label': 'TCP'
+  },
+  'http': {
+    'ui_label': 'HTTP'
+  }
+} %}
+
+{% call ui_box(title="Network analysis", collapsed=False, has_padding=False) %}
+  <nav class="tabbar" data-enhance>
+    {% for key in report.network %}
+      {% set view = network_view_configuration[key] | default({}) %}
+      <a class="tabbar-link {% if view.is_active %}is-active{% endif %}" href="#network-analysis-{{ key }}">{{ view.ui_label | default(key) }}</a>
+    {% endfor %}
+  </nav>
+  <div id="network-analysis-host" {% if not network_view_configuration.host.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.host.ui_label }}
+  </div>
+  <div id="network-analysis-udp" {% if not network_view_configuration.udp.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.udp.ui_label }}
+  </div>
+  <div id="network-analysis-dns" {% if not network_view_configuration.dns.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.dns.ui_label }}
+  </div>
+  <div id="network-analysis-domain" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.domain.ui_label }}
+  </div>
+  <div id="network-analysis-tcp" {% if not network_view_configuration.tcp.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.tcp.ui_label }}
+  </div>
+  <div id="network-analysis-http" {% if not network_view_configuration.http.is_active %}hidden{% endif %}>
+    {{ network_view_configuration.http.ui_label }}
+  </div>
 {% endcall %}
