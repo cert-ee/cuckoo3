@@ -876,7 +876,7 @@ a.button, .control.is-file a.file-trigger {
   display: block;
   padding: 0;
 }
-.details:hover {
+.details::not(.has-no-hover):hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
 .details > summary {

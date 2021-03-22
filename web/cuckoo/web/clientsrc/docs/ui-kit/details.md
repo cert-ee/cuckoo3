@@ -15,9 +15,10 @@ Example: hiding additional/secondary content:
 Attaching the details class ensure supporting styles to make its use slightly
 easier. It is styled on top of best practice.
 
-| class      | type   | description                    |
-| ---------- | ------ | ------------------------------ |
-| `.details` | parent | Defines a styled details block |
+| class           | type     | description                      |
+| --------------- | -------- | -------------------------------- |
+| `.details`      | parent   | Defines a styled details block   |
+| `.has-no-hover` | modifier | Disables hover effect on element | 
 
 ---
 _file: `web/cuckoo/web/clientsrc/sass/_details.sass`_
