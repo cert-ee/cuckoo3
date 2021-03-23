@@ -710,6 +710,12 @@ a.button, .control.is-file a.file-trigger {
   word-break: break-all;
   min-width: 10rem;
 }
+.table th.is-vtop, .table td.is-vtop {
+  vertical-align: top;
+}
+.table th.is-vbottom, .table td.is-vbottom {
+  vertical-align: bottom;
+}
 .table th.has-ellipsis, .table td.has-ellipsis {
   white-space: nowrap;
   overflow: hidden;
@@ -767,6 +773,9 @@ a.button, .control.is-file a.file-trigger {
 .table td {
   font-size: 0.8em;
 }
+.table td .table {
+  font-size: 1.2em;
+}
 .table thead tr {
   background-color: #FFFFFF;
   color: #0F485A;
@@ -800,37 +809,37 @@ a.button, .control.is-file a.file-trigger {
   box-shadow: inset 0 1px 0 #CCCCCC;
   background-color: #f2f2f2;
 }
-.table tbody tr:nth-child(odd):not([class^=separator-]) {
+.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator-]) {
   background-color: #FFFFFF;
 }
-.table tbody tr:nth-child(odd):not([class^=separator-]):hover {
+.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator-]):hover {
   background-color: #fffcf2;
 }
-.table tbody tr:nth-child(even) {
+.table.has-striped-rows > tbody > tr:nth-child(even) {
   background-color: #E8F0F1;
 }
-.table tbody tr:nth-child(even):hover {
+.table.has-striped-rows > tbody > tr:nth-child(even):hover {
   background-color: #e9eee5;
 }
-.table tbody tr.has-background-red {
+.table.has-striped-rows > tbody > tr.has-background-red {
   background-color: #FF0000;
   color: #FFFFFF;
 }
-.table tbody tr.has-background-red:hover {
+.table.has-striped-rows > tbody > tr.has-background-red:hover {
   background-color: #e60000;
 }
-.table tbody tr.is-shown {
+.table.has-striped-rows > tbody > tr.is-shown {
   background-color: #2E94F1 !important;
   color: #FFFFFF;
 }
-.table tbody tr.is-shown a, .table tbody tr.is-shown .is-link {
+.table.has-striped-rows > tbody > tr.is-shown a, .table.has-striped-rows > tbody > tr.is-shown .is-link {
   color: inherit;
 }
-.table tbody tr.is-shown td {
+.table.has-striped-rows > tbody > tr.is-shown td {
   background-color: transparent;
   font-weight: 700;
 }
-.table tbody tr.separator {
+.table.has-striped-rows tr.separator {
   background-color: #FFFFFF;
   font-size: 0.9em;
   font-weight: 800;
@@ -840,19 +849,19 @@ a.button, .control.is-file a.file-trigger {
   border: 0;
   text-align: center;
 }
-.table tbody tr.separator-bar td {
+.table.has-striped-rows tr.separator-bar td {
   background: linear(white, #CCCCCC, 50%);
   padding: 0;
   box-shadow: inset 0 0.1rem 0 rgba(255, 255, 255, 0.5);
   border-top: 0.0625rem solid #CCCCCC;
   border-bottom: 0.0625rem solid #CCCCCC;
 }
-.table tbody tr.separator.is-beveled {
+.table.has-striped-rows tr.separator.is-beveled {
   background: linear-gradient(180deg, #EEEEEE 23.44%, #eaf4fe 100%);
   box-shadow: inset 0px -2px 0px #CCCCCC, inset 0px 2px 0px #FFFFFF;
   text-shadow: 0 0.0625rem 0 white;
 }
-.table tbody tr.separator:hover {
+.table.has-striped-rows tr.separator:hover {
   background-color: #FFFFFF;
 }
 .table.has-sticky-header, .table.has-sticky-footer {
