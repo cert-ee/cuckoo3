@@ -16,12 +16,6 @@
       function manualStatus(id) {
         return new Promise((resolve, reject) => {
 
-          // if(!window.csrf_token)
-          //   return reject({
-          //     state_desc: "Client error",
-          //     error: "No CSRF token available."
-          //   });
-
           fetch(`/api/analyses/${id}/manualstatus`, {
             headers: {
               'X-CSRF-Token': window.csrf_token
