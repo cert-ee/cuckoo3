@@ -680,7 +680,7 @@ a.button, .control.is-file a.file-trigger {
   width: 100%;
   border-collapse: collapse;
 }
-.table.has-border td {
+.table.has-border > tbody > td {
   border-bottom: 1px solid #CCCCCC;
 }
 .table.has-layout-fixed {
@@ -1599,6 +1599,10 @@ ul.process-tree .duration--inner {
 }
 .tag.is-big {
   font-size: 1.2em;
+}
+.tag.is-white {
+  background-color: #FFFFFF;
+  border-color: #CCCCCC;
 }
 .tag.is-red {
   background-color: #ffbfbf;
