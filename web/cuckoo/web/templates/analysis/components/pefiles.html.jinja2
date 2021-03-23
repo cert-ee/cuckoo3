@@ -20,7 +20,7 @@
         cols=["name","virtual_address","virtual_size","size_of_data","entropy"],
         labels=["Name", "Address","Size","Data Size", "Entropy"],
         style=["is-monospace","is-monospace","is-monospace","is-monospace","is-monospace"],
-        has_sticky_header=True
+        has_sticky_header=True,
   )}}
 {% endcall %}
 {# PE Resources #}
@@ -54,7 +54,7 @@
     <div id="pesig-results-{{loop.index}}">
       <div class="columns is-gapless is-divided">
         <div class="column">
-          <table class="table has-border">
+          <table class="table has-border has-striped-rows">
             <tbody>
               <tr class="separator">
                 <td colspan="2">Issuer</td>
@@ -111,7 +111,7 @@
           </table>
         </div>
         <div class="column">
-          <table class="table has-border">
+          <table class="table has-border has-striped-rows">
             <tbody>
               <tr class="separator">
                 <td colspan="2">Subject</td>

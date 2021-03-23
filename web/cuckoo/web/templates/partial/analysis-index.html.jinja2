@@ -61,7 +61,7 @@
             {% endif %}
           </a>
           {% if report and task.id == t.id %}
-            <ul class="has-text-small">
+            <ul>
               {% for component in report_components %}
                 {# only display if the report has the corresponding property #}
                 {% if report[component] %}

@@ -52,6 +52,7 @@
                                            To apply multple, define the casses space separated. If no style has to be applied,
                                            leave None. Order is the same als column order.
       has_sticky_header   Boolean          Wether or not to apply a sticky header experience.
+      striped             Boolean          Set to False to disable odd/even stripes in the table body
 
   example:
 
@@ -59,12 +60,13 @@
                     data = my_data,
                     cols = ["first_name", "last_name", "age"],
                     labels = ["First name", "Last name", "Age"],
-                    style: ["has-text-right", None, "is-monospace has-text-red"]
+                    style = ["has-text-right", None, "is-monospace has-text-red"],
+                    striped = False
                   )
     }}
 #}
-{% macro render_table(data=[], cols=[], labels=[], style=[], types=[], has_sticky_header=False) %}
-  <table class="table {% if has_sticky_header %}has-sticky-header{% endif %}">
+{% macro render_table(data=[], cols=[], labels=[], style=[], types=[], has_sticky_header=False, striped=True) %}
+  <table class="table {% if has_sticky_header %}has-sticky-header{% endif %} {% if striped %}has-striped-rows{% endif %}">
     <thead>
       <tr>
         {% for col in cols %}
@@ -313,7 +315,7 @@
 
 #}
 {% macro ui_signatures(signatures=[]) %}
-  <table class="table">
+  <table class="table has-striped-rows">
     <thead>
       <tr>
         <th>&nbsp;</th>
