@@ -1,14 +1,15 @@
 {
-  "name": "cuckoo3",
+  "name": "Cuckoo 3 Web UI tooling",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Tools and scripts for development on the Cuckoo Web Interface styling and layout features",
+  "main": "sass/ui.sass",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "sass": "sass sass:../static/css --style=expanded",
+    "sass-prod": "sass sass:../static/css --style=compressed --no-source-map",
     "sass-watch": "sass sass:../static/css --style=expanded --watch"
   },
-  "author": "",
+  "author": "Cuckoo Sandbox Foundation",
   "license": "ISC",
   "devDependencies": {
     "sass": "1.26.8"

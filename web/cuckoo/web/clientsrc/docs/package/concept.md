@@ -124,9 +124,24 @@ To give that box more definition to add a different background color and apply m
 <div class="box is-red is-large"></div>
 ```
 
-Note the `is-` prefix in the classes. Using these verbs, the class names in itself start to reflect the function of it and presents itself as an extension on top of a base class. As a human, reading 'box is red is large' is straight forward to visually get an idea of what that element is representing in the UI.
+Note the `is-` prefix in the classes. Using these verbs, the class names in itself start to reflect the function of it and presents itself as an extension on top of a base class. As a human, reading 'box is red is large' is straight forward to visually get an idea of what that element is representing in the UI. This concept is fairly similar to Atomic Design principles, which you can read more about in [this write down by Brad Frost](https://bradfrost.com/blog/post/atomic-web-design/).
 
 These were simple examples, but the entirety of classes included are based on this concept of naming all the structural elements. This helps into making HTML look less complex and easier to build features rather than spend a lot of time styling elements.
 
+## Modifiers
+While the above ensures less complexity in markup, there still will be situations where the layout does not look consistent due to margin/padding and other parameters of that variant. The setup of the UI to handle these edge-cases within a layout is to work with extra classes called modifiers. They exists on a global level, and on element specific levels. Modifiers exist to add or remove certain properties to make them fit greatly in the content. Most of these modifiers simply alter one or two css properties on top of a parent base style.
+
+_Example: fit a columns layout tightly into a box element using modifiers_  
+```html
+<div class"box no-margin-x">
+  <div class="columns is-divided no-padding no-margin">
+    <div class="column is-auto no-padding-left">Column 1</div>
+    <div class="column is-fill no-padding-right">Column 2</div>
+  </div>
+</div>
+```
+
+Also for these classes, a fair sense of straight forward readability is implemented for optimal code clarity and contributes to the HTML output being overridden. If the output seems to large or bulky, one can always try and run a minimiation tool over the output as post-processing. Such methodics are currently not included in the package, but may solve such problems or at least decrease the size of the output.
+
 ## Modularity
-The `.sass` build code is leveraging some techniques with variables for entities such as colors, gaps and breakpoints. These can be tweaked to desired needs. However this is currently implemented with sass, it is not unlikely this will change to css variables so the tweaking can be applied using pure css.
+The `.sass` build code is leveraging some techniques with variables for entities such as colors, gaps and breakpoints. These can be tweaked to desired needs. However this is currently implemented with sass, it is not unlikely this will change to css variables so the tweaking can be applied using pure css, and the sass overhead will dissapear eventually completely. This depends on browser support for those features being stable enough to provide the experience independently.
