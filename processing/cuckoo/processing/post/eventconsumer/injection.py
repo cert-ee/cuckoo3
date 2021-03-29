@@ -18,7 +18,7 @@ class ProcessInjection(EventConsumer):
             name="process_injection", short_description="Process injection",
             description="Process injection is a method of executing arbitrary "
                         "code in the address space a separate live process.",
-            ttps=["T1055"], tags=["evader"], score=Scores.KNOWN_BAD,
+            ttps=["T1055"], tags=["evasion"], score=Scores.KNOWN_BAD,
             iocs=[{
                 "technique": event.description,
                 "source_process": srcproc.process_name,

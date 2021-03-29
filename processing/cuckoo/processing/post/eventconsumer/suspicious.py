@@ -4,6 +4,7 @@
 
 from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.event.events import Kinds, SuspiciousEvents
+from cuckoo.processing.event.processtools import is_windowserr_svc
 from cuckoo.processing.signatures.signature import Scores
 
 class SuspiciousEventScoring(EventConsumer):
@@ -67,15 +68,23 @@ class SuspiciousEventScoring(EventConsumer):
         )
 
     def _handle_otherparent(self, event, process):
+        # Ignore this event if the process that causes it is the Windows
+        # error reporting service. It starts Werfault with the crashing
+        # process as the parent.
+        if self.taskctx.machine.platform == "windows" \
+                and is_windowserr_svc(process):
+            return None
+
         ioc = {}
         if len(event.args):
             parent_proc = self.taskctx.process_tracker.process_by_pid(
                 event.args[0]
             )
+
             if parent_proc:
                 ioc = {
-                    "parent_process": parent_proc.process_name,
-                    "parent_process_id": parent_proc.procid
+                    "fake_parent_process": parent_proc.process_name,
+                    "fake_parent_process_id": parent_proc.procid
                 }
 
         return (

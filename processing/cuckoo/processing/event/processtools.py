@@ -29,6 +29,10 @@ def commandline_args(commandline):
 
     return ""
 
+def is_windowserr_svc(process):
+    return process.commandline == \
+           "C:\\Windows\\System32\\svchost.exe -k WerSvcGroup"
+
 class ProcessStates:
     RUNNING = "running"
     TERMINATED = "terminated"
