@@ -4,7 +4,6 @@
 
 import json
 import logging
-import os
 
 import sflock
 import sflock.exception
@@ -61,7 +60,7 @@ class Identify(Processor):
     def start(self):
 
         submitted_file = AnalysisPaths.submitted_file(self.ctx.analysis.id)
-        if not os.path.isfile(submitted_file):
+        if not submitted_file.is_file():
             err = f"Submitted file for analysis: {self.ctx.analysis.id} " \
                   f"does not exist"
             raise CancelProcessing(err)

@@ -98,7 +98,7 @@ class ReaderWriter(object):
 class UnixSocketServer:
 
     def __init__(self, sock_path):
-        self.sock_path = sock_path
+        self.sock_path = str(sock_path)
         self.sock = None
         self.do_run = True
         self.socks_readers = {}
@@ -239,7 +239,7 @@ class UnixSockClient:
 
     def __init__(self, sockpath, blockingreads=True):
         self.blockingreads = blockingreads
-        self.sockpath = sockpath
+        self.sockpath = str(sockpath)
         self.sock = None
         self.reader = None
 
@@ -329,7 +329,7 @@ def message_unix_socket(sock_path, message_dict):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
     try:
-        sock.connect(sock_path)
+        sock.connect(str(sock_path))
     except socket.error as e:
         raise IPCError(f"Could not connect to socket: {sock_path}. Error: {e}")
 

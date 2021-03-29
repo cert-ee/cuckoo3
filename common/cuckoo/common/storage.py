@@ -5,17 +5,17 @@
 import hashlib
 import json
 import os
-import pathlib
 import random
 import shutil
 import string
 import uuid
-from tempfile import gettempdir
 from datetime import datetime
-
-from .packages import find_cuckoo_packages, get_cwdfiles_dir
+from pathlib import Path
+from tempfile import gettempdir
 
 import sflock
+
+from .packages import find_cuckoo_packages, get_cwdfiles_dir
 
 class CWDNotSetError(Exception):
     pass
@@ -26,27 +26,104 @@ class InvalidCWDError(Exception):
 _allowed_deletion_dirs = set()
 
 def _add_deletion_dir(path):
-    realpath = os.path.realpath(path)
+    realpath = str(os.path.realpath(path))
     if realpath == "/":
         raise OSError("Root path deletion not allowed")
 
     _allowed_deletion_dirs.add(realpath)
 
 def _remove_deletion_dir(path):
-    _allowed_deletion_dirs.discard(os.path.realpath(path))
+    _allowed_deletion_dirs.discard(os.path.realpath(str(path)))
 
 def _deletion_allowed(path):
-    return os.path.realpath(path).startswith(tuple(_allowed_deletion_dirs))
+    return os.path.realpath(str(path)).startswith(
+        tuple(_allowed_deletion_dirs)
+    )
 
 if not _allowed_deletion_dirs:
     _add_deletion_dir(gettempdir())
 
+DEFAULT_DIRMODE = 0o775
+
+class _CWDDirs:
+
+    # Child dirs must hold a _CWDDirs class as a value and a key that
+    # is a directory name part of the current class.
+    CHILD_DIRS = {}
+    MODE = DEFAULT_DIRMODE
+
+    @classmethod
+    def list_names(cls):
+        """Return a list of all directory names this within this
+        type."""
+        raise NotImplementedError
+
+    @classmethod
+    def list_paths(cls):
+        paths = []
+        for dirname in cls.list_names():
+            paths.append(Path(dirname))
+
+        return paths
+
+    @classmethod
+    def create(cls, create_in: Path):
+        for dirpath in cls.list_paths():
+            create_in.joinpath(dirpath).mkdir(exist_ok=True, mode=cls.MODE)
+            child_cwddirs = cls.CHILD_DIRS.get(dirpath.path)
+            if child_cwddirs:
+                child_cwddirs.create(dirpath)
+
+
+class StorageDirs(_CWDDirs):
+    ANALYSES = "analyses"
+    BINARIES = "binaries"
+    EXPORTED = "exported"
+    IMPORTABLES = "importables"
+    UNTRACKED = "untracked"
+    NODE_WORK = "nodework"
+
+    @classmethod
+    def list_names(cls):
+        return [
+            cls.ANALYSES, cls.BINARIES, cls.EXPORTED, cls.IMPORTABLES,
+            cls.UNTRACKED, cls.NODE_WORK
+        ]
+
+class OperationalDirs(_CWDDirs):
+
+    SOCKETS = "sockets"
+    GENERATED = "generated"
+
+    @classmethod
+    def list_names(cls):
+        return [cls.SOCKETS, cls.GENERATED]
+
+class RootDirs(_CWDDirs):
+    CONF = "conf"
+    STORAGE = "storage"
+    OPERATIONAL = "operational"
+    LOG = "log"
+
+    CHILD_DIRS = {
+        STORAGE: StorageDirs,
+        OPERATIONAL: OperationalDirs
+    }
+
+    @classmethod
+    def list_names(cls):
+        return [cls.CONF, cls.STORAGE, cls.OPERATIONAL, cls.LOG]
+
 class _CuckooCWD:
 
-    DEFAULT = pathlib.Path.home().joinpath(".cuckoocwd")
+    DEFAULT_NAME = ".cuckoocwd"
+    _CWD_FILE_NAME = ".cuckoocwd"
+
+    DEFAULT = Path.home().joinpath(DEFAULT_NAME)
 
     def __init__(self):
         self._dir = None
+        self._analyses_dir = None
 
     @property
     def root(self):
@@ -58,19 +135,30 @@ class _CuckooCWD:
 
         return self._dir
 
+    @property
+    def analyses(self):
+        if not self._analyses_dir:
+            raise CWDNotSetError(
+                "The Cuckoo CWD must be set before performing any actions "
+                "that read from or write to it."
+            )
+
+        return self._analyses_dir
+
     @staticmethod
     def exists(path):
-        return os.path.isdir(path)
+        return path.exists()
 
     @staticmethod
     def is_valid(path):
-        return os.path.isfile(os.path.join(path, ".cuckoocwd"))
+        return path.joinpath(_CuckooCWD._CWD_FILE_NAME).is_file()
 
     @staticmethod
     def have_permission(path):
         return os.access(path, os.R_OK | os.W_OK | os.X_OK)
 
-    def set(self, path):
+    def set(self, path, analyses_dir=StorageDirs.ANALYSES):
+        path = Path(path)
         if not _CuckooCWD.exists(path):
             raise InvalidCWDError(f"Cuckoo CWD {path} does not exist.")
 
@@ -86,28 +174,34 @@ class _CuckooCWD:
         if self._dir:
             _remove_deletion_dir(self._dir)
 
-        self._dir = path
+        self._dir = Path(path)
+
+        # The analyses dir can be changed. A "remote" Cuckoo node can be on the
+        # same machine and might share a cwd, but it should not interact
+        # with results in any way. It has its own directory for analysis
+        # data it works with. It must be completely invisible to the caller of
+        # any path helpers that this happens, though.
+        self._analyses_dir = analyses_dir
         os.environ["CUCKOO_CWD"] = str(path)
         _add_deletion_dir(self._dir)
 
     @staticmethod
     def create(path):
-        if os.path.exists(path):
+        cwdroot = Path(path)
+        if cwdroot.exists():
             raise IsADirectoryError(f"Directory {path} already exists.")
 
-        os.makedirs(path)
-        for dirname in ("storage", "conf", "operational", "log"):
-            os.makedirs(os.path.join(path, dirname))
+        cwdroot.mkdir(mode=DEFAULT_DIRMODE)
 
-        for dirname in ("analyses", "binaries", "untracked",
-                        "importables", "exported"):
-            os.mkdir(os.path.join(path, "storage", dirname))
+        # Creates all essential directories and subdirectories
+        RootDirs.create(cwdroot)
 
-        for dirname in ("sockets", "generated"):
-            os.mkdir(os.path.join(path, "operational", dirname))
-
+        # Copies directories and files from installed Cuckoo packages to
+        # the cwd that was just created
         _CuckooCWD._add_package_cwdfiles(path)
-        pathlib.Path(path).joinpath(".cuckoocwd").touch()
+        # Create empty file with specific name so that a given directory
+        # can later be identified as a Cuckoo cwd
+        cwdroot.joinpath(_CuckooCWD._CWD_FILE_NAME).touch()
 
     @staticmethod
     def _add_package_cwdfiles(path):
@@ -115,7 +209,6 @@ class _CuckooCWD:
             pkg_cwd_files = get_cwdfiles_dir(package)
             if not pkg_cwd_files:
                 continue
-
 
             for entry in os.listdir(pkg_cwd_files):
 
@@ -132,7 +225,7 @@ class _CuckooCWD:
 
 cuckoocwd = _CuckooCWD()
 
-_ANALYSIS_ID_LEN = 6
+ANALYSIS_ID_LEN = 6
 
 def split_analysis_id(analysis_id):
         date_analysis = analysis_id.split("-", 1)
@@ -142,9 +235,9 @@ def split_analysis_id(analysis_id):
                 f"YYYYMMDD-identifier. Given: {analysis_id}"
             )
 
-        if len(date_analysis[1]) != _ANALYSIS_ID_LEN:
+        if len(date_analysis[1]) != ANALYSIS_ID_LEN:
             raise ValueError(
-                f"Invalid identifier length. Must be {_ANALYSIS_ID_LEN} "
+                f"Invalid identifier length. Must be {ANALYSIS_ID_LEN} "
                 f"characters. Given: {date_analysis[1]}"
             )
 
@@ -182,13 +275,19 @@ def task_to_analysis_id(task_id):
 def make_task_id(analysis_id, task_number):
     return f"{analysis_id}_{task_number}"
 
+
+TASK_PREFIX = "task_"
+
+def taskdir_name(task_id):
+    return f"{TASK_PREFIX}{split_task_id(task_id)[2]}"
+
 class AnalysisPaths:
 
     @staticmethod
     def _path(analysis_id, *args):
         date, analysis = split_analysis_id(analysis_id)
-        return os.path.join(
-            cuckoocwd.root, "storage", "analyses", date, analysis, *args
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, cuckoocwd.analyses, date, analysis, *args
         )
 
     @staticmethod
@@ -208,8 +307,12 @@ class AnalysisPaths:
         return AnalysisPaths._path(analysis_id, "pre.json")
 
     @staticmethod
-    def submitted_file(analysis_id):
-        return os.path.realpath(AnalysisPaths._path(analysis_id, "binary"))
+    def submitted_file(analysis_id, resolve=True):
+        path = AnalysisPaths._path(analysis_id, "binary")
+        if resolve:
+            return path.resolve(strict=False)
+
+        return path
 
     @staticmethod
     def filetree(analysis_id):
@@ -233,7 +336,9 @@ class AnalysisPaths:
 
     @staticmethod
     def analyses(*args):
-        return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, cuckoocwd.analyses, *args
+        )
 
     @staticmethod
     def day(day):
@@ -244,9 +349,9 @@ class TaskPaths:
     @staticmethod
     def _path(task_id,  *args):
         date, analysis, task_number = split_task_id(task_id)
-        return os.path.join(
-            cuckoocwd.root, "storage", "analyses", date, analysis,
-            f"task_{task_number}", *args
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, cuckoocwd.analyses, date, analysis,
+            taskdir_name(task_id), *args
         )
 
     @staticmethod
@@ -309,11 +414,13 @@ class Paths(object):
 
     @staticmethod
     def unix_socket(sockname):
-        return os.path.join(cuckoocwd.root, "operational", "sockets", sockname)
+        return cuckoocwd.root.joinpath(
+            RootDirs.OPERATIONAL, OperationalDirs.SOCKETS, sockname
+        )
 
     @staticmethod
     def dbfile():
-        return os.path.join(cuckoocwd.root, "cuckoo.db")
+        return cuckoocwd.root.joinpath("cuckoo.db")
 
     @staticmethod
     def analysis(analysis):
@@ -321,41 +428,38 @@ class Paths(object):
 
     @staticmethod
     def untracked(analysis=None):
-        if analysis:
-            return os.path.join(
-                cuckoocwd.root, "storage", "untracked", analysis
-            )
-        return os.path.join(cuckoocwd.root, "storage", "untracked")
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, StorageDirs.UNTRACKED, analysis or ""
+        )
 
     @staticmethod
     def importables(filename=None):
-        if filename:
-            return os.path.join(
-                cuckoocwd.root, "storage", "importables", filename
-            )
-        return os.path.join(cuckoocwd.root, "storage", "importables")
+       return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, StorageDirs.IMPORTABLES, filename or ""
+        )
 
     @staticmethod
     def exported(filename=None):
-        if filename:
-            return os.path.join(
-                cuckoocwd.root, "storage", "exported", filename
-            )
-        return os.path.join(cuckoocwd.root, "storage", "exported")
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, StorageDirs.EXPORTED, filename or ""
+        )
 
     @staticmethod
     def binaries():
-        return os.path.join(cuckoocwd.root, "storage", "binaries")
+        return cuckoocwd.root.joinpath(RootDirs.STORAGE, StorageDirs.BINARIES)
 
     @staticmethod
     def machinestates():
-        return os.path.join(
-            cuckoocwd.root, "operational", "generated", "machinestates.json"
+        return cuckoocwd.root.joinpath(
+            RootDirs.OPERATIONAL, OperationalDirs.GENERATED,
+            "machinestates.json"
         )
 
     @staticmethod
     def analyses(*args):
-        return os.path.join(cuckoocwd.root, "storage", "analyses", *args)
+        return cuckoocwd.root.joinpath(
+            RootDirs.STORAGE, cuckoocwd.analyses, *args
+        )
 
     @staticmethod
     def config(file=None, subpkg=None):
@@ -364,74 +468,43 @@ class Paths(object):
             args.append(subpkg)
         if file:
             args.append(file)
-        return os.path.join(cuckoocwd.root, *tuple(args))
+        return cuckoocwd.root.joinpath(*tuple(args))
 
     @staticmethod
     def monitor(*args):
-        return os.path.join(cuckoocwd.root, "monitor", *args)
+        return cuckoocwd.root.joinpath("monitor", *args)
 
     @staticmethod
     def log(filename):
-        return os.path.join(cuckoocwd.root, "log", filename)
+        return cuckoocwd.root.joinpath(RootDirs.LOG, filename)
 
     @staticmethod
     def elastic_templates():
-        return os.path.join(cuckoocwd.root, "elasticsearch")
+        return cuckoocwd.root.joinpath("elasticsearch")
 
     @staticmethod
     def web(*args):
-        return os.path.join(cuckoocwd.root, "web", *args)
+        return cuckoocwd.root.joinpath("web", *args)
 
     @staticmethod
     def signatures(*args):
-        return os.path.join(cuckoocwd.root, "signatures", *args)
+        return cuckoocwd.root.joinpath("signatures", *args)
 
     @staticmethod
     def pattern_signatures(platform=None):
-        pattern_path = os.path.join(Paths.signatures("cuckoo", "pattern"))
-        if not platform:
-            return pattern_path
-
-        return os.path.join(pattern_path, platform)
+        return Paths.signatures().joinpath("cuckoo", "pattern", platform or "")
 
     @staticmethod
     def safelist(filename):
-        return os.path.join(cuckoocwd.root, "safelist", filename)
+        return cuckoocwd.root.joinpath("safelist", filename)
 
     @staticmethod
     def safelist_db():
         return Paths.safelist("safelist.db")
 
-
-def cwd(*args, **kwargs):
-    if kwargs.get("analysis"):
-        try:
-            date, analysis = kwargs["analysis"].split("-", 1)
-        except ValueError:
-            raise ValueError(
-                "Invalid analysis ID given. Format must be YYYYMMDD-analysis"
-            )
-
-        return os.path.join(
-            cuckoocwd.root, "storage", "analyses", date, analysis
-        )
-
-    elif kwargs.get("day"):
-        return os.path.join(
-            cuckoocwd.root, "storage", "analyses", str(kwargs["day"])
-        )
-
-    elif kwargs.get("socket"):
-        return os.path.join(
-            cuckoocwd.root, "sockets", str(kwargs["socket"])
-        )
-
-    return os.path.join(cuckoocwd.root, *args)
-
-
 def create_analysis_folder(day, identifier):
     try:
-        os.mkdir(cwd(day=day))
+        AnalysisPaths.day(day).mkdir(mode=DEFAULT_DIRMODE)
     except FileExistsError:
         # Don't handle, as this means it was already created before or at the
         # same time of the mkdir call.
@@ -439,7 +512,7 @@ def create_analysis_folder(day, identifier):
 
     analysis = f"{day}-{identifier}"
     analysis_path = AnalysisPaths.path(analysis)
-    os.mkdir(analysis_path)
+    analysis_path.mkdir(mode=DEFAULT_DIRMODE)
 
     return analysis, analysis_path
 
@@ -454,7 +527,7 @@ def make_analysis_folder():
 
     identifier = ''.join(
         random.choices(
-            string.ascii_uppercase + string.digits, k=_ANALYSIS_ID_LEN
+            string.ascii_uppercase + string.digits, k=ANALYSIS_ID_LEN
         )
     )
     try:
@@ -640,7 +713,7 @@ class _DataHasher:
 class File:
 
     def __init__(self, file_path):
-        self._path = pathlib.Path(file_path)
+        self._path = Path(file_path)
 
         if not self.valid():
             raise FileNotFoundError("File does not exist or is not a file")
@@ -663,7 +736,7 @@ class File:
         """Get file size.
         @return: file size.
         """
-        return os.path.getsize(self._path)
+        return self._path.stat().st_size
 
     @property
     def md5(self):
@@ -707,7 +780,7 @@ class File:
         """Get the file type.
         @return: file type.
         """
-        return str(sflock.magic.from_file(os.path.realpath(self._path)))
+        return str(sflock.magic.from_file(str(self._path.resolve())))
 
     @property
     def media_type(self):
@@ -715,7 +788,7 @@ class File:
         @return: file content type.
         """
         return str(sflock.magic.from_file(
-            os.path.realpath(self._path), mime=True
+            str(self._path.resolve()), mime=True
         ))
 
     def valid(self):

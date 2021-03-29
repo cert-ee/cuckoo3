@@ -293,7 +293,7 @@ class Pcapreader(Processor):
 
     def start(self):
         pcap_path = TaskPaths.pcap(self.ctx.task.id)
-        if not os.path.isfile(pcap_path):
+        if not pcap_path.is_file():
             return
 
         r = reader.PcapReader(pcap_path)
@@ -379,6 +379,9 @@ class NetworkPatternSignatures(Processor):
                     f"Failed to load network signature file: {sigfile_path}. "
                     f"Error: {e}"
                 ).with_traceback(e.__traceback__)
+
+        if not cls.scanner:
+            return
 
         # Ask the scanner to compile the loaded patterns into a hyperscan
         # database. It is so possible to show what regex caused the compile

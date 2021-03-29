@@ -111,7 +111,7 @@ class Settings(_Settings):
             )
 
 def exists(analysis_id):
-    return os.path.isfile(AnalysisPaths.analysisjson(analysis_id))
+    return AnalysisPaths.analysisjson(analysis_id).is_file()
 
 def track_analyses(analysis_ids):
     untracked_analyses = []
@@ -297,7 +297,7 @@ def merge_errors(analysis, error_container):
 
 def merge_processing_errors(analysis):
     errpath = AnalysisPaths.processingerr_json(analysis.id)
-    if not os.path.exists(errpath):
+    if not errpath.is_file():
         return
 
     merge_errors(analysis, Errors.from_file(errpath))
@@ -331,7 +331,7 @@ def get_analysis(analysis_id):
 
 def get_filetree_fp(analysis_id):
     treepath = AnalysisPaths.filetree(analysis_id)
-    if not os.path.isfile(treepath):
+    if not treepath.is_file():
         raise AnalysisError("Filetree JSON file does not exist")
 
     return open(treepath, "r")
@@ -475,10 +475,11 @@ def delete_analysis_disk(analysis_id):
     daypart, _ = split_analysis_id(analysis_id)
     delete_dirtree(AnalysisPaths.path(analysis_id))
 
-    # If the daydir is empty and it is not today, delete it.
+    # If the daydir is today, never delete it.
     if daypart == todays_daydir():
         return
 
     daydir = AnalysisPaths.day(daypart)
-    if len(os.listdir(daydir)) < 1:
+    # Delete day dir if it is empty
+    if sum(1 for _ in daydir.iterdir()) < 1:
         delete_dir(daydir)

@@ -2,8 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os
-
 from cuckoo.common.storage import TaskPaths
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.processing.abtracts import LogFileTranslator
@@ -25,14 +23,12 @@ class NormalizedEventReader:
                 return translator_class
 
     def _find_task_logfiles(self):
-        logs_path = TaskPaths.logfile(self.taskctx.task.id)
         log_files = []
-        for filename in os.listdir(logs_path):
-            logfile_path = os.path.join(logs_path, filename)
-            if os.path.isdir(logfile_path):
+        for path in TaskPaths.logfile(self.taskctx.task.id).iterdir():
+            if path.is_dir():
                 continue
 
-            log_files.append((filename, logfile_path))
+            log_files.append((path.name, path))
 
         return log_files
 

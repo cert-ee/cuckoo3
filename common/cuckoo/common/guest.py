@@ -266,10 +266,7 @@ class Payload:
                 "It is not possible to write to the payload retrieving its fp."
             )
 
-        if not archive_path:
-            archive_path = Path(path).name
-
-        self._zip.write(path, arcname=archive_path)
+        self._zip.write(path, arcname=archive_path or path.name)
 
     def add_str(self, strdata, archive_path):
         """Add the given strdata as the file specified in archive_path."""
@@ -331,7 +328,7 @@ class StagerHelper:
 
     @classmethod
     def find_stager_binary(cls, platform, archirecture, version=""):
-        base = Path(Paths.monitor(platform, archirecture))
+        base = Paths.monitor(platform, archirecture)
         # Find 'latest' version hash from latest_stager file.
         if not version:
             version = cls.get_latest_version(base.joinpath("latest_stager"))
@@ -344,7 +341,7 @@ class StagerHelper:
 
     @classmethod
     def find_monitor_binary(cls, platform, archirecture, version=""):
-        base = Path(Paths.monitor(platform, archirecture))
+        base = Paths.monitor(platform, archirecture)
         # Find 'latest' version hash from latest_monitor file.
         if not version:
             version = cls.get_latest_version(base.joinpath("latest_monitor"))
