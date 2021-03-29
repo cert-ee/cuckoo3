@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import zipfile
 import sflock
 
@@ -46,14 +47,41 @@ def get_child(f, path):
     for parent in parents:
         return get_child(parent, path)
 
-def zipify(f, path):
-    """Turns any type of archive into an equivalent .zip file."""
-    z = zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED)
+def _make_ident_relapath(f):
+    if not f.extension:
+        return f.relapath
 
-    for child in f.children:
-        z.writestr(child.relapath, child.contents)
+    relaparts = Path(f.relapath).parts
+    filename = f.filename
+
+    if not relaparts:
+        return f.relapath
+
+    if not f.filename.lower().endswith(f.extension):
+        filename = f"{f.filename}.{f.extension}"
+
+    return str(Path(*relaparts[:-1] + (filename,)))
+
+def zipify_target(target_f, zip_path):
+    """Turns any type of archive into an equivalent .zip file."""
+    z = zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED)
+
+    target_relapath = target_f.relapath
+    for child in target_f.parent.children:
+        relapath = child.relapath
+
+        # Create a relative archive path that uses the identified extension
+        # in the file name.
+        if child == target_f:
+            relapath = _make_ident_relapath(child)
+            target_relapath = relapath
+
+        z.writestr(relapath, child.contents)
 
     z.close()
+
+    return target_relapath
+
 
 def find_child_in_tree(file_dict, extraction_paths):
     current = None
@@ -160,7 +188,9 @@ class CreateZip(Processor):
 
         # Normalize the lowest parent of the target to a zipfile. This
         # is the zipfile that will be uploaded to the analysis machine.
-        zipify(
-            selected_file.parent,
-            AnalysisPaths.zipified_file(self.ctx.analysis.id)
-        )
+        # Also overwrite the extrpath path the target will be located at in the
+        # newly created zip. This new path includes a filename+identified
+        # file extension.
+        target.extrpath = [zipify_target(
+            selected_file, AnalysisPaths.zipified_file(self.ctx.analysis.id)
+        )]
