@@ -167,8 +167,9 @@
         <h2>Analysis</h2>
         <p>Static and file analysis results. The sidebar on the left reflects any additional results by component.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance data-priority="tab-overview" id="analysisReport" hidden>
-          <a class="tabbar-link is-active" href="#tab-overview">Overview</a>
+        {# review: this 'hack' is redundant later on I think #}
+        <nav role="tablist" class="tabbar has-background-transparent" id="analysisReport" hidden>
+          <a role="tab" class="tabbar-link" href="#overview">Overview</a>
         </nav>
 
         {% if debug_template_data %}
@@ -187,7 +188,7 @@
           {% endcall %}
         {% endif %}
 
-        <div id="tab-overview">
+        <div role="region" id="overview">
           {% include "analysis/components/summary.html.jinja2" %}
 
           {# include components if they exist inside the template scope #}
@@ -210,35 +211,35 @@
 
         {# tab: static.target/static.pe #}
         {% if pre.static.pe %}
-          <div id="tab-pefiles" hidden>
+          <div role="region" id="pefiles" hidden>
             {% include "analysis/components/pefiles.html.jinja2" %}
           </div>
         {% endif %}
 
         {# tab: static.virustotal #}
         {% if pre.virustotal %}
-          <div id="tab-virus-total" hidden>
+          <div role="region" id="virus-total" hidden>
             {% include "analysis/components/virustotal.html.jinja2" %}
           </div>
         {% endif %}
 
         {# tab: pre.misp #}
         {% if pre.misp %}
-          <div id="tab-misp" hidden>
+          <div role="region" id="misp" hidden>
             {% include "analysis/components/misp.html.jinja2" %}
           </div>
         {% endif %}
 
         {# tab: pre.intelmq #}
         {% if pre.intelmq %}
-          <div id="tab-intelmq" hidden>
+          <div role="region" id="intelmq" hidden>
             {% include "analysis/components/intelmq.html.jinja2" %}
           </div>
         {% endif %}
 
         {# tab: pre.static.office #}
         {% if pre.static.office %}
-          <div id="tab-office" hidden>
+          <div role="region" id="office" hidden>
             {% include "analysis/components/office.html.jinja2" %}
           </div>
         {% endif %}

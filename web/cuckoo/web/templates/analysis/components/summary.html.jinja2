@@ -1,12 +1,12 @@
 {% call ui_box(title="Summary", has_padding=False) %}
-  <div class="tabbar" data-enhance>
-    <a href="#analysis" class="tabbar-link is-active">Analysis</a>
-    <a href="#file-analysis" class="tabbar-link">Target</a>
-    <a href="#submission" class="tabbar-link">Submission</a>
-    <a href="#settings" class="tabbar-link">Settings</a>
+  <div class="tabbar">
+    <a role="tab" href="#overview:analysis" class="tabbar-link is-active">Analysis</a>
+    <a role="tab" href="#overview:file-analysis" class="tabbar-link">Target</a>
+    <a role="tab" href="#overview:submission" class="tabbar-link">Submission</a>
+    <a role="tab" href="#overview:settings" class="tabbar-link">Settings</a>
   </div>
 
-  <div id="analysis">
+  <div role="region" id="overview:analysis">
     <div class="columns has-padding is-divided">
       <div class="column is-auto">
         <div class="ratio-1-1">
@@ -54,7 +54,7 @@
       </div>
     </div>
   </div>
-  <table class="table has-striped-rows" id="submission" hidden>
+  <table role="region" class="table has-striped-rows" id="overview:submission" hidden>
     <thead>
       <tr>
         <th>Property</th>
@@ -100,7 +100,7 @@
       </tr>
     </tbody>
   </table>
-  <table class="table has-striped-rows" id="settings" hidden>
+  <table role="region" class="table has-striped-rows" id="overview:settings" hidden>
     <thead>
       <tr>
         <th>Property</th>
@@ -136,7 +136,7 @@
       </tr>
     </tbody>
   </table>
-  <table class="table has-striped-rows" id="file-analysis" hidden>
+  <table role="region" class="table has-striped-rows" id="overview:file-analysis" hidden>
     <thead>
       <tr>
         <th>Property</th>

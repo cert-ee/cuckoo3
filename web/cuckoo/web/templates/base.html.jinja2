@@ -1,5 +1,5 @@
 {# Set this to true to display inline template data output (debugging) #}
-{% set debug_template_data = False %}
+{% set debug_template_data = True %}
 
 <!doctype html>
 <html lang="en">
@@ -21,6 +21,7 @@
     </div>
     {% include "partial/footer.html.jinja2" %}
     <script>window.csrf_token = "{{ csrf_token }}";</script>
+    <script type="text/javascript" src="{{ static('js/hashrouter.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/ui.js') }}"></script>
     {% block page_script %}{% endblock %}
   </body>

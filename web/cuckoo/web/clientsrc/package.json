@@ -1,5 +1,5 @@
 {
-  "name": "Cuckoo 3 Web UI tooling",
+  "name": "cuckoo-3-web-ui-tooling",
   "version": "1.0.0",
   "description": "Tools and scripts for development on the Cuckoo Web Interface styling and layout features",
   "main": "sass/ui.sass",

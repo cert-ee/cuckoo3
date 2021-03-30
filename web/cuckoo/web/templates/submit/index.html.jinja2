@@ -4,35 +4,46 @@
 
 {% block body %}
   {% include "submit/partial/tabbar.html.jinja2" %}
+
   <section class="section">
     <div class="container is-fixed is-smol">
       <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data">
         {{ csrf_input }}
-        <nav class="tabbar has-padding-x has-margin-bottom" data-enhance>
-          <a href="#options-form" class="tabbar-link is-active">File</a>
-          {# <a href="#options-form" class="tabbar-link">URL</a> #}
+        <nav role="tablist" class="tabbar has-padding-x has-margin-bottom">
+          <a role="tab" href="#submit-file" class="tabbar-link is-active">File</a>
+          {# <a role="tab" href="#submit-url" class="tabbar-link">URL</a> #}
         </nav>
-        <h4 class="label is-set-title has-margin has-padding clear-box">
-          Submit a sample by uploading a file or archive
-          <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
-        </h4>
-        <hr class="separator" />
-        <div class="box is-big has-background-fade no-margin-bottom has-text-center" id="file-dropzone">
-          <div class="field no-margin-top">
-            <div class="control is-file has-text-center">
-              <label class="file-trigger" for="file">Select file</label>
-              <input class="input" type="file" id="file" name="file" data-enhance />
+        <div role="region" id="submit-file">
+          <h4 class="label is-set-title has-margin has-padding clear-box">
+            Submit a sample by uploading a file or archive
+            <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
+          </h4>
+          <hr class="separator" />
+          <div class="box is-big has-background-fade no-margin-bottom has-text-center" id="file-dropzone">
+            <div class="field no-margin-top">
+              <div class="control is-file has-text-center">
+                <label class="file-trigger" for="file">Select file</label>
+                <input class="input" type="file" id="file" name="file" data-enhance />
+              </div>
+              <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
             </div>
-            <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
+          </div>
+          <hr class="separator no-margin-top" />
+          <div class="columns is-gapless is-between has-margin has-padding-x">
+            <div class="column">&nbsp;</div>
+            <div class="column">
+              <input type="submit" class="button is-blue" />
+            </div>
           </div>
         </div>
-        <hr class="separator no-margin-top" />
-        <div class="columns is-gapless is-between has-margin has-padding-x">
-          <div class="column">&nbsp;</div>
-          <div class="column">
-            <input type="submit" class="button is-blue" />
+
+        {# demonstrational extra tab for window state implementation #}
+        <!-- <div role="region" id="submit-url" class="has-padding has-text-center" hidden>
+          <div class="box has-background-green has-shadow">
+            <img src="/static/images/cuckoo-light.svg" width="400" />
           </div>
-        </div>
+        </div> -->
+
       </form>
     </div>
   </section>
