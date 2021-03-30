@@ -5,6 +5,7 @@
  * to inline navigation methods. Using that, and a format that works for
  * single-level tabs as well as multi-dimensional deep tabs.
  *
+ *
  * <div role="tablist" id="tabs-index">
  *   <a role="tab" href="#test"></a>
  *   <a role="tab" href="#test-two"></a>
@@ -18,6 +19,9 @@
  *   <div role="region" id="test:test-three"></div>
  *   <div role="region" id="test:test-four"></div>
  * </div>
+ *
+ * @NOTE: uses WAI-ARIA attributes/roles as indicator for each tab element, no
+ * fixation on class names or id's.
  */
 
 (function() {

@@ -55,9 +55,9 @@
         <h2>Task report</h2>
         <p>Results of individual task ran during analysis.</p>
 
-          <div class="tabbar has-background-transparent" data-enhance id="taskReport">
-            <a href="#tab-report" class="tabbar-link is-active"><strong>Task</strong></a>
-            <a href="#tab-machine" class="tabbar-link">Machine</a>
+          <div role="tablist" class="tabbar has-background-transparent">
+            <a role="tab" href="#report" class="tabbar-link is-active"><strong>Task</strong></a>
+            <a role="tab" href="#machine" class="tabbar-link">Machine</a>
           </div>
 
           {% if debug_template_data %}
@@ -71,7 +71,7 @@
             {% endcall %}
           {% endif %}
 
-          <div id="tab-report">
+          <div role="region" id="report">
             {% if task.errors.errors|length > 0 %}
               {% call error_box(task.errors.errors) %}
                 <p class="has-padding no-margin-bottom">Errors occured during this analysis.</p>
@@ -86,13 +86,13 @@
           </div>
 
           {# Report.machine #}
-          <div id="tab-machine" hidden>
+          <div role="region" id="machine" hidden>
             {% include "task/components/machine.html.jinja2" %}
           </div>
 
           {% for component in report_components %}
             {% if report[component] %}
-              <div id="tab-{{ component }}" hidden>
+              <div role="region" id="{{ component }}" hidden>
                 {% include "task/components/"+component+".html.jinja2" %}
               </div>
             {% endif %}

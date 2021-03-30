@@ -194,7 +194,7 @@ function handlePageTabs(tabContext) {
       if(results.length > 0 && !hasActiveTab()) {
         results.forEach(result => result.dispatchEvent(new Event("click")));
       }
-    })
+    });
   }
 
   if(!hasActiveTab() && links.length > 0) {
@@ -604,15 +604,12 @@ function applyHandler(sel=null, fn=null) {
   return null;
 }
 
-/**
- * document ready state initializer
- */
 document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.navbar .navbar-toggle', handleNavbar);
   applyHandler('.input[type="file"][data-enhance]', handleFileInput);
   applyHandler('.input[type="password"][data-enhance]', handlePasswordHide);
   applyHandler('.list.is-tree[data-enhance]', handleListTree);
-  applyHandler('.tabbar[data-enhance]', handlePageTabs);
+  // applyHandler('.tabbar[data-enhance]', handlePageTabs);
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
   applyHandler('[data-tooltip]', handleTooltip);

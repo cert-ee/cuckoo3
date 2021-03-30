@@ -31,19 +31,19 @@
 } %}
 
 {% call ui_box(title="Network analysis", collapsed=False, has_padding=False) %}
-  <nav class="tabbar no-margin-bottom" data-enhance>
+  <nav class="tabbar no-margin-bottom" role="tablist">
     {% for key in network_view_configuration %}
       {% set view = network_view_configuration[key] | default({}) %}
-      <a class="tabbar-link {% if view.is_active %}is-active{% endif %}" href="#network-analysis-{{ key }}">{{ view.ui_label | default(key) }}</a>
+      <a role="tab" class="tabbar-link {% if view.is_active %}is-active{% endif %}" href="#network:{{ key }}">{{ view.ui_label | default(key) }}</a>
     {% endfor %}
   </nav>
-  <div class="box no-margin-y has-background-light" id="network-analysis-host" {% if not network_view_configuration.host.is_active %}hidden{% endif %}>
+  <div role="region" id="network:host" class="box no-margin-y has-background-light" {% if not network_view_configuration.host.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">Hosts network communicated with.</p>
     {% for host in report.network.host %}
       <p class="box has-background-white has-shadow is-monospace">{{ host }}</p>
     {% endfor %}
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-udp" {% if not network_view_configuration.udp.is_active %}hidden{% endif %}>
+  <div role="region" id="network:udp" class="box no-margin-y has-background-light" {% if not network_view_configuration.udp.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of UDP communications.</p>
     {% for udp in report.network.udp %}
       <div class="columns is-justified box has-shadow is-vcenter">
@@ -59,7 +59,7 @@
       </div>
     {% endfor %}
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-dns" {% if not network_view_configuration.dns.is_active %}hidden{% endif %}>
+  <div role="region" id="network:dns" class="box no-margin-y has-background-light" {% if not network_view_configuration.dns.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of DNS queries and responses.</p>
     <details class="details has-no-hover" open>
       <summary>
@@ -90,13 +90,13 @@
       {% endfor %}
     </details>
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-domain" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
+  <div role="region" id="network:domain" class="box no-margin-y has-background-light" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of resolved domains.</p>
     {% for domain in report.network.domain %}
       <p class="box has-background-white has-shadow is-monospace">{{ domain }}</p>
     {% endfor %}
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-tcp" {% if not network_view_configuration.tcp.is_active %}hidden{% endif %}>
+  <div role="region" id="network:tcp" class="box no-margin-y has-background-light" {% if not network_view_configuration.tcp.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of TCP connections.</p>
     {% for tcp in report.network.tcp %}
       <div class="columns is-justified box has-shadow is-vcenter">
@@ -113,7 +113,7 @@
       </div>
     {% endfor %}
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-http" {% if not network_view_configuration.http.is_active %}hidden{% endif %}>
+  <div role="region" id="network:http" class="box no-margin-y has-background-light" {% if not network_view_configuration.http.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of HTTP requests and responses.</p>
     {% for req in report.network.http %}
       <div class="box has-background-white has-shadow no-margin-top">
@@ -206,7 +206,7 @@
       </div>
     {% endfor %}
   </div>
-  <div class="box no-margin-y has-background-light" id="network-analysis-smtp" {% if not network_view_configuration.smtp.is_active %}hidden{% endif %}>
+  <div role="region" id="network:smtp" class="box no-margin-y has-background-light" {% if not network_view_configuration.smtp.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">Hosts network communicated with.</p>
   </div>
 {% endcall %}

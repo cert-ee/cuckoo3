@@ -66,7 +66,7 @@
                 {# only display if the report has the corresponding property #}
                 {% if report[component] %}
                   <li>
-                    <a href="#tab-{{component}}" data-tabbar="#taskReport">
+                    <a role="tab" href="#{{component}}{% if component == 'network' %}:host{% endif %}">
                       {% if report_component_labels[loop.index-1] %}
                         {{ report_component_labels[loop.index-1] }}
                       {% else %}
