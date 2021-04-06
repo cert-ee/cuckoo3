@@ -269,3 +269,118 @@ const processes = (function() {
   });
 
 }());
+
+// comparison form
+(function compareTasksWidget() {
+
+  const compareForm = document.querySelector('form#compare-tasks')
+  if(compareForm) {
+
+    const submit = compareForm.querySelector('input[type="submit"]');
+    const checkboxes = compareForm.querySelectorAll('input[type="checkbox"]');
+    const checked = () => [...checkboxes].filter(checkbox => checkbox.checked);
+
+    compareForm.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const ids = checked().map(checkbox => checkbox.value);
+      window.location = '/compare/' + ids.join('/');
+    });
+
+    // limits selectable tasks to max 2
+    function checkValidity() {
+
+      if(checked().length == 2) {
+        submit.disabled = false;
+        checkboxes.forEach(cb => {
+          if(cb.checked == false)
+            cb.disabled = true;
+        })
+      } else {
+        submit.disabled = true;
+        checkboxes.forEach(cb => {
+          cb.disabled = false
+        });
+      }
+    }
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', checkValidity)
+    });
+
+    // in the case of browser-cached ticked checkboxes, make sure
+    // the rules listen to that too.
+    setTimeout(checkValidity, 20);
+
+  }
+
+}());
+
+// threat radar chart
+(function renderThreatChart() {
+
+  const ctx = document.querySelector('canvas#behavior-map');
+  if(!window.Chart || !ctx || !window.data || !window.data.chart) return;
+  const { tags, labels, values } = window.data.chart;
+
+  const opacity = .8;
+  const type = 'radar';
+
+  // remove the chart if the data is not sufficient to display anything
+  // that matches. Needs review to as if this behavior is wanted like this.
+  if(values.indexOf(90) == -1) {
+    lib.parent('.box', ctx).remove();
+    return;
+  } else {
+    lib.parent('.box', ctx).removeAttribute('hidden');
+  }
+
+  let chart;
+
+  function renderChart() {
+    if(chart)
+      chart.destroy();
+    chart = new Chart(ctx.getContext('2d'), {
+      type,
+      data: {
+        labels: labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())),
+        datasets: [{
+          values,
+          backgroundColor: ['rgba(249,93,106, '+opacity+')'],
+          pointRadius: 0
+        }]
+      },
+      options: {
+        scale: {
+          ticks: {
+            startAtZero: true,
+            min: 0,
+            max: 100,
+            stepSize: 10,
+            display: false
+          }
+        },
+        legend: {
+          display: false
+        },
+        tooltips: {
+          enabled: false
+        },
+        animation: {
+          duration: 0
+        },
+        hover: {
+          animationDuration: 0
+        },
+        responsive: true,
+        maintainAspectRatio: true,
+        responsiveAnimationDuration: 0
+      }
+    });
+  }
+
+  renderChart();
+
+  let prevWidth;
+  window.addEventListener("resize", renderChart);
+
+}());
