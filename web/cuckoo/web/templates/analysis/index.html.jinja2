@@ -33,126 +33,31 @@
   {% endif %}
 
   <script type="text/javascript" src="{{ static('js/chart.bundle.min.js') }}"></script>
-  <script src="{{ static('js/analysis.task.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
-    // threat radar chart
+    window.data = {
+      chart: {
+        tags: {{ analysis.tags|tojson }},
+        labels: {{ chart_labels|tojson }},
+        values: {{ chart_values|tojson }}
+      }
+    };
+    // sets default tabs to display when te hash router is not active. This is
+    // determined here because it is page-specific.
     (function() {
-
-      const ctx = document.querySelector('canvas#behavior-map');
-      if(!window.Chart || !ctx) return;
-
-      const tags = {{ analysis.tags|tojson }};
-      const labels = {{ chart_labels|tojson }};
-      const data = {{ chart_values|tojson }};
-      const opacity = .8;
-      const type = 'radar';
-
-      // remove the chart if the data is not sufficient to display anything
-      // that matches. Needs review to as if this behavior is wanted like this.
-      if(data.indexOf(90) == -1) {
-        lib.parent('.box', ctx).remove();
-        return;
+      if(window.hashRouted !== undefined) {
+         if(window.hashRouted === false) {
+           window.gotoHash('overview:analysis');
+         } else {
+           document.querySelector('[role="region"]#overview').classList.remove('hidden')
+         }
       } else {
-        lib.parent('.box', ctx).removeAttribute('hidden');
+        // @TODO initialize a way when the hash router is not available, UX can't
+        // break here - eg fall back to legacy tabbar navigation scripts.
       }
-
-      let chart;
-
-      function renderChart() {
-        if(chart)
-          chart.destroy();
-        chart = new Chart(ctx.getContext('2d'), {
-          type,
-          data: {
-            labels: labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())),
-            datasets: [{
-              data,
-              backgroundColor: ['rgba(249,93,106, '+opacity+')'],
-              pointRadius: 0
-            }]
-          },
-          options: {
-            scale: {
-              ticks: {
-                startAtZero: true,
-                min: 0,
-                max: 100,
-                stepSize: 10,
-                display: false
-              }
-            },
-            legend: {
-              display: false
-            },
-            tooltips: {
-              enabled: false
-            },
-            animation: {
-              duration: 0
-            },
-            hover: {
-              animationDuration: 0
-            },
-            responsive: true,
-            maintainAspectRatio: true,
-            responsiveAnimationDuration: 0
-          }
-        });
-      }
-
-      renderChart();
-
-      let prevWidth;
-      window.addEventListener("resize", renderChart);
-
-    }());
-
-    // comparison form
-    (function() {
-
-      const compareForm = document.querySelector('form#compare-tasks')
-      if(compareForm) {
-
-        const submit = compareForm.querySelector('input[type="submit"]');
-        const checkboxes = compareForm.querySelectorAll('input[type="checkbox"]');
-        const checked = () => [...checkboxes].filter(checkbox => checkbox.checked);
-
-        compareForm.addEventListener('submit', ev => {
-          ev.preventDefault();
-          const ids = checked().map(checkbox => checkbox.value);
-          window.location = '/compare/' + ids.join('/');
-        });
-
-        // limits selectable tasks to max 2
-        function checkValidity() {
-
-          if(checked().length == 2) {
-            submit.disabled = false;
-            checkboxes.forEach(cb => {
-              if(cb.checked == false)
-                cb.disabled = true;
-            })
-          } else {
-            submit.disabled = true;
-            checkboxes.forEach(cb => {
-              cb.disabled = false
-            });
-          }
-        }
-
-        checkboxes.forEach(checkbox => {
-          checkbox.addEventListener('change', checkValidity)
-        });
-
-        // in the case of browser-cached ticked checkboxes, make sure
-        // the rules listen to that too.
-        setTimeout(checkValidity, 20);
-
-      }
-
     }());
   </script>
+  <script src="{{ static('js/analysis.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -188,7 +93,7 @@
           {% endcall %}
         {% endif %}
 
-        <div role="region" id="overview">
+        <div role="region" id="overview" hidden>
           {% include "analysis/components/summary.html.jinja2" %}
 
           {# include components if they exist inside the template scope #}
