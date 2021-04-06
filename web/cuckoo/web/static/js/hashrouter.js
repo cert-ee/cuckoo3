@@ -26,18 +26,11 @@
 
 (function() {
 
-  let _tabs     = [...document.querySelectorAll('[role="tab"]')];
-  let _tabpages = [...document.querySelectorAll('[role="region"]')];
-  const router    = {};
+  window.hashRouted  = false;
+  let _tabs          = [...document.querySelectorAll('[role="tab"]')];
+  let _tabpages      = [...document.querySelectorAll('[role="region"]')];
 
-  function chunk(arr=[], div=2) {
-    let result = [], idx = 0;
-    while(idx < arr.length) {
-      if(idx % div == 0)  result.push([]);
-      result[result.length - 1].push(arr[idx++]);
-    }
-    return result;
-  }
+  // _tabs.forEach(tab => tab.addEventListener('click', e => e.preventDefault()));
 
   function parseHash(url) {
     return url.replace('#', '').split(':');
@@ -51,7 +44,10 @@
   function onURLChanged(evt) {
 
     let url = (evt.newUrl ? substring(evt.newUrl.indexOf('#'), evt.newUrl.length) : false) || window.location.hash;
-    if(!url.length) return;
+    if(!url.length) {
+      window.hashRouted = false;
+      return;
+    };
 
     // clean the current state of the ui
     _tabs.forEach(tab => tab.classList.remove('is-active'));
@@ -69,9 +65,25 @@
         el.removeAttribute('hidden');
     });
 
+    window.hashRouted = true;
+
   }
 
   window.addEventListener('hashchange', onURLChanged);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
+
+  /**
+   * Jumps to a hash from the global scope
+   *
+   * @param {String} hash - the target hash to jump to
+   * @example
+   *
+   *    const { gotoHash } = window;
+   *    gotoHash('#tab:nested-tab')
+   */
+  window.gotoHash = function(hash) {
+    if(hash) window.location.hash = hash;
+    return;
+  }
 
 }());
