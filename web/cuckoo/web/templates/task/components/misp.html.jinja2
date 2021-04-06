@@ -11,10 +11,10 @@
     <tbody>
       {% for m in report.misp %}
         <tr>
-          <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
-          <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
-          <td>{{ m.description }}</td>
-          <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+          <td class="is-vtop"><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+          <td class="is-monospace has-auto-width is-break is-vtop">{{ m.ioc }}</td>
+          <td class="is-vtop">{{ m.description }}</td>
+          <td class="is-vtop is-datetime">{{ m.datetime|formatisodatetime }}</td>
         </tr>
       {% endfor %}
     </tbody>
