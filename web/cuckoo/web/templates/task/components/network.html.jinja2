@@ -92,9 +92,28 @@
   </div>
   <div role="region" id="network:domain" class="box no-margin-y has-background-light" {% if not network_view_configuration.domain.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of resolved domains.</p>
-    {% for domain in report.network.domain %}
-      <p class="box has-background-white has-shadow is-monospace">{{ domain }}</p>
-    {% endfor %}
+      <div class="box has-background-white no-padding-x no-padding-bottom has-shadow">
+      <div class="columns is-divided is-vcenter">
+        <div class="column is-auto">
+          <h4 class="no-margin">{{ report.network.domain|length }} total</h4>
+        </div>
+        <div class="column">
+          <div class="field no-margin">
+            <div class="control has-addon">
+              <span class="addon has-half-opacity">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="search" class="input" placeholder="Type to search domains by string..." data-enhance="#domains-list" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <ol class="list is-strings-list" id="domains-list">
+        {% for domain in report.network.domain %}
+          <li data-count="{{loop.index}}" {% if loop.index % 2 != 0 %}class="is-odd"{% endif %} data-search-value="{{ domain }}">{{ domain }}</li>
+        {% endfor %}
+      </ol>
+    </div>
   </div>
   <div role="region" id="network:tcp" class="box no-margin-y has-background-light" {% if not network_view_configuration.tcp.is_active %}hidden{% endif %}>
     <p class="has-half-opacity">List of TCP connections.</p>

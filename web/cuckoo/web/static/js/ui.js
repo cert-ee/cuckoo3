@@ -593,6 +593,40 @@ function handleClickToCopy(elem) {
 
 }
 
+/*
+ * A simple API for filtering through a list of data by typing a string
+ */
+function handleInlineSearch(searchBar) {
+  const searchElement = document.querySelector(searchBar.dataset.enhance);
+  if(!searchElement) return;
+  let hidden, shown, value, attributes = [...searchElement.querySelectorAll('[data-search-value]')];
+
+  searchBar.addEventListener('keyup', ev => {
+    hidden = [];
+    shown = [];
+    value = searchBar.value;
+
+    if(value.length) {
+      attributes.forEach(el => {
+        if(el.dataset.searchValue.indexOf(value) > -1)
+          shown.push(el);
+        else
+          hidden.push(el);
+      });
+    } else {
+      attributes.forEach(att => att.removeAttribute('hidden'));
+      shown = attributes;
+    }
+
+    hidden.forEach(el => el.setAttribute('hidden', true));
+    shown.forEach((el, i) => {
+      el.classList.toggle('is-odd', !(i % 2));
+      el.removeAttribute('hidden');
+    });
+
+  });
+}
+
 /**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
@@ -609,9 +643,10 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.input[type="file"][data-enhance]', handleFileInput);
   applyHandler('.input[type="password"][data-enhance]', handlePasswordHide);
   applyHandler('.list.is-tree[data-enhance]', handleListTree);
-  // applyHandler('.tabbar[data-enhance]', handlePageTabs);
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
   applyHandler('[data-tooltip]', handleTooltip);
   applyHandler('[data-click-to-copy]', handleClickToCopy);
+  applyHandler('.input[type="search"][data-enhance]', handleInlineSearch);
+  // applyHandler('.tabbar[data-enhance]', handlePageTabs);
 });
