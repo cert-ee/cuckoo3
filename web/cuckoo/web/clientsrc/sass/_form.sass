@@ -23,6 +23,8 @@
   border-radius: 2px
   .label
     display: inline-block
+  .input
+    box-shadow: none
   // for select boxes, render an arrow
   &.is-select
     min-width: 10rem
@@ -99,6 +101,8 @@
   padding: calc((#{$gap}/2) - .025rem)
   background: $white
   border: .05rem solid $border
+  box-shadow: inset 0 .1rem .062rem rgba(0,0,0,.1)
+  border-radius: $radius
   &.is-small
     width: 4rem
   &:focus

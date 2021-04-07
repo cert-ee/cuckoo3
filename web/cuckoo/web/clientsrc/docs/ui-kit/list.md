@@ -48,6 +48,23 @@ Example: Tree diagram
 </ul>
 ```
 
+Example: Strings list
+```html
+<ul class="list is-strings-list">
+  <li class="is-odd">String 1</li>
+  <li>String 2</li>
+  <li>String 3</li>
+</ul>
+
+Or take control of the item counter;
+
+<ul class="list is-strings-list">
+  <li data-count="4" class="is-odd">String 1</li>
+  <li data-count="5">String 2</li>
+  <li data-count="6">String 3</li>
+</ul>
+```
+
 | class              | type     | description                                                                  |
 | ------------------ | -------- | ---------------------------------------------------------------------------- |
 | `.list`            | parent   | Base class for stylized lists                                                |
@@ -56,10 +73,10 @@ Example: Tree diagram
 | `.is-horizontal`   | modifier | Makes a list left-to-right instead of top-to-bottom, with separation symbols |
 | `.is-index`        | modifier | List variant that will form a contents index                                 |
 | `.is-tree-diagram` | modifier | List variant that renders parent-child relations as individual nodes         |
+| `.is-strings-list` | modfier  | List variant optimized for using with lists of strings                       |
 
 ---
 _file: `web/cuckoo/web/clientsrc/sass/_list.sass`_
-
 ---
 
 ### More docs

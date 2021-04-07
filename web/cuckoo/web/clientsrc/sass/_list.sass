@@ -53,7 +53,6 @@
           border-width: 10.4px 6px 0 6px
           border-color: $border transparent transparent transparent
 
-
   // horizontal list modifier
   &.is-horizontal
     list-style: none
@@ -176,3 +175,26 @@
     & > li > code:before,
     & > li > span:before
       outline: none
+
+  // list format optimized for displaying strings
+  // - counts using css counter by default
+  // - when <li> has a data-count attribute, that will be used for listing instead.
+  &.is-strings-list
+    @extend .list, .is-reset
+    margin-left: 0
+    margin-right: 0
+    counter-reset: str-list-counter
+    li
+      counter-increment: str-list-counter
+      padding: $gap/2 0
+      &.is-odd
+        background: rgba(0,0,0,.05)
+      &:before
+        opacity: .5
+        content: counter(str-list-counter)
+        display: inline-block
+        text-align: right
+        width: $gap * 2
+        margin-right: $gap
+      &[data-count]:before
+        content: attr(data-count)
