@@ -416,7 +416,7 @@ function handlePasswordHide(input) {
 
 /**
  * This enables interactions on tag lists such as; 'type-to-tag'
- * @param * @param {HTMLElement} tagList - the password field to toggle
+ * @param {HTMLElement} tagList - the password field to toggle
  * @return {null}
  */
 function handleTagInput(tagList) {
@@ -593,18 +593,40 @@ function handleClickToCopy(elem) {
 
 }
 
-/*
+/**
  * A simple API for filtering through a list of data by typing a string
+ * @param {HTMLElement} searchBar - the text field to bind the search event to
+ * @example
+ *    <input type="search" data-enhance="#my-list-of-strings" />
+ *    <ul id="my-list-of-strings">
+ *      <li data-search-value="foo">Foo</li>
+ *      <li data-search-value="bar">Bar</li>
+ *      <li data-search-value="baz">Baz</li>
+ *    </ul>
+ * @note The data-enhance attribute in the search input field has to point to
+ *       an element on the page with that referenced id. The elements to filter
+ *       within that context has to have an attribute 'data-search-value' that
+ *       contains the searching context to match against.
  */
 function handleInlineSearch(searchBar) {
   const searchElement = document.querySelector(searchBar.dataset.enhance);
   if(!searchElement) return;
-  let hidden, shown, value, attributes = [...searchElement.querySelectorAll('[data-search-value]')];
 
-  searchBar.addEventListener('keyup', ev => {
+  let hidden = [],
+      shown = [],
+      value = "",
+      attributes = [...searchElement.querySelectorAll('[data-search-value]')],
+      status     = [...document.querySelectorAll('[data-search-status="'+searchElement.id+'"]')];
+
+  function update() {
+    status.forEach(stat => stat.textContent = shown.length);
+    searchElement.classList.toggle('has-no-results', !shown.length);
+  }
+
+  function search(ev) {
+    value = ev.target.value;
     hidden = [];
     shown = [];
-    value = searchBar.value;
 
     if(value.length) {
       attributes.forEach(el => {
@@ -624,7 +646,12 @@ function handleInlineSearch(searchBar) {
       el.removeAttribute('hidden');
     });
 
-  });
+    if(status.length)
+      update();
+  }
+
+  searchBar.addEventListener('keyup', search);
+  searchBar.dispatchEvent(new KeyboardEvent('keyup'));
 }
 
 /**

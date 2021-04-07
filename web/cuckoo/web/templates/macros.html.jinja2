@@ -347,3 +347,50 @@
     </tbody>
   </table>
 {% endmacro %}
+
+{#
+
+  String search component
+
+    id        String     Reference name of the string  collection
+    strings   Array      String collection to render as a list (and/or datalist)
+    datalist  Boolean    Toggles the optional use of HTML <datalist> on or off
+
+#}
+{% macro ui_strings(id="strings", strings=[], datalist=True) %}
+  <div class="box has-background-white no-padding-x no-padding-bottom has-shadow">
+    <div class="columns is-divided is-vcenter">
+      <div class="column is-auto">
+        <h4 class="no-margin has-text-weight-normal"><span data-search-status="{{ id }}"></span>/<span class="has-half-opacity">{{ strings|length }} results</span></h4>
+      </div>
+      <div class="column">
+        <div class="field no-margin">
+          <div class="control has-addon">
+            <span class="addon has-half-opacity">
+              <i class="fas fa-search"></i>
+            </span>
+            <input {% if datalist %}list="datalist-{{id}}"{% endif %} type="search" class="input" placeholder="Type to filter by string occurence" data-enhance="#{{ id }}" />
+            {% if datalist %}
+              <datalist id="datalist-{{id}}">
+                {% for str in strings %}
+                  <option value="{{str}}" />
+                {% endfor %}
+              </datalist>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="list is-strings-list" id="{{ id }}">
+      {% for str in strings %}
+        <li
+          {% if loop.index % 2 != 0 %}class="is-odd"{% endif %}
+          data-count="{{loop.index}}"
+          data-search-value="{{ str }}">
+          {{ str }}
+        </li>
+      {% endfor %}
+      <li class="has-padding" role="log">No results</li>
+    </ol>
+  </div>
+{% endmacro %}
