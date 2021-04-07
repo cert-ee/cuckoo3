@@ -186,10 +186,11 @@
     counter-reset: str-list-counter
     li
       counter-increment: str-list-counter
-      padding: $gap/2 0
-      &.is-odd
+      &:not([class^="has-padding"])
+        padding: $gap/2 0
+      &:not([role="log"]).is-odd
         background: rgba(0,0,0,.05)
-      &:before
+      &:not([role="log"]):before
         opacity: .5
         content: counter(str-list-counter)
         display: inline-block
@@ -198,3 +199,9 @@
         margin-right: $gap
       &[data-count]:before
         content: attr(data-count)
+
+    // use these for log messages on when all elements are hidden through JS
+    li[role="log"]
+      display: none
+    &.has-no-results li[role="log"]
+      display: list-item

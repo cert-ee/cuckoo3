@@ -1258,12 +1258,14 @@ a.button, .control.is-file a.file-trigger {
 }
 .list.is-strings-list li, .is-strings-list.list li, .is-strings-list.list li {
   counter-increment: str-list-counter;
+}
+.list.is-strings-list li:not([class^=has-padding]), .is-strings-list.list li:not([class^=has-padding]), .is-strings-list.list li:not([class^=has-padding]) {
   padding: 0.375rem 0;
 }
-.list.is-strings-list li.is-odd, .is-strings-list.list li.is-odd, .is-strings-list.list li.is-odd {
+.list.is-strings-list li:not([role=log]).is-odd, .is-strings-list.list li:not([role=log]).is-odd, .is-strings-list.list li:not([role=log]).is-odd {
   background: rgba(0, 0, 0, 0.05);
 }
-.list.is-strings-list li:before, .is-strings-list.list li:before, .is-strings-list.list li:before {
+.list.is-strings-list li:not([role=log]):before, .is-strings-list.list li:not([role=log]):before, .is-strings-list.list li:not([role=log]):before {
   opacity: 0.5;
   content: counter(str-list-counter);
   display: inline-block;
@@ -1273,6 +1275,12 @@ a.button, .control.is-file a.file-trigger {
 }
 .list.is-strings-list li[data-count]:before, .is-strings-list.list li[data-count]:before, .is-strings-list.list li[data-count]:before {
   content: attr(data-count);
+}
+.list.is-strings-list li[role=log], .is-strings-list.list li[role=log], .is-strings-list.list li[role=log] {
+  display: none;
+}
+.list.is-strings-list.has-no-results li[role=log], .is-strings-list.has-no-results.list li[role=log], .is-strings-list.has-no-results.list li[role=log] {
+  display: list-item;
 }
 
 ul.process-tree, ul.process-tree ul {

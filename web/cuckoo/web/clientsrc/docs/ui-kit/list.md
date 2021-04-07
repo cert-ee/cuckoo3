@@ -63,6 +63,12 @@ Or take control of the item counter;
   <li data-count="5">String 2</li>
   <li data-count="6">String 3</li>
 </ul>
+
+Display list item on an empty state with a message (role="log" is required)
+
+<ul class="list is-strings-list has-no-results">
+  <li role="log">No results</li>
+</ul>
 ```
 
 | class              | type     | description                                                                  |
