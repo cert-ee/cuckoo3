@@ -73,6 +73,9 @@ Example: Removing vertical padding on a box using no-padding helpers:
 | `.no-line-break`          | modifier | Disables line-breaking on content                                                  |
 | `.has-line-break`         | modifier | Enforces line breaking on content                                                  |
 | `.is-sticky`              | modifier | enables position: sticky on an element, making it stick when scrolled out of view  |
+| `.no-overflow`            | modifier | applies `overflow: hidden` to target container                                     |
+| `.no-overflow-x`          | modifier | applies `overflow-x: hidden` to target container                                   |
+| `.no-overflow-y`          | modifier | applies `overflow-y: hidden` to target container                                   |
 
 ---
 _file: `web/cuckoo/web/clientsrc/sass/_helpers.sass`_

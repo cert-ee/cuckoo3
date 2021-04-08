@@ -228,7 +228,7 @@ function toggleVisibility(element, force=null, event) {
   else
     element.toggleAttribute('hidden');
 
-  // approach 1: if the dispatcher sent an event, take the target of the event
+  // if the dispatcher sent an event, take the target of the event
   // to indicate said toggleable visibility for appropriate style changes.
   if(event) {
     if(element.getAttribute('hidden') === null) {

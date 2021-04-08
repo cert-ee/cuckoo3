@@ -94,6 +94,8 @@ p {
   letter-spacing: 0.05em;
   white-space: pre-wrap;
   max-width: 100%;
+  max-height: 40rem;
+  overflow-y: auto;
 }
 .code.is-dark, .is-dark.code-block {
   background-color: #0F485A;
@@ -850,8 +852,8 @@ a.button, .control.is-file a.file-trigger {
   text-align: center;
 }
 .table.has-striped-rows tr.separator-bar td {
-  background: linear(white, #CCCCCC, 50%);
-  padding: 0;
+  background-image: linear-gradient(white, #CCCCCC);
+  padding: 0.375rem 0.75rem;
   box-shadow: inset 0 0.1rem 0 rgba(255, 255, 255, 0.5);
   border-top: 0.0625rem solid #CCCCCC;
   border-bottom: 0.0625rem solid #CCCCCC;
@@ -2091,6 +2093,16 @@ button[disabled] {
 .is-sticky {
   position: sticky;
   top: 0;
+}
+
+.no-overflow {
+  overflow: hidden;
+}
+.no-overflow-x {
+  overflow-x: hidden;
+}
+.no-overflow-y {
+  overflow-y: hidden;
 }
 
 /*# sourceMappingURL=ui.css.map */
