@@ -3,6 +3,8 @@
 {% set active_level = 'settings' %}
 {% set title = "Configure submission" %}
 
+{% from 'macros.html.jinja2' import render_dict, ui_box %}
+
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
 {% block page_script %}
   <script>
@@ -24,6 +26,11 @@
       <div class="columns is-divided">
         {# Sample information #}
         <div class="column">
+          {% if debug_template_data %}
+            {% call ui_box(title="Template data", collapsed=True) %}
+              {{ render_dict(unpacked) }}
+            {% endcall %}
+          {% endif %}
           {% if unpacked.children|length > 0 %}
             <div class="box has-shadow">
               <div class="control is-checkable">

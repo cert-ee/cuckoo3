@@ -49,10 +49,10 @@
   <p class="has-margin-x has-padding-x">Select OS and version, then press enter or click Add. Multiple OS’s can be selected. They will be shown in the list after selection. Additional tags can be applied in the list of added machines.</p>
   <div class="columns is-gapless is-divided has-margin-x has-padding-x">
     <div class="column">
-      <div class="field is-inline no-margin-y">
+      <div class="field is-inline no-margin-y no-radius-right">
         <label class="label">OS</label>
         <div class="control is-select">
-          <select class="input" name="platform" id="platform">
+          <select class="input no-shadow" name="platform" id="platform">
             {% for p in possible_settings.platforms %}
               <option value="{{ p.platform }}" {% if p.default %}selected{% endif %}>{{ p.platform|e }} {% if p.default %}(Default){% endif %}</option>
             {% endfor %}
@@ -61,10 +61,10 @@
       </div>
     </div>
     <div class="column">
-      <div class="field is-inline no-margin-y">
+      <div class="field is-inline no-margin-y no-radius">
         <label class="label">Version</label>
         <div class="control is-select">
-          <select class="input" name="version" id="version">
+          <select class="input no-shadow" name="version" id="version">
             {% for p in possible_settings.platforms %}
               {% for version in p.os_version %}
                 <option data-platform="{{ p.platform }}" value="{{ version }}">{{ version|e }}</option>
