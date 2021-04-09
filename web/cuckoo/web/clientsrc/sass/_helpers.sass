@@ -104,13 +104,16 @@
     @extend .no-border-bottom
 
 .no-radius
-  border-radius: 0
+  border-radius: 0 !important
   &-left
-    border-top-left-radius: 0
-    border-bottom-left-radius: 0
+    border-top-left-radius: 0 !important
+    border-bottom-left-radius: 0 !important
   &-right
-    border-top-right-radius: 0
-    border-bottom-right-radius: 0
+    border-top-right-radius: 0 !important
+    border-bottom-right-radius: 0 !important
+
+.no-shadow
+  box-shadow: none !important
 
 .hidden,
 [hidden]

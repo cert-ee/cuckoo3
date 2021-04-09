@@ -925,6 +925,26 @@ a.button, .control.is-file a.file-trigger {
   border-color: #000000 transparent transparent transparent;
 }
 
+.input:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
+  padding: calc((0.75rem/2) - .025rem);
+  background: #FFFFFF;
+  border: 0.05rem solid #CCCCCC;
+  box-shadow: inset 0 0.1rem 0.062rem rgba(0, 0, 0, 0.1);
+  border-radius: 0.2rem;
+}
+.input:not([type=file]):not([type=checkbox]):not([type=radio]).is-small, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]).is-small {
+  width: 4rem;
+}
+.input:not([type=file]):not([type=checkbox]):not([type=radio]):focus, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]):focus {
+  border: 0.05rem solid #a3a3a3;
+}
+
+.input[type=checkbox], [type=checkbox].field.is-inline,
+.input[type=radio],
+[type=radio].field.is-inline {
+  margin: 0;
+}
+
 .field {
   margin: 0.75rem 0;
 }
@@ -950,9 +970,6 @@ a.button, .control.is-file a.file-trigger {
 }
 .control .label {
   display: inline-block;
-}
-.control .input, .control .field.is-inline {
-  box-shadow: none;
 }
 .control.is-select {
   min-width: 10rem;
@@ -1024,26 +1041,6 @@ a.button, .control.is-file a.file-trigger {
 }
 .label.is-set-title {
   font-size: 1.1em;
-}
-
-.input:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
-  padding: calc((0.75rem/2) - .025rem);
-  background: #FFFFFF;
-  border: 0.05rem solid #CCCCCC;
-  box-shadow: inset 0 0.1rem 0.062rem rgba(0, 0, 0, 0.1);
-  border-radius: 0.2rem;
-}
-.input:not([type=file]):not([type=checkbox]):not([type=radio]).is-small, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]).is-small {
-  width: 4rem;
-}
-.input:not([type=file]):not([type=checkbox]):not([type=radio]):focus, .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]):focus {
-  border: 0.05rem solid #a3a3a3;
-}
-
-.input[type=checkbox], [type=checkbox].field.is-inline,
-.input[type=radio],
-[type=radio].field.is-inline {
-  margin: 0;
 }
 
 .field.is-inline > .field-end, .field.is-inline > .label {
@@ -2036,15 +2033,19 @@ ul.process-tree .duration--inner {
   border-right: 0;
 }
 .no-radius {
-  border-radius: 0;
+  border-radius: 0 !important;
 }
 .no-radius-left {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 .no-radius-right {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.no-shadow {
+  box-shadow: none !important;
 }
 
 .hidden, .control.is-file input[type=file], .list.is-tree li > input[type=checkbox].list-collapse:not(:checked) + label + ul,

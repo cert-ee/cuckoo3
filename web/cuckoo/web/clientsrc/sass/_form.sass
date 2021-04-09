@@ -2,6 +2,23 @@
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
 
+// input control wrapper
+.input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
+  @extend %input-reset
+  padding: calc((#{$gap}/2) - .025rem)
+  background: $white
+  border: .05rem solid $border
+  box-shadow: inset 0 .1rem .062rem rgba(0,0,0,.1)
+  border-radius: $radius
+  &.is-small
+    width: 4rem
+  &:focus
+    border: .05rem solid shade($border, .2)
+
+.input[type="checkbox"],
+.input[type="radio"]
+  margin: 0
+
 // wrapper for a form control and a label
 .field
   margin: $gap 0
@@ -23,8 +40,6 @@
   border-radius: 2px
   .label
     display: inline-block
-  .input
-    box-shadow: none
   // for select boxes, render an arrow
   &.is-select
     min-width: 10rem
@@ -94,23 +109,6 @@
 
   &.is-set-title
     font-size: 1.1em
-
-// input control wrapper
-.input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
-  @extend %input-reset
-  padding: calc((#{$gap}/2) - .025rem)
-  background: $white
-  border: .05rem solid $border
-  box-shadow: inset 0 .1rem .062rem rgba(0,0,0,.1)
-  border-radius: $radius
-  &.is-small
-    width: 4rem
-  &:focus
-    border: .05rem solid shade($border, .2)
-
-.input[type="checkbox"],
-.input[type="radio"]
-  margin: 0
 
 // a special standalone control variety, including a label and a control in one
 // element

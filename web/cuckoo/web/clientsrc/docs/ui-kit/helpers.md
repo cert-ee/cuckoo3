@@ -76,6 +76,7 @@ Example: Removing vertical padding on a box using no-padding helpers:
 | `.no-overflow`            | modifier | applies `overflow: hidden` to target container                                     |
 | `.no-overflow-x`          | modifier | applies `overflow-x: hidden` to target container                                   |
 | `.no-overflow-y`          | modifier | applies `overflow-y: hidden` to target container                                   |
+| `.no-shadow`              | modifier | removes an applied box-shadow property from an element                             | 
 
 ---
 _file: `web/cuckoo/web/clientsrc/sass/_helpers.sass`_
