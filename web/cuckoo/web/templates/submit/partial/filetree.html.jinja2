@@ -4,7 +4,7 @@
   {%- for child in unpacked.children recursive %}
 
     {% set uniq.value = uniq.value + 1 %}
-    {% set has_error = 'error' in child %}
+    {% set has_error = child.error %}
     {% set is_selectable = (has_error or not child.selectable and child.type != 'directory') %}
 
     <li class="{% if child.type in ["container", "directory"] %}is-parent{% endif %}" {% if child.type == 'file' and not child.selectable %}hidden{% endif %}>
