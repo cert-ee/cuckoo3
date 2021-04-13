@@ -1,0 +1,29 @@
+<p class="has-half-opacity">List of DNS queries and responses.</p>
+<details class="details has-no-hover" open>
+  <summary>
+    <h3>DNS Query</h3>
+  </summary>
+  {% for query in report.network.dns.query %}
+    <div class="columns is-justified box has-shadow is-vcenter">
+      <div class="column is-fill has-text-right is-monospace">{{ query.srcip }}:{{ query.srcport }}</div>
+      <div class="column is-auto no-line-break" title="type / name" data-tooltip>
+        <span class="tag is-rounded is-monospace">{{ query.type }} - {{ query.name }}</span>
+      </div>
+      <div class="column is-fill is-monospace">{{ query.dstip }}:{{ query.dstport }}</div>
+    </div>
+  {% endfor %}
+</details>
+<details class="details has-no-hover" open>
+  <summary>
+    <h3>DNS Response</h3>
+  </summary>
+  {% for response in report.network.dns.response %}
+    <div class="columns is-justified box has-shadow is-vcenter">
+      <div class="column is-fill has-text-right is-monospace">{{ response.srcip }}:{{ response.srcport }}</div>
+      <div class="column is-auto no-line-break" title="type / name" data-tooltip>
+        <span class="tag is-rounded is-monospace">{{ response.type }} - {{ response.data }}</span>
+      </div>
+      <div class="column is-fill is-monospace">{{ response.dstip }}:{{ response.dstport }}</div>
+    </div>
+  {% endfor %}
+</details>

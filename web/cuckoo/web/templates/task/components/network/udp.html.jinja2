@@ -1,0 +1,14 @@
+<p class="has-half-opacity">List of UDP communications.</p>
+{% for udp in report.network.udp %}
+  <div class="columns is-justified box has-shadow is-vcenter">
+    <div class="column is-fill has-text-right is-monospace">{{ udp.srcip }}:{{ udp.srcport }}</div>
+    <div class="column is-auto no-line-break" title="size" data-tooltip>
+      <span class="tag is-rounded is-monospace no-padding-x">
+        <span class="icon"><i class="fas fa-chevron-right"></i></span>
+        {{ udp.size }}
+        <span class="icon"><i class="fas fa-chevron-right"></i></span>
+      </span>
+    </div>
+    <div class="column is-fill is-monospace">{{ udp.dstip }}:{{ udp.dstport }}</div>
+  </div>
+{% endfor %}
