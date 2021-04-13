@@ -6,7 +6,7 @@
   set ui_label to replace original key name with a humanized version
 #}
 {% set report_network_pluralizations = {
-  'host': { 'ui_label': 'Host', 'is_active': True },
+  'host': { 'ui_label': 'Host' },
   'domain': { 'ui_label': 'Domain' },
   'tcp': { 'ui_label': 'TCP' },
   'udp': { 'ui_label': 'UDP' },
@@ -19,12 +19,14 @@
   <nav class="tabbar no-margin-bottom" role="tablist">
     {% for key in report.network %}
       {% set plural = report_network_pluralizations[key] | default({}) %}
-      <a role="tab" class="tabbar-link {% if plural.is_active %}is-active{% endif %}" href="#network:{{ key }}">{{ plural.ui_label | default(key) }}</a>
+      {% set is_active = (loop.index == 1) %}
+      <a role="tab" class="tabbar-link {% if loop.index == 1 %}is-active{% endif %}" href="#network:{{ key }}">{{ plural.ui_label | default(key) }}</a>
     {% endfor %}
   </nav>
   {% for key in report.network %}
     {% set plural = report_network_pluralizations[key] | default({}) %}
-    <div role="region" id="network:{{key}}" class="box no-margin-y has-background-light" {% if not plural.is_active %}hidden{% endif %}>
+    {% set is_active = (loop.index == 1) %}
+    <div role="region" id="network:{{key}}" class="box no-margin-y has-background-light" {% if not is_active %}hidden{% endif %}>
       {% include "task/components/network/"+key+".html.jinja2" %}
     </div>
   {% endfor %}

@@ -26,11 +26,9 @@
 
 (function() {
 
-  window.hashRouted  = false;
+  let initialized    = false;
   let _tabs          = [...document.querySelectorAll('[role="tab"]')];
   let _tabpages      = [...document.querySelectorAll('[role="region"]')];
-
-  // _tabs.forEach(tab => tab.addEventListener('click', e => e.preventDefault()));
 
   function parseHash(url) {
     return url.replace('#', '').split(':');
@@ -50,8 +48,15 @@
     };
 
     // clean the current state of the ui
-    _tabs.forEach(tab => tab.classList.remove('is-active'));
-    _tabpages.forEach(page => page.setAttribute('hidden', true));
+    // - when ran first, skip the tabs that already have a .is-active
+    // - but brute-force if there is a hash
+    if(!initialized) {
+      _tabs.filter(t => !(t.classList.contains('is-active'))).forEach(tab => tab.classList.remove('is-active'));
+      _tabpages.filter(p => !p.hasAttribute('hidden')).forEach(page => page.setAttribute('hidden', true));
+    } else {
+      _tabs.forEach(tab => tab.classList.remove('is-active'));
+      _tabpages.forEach(page => page.setAttribute('hidden', true));
+    }
 
     // propagate hashed view state
     let hash = parseHash(url);
@@ -65,6 +70,7 @@
         el.removeAttribute('hidden');
     });
 
+    initialized = true;
     window.hashRouted = true;
 
   }
