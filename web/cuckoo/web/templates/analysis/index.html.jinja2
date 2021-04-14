@@ -9,10 +9,6 @@
   render_dict, render_table
 %}
 
-{% block page_styles %}
-  <link rel="stylesheet" type="text/css" href="{{ static('/css/chart.min.css') }}" />
-{% endblock %}
-
 {% block page_script %}
 
   {#
@@ -32,7 +28,7 @@
     {% endfor %}
   {% endif %}
 
-  <script type="text/javascript" src="{{ static('js/chart.bundle.min.js') }}"></script>
+  <script type="text/javascript" src="{{ static('js/chart.min.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
     window.data = {
