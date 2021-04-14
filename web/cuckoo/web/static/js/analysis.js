@@ -322,6 +322,9 @@ const processes = (function() {
   if(!window.Chart || !ctx || !window.data || !window.data.chart) return;
   const { tags, labels, values } = window.data.chart;
 
+  // console.log(tags, labels, values);
+  // console.log(labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())));
+
   const opacity = .8;
   const type = 'radar';
 
@@ -344,26 +347,28 @@ const processes = (function() {
       data: {
         labels: labels.map(label => label.trim().replace(/^\w/, c => c.toUpperCase())),
         datasets: [{
-          values,
+          data: values,
+          fill: true,
           backgroundColor: ['rgba(249,93,106, '+opacity+')'],
           pointRadius: 0
         }]
       },
       options: {
-        scale: {
-          ticks: {
-            startAtZero: true,
-            min: 0,
-            max: 100,
-            stepSize: 10,
+        plugins: {
+          legend: {
             display: false
           }
         },
-        legend: {
-          display: false
-        },
-        tooltips: {
-          enabled: false
+        scales: {
+          r: {
+            ticks: {
+              startAtZero: true,
+              min: 0,
+              max: 100,
+              stepSize: 10,
+              display: false
+            }
+          }
         },
         animation: {
           duration: 0
@@ -378,9 +383,8 @@ const processes = (function() {
     });
   }
 
-  renderChart();
-
-  let prevWidth;
+  // wait for window ready, then render the chart
+  document.addEventListener('DOMContentLoaded', renderChart);
   window.addEventListener("resize", renderChart);
 
 }());

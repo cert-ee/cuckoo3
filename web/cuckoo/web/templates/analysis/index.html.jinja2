@@ -15,7 +15,7 @@
     not the most pretty solution; prevents a blinking UI component on render and does
     sorting chart data inline, based on a hardcoded list of queries.
   #}
-  {% set chart_labels = ['trojan','ransomware','stealer','spyware','keylogger','dropper','loader','evasion','rat'] %}
+  {% set chart_labels = ['trojan','ransomware','stealer','spyware','keylogger','dropper','loader','miner','rat'] %}
   {% set chart_values = [] %}
 
   {% if analysis.tags and analysis.tags|length %}
