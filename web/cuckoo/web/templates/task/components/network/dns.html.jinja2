@@ -4,12 +4,19 @@
     <h3>DNS Query</h3>
   </summary>
   {% for query in report.network.dns.query %}
-    <div class="columns is-justified box has-shadow is-vcenter">
-      <div class="column is-fill has-text-right is-monospace">{{ query.srcip }}:{{ query.srcport }}</div>
-      <div class="column is-auto no-line-break" title="type / name" data-tooltip>
-        <span class="tag is-rounded is-monospace">{{ query.type }} - {{ query.name }}</span>
+    <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
+      <div class="columns is-gapless is-vcenter has-text-small">
+        <div class="column has-margin-right">
+          <strong>From:</strong> <span class="is-monospace">{{ query.srcip }}:{{ query.srcport }}</span>
+        </div>
+        <div class="column">
+          <strong>To:</strong> <span class="is-monospace">{{ query.dstip }}:{{ query.dstport }}</span>
+        </div>
       </div>
-      <div class="column is-fill is-monospace">{{ query.dstip }}:{{ query.dstport }}</div>
+      <div class="has-margin-top has-text-small">
+        <p class="no-margin-top has-half-opacity"><strong>Type/name</strong></p>
+        <p class="no-margin is-monospace"><span class="tag">{{ query.type }}</span> {{ query.name }}</span>
+      </div>
     </div>
   {% endfor %}
 </details>
@@ -18,12 +25,19 @@
     <h3>DNS Response</h3>
   </summary>
   {% for response in report.network.dns.response %}
-    <div class="columns is-justified box has-shadow is-vcenter">
-      <div class="column is-fill has-text-right is-monospace">{{ response.srcip }}:{{ response.srcport }}</div>
-      <div class="column is-auto no-line-break" title="type / name" data-tooltip>
-        <span class="tag is-rounded is-monospace">{{ response.type }} - {{ response.data }}</span>
+    <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
+      <div class="columns is-gapless is-vcenter has-text-small">
+        <div class="column has-margin-right">
+          <strong>From:</strong> <span class="is-monospace">{{ response.srcip }}:{{ response.srcport }}</span>
+        </div>
+        <div class="column">
+          <strong>To:</strong> <span class="is-monospace">{{ response.dstip }}:{{ response.dstport }}</span>
+        </div>
       </div>
-      <div class="column is-fill is-monospace">{{ response.dstip }}:{{ response.dstport }}</div>
+      <div class="has-margin-top has-text-small">
+        <p class="no-margin-top has-half-opacity"><strong>Type/name</strong></p>
+        <p class="no-margin is-monospace"><span class="tag">{{ response.type }}</span> {{ response.data }}</span>
+      </div>
     </div>
   {% endfor %}
 </details>

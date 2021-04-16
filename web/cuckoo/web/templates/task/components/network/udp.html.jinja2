@@ -1,14 +1,16 @@
 <p class="has-half-opacity">List of UDP communications.</p>
 {% for udp in report.network.udp %}
-  <div class="columns is-justified box has-shadow is-vcenter">
-    <div class="column is-fill has-text-right is-monospace">{{ udp.srcip }}:{{ udp.srcport }}</div>
-    <div class="column is-auto no-line-break" title="size" data-tooltip>
-      <span class="tag is-rounded is-monospace no-padding-x">
-        <span class="icon"><i class="fas fa-chevron-right"></i></span>
-        {{ udp.size }}
-        <span class="icon"><i class="fas fa-chevron-right"></i></span>
-      </span>
+  <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
+    <div class="columns is-gapless is-vcenter has-text-small">
+      <div class="column has-margin-right">
+        <strong>From:</strong> <span class="is-monospace">{{ udp.srcip }}:{{ udp.srcport }}</span>
+      </div>
+      <div class="column">
+        <strong>To:</strong> <span class="is-monospace">{{ udp.dstip }}:{{ udp.dstport }}</span>
+      </div>
     </div>
-    <div class="column is-fill is-monospace">{{ udp.dstip }}:{{ udp.dstport }}</div>
+    <div class="has-margin-top has-text-small">
+      <p class="no-margin"><strong class="has-half-opacity">Size</strong> <span class="tag">{{ udp.size }} bytes</span></p>
+    </div>
   </div>
 {% endfor %}
