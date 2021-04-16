@@ -22,6 +22,7 @@
       {% set is_active = (loop.index == 1) %}
       <a role="tab" class="tabbar-link {% if loop.index == 1 %}is-active{% endif %}" href="#network:{{ key }}">{{ plural.ui_label | default(key) }}</a>
     {% endfor %}
+    <a class="button is-green tabbar-button has-margin-right" href="#">Download pcap</a>
   </nav>
   {% for key in report.network %}
     {% set plural = report_network_pluralizations[key] | default({}) %}

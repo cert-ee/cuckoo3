@@ -1590,6 +1590,10 @@ ul.process-tree .duration--inner {
   bottom: -0.15rem;
   left: 0;
 }
+.tabbar-button {
+  align-self: center;
+  margin-left: auto;
+}
 .tabbar-label {
   font-size: 0.9em;
   font-weight: 700;

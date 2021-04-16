@@ -28,6 +28,7 @@ Example: markup for tabs
 | ----------------------------- | -------- | ---------------------------------------------------- |
 | `.tabbar`                     | parent   | Container that contains the tabs                     |
 | `.tabbar-link`                | child    | Styles for an inactive tab                           |
+| `.tabbar-button`              | child    | Styles for a button on the right in a tabbar         |
 | `.tabbar-label`               | child    | Styles for a tabbar label (non-link descriptor)      |
 | `.has-background-transparent` | modifier | Gives tabbar transparent background                  |
 | `.tabbar-link.is-active`      | modifier | Gives tab an active appearance                       |
