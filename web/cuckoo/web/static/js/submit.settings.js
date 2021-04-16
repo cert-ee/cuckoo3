@@ -173,6 +173,9 @@
   function finishSubmission() {
 
     const { analysis_id } = window.Application;
+    const selectedFile = document.querySelector('input[name="selected-file"]:checked');
+    if(!selectedFile)
+      return handleError('No file has been selected. Select a file and try again.');
     if(!analysis_id)
       return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
 
