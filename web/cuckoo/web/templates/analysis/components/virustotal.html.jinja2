@@ -1,8 +1,24 @@
 {% call ui_box(title="Antivirus Engines", has_padding=False) %}
-  {{ render_table(
-      data=pre.virustotal.avs,
-      cols=["category","engine_name","engine_version","method","result"],
-      labels=["Category","Name","Version","Method","Result"],
-      has_sticky_header=True
-  )}}
+  <table class="table has-sticky-header has-striped-rows">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Method</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for av in pre.virustotal.avs.values() %}
+        <tr>
+          <td {% if av.category == 'malicious' %}class="has-text-red"{% endif %}>{{ av.category }}</td>
+          <td>{{ av.engine_name }}</td>
+          <td>{{ av.engine_version }}</td>
+          <td>{{ av.method }}</td>
+          <td>{{ av.result }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endcall %}
