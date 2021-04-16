@@ -1,19 +1,5 @@
 <p class="has-half-opacity">List of TCP connections.</p>
 {% for tcp in report.network.tcp %}
-  {#
-    <div class="columns is-justified box has-shadow is-vcenter">
-      <div class="column is-fill has-text-right is-monospace">{{ tcp.srcip }}:{{ tcp.srcport }}</div>
-      <div class="column is-auto no-line-break" title="transmitted/received data size" data-tooltip>
-        <span class="tag is-rounded is-monospace">
-          {{ tcp.tx_size }}
-          <span class="icon"><i class="fas fa-chevron-left"></i></span>
-          <span class="icon"><i class="fas fa-chevron-right"></i></span>
-          {{ tcp.rx_size }}
-        </span>
-      </div>
-      <div class="column is-fill is-monospace">{{ tcp.dstip }}:{{ tcp.dstport }}</div>
-    </div>
-  #}
   <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
     <div class="columns is-vcenter has-text-small">
       <div class="column has-margin-right">

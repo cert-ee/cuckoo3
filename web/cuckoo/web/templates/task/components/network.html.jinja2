@@ -16,7 +16,7 @@
 } %}
 
 {% call ui_box(title="Network analysis", collapsed=False, has_padding=False) %}
-  <nav class="tabbar no-margin-bottom" role="tablist">
+  <nav class="tabbar no-margin-bottom is-sticky" role="tablist">
     {% for key in report.network %}
       {% set plural = report_network_pluralizations[key] | default({}) %}
       {% set is_active = (loop.index == 1) %}
