@@ -1,16 +1,32 @@
-<p class="has-half-opacity">List of UDP communications.</p>
-{% for udp in report.network.udp %}
-  <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
-    <div class="columns is-gapless is-vcenter has-text-small">
-      <div class="column has-margin-right">
-        <strong>From:</strong> <span class="is-monospace">{{ udp.srcip }}:{{ udp.srcport }}</span>
-      </div>
-      <div class="column">
-        <strong>To:</strong> <span class="is-monospace">{{ udp.dstip }}:{{ udp.dstport }}</span>
-      </div>
-    </div>
-    <div class="has-margin-top has-text-small">
-      <p class="no-margin"><strong class="has-half-opacity">Size</strong> <span class="tag">{{ udp.size }} bytes</span></p>
+{# search box #}
+<div class="box has-background-light has-border no-radius is-sticky no-margin" style="top: 2.7rem">
+  <div class="field no-margin">
+    <div class="control has-addon">
+      <span class="addon has-half-opacity">
+        <i class="fas fa-search"></i>
+      </span>
+      <input type="search" class="input" placeholder="Type to filter by string occurence" data-enhance="#network-udp-data" />
     </div>
   </div>
-{% endfor %}
+</div>
+
+<p class="has-half-opacity">List of UDP communications.</p>
+
+<div id="network-udp-data">
+  {% for udp in report.network.udp %}
+    {% set search_values = [udp.srcip, udp.srcport, udp.dstip, udp.dstport, udp.size] %}
+    <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border" data-search-value="{{ search_values|join(' ') }}">
+      <div class="columns is-gapless is-vcenter has-text-small">
+        <div class="column has-margin-right">
+          <strong>From:</strong> <span class="is-monospace">{{ udp.srcip }}:{{ udp.srcport }}</span>
+        </div>
+        <div class="column">
+          <strong>To:</strong> <span class="is-monospace">{{ udp.dstip }}:{{ udp.dstport }}</span>
+        </div>
+      </div>
+      <div class="has-margin-top has-text-small">
+        <p class="no-margin"><strong class="has-half-opacity">Size</strong> <span class="tag">{{ udp.size }} bytes</span></p>
+      </div>
+    </div>
+  {% endfor %}
+</div>

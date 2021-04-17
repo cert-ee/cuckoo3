@@ -1,15 +1,31 @@
-<p class="has-half-opacity">List of TCP connections.</p>
-{% for tcp in report.network.tcp %}
-  <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border">
-    <div class="columns is-vcenter has-text-small">
-      <div class="column has-margin-right">
-        <p><strong>From:</strong> <span class="is-monospace">{{ tcp.srcip }}:{{ tcp.srcport }}</span></p>
-        <strong class="has-half-opacity">Transmitted </strong> <span class="tag">{{ tcp.tx_size }} bytes</span>
-      </div>
-      <div class="column">
-        <p><strong>To:</strong> <span class="is-monospace">{{ tcp.dstip }}:{{ tcp.dstport }}</span></p>
-        <strong class="has-half-opacity">Received </strong> <span class="tag">{{ tcp.rx_size }} bytes</span>
-      </div>
+{# search box #}
+<div class="box has-background-light has-border no-radius is-sticky no-margin" style="top: 2.7rem">
+  <div class="field no-margin">
+    <div class="control has-addon">
+      <span class="addon has-half-opacity">
+        <i class="fas fa-search"></i>
+      </span>
+      <input type="search" class="input" placeholder="Type to filter by string occurence" data-enhance="#network-tcp-data" />
     </div>
   </div>
-{% endfor %}
+</div>
+
+<p class="has-half-opacity">List of TCP connections.</p>
+
+<div id="network-tcp-data">
+  {% for tcp in report.network.tcp %}
+    {% set search_values = [tcp.srcip, tcp.srcport, tcp.tx_size, tcp.dstip, tcp.dstport, tcp.rx_size] %}
+    <div class="box {% if loop.first %}is-grouped{% endif %} {% if loop.last %}has-shadow{% endif %} has-border" data-search-value="{{ search_values|join(' ') }}">
+      <div class="columns is-vcenter has-text-small">
+        <div class="column has-margin-right">
+          <p><strong>From:</strong> <span class="is-monospace">{{ tcp.srcip }}:{{ tcp.srcport }}</span></p>
+          <strong class="has-half-opacity">Transmitted </strong> <span class="tag">{{ tcp.tx_size }} bytes</span>
+        </div>
+        <div class="column">
+          <p><strong>To:</strong> <span class="is-monospace">{{ tcp.dstip }}:{{ tcp.dstport }}</span></p>
+          <strong class="has-half-opacity">Received </strong> <span class="tag">{{ tcp.rx_size }} bytes</span>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>

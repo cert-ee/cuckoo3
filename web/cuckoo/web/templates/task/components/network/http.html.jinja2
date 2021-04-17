@@ -1,91 +1,107 @@
+{# search box #}
+<div class="box has-background-light has-border no-radius is-sticky no-margin" style="top: 2.7rem">
+  <div class="field no-margin">
+    <div class="control has-addon">
+      <span class="addon has-half-opacity">
+        <i class="fas fa-search"></i>
+      </span>
+      <input type="search" class="input" placeholder="Type to filter by string occurence" data-enhance="#network-http-data" />
+    </div>
+  </div>
+</div>
+
 <p class="has-half-opacity">List of HTTP requests and responses.</p>
-{% for req in report.network.http %}
-  <div class="box has-background-white has-shadow no-margin-top">
-    <div class="columns has-text-small box has-background-light no-margin">
-      <div class="column">
-        <h4 class="no-margin-top">Source</h4>
-        {{ req.srcip }}:{{ req.srcport }}
-      </div>
-      <div class="column">
-        <h4 class="no-margin-top">Destination</h4>
-        {{ req.dstip }}:{{ req.dstport }}
-      </div>
-      <div class="column">
-        <h4>URL</h4>
-        <div class="columns is-vcenter no-margin-x no-padding-x">
-          <div class="column is-auto no-margin-left"><span class="tag is-white has-text-weight-bold" data-tooltip title="Method">{{ req.request.method }}</span></div>
-          <div class="column is-fill has-line-break"><p class="no-margin">{{ req.request.url }}</p></div>
-          <div class="column is-auto no-margin-right"><span class="tag is-white has-text-weight-bold" data-tooltip title="Status">{{ req.response.status }}</span></div>
+
+<div id="network-http-data">
+  {% for req in report.network.http %}
+    {% set search_values = [req.request.url, req.request.method, req.response.status, req.srcip, req.srcport, req.dstip, req.dstport] %}
+    <div class="box has-background-white has-shadow no-margin-top" data-search-value="{{ search_values|join(' ') }}">
+      <div class="columns has-text-small box has-background-light no-margin">
+        <div class="column">
+          <h4 class="no-margin-top">Source</h4>
+          {{ req.srcip }}:{{ req.srcport }}
+        </div>
+        <div class="column">
+          <h4 class="no-margin-top">Destination</h4>
+          {{ req.dstip }}:{{ req.dstport }}
+        </div>
+        <div class="column">
+          <h4>URL</h4>
+          <div class="columns is-vcenter no-margin-x no-padding-x">
+            <div class="column is-auto no-margin-left"><span class="tag is-white has-text-weight-bold" data-tooltip title="Method">{{ req.request.method }}</span></div>
+            <div class="column is-fill has-line-break"><p class="no-margin">{{ req.request.url }}</p></div>
+            <div class="column is-auto no-margin-right"><span class="tag is-white has-text-weight-bold" data-tooltip title="Status">{{ req.response.status }}</span></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="columns is-divided">
-      <div class="column">
-        <h4 class="has-half-opacity">Request</h4>
-        <table class="table">
-          <tbody>
-            <tr>
-              <td class="has-text-right"><strong>Version</strong></td>
-              <td class="is-break">{{ req.request.version }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right"><strong>method</strong></td>
-              <td class="is-break">{{ req.request.method }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right"><strong>Length</strong></td>
-              <td class="is-break">{{ req.request.length }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right is-vtop"><strong>Headers</strong></td>
-              <td class="no-padding-x">
-                <table class="table is-monospace">
-                  {% for header in req.request.headers %}
-                    <tr>
-                      <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
-                      <td class="no-padding-y">{{ header.value }}</td>
-                    </tr>
-                  {% endfor %}
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="column">
-        <h4 class="has-half-opacity">Response</h4>
-        <table class="table">
-          <tbody>
-            <tr>
-              <td class="has-text-right"><strong>Version</strong></td>
-              <td class="is-break">{{ req.response.version }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right"><strong>Status</strong></td>
-              <td class="is-break">{{ req.response.status }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right"><strong>Length</strong></td>
-              <td>{{ req.response.length }}</td>
-            </tr>
-            <tr>
-              <td class="has-text-right is-vtop"><strong>Headers</strong></td>
-              <td class="no-padding-x">
-                <table class="table is-monospace">
-                  <tbody>
-                    {% for header in req.response.headers %}
+      <div class="columns is-divided">
+        <div class="column">
+          <h4 class="has-half-opacity">Request</h4>
+          <table class="table">
+            <tbody>
+              <tr>
+                <td class="has-text-right"><strong>Version</strong></td>
+                <td class="is-break">{{ req.request.version }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right"><strong>method</strong></td>
+                <td class="is-break">{{ req.request.method }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right"><strong>Length</strong></td>
+                <td class="is-break">{{ req.request.length }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right is-vtop"><strong>Headers</strong></td>
+                <td class="no-padding-x">
+                  <table class="table is-monospace">
+                    {% for header in req.request.headers %}
                       <tr>
                         <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
                         <td class="no-padding-y">{{ header.value }}</td>
                       </tr>
                     {% endfor %}
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="column">
+          <h4 class="has-half-opacity">Response</h4>
+          <table class="table">
+            <tbody>
+              <tr>
+                <td class="has-text-right"><strong>Version</strong></td>
+                <td class="is-break">{{ req.response.version }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right"><strong>Status</strong></td>
+                <td class="is-break">{{ req.response.status }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right"><strong>Length</strong></td>
+                <td>{{ req.response.length }}</td>
+              </tr>
+              <tr>
+                <td class="has-text-right is-vtop"><strong>Headers</strong></td>
+                <td class="no-padding-x">
+                  <table class="table is-monospace">
+                    <tbody>
+                      {% for header in req.response.headers %}
+                        <tr>
+                          <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
+                          <td class="no-padding-y">{{ header.value }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
-{% endfor %}
+  {% endfor %}
+</div>
