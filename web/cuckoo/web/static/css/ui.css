@@ -1946,6 +1946,29 @@ ul.process-tree .duration--inner {
   opacity: 1;
 }
 
+.stand-out {
+  text-align: center;
+  margin-top: 7rem;
+}
+.stand-out.out {
+  display: block;
+}
+.stand-out-logo, .stand-out-payoff, .stand-out-continue {
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+  margin: 1.5rem 0;
+}
+.out > .stand-out-logo, .out > .stand-out-payoff, .out > .stand-out-continue {
+  opacity: 0;
+  transition: none;
+}
+.stand-out-payoff {
+  transition-delay: 0.5s;
+}
+.stand-out-continue {
+  transition-delay: 1s;
+}
+
 .no-padding, .banner {
   padding: 0 !important;
 }
