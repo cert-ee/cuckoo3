@@ -194,20 +194,23 @@ def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
         body["subtype"] = subtype
 
     try:
-        manager.client.index(index="events", id=doc_id, body=body)
+        manager.client.index(
+            index=manager.index_realname(_Indices.EVENTS), id=doc_id, body=body
+        )
     except ElasticsearchException as e:
         raise ElasticSearchError(
             f"Failed to create event entry in Elasticsearch. {e}"
         )
 
-def index_analysis(analysis, target):
+def index_analysis(analysis, target, signatures):
     body = {
         "ts": _make_ts(),
         "analysis_id": analysis.id,
         "category": analysis.category,
         "settings": {
             "timeout": analysis.settings.timeout
-        }
+        },
+        "signatures": [sig.short_description for sig in signatures]
     }
 
     submitted = analysis.submitted
@@ -235,14 +238,45 @@ def index_analysis(analysis, target):
             "sha1": target.sha1,
             "sha256": target.sha256,
             "media_type": target.media_type,
-            "magic": target.filetype
+            "magic": target.filetype,
+            "fileext": Path(target.filename).suffix.strip(".")
         }
         try:
-            manager.client.index(index="analyses", id=analysis.id, body=body)
+            manager.client.index(
+                index=manager.index_realname(_Indices.ANALYSES),
+                id=analysis.id, body=body
+            )
         except ElasticsearchException as e:
             raise ElasticSearchError(
                 f"Failed to create analysis entry in Elasticsearch. {e}"
             )
+
+def index_task(task, score, machine, signatures, tags, families,
+               ttps):
+    body = {
+        "task_id": task.id,
+        "analysis_id": task.analysis_id,
+        "score": score,
+        "machine": {
+            "platform": machine.platform,
+            "os_version": machine.os_version,
+            "tags": list(machine.tags)
+        },
+        "tags": tags,
+        "families": families,
+        "ttps": ttps,
+        "signatures": [sig.short_description for sig in signatures]
+    }
+
+    try:
+        manager.client.index(
+            index=manager.index_realname(_Indices.TASKS), id=task.id, body=body
+        )
+    except ElasticsearchException as e:
+        raise ElasticSearchError(
+            f"Failed to create task entry in Elasticsearch. {e}"
+        )
+
 
 _query_pattern = {
     "analysis.target.md5": re.compile("^[a-f0-9]{32}$", re.IGNORECASE),

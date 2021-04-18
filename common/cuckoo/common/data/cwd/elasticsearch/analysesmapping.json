@@ -8,6 +8,9 @@
       "category": {
         "type": "keyword"
       },
+      "families": {
+        "type": "keyword"
+      },
       "submitted": {
         "properties": {
           "url": {
@@ -61,6 +64,16 @@
           },
           "media_type": {
             "type": "text"
+          },
+          "fileext": {
+            "type": "keyword"
+          }
+        }
+      },
+      "signatures": {
+        "properties": {
+          "name": {
+            "type": "keyword"
           }
         }
       },

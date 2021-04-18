@@ -7,6 +7,9 @@
       "analysis_id": {
         "type": "keyword"
       },
+      "score": {
+        "type": "integer"
+      },
       "machine": {
         "properties": {
           "platform": {
@@ -19,6 +22,22 @@
             "type": "text"
           }
         }
+      },
+      "signatures": {
+        "properties": {
+          "name": {
+            "type": "keyword"
+          },
+        }
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "families": {
+        "type": "keyword"
+      },
+      "ttps": {
+        "type": "keyword"
       }
     }
   }

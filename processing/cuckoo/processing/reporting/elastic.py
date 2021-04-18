@@ -7,7 +7,7 @@ import os.path
 
 from cuckoo.common.config import cfg
 from cuckoo.common.elastic import (
-    index_analysis, index_events, ElasticSearchError
+    index_analysis, index_events, index_task, ElasticSearchError
 )
 from cuckoo.common.startup import init_elasticsearch
 from cuckoo.common.storage import TaskPaths
@@ -27,7 +27,10 @@ class ElasticSearch(Reporter):
 
     def report_pre_analysis(self):
         try:
-            index_analysis(self.ctx.analysis, self.ctx.result.get("target"))
+            index_analysis(
+                self.ctx.analysis, self.ctx.result.get("target"),
+                self.ctx.signature_tracker.signatures
+            )
         except ElasticSearchError as e:
             self.ctx.log.warning("Failed to index analysis.", error=e)
 
@@ -174,3 +177,14 @@ class ElasticSearch(Reporter):
     def report_post_analysis(self):
         self._store_behavioral_events()
         self._store_network_events()
+        try:
+            index_task(
+                task=self.ctx.task, score=self.ctx.signature_tracker.score,
+                machine=self.ctx.machine,
+                signatures=self.ctx.signature_tracker.signatures,
+                tags=self.ctx.tag_tracker.tags,
+                families=self.ctx.family_tracker.families,
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
+            )
+        except ElasticSearchError as e:
+            self.ctx.log.warning("Failed to index analysis.", error=e)
