@@ -122,8 +122,8 @@
     if(matches && matches.length) {
       results.innerHTML = matches.map(match => `
         <tr>
-          <td>${match.analysis_id}</td>
-          <td>${match.task_id}</td>
+          <td><a target="_blank" href="/analysis/${match.analysis_id}">${match.analysis_id}</a></td>
+          <td><a target="_blank" href="/analysis/${match.analysis_id}/task/${match.task_id}">${match.task_id}</a></td>
           ${match.matches.map(m => `
             <td>${m.field}</td>
             <td>${m.matches.join('<br />')}</td>

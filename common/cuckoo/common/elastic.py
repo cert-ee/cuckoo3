@@ -172,7 +172,7 @@ _INDEX_KEYWORDS = {
         "target.sha256"
     ),
     _Indices.TASKS: (
-        "task_id", "analysis_id", "tags", "families", "ttps"
+        "task_id", "analysis_id", "tags", "ttps"
     )
 }
 
@@ -213,7 +213,9 @@ def index_analysis(analysis, target, signatures):
         "settings": {
             "timeout": analysis.settings.timeout
         },
-        "signatures": [sig.short_description for sig in signatures]
+        "signatures": {
+            "name": [sig.short_description for sig in signatures]
+        }
     }
 
     submitted = analysis.submitted
@@ -269,7 +271,9 @@ def index_task(task, score, machine, signatures, tags, families,
         "tags": tags,
         "families": families,
         "ttps": ttps,
-        "signatures": [sig.short_description for sig in signatures]
+        "signatures": {
+            "name": [sig.short_description for sig in signatures]
+        }
     }
 
     try:
