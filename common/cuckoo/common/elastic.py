@@ -257,6 +257,7 @@ def index_analysis(analysis, target, signatures):
 def index_task(task, score, machine, signatures, tags, families,
                ttps):
     body = {
+        "ts": _make_ts(),
         "task_id": task.id,
         "analysis_id": task.analysis_id,
         "score": score,
