@@ -161,7 +161,7 @@ manager = _ESManager()
 _PREFIX_INDEX = {
     "event": _Indices.EVENTS,
     "analysis": _Indices.ANALYSES,
-    # "task": _Indices.TASKS
+    "task": _Indices.TASKS
 }
 
 _INDEX_KEYWORDS = {
@@ -170,6 +170,9 @@ _INDEX_KEYWORDS = {
         "analysis_id", "category", "submitted.md5", "submitted.sha1",
         "submitted.sha256", "target.md5", "target.sha1",
         "target.sha256"
+    ),
+    _Indices.TASKS: (
+        "task_id", "analysis_id", "tags", "families", "ttps"
     )
 }
 
@@ -292,7 +295,8 @@ class _SearchQueryParser:
         self._searches = {}
         self._search_preparators = {
             "events": self._add_event_search,
-            "analyses": self._add_analysis_search
+            "analyses": self._add_analysis_search,
+            "tasks": self._add_task_search
         }
 
         self.parse()
@@ -320,6 +324,22 @@ class _SearchQueryParser:
         raise SearchError(
             f"No further subkey possible after {filter_fields[1]!r}"
         )
+
+    def _add_task_search(self, filter_fields, argsstr):
+        fields_path = ".".join(filter_fields)
+        search = {"path": fields_path, "value": argsstr}
+
+        searches = self._searches.setdefault(_Indices.TASKS, [])
+        # If this fieldpath is a keyword, insert it at the front to ensure
+        # it will be the first query performed for this index.
+        if fields_path.endswith(_INDEX_KEYWORDS[_Indices.TASKS]):
+            searches.insert(0, search)
+            return
+
+        if self._has_wildcard(argsstr):
+            self._add_wildcard_indicator(search)
+
+        searches.append(search)
 
     def _add_analysis_search(self, filter_fields, argsstr):
 
@@ -636,6 +656,8 @@ class _SearchQueryRunner:
                 query = self._make_events_query(searches[0])
             elif index == _Indices.ANALYSES:
                 query = self._make_analyses_query(searches)
+            elif index == _Indices.TASKS:
+                query = self._make_tasks_query(searches)
             else:
                 raise SearchError(f"Unknown index: {index}")
 
@@ -658,6 +680,23 @@ class _SearchQueryRunner:
 
     def _make_querystring(self, query, path, value):
         return query.query("query_string", fields=[path], query=value)
+
+    def _make_tasks_query(self, searches):
+        query = elasticsearch_dsl.Search(
+            using=manager.client,
+            index=manager.index_realname(_Indices.TASKS)
+        )
+        for search in searches:
+            path = search["path"]
+            value = search["value"]
+            if path.endswith(_INDEX_KEYWORDS[_Indices.TASKS]):
+                query = self._make_termsearch(query, path, value)
+            elif "_has_wildcard" in search:
+                query = self._make_querystring(query, path, value)
+            else:
+                query = self._make_matchsearch(query, path, value)
+
+        return query
 
     def _make_analyses_query(self, searches):
         query = elasticsearch_dsl.Search(

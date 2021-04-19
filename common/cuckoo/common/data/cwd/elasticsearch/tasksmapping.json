@@ -1,6 +1,7 @@
 {
   "mappings": {
     "properties": {
+      "ts": {"type": "long"},
       "task_id": {
         "type": "keyword"
       },
@@ -27,7 +28,7 @@
         "properties": {
           "name": {
             "type": "keyword"
-          },
+          }
         }
       },
       "tags": {

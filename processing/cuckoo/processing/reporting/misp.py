@@ -1,6 +1,7 @@
 # Copyright (C) 2020 - 2021 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
+import logging
 
 from cuckoo.common.config import cfg
 from cuckoo.common.misp import MispClient, MispError, NewMispEvent
@@ -11,6 +12,8 @@ from cuckoo.common.safelist import IPMisp, DomainMisp, URLMisp
 from ..abtracts import Reporter
 from ..errors import DisablePluginError
 from ..signatures.signature import Signature
+
+logging.getLogger("pymisp").setLevel(logging.WARNING)
 
 class MISP(Reporter):
 
