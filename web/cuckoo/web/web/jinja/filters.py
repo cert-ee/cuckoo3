@@ -19,7 +19,7 @@ def do_formatisodatetime(value, fmt="%Y-%m-%d %H:%M"):
     try:
         return do_formatdatetime(dateutil.parser.parse(value), fmt)
     except dateutil.parser.ParserError as e:
-        raise ValueError(f"Invalid ISO format datetime '{value}'. {e}")
+        return value
 
 def do_humanstate(value):
     return AnalysisStates.to_human(value)
