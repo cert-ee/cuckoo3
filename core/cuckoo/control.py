@@ -147,8 +147,8 @@ def handle_pre_done(worktracker):
     # Set the final target in analysis.json
     analysis.target = pre.target
 
-    # Update the analysis with the score of pre analysis
-    analyses.set_score(analysis, pre.score)
+    # Update analysis score, tags, and detected families
+    worktracker.analysis.update_from_report(pre)
 
     worktracker.log.debug("Creating tasks for analysis.")
     # It is possible that no tasks are created if the identified machine tags
