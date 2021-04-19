@@ -12,7 +12,7 @@ from cuckoo.common.log import set_logger_level
 
 from ..errors import StaticAnalysisError
 
-set_logger_level("alevba", logging.ERROR)
+set_logger_level("olevba", logging.WARNING)
 
 class OfficeStaticAnalysisError(StaticAnalysisError):
     pass

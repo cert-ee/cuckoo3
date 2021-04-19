@@ -28,6 +28,9 @@ def serialize_disk_json(obj):
     if isinstance(obj, datetime.datetime):
         return {"__isodt__": obj.isoformat()}
 
+    if isinstance(obj, set):
+        return list(obj)
+
     log.warning("Unhandled object type in JSON disk serialization", object=obj)
     return str(obj)
 

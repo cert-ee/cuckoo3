@@ -528,6 +528,14 @@ class Paths:
         return Paths.signatures().joinpath("cuckoo", "pattern", platform or "")
 
     @staticmethod
+    def yara_signatures(kind, filename=None):
+        yara_path = os.path.join(Paths.signatures("cuckoo", "yara", kind))
+        if not filename:
+            return yara_path
+
+        return os.path.join(yara_path, filename)
+
+    @staticmethod
     def safelist(filename):
         return cuckoocwd.root.joinpath("safelist", filename)
 

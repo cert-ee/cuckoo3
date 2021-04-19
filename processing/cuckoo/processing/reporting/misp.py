@@ -13,8 +13,6 @@ from ..abtracts import Reporter
 from ..errors import DisablePluginError
 from ..signatures.signature import Signature
 
-logging.getLogger("pymisp").setLevel(logging.WARNING)
-
 class MISP(Reporter):
 
     @classmethod
