@@ -27,6 +27,25 @@
     }).then(res => res.json());
   }
 
-  const results = await getStatistics();
+  const statistics = await getStatistics();
+  const display = document.querySelector('#statistics-display');
+
+  if(!display)
+    return;
+
+  const chart =  new Chart(display.getContext("2d"), {
+    type: "line",
+    data: {
+      datasets: [{
+        label: 'Analyses/day',
+        data: statistics.analyses.map(a => {
+          return {
+            x: a.ts,
+            y: a.value
+          }
+        })
+      }]
+    }
+  });
 
 }());
