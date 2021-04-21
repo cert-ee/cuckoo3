@@ -64,7 +64,7 @@ class ElasticSearch(Reporter):
         eventype_key_checkfunc = {
             Kinds.FILE: ("srcpath", None),
             Kinds.REGISTRY: ("path", None),
-            Kinds.PROCESS: ("command", None)
+            Kinds.PROCESS: ("commandline", None)
         }
 
         for eventtype, key_checkfunc in eventype_key_checkfunc.items():
