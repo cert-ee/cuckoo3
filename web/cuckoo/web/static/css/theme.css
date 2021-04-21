@@ -5,4 +5,44 @@
   transform: translateY(0.3rem);
 }
 
+@keyframes wiggle {
+  0% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(5deg);
+  }
+}
+.loader.loader-cuckoo {
+  transition: opacity 0.5s linear;
+}
+.loader.loader-cuckoo .loader-icon {
+  transform: translateY(1rem);
+}
+.loader.loader-cuckoo #birb,
+.loader.loader-cuckoo #stick {
+  transition: transform 0.5s ease-in;
+}
+.loader.loader-cuckoo #birb {
+  animation: wiggle 0.5s ease-in-out infinite;
+  animation-direction: alternate-reverse;
+  transform-origin: center center;
+}
+.loader.loader-cuckoo.loader-out {
+  opacity: 0;
+}
+.loader.loader-cuckoo.loader-out #birb {
+  transform: translateY(-10rem);
+}
+.loader.loader-cuckoo.loader-out #stick {
+  transform: translateY(2rem);
+}
+.loader.loader-cuckoo.loader-hidden {
+  display: none;
+  overflow: hidden;
+  width: 0;
+  height: 0;
+  touch-events: none;
+}
+
 /*# sourceMappingURL=theme.css.map */

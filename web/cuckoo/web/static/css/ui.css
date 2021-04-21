@@ -1969,6 +1969,26 @@ ul.process-tree .duration--inner {
   transition-delay: 1s;
 }
 
+.loader {
+  margin: 1.5rem auto;
+  text-align: center;
+  width: 15rem;
+  height: 15rem;
+  background-color: #FFFFFF;
+  border-radius: 7.5rem;
+}
+.loader .loader-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loader .loader-icon img, .loader .loader-icon svg {
+  width: 75%;
+}
+.loader > p {
+  margin-top: 0;
+}
+
 .no-padding, .banner {
   padding: 0 !important;
 }

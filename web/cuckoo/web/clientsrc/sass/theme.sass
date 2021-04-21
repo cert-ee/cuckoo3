@@ -9,3 +9,39 @@
 // bit down to look visually ok.
 .navbar-logo img
   transform: translateY(0.3rem)
+
+// special variation for a special logo
+@keyframes wiggle
+  0%
+    transform: rotate(-5deg)
+  100%
+    transform: rotate(5deg)
+
+// cuckoo loader variation
+.loader.loader-cuckoo
+  transition: opacity .5s linear
+
+  .loader-icon
+    transform: translateY(1rem)
+
+  #birb,
+  #stick
+    transition: transform .5s ease-in
+  #birb
+    animation: wiggle .5s ease-in-out infinite
+    animation-direction: alternate-reverse
+    transform-origin: center center
+
+  &.loader-out
+    opacity: 0
+    #birb
+      transform: translateY(-10rem)
+    #stick
+      transform: translateY(2rem)
+
+  &.loader-hidden
+    display: none
+    overflow: hidden
+    width: 0
+    height: 0
+    touch-events: none
