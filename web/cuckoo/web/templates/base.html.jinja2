@@ -21,8 +21,8 @@
     </div>
     {% include "partial/footer.html.jinja2" %}
     <script>window.csrf_token = "{{ csrf_token }}";</script>
-    <script type="text/javascript" src="{{ static('js/hashrouter.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/ui.js') }}"></script>
+    <script src="{{ static('js/hashrouter.js') }}"></script>
+    <script src="{{ static('js/ui.js') }}"></script>
     {% block page_script %}{% endblock %}
   </body>
 </html>

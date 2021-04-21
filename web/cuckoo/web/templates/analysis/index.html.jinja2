@@ -28,7 +28,7 @@
     {% endfor %}
   {% endif %}
 
-  <script type="text/javascript" src="{{ static('js/chart.min.js') }}"></script>
+  <script src="{{ static('js/chart.min.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
     window.data = {

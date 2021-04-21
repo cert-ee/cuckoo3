@@ -1,0 +1,36 @@
+{% extends "base.html.jinja2" %}
+{% set active_page = "dashboard" %}
+{% set title = "Dashboard" %}
+
+{% block page_script %}
+  <script>
+    (function() {
+      const standOut = document.querySelector('.stand-out');
+      document.addEventListener('DOMContentLoaded', () => standOut.classList.remove('out'));
+    }());
+  </script>
+{% endblock %}
+
+{% block body %}
+  <div class="container is-fixed">
+    <div class="stand-out out">
+      <div class="stand-out-logo">
+        <img src="{{ static('images/cuckoo.svg') }}" title="Cuckoo Sandbox 3.0" width="400" />
+      </div>
+      <div class="stand-out-payoff">
+        <h1 class="has-half-opacity">Welcome to Cuckoo Sandbox. <span class="tag is-monospace">3.0</span></h1>
+      </div>
+      <div class="stand-out-continue">
+        <a href="/analyses" class="button is-white">View analyses</a>
+        <a href="/submit" class="button is-blue">Submit a file</a>
+        <a href="/analyses" class="button is-white">Compare tasks</a>
+        {% if "search" | nav_enabled %}
+          <a href="/search" class="button is-white is-small">Search analyses</a>
+        {% endif %}
+        <div class="has-margin-top">
+          <span class="tag">Educational version</span>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
