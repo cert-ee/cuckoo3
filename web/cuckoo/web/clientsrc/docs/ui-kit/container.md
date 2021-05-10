@@ -12,13 +12,16 @@ Example: Container wrappers
   <div class="container is-portal-view"><!-- max viewport width--></div>
 ```
 
-| class             | type     | description                                                                    |
-| ----------------- | -------- | ------------------------------------------------------------------------------ |
-| `.container`      | parent   | Wrapping class around main content                                             |
-| `.is-fixed`       | modifier | Responsive container box width fixed width breakpoints                         |
-| `.is-smol`        | modifier | Additional modifier to `.is-fixed` that will have less width in the container. |
-| `.is-portal-view` | modifier | Scaling container box that consumes max viewport width                         |
-
+| class               | type     | description                                                                    |
+| ------------------- | -------- | ------------------------------------------------------------------------------ |
+| `.container`        | parent   | Wrapping class around main content                                             |
+| `.is-fixed`         | modifier | Responsive container box width fixed width breakpoints                         |
+| `.is-smol`          | modifier | Additional modifier to `.is-fixed` that will have less width in the container. |
+| `.is-portal-view`   | modifier | Scaling container box that consumes max viewport width                         |
+| `.container-inline` | parent   | Inline containers meant for wrapping components and controls                   |
+| `.is-center`        | modifier | Centerizes container in parent                                                 |
+| `.is-smol`          | modifier | Small container relative to parent                                             |
+| `.is-medium`        | modifier | Medium container relative to parent                                            |
 ---
 _file: `web/cuckoo/web/clientsrc/sass/_container.sass`_
 

@@ -7,42 +7,61 @@
 
   <section class="section">
     <div class="container is-fixed is-smol">
-      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data">
+      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data" id="submit-sample">
         {{ csrf_input }}
         <nav role="tablist" class="tabbar has-padding-x has-margin-bottom">
-          <a role="tab" href="#submit-file" class="tabbar-link is-active">File</a>
-          {# <a role="tab" href="#submit-url" class="tabbar-link">URL</a> #}
+          <a role="tab" href="#submit-file" class="tabbar-link">File</a>
+          <a role="tab" href="#submit-url" class="tabbar-link">URL</a>
         </nav>
         <div role="region" id="submit-file">
           <h4 class="label is-set-title has-margin has-padding clear-box">
             Submit a sample by uploading a file or archive
             <a class="is-link pull-right" href="#" title="Go to documentation" data-tooltip><i class="fas fa-book"></i></a>
           </h4>
-          <hr class="separator" />
-          <div class="box is-big has-background-fade no-margin-bottom has-text-center" id="file-dropzone">
-            <div class="field no-margin-top">
-              <div class="control is-file has-text-center">
-                <label class="file-trigger" for="file">Select file</label>
-                <input class="input" type="file" id="file" name="file" data-enhance required />
+          <div class="box is-big has-background-fade no-margin-bottom has-text-center has-border-y" id="file-dropzone">
+            <div class="container-inline is-medium is-center">
+              <div class="field no-margin-top">
+                <div class="control is-file has-text-center">
+                  <label class="file-trigger" for="file">Select file</label>
+                  <input class="input" type="file" id="file" name="file" data-enhance required />
+                </div>
+                <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
               </div>
-              <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
             </div>
           </div>
-          <hr class="separator no-margin-top" />
-          <div class="columns is-gapless is-between has-margin has-padding-x">
+          <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
             <div class="column">&nbsp;</div>
             <div class="column">
-              <input type="submit" class="button is-blue" />
+              <input type="submit" class="button is-blue no-margin-bottom" value="Configure analysis" />
             </div>
           </div>
         </div>
 
         {# demonstrational extra tab for window state implementation #}
-        <!-- <div role="region" id="submit-url" class="has-padding has-text-center" hidden>
-          <div class="box has-background-green has-shadow">
-            <img src="/static/images/cuckoo-light.svg" width="400" />
+        <div role="region" id="submit-url" hidden>
+          <div class="has-padding">
+            <h4 class="label is-set-title clear-box no-margin-y has-margin-x">
+              Submit a web URL
+              <a class="is-link pull-right" href="#" title="Go to documentation" data-tooltip><i class="fas fa-book"></i></a>
+            </h4>
           </div>
-        </div> -->
+          <div class="box has-background-fade no-radius has-border-y">
+            <div class="container-inline is-medium is-center">
+              <div class="field">
+                <div class="control">
+                  <label class="label" for="url">URL</label>
+                  <input class="input" type="text" id="url" name="url" required />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
+            <div class="column">&nbsp;</div>
+            <div class="column">
+              <input type="submit" class="button is-blue" value="Configure analysis" />
+            </div>
+          </div>
+        </div>
 
       </form>
     </div>

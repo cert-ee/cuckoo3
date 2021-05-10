@@ -410,6 +410,19 @@ p {
   }
 }
 
+.container-inline {
+  position: relative;
+}
+.container-inline.is-center {
+  margin: 0 auto;
+}
+.container-inline.is-smol {
+  max-width: 33%;
+}
+.container-inline.is-medium {
+  max-width: 66%;
+}
+
 .section {
   padding: 0.75rem 0;
 }
