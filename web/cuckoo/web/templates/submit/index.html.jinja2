@@ -2,6 +2,10 @@
 {% set active_page = "submit" %}
 {% set title = "Submit" %}
 
+{% block page_script %}
+<script src="{{ static("js/submit.form.js") }}"></script>
+{% endblock %}
+
 {% block body %}
   {% include "submit/partial/tabbar.html.jinja2" %}
 
@@ -30,7 +34,25 @@
             </div>
           </div>
           <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
-            <div class="column">&nbsp;</div>
+            <div class="column">
+              <div class="columns is-gapless">
+                <div class="column">
+                  <div class="field no-margin-y">
+                    <div class="control is-checkable">
+                      <input type="checkbox" value="yes" id="has-password" name="password" />
+                      <label for="has-password">Password encrypted</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="column has-padding-left" id="password-field" hidden>
+                  <div class="field no-margin-y">
+                    <div class="control">
+                      <input class="input" type="text" id="password" name="password" placeholder="Password" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="column">
               <input type="submit" class="button is-blue no-margin-bottom" value="Configure analysis" />
             </div>
