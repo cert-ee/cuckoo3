@@ -27,25 +27,56 @@
     }).then(res => res.json());
   }
 
+  startLoader();
   const statistics = await getStatistics();
-  const display = document.querySelector('#statistics-display');
+  const view = document.querySelector('#statistics');
 
-  if(!display)
-    return;
+  function renderChart(stats) {
 
-  const chart =  new Chart(display.getContext("2d"), {
-    type: "line",
-    data: {
-      datasets: [{
-        label: 'Analyses/day',
-        data: statistics.analyses.map(a => {
+    let { type, data } = stats;
+    let label = stats.name;
+    let desc = stats.description;
+
+    const container = document.createElement('div');
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    view.appendChild(container);
+    canvas.style.maxHeight = '500px';
+
+    // global chart setup configuration
+    const chartSetup = {
+      type,
+      data: {
+        datasets: []
+      }
+    };
+
+    // create a line chart for chart.type = line
+    if(type === 'line') {
+      chartSetup.data.datasets.push({
+        label,
+        data: data.map(p => {
           return {
-            x: a.ts,
-            y: a.value
+            x: p.label,
+            y: p.value
           }
         })
-      }]
+      });
+      const chart = new Chart(canvas.getContext('2d'), chartSetup);
     }
-  });
+    // create a bar chart for chart.type = bar
+    if(type == 'bar') {
+      chartSetup.data.labels = data.map(p => p.label);
+      chartSetup.data.datasets.push({ label, data: data.map(p => p.value) })
+      const chart = new Chart(canvas.getContext('2d'), chartSetup);
+    }
+
+  }
+
+  setTimeout(() => {
+    stopLoader(() => {
+      if(statistics.length) statistics.forEach(renderChart);
+    });
+  }, 1000);
 
 }());
