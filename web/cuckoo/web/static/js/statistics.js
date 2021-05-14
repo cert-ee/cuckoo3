@@ -1,6 +1,8 @@
 (async function() {
 
-  const loader = document.querySelector('.loader.loader-cuckoo');
+  const container   = document.querySelector('#statistics');
+  const loader      = document.querySelector('.loader.loader-cuckoo');
+  const colorScheme = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600'];
   let lto;
 
   window.startLoader = function startLoader(next) {
@@ -31,30 +33,69 @@
   const statistics = await getStatistics();
   const view = document.querySelector('#statistics');
 
+  /*
+   * renders a selection of dom elements to render a single chart in.
+   * the output can be appended to the target location using appendChild
+   */
+  function chartView(data={}) {
+    let { name, description } = data;
+    return parseDOM(`
+      <div class="column is-fill">
+        <div class="box has-background-white has-shadow">
+          <div class="box has-background-light has-border columns is-between is-vcenter has-margin-x no-margin-top">
+            <div class="column">
+              ${ name ? `<h3 class="no-margin-y">${name}</h3>` : '' }
+              ${ description ? `<p class="no-margin-y">${description}</p>` : '' }
+            </div>
+            <div class="columns"><span class="tag has-background-white">{chart controls}</span></div>
+          </div>
+          <canvas></canvas>
+        </div>
+      </div>
+    `);
+  }
+
+  /*
+   * renders a chart based on the input chart type, and utilizes chartView
+   * to construct the required DOM markup before appending it to the DOM for
+   * display.
+   */
   function renderChart(stats) {
 
-    let { type, data } = stats;
-    let label = stats.name;
-    let desc = stats.description;
+    let { type, data, name, description  } = stats;
 
-    const container = document.createElement('div');
-    const canvas = document.createElement('canvas');
-    container.appendChild(canvas);
-    view.appendChild(container);
-    canvas.style.maxHeight = '500px';
+    let view      = chartView({ name, description });
+    let canvas    = view.querySelector('canvas');
+    let ctx       = canvas.getContext('2d');
 
     // global chart setup configuration
     const chartSetup = {
       type,
       data: {
         datasets: []
+      },
+      options: {
+        color: colorScheme,
+        // responsive: false,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 0
+        },
+        datasets: {
+          bar: { backgroundColor: colorScheme },
+          line: { fill: 'origin' }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
       }
     };
-
     // create a line chart for chart.type = line
     if(type === 'line') {
       chartSetup.data.datasets.push({
-        label,
+        label: name,
         data: data.map(p => {
           return {
             x: p.label,
@@ -62,14 +103,19 @@
           }
         })
       });
-      const chart = new Chart(canvas.getContext('2d'), chartSetup);
+      const chart = new Chart(ctx, chartSetup);
     }
     // create a bar chart for chart.type = bar
     if(type == 'bar') {
       chartSetup.data.labels = data.map(p => p.label);
-      chartSetup.data.datasets.push({ label, data: data.map(p => p.value) })
-      const chart = new Chart(canvas.getContext('2d'), chartSetup);
+      chartSetup.data.datasets.push({
+        label: name,
+        data: data.map(p => p.value)
+      });
+      const chart = new Chart(ctx, chartSetup);
     }
+
+    container.appendChild(view);
 
   }
 

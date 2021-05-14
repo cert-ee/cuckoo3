@@ -45,4 +45,14 @@
   touch-events: none;
 }
 
+#statistics > .column {
+  flex-basis: 30%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+}
+#statistics > .column canvas {
+  max-height: 40vh;
+}
+
 /*# sourceMappingURL=theme.css.map */
