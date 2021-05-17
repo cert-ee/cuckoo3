@@ -2,7 +2,7 @@
 
   const container   = document.querySelector('#statistics');
   const loader      = document.querySelector('.loader.loader-cuckoo');
-  const colorScheme = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600'];
+  const colorScheme = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ffa600'];
   let lto;
 
   window.startLoader = function startLoader(next) {
@@ -40,16 +40,18 @@
   function chartView(data={}) {
     let { name, description } = data;
     return parseDOM(`
-      <div class="column is-fill">
-        <div class="box has-background-white has-shadow">
-          <div class="box has-background-light has-border columns is-between is-vcenter has-margin-x no-margin-top">
+      <div style="overflow: auto">
+        <div class="box has-background-white no-padding no-radius no-margin-y">
+          <div class="box-title no-radius columns is-between is-vcenter is-gapless no-margin-top">
             <div class="column">
-              ${ name ? `<h3 class="no-margin-y">${name}</h3>` : '' }
+              ${ name ? `<h4 class="no-margin-y">${name}</h4>` : '' }
               ${ description ? `<p class="no-margin-y">${description}</p>` : '' }
             </div>
-            <div class="columns"><span class="tag has-background-white">{chart controls}</span></div>
+            <!-- <div class="columns"><span class="tag has-background-white">{chart controls}</span></div> -->
           </div>
-          <canvas></canvas>
+          <div class="has-padding-y">
+            <canvas></canvas>
+          </div>
         </div>
       </div>
     `);

@@ -10,34 +10,30 @@
 {% endblock %}
 
 {% block body %}
-  <div class="container">
-    <!-- <nav class="columns is-divided">
-      <div class="column">
-        <div class="field">
-          <label class="label">X</label>
-          <div class="control is-select">
-            <select class="input" name="x-axis" id="x-axis-value">
-              <option>Time</option>
-            </select>
-          </div>
+  <!-- <nav class="columns is-divided">
+    <div class="column">
+      <div class="field">
+        <label class="label">X</label>
+        <div class="control is-select">
+          <select class="input" name="x-axis" id="x-axis-value">
+            <option>Time</option>
+          </select>
         </div>
       </div>
-      <div class="column">
-        <div class="field">
-          <label class="label">Y</label>
-          <div class="control is-select">
-            <select class="input" name="x-axis" id="x-axis-value">
-              <option>Total analyses</option>
-              <option>Malicious analyses</option>
-              <option>File types</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </nav> -->
-    <div>{{ custom_cuckoo_loader() }}</div>
-    <div class="columns is-vertical">
-      <div id="statistics" class="columns"></div>
     </div>
-  </div>
+    <div class="column">
+      <div class="field">
+        <label class="label">Y</label>
+        <div class="control is-select">
+          <select class="input" name="x-axis" id="x-axis-value">
+            <option>Total analyses</option>
+            <option>Malicious analyses</option>
+            <option>File types</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </nav> -->
+  <div>{{ custom_cuckoo_loader() }}</div>
+  <div class="grid-2x2 has-border-bottom" id="statistics"></div>
 {% endblock %}
