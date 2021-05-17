@@ -22,132 +22,6 @@ class MachineDoesNotExistError(MachineryManagerError):
 
 log = CuckooGlobalLogger(__name__)
 
-# This lock must be acquired when making any changes to the machines tracker
-# or any of its members.
-_machines_lock = threading.RLock()
-
-# A name->instance mapping of all loaded machinery modules
-_machineries = {}
-
-# Is set to True if machine is disabled, its state changes, or is (un)locked.
-# Must be true by default so a dump is created on startup of the MsgHandler.
-_machines_updated = True
-
-def _set_machines_updated():
-    global _machines_updated
-    _machines_updated = True
-
-def _clear_machines_updated():
-    global _machines_updated
-    _machines_updated = False
-
-def load_machineries(machinery_classes, machine_states={}):
-    """Creates instances of each given machinery class, initializes the
-    instances, and loads their machines from their configuration files.
-
-    machinery_classes: a list of imported machinery classes
-    machine_states: (Optional) a name:machine_obj dict returned by
-    read_machines_dump. Used to restore machine states from previous runs
-    to machines that are still used. See cuckoo.common.machines.Machine
-    for information about what states are restored.
-    """
-    for machinery_class in machinery_classes:
-        machine_conf = cfg(machinery_class.name, subpkg="machineries")
-
-        log.debug(
-            "Loading machinery and its machines.",
-            machinery=machinery_class.name
-        )
-        try:
-            machinery_class.verify_dependencies()
-            machinery = machinery_class(machine_conf)
-            machinery.init()
-            machinery.load_machines()
-        except errors.MachineryError as e:
-            raise MachineryManagerError(
-                f"Loading of machinery module {machinery_class.name} "
-                f"failed. {e}"
-            )
-
-        for machine in machinery.list_machines():
-            try:
-                existing_machine = machines.get_by_name(machine.name)
-                raise MachineryManagerError(
-                    f"Machine name {machine.name} of {machinery_class.name} "
-                    f"is not unique. It already exists "
-                    f"in {existing_machine.machinery.name}"
-                )
-            except KeyError:
-                pass
-
-            # Load state information from a machine obj loaded from a
-            # machinestates dump of a previous run.
-            dumped_machine = machine_states.get(machine.name)
-            if dumped_machine:
-                machine.load_stored_states(dumped_machine)
-
-            machines.add_machine(machine)
-            log.debug(
-                "Machinery loaded machine.",
-                machinery=machinery.name, machine=machine.name
-            )
-
-        _machineries[machinery.name] = machinery
-
-    log.info("Loaded analysis machines", amount=machines.count())
-
-def acquire_available(task_id, name="", platform="", os_version="",
-                      tags=set()):
-    """Find and lock a machine for task_id that matches the given name or
-    platform, os_version, and has the given tags."""
-    with _machines_lock:
-        machine = machines.find_available(
-            name, platform, os_version, tags
-        )
-
-        if not machine:
-            return None
-
-        _lock(machine, task_id)
-        return machine
-
-def unlock(machine):
-    """Unlock the given machine to put it back in the pool of available
-    machines"""
-    with _machines_lock:
-        if not machine.locked:
-            raise MachineryManagerError(
-                f"Cannot unlock machine {machine.name}. Machine is not locked."
-            )
-
-        machine.clear_lock()
-    _set_machines_updated()
-
-def _lock(machine, task_id):
-    """Lock the given machine for the given task_id. This makes the machine
-    unavailable for acquiring."""
-    with _machines_lock:
-        if not machine.available:
-            raise MachineryManagerError(
-                f"Machine {machine.name} is unavailable and cannot be locked. "
-                f"{machine.unavailable_reason}"
-            )
-
-        machine.lock(task_id)
-    _set_machines_updated()
-
-def _mark_disabled(machine, reason):
-    """Mark the machine as disabled. Causing it to no longer be available.
-    Should be used if machines reach an unexpected state."""
-    machine.disable(reason)
-    _set_state(machine, machines.States.ERROR)
-    _set_machines_updated()
-
-def _set_state(machine, state):
-    """Set the given machine to the given state"""
-    machine.state = state
-    _set_machines_updated()
-
 # These call the machines underlying machinery implementation of the called
 # method. All of these cause the state to change. This change can take a while.
 # We therefore return the expected state, a maximum waiting time, and a
@@ -249,13 +123,6 @@ def shutdown(machinery):
     """Shutdown all machines of the given machinery module"""
     machinery.shutdown()
 
-def shutdown_all():
-    """Shutdown the machines of all loaded machinery modules"""
-    if _machineries:
-        for name, module in _machineries.items():
-            log.info("Shutting down machinery.", machinery=name)
-            shutdown(module)
-
 class _MachineryMessages:
 
     @staticmethod
@@ -263,8 +130,8 @@ class _MachineryMessages:
         return {"success": True}
 
     @staticmethod
-    def fail():
-        return {"success": False}
+    def fail(reason=""):
+        return {"success": False, "reason": reason}
 
     @staticmethod
     def invalid_msg(reason):
@@ -290,9 +157,10 @@ class MachineryWorker(threading.Thread):
     located in a machinery module's statemapping attribute.
     """
 
-    def __init__(self, work_queue, state_waiters, waiter_lock):
+    def __init__(self, machines, work_queue, state_waiters, waiter_lock):
         super().__init__()
 
+        self._machines = machines
         self._work_queue = work_queue
         self._state_waiters = state_waiters
         self._waiter_lock = waiter_lock
@@ -314,8 +182,8 @@ class MachineryWorker(threading.Thread):
                         "Unhandled machine state. Disabling machine.",
                         machine=work.machine.name, error=e
                     )
-                    work.work_failed()
-                    _mark_disabled(work.machine, str(e))
+                    work.work_failed(reason=str(e))
+                    self._machines.mark_disabled(work.machine, str(e))
 
                     # Remove this work tracker from state waiting work trackers
                     # as we disabled the machine
@@ -328,15 +196,17 @@ class MachineryWorker(threading.Thread):
                         machine=work.machine.name, newstate=work.expected_state
                     )
 
-                    _set_state(work.machine, work.expected_state)
+                    self._machines.set_state(work.machine, work.expected_state)
                     work.work_success()
                 elif state == machines.States.ERROR:
                     log.error(
                         "Machinery returned error state for machine. "
                         "Disabling machine.", machine=work.machine.name
                     )
-                    work.work_failed()
-                    _mark_disabled(work.machine, "Machine has error state")
+                    work.work_failed(reason=str(e))
+                    self._machines.mark_disabled(
+                        work.machine, "Machine has error state"
+                    )
 
                 elif not work.timeout_reached():
                     # Timeout not reached. Continue with other state waiters.
@@ -353,8 +223,8 @@ class MachineryWorker(threading.Thread):
                             actual_state=state
                         )
 
-                        work.work_failed()
-                        _mark_disabled(
+                        work.work_failed(reason=str(e))
+                        self._machines.mark_disabled(
                             work.machine,
                             f"Timeout reached while waiting for machine to "
                             f"reach state: {work.expected_state}. Actual "
@@ -382,13 +252,15 @@ class MachineryWorker(threading.Thread):
                 else:
                     work.work_success()
             except NotImplementedError:
+                err = "Machinery does not support work type."
                 log.error(
-                    "Machinery does not support work type.",
-                    machine=work.machine.name,
+                    err, machine=work.machine.name,
                     machinery=work.machine.machinery.name,
                     action=work.work_func
                 )
-                work.work_failed()
+
+                err += f" action={work.work_func}"
+                work.work_failed(reason=err)
 
             except errors.MachineStateReachedError:
                 # Machine already has the state the executed work should put
@@ -409,8 +281,8 @@ class MachineryWorker(threading.Thread):
                     machinery=work.machine.machinery.name,
                     error=e
                 )
-                _mark_disabled(work.machine, str(e))
-                work.work_failed()
+                self._machines.mark_disabled(work.machine, str(e))
+                work.work_failed(reason=str(e))
 
             except errors.MachineryUnhandledStateError as e:
                 log.error(
@@ -418,8 +290,8 @@ class MachineryWorker(threading.Thread):
                     "Disabling machine", machine=work.machine.name,
                     machinery=work.machine.machinery.name, error=e
                 )
-                _mark_disabled(work.machine, str(e))
-                work.work_failed()
+                self._machines.mark_disabled(work.machine, str(e))
+                work.work_failed(reason=str(e))
 
             except errors.MachineryError as e:
                 log.error(
@@ -427,18 +299,19 @@ class MachineryWorker(threading.Thread):
                     machine=work.machine.name,
                     machinery=work.machine.machinery.name, error=e
                 )
-                _mark_disabled(work.machine, str(e))
-                work.work_failed()
+                self._machines.mark_disabled(work.machine, str(e))
+                work.work_failed(reason=str(e))
 
             except Exception as e:
+                err = "Unhandled error in machinery module."
                 log.exception(
-                    "Unhandled error in machinery module.",
-                    machine=work.machine.name,
+                    err, machine=work.machine.name,
                     machinery=work.machine.machinery.name,
                     action=work.work_func, error=e
                 )
 
-                work.work_failed()
+                err += f" action={work.work_func}. error={e}"
+                work.work_failed(reason=err)
                 # TODO mark this fatal error somewhere, so that it is clear
                 # this happened.
                 raise
@@ -476,10 +349,10 @@ class WorkTracker:
         and run its work for the machine"""
         self.machine.action_lock.release()
 
-    def work_failed(self):
+    def work_failed(self, reason=""):
         self.unlock_work()
         self.machinerymngr.queue_response(
-            self.readerwriter, _MachineryMessages.fail()
+            self.readerwriter, _MachineryMessages.fail(reason=reason)
         )
 
     def work_success(self):
@@ -606,6 +479,10 @@ class MachineryManager(UnixSocketServer):
     def __init__(self, manager_sock_path):
         super().__init__(manager_sock_path)
 
+        self.machines = machines.MachinesList()
+
+        # A name->instance mapping of all loaded machinery modules
+        self._machineries = {}
         self.workers = []
 
         # These are passed to worker threads
@@ -615,17 +492,84 @@ class MachineryManager(UnixSocketServer):
         self.work_queue = _WorkQueue()
         self.responses = queue.Queue()
 
+    def load_machineries(self, machinery_classes, previous_machinelist):
+        """Creates instances of each given machinery class, initializes the
+        instances, and loads their machines from their configuration files.
+
+        machinery_classes: a list of imported machinery classes
+        previous_machinelist: (Optional) a MachineList returned by
+        read_machines_dump. Used to restore machine states from previous runs
+        to machines that are still used. See cuckoo.common.machines.Machine
+        for information about what states are restored.
+        """
+        for machinery_class in machinery_classes:
+            machine_conf = cfg(machinery_class.name, subpkg="machineries")
+
+            log.debug(
+                "Loading machinery and its machines.",
+                machinery=machinery_class.name
+            )
+            try:
+                machinery_class.verify_dependencies()
+                machinery = machinery_class(machine_conf)
+                machinery.init()
+                machinery.load_machines()
+            except errors.MachineryError as e:
+                raise MachineryManagerError(
+                    f"Loading of machinery module {machinery_class.name} "
+                    f"failed. {e}"
+                )
+
+            for machine in machinery.list_machines():
+                try:
+                    existing = self.machines.get_by_name(machine.name)
+                    raise MachineryManagerError(
+                        f"Machine name {machine.name} of "
+                        f"{machinery_class.name} "
+                        f"is not unique. It already exists "
+                        f"in {existing.machinery.name}"
+                    )
+                except KeyError:
+                    pass
+
+                # Load state information from a machine obj loaded from a
+                # machinestates dump of a previous run.
+                if previous_machinelist:
+                    try:
+                        machine.load_stored_states(
+                            previous_machinelist.get_by_name(machine.name)
+                        )
+                    except KeyError:
+                        pass
+
+                self.machines.add_machine(machine)
+                log.debug(
+                    "Machinery loaded machine.",
+                    machinery=machinery.name, machine=machine.name
+                )
+
+            self._machineries[machinery.name] = machinery
+
+        log.info("Loaded analysis machines", amount=self.machines.count())
+
     def start(self):
 
         for _ in range(self.NUM_MACHINERY_WORKERS):
             worker = MachineryWorker(
-                self.work_queue, self.state_waiters, self.waiter_lock
+                self.machines, self.work_queue, self.state_waiters,
+                self.waiter_lock
             )
             self.workers.append(worker)
             worker.start()
 
         self.create_socket()
         self.start_accepting(select_timeout=1)
+
+    def shutdown_all(self):
+        """Shutdown the machines of all loaded machinery modules"""
+        for name, module in self._machineries.items():
+            log.info("Shutting down machinery.", machinery=name)
+            shutdown(module)
 
     def stop(self):
         if not self.do_run and not self.workers:
@@ -660,11 +604,6 @@ class MachineryManager(UnixSocketServer):
             if close:
                 self.untrack(readerwriter.sock)
 
-        # If any machines were updated, make a json dump to disk.
-        if _machines_updated:
-            machines.dump_machines_info(Paths.machinestates())
-            _clear_machines_updated()
-
     def handle_message(self, sock, msg):
         action = msg.get("action")
         machine_name = msg.get("machine")
@@ -682,7 +621,7 @@ class MachineryManager(UnixSocketServer):
             return
 
         try:
-            machine = machines.get_by_name(machine_name)
+            machine = self.machines.get_by_name(machine_name)
         except KeyError as e:
             # Send error if the machine does not exist.
             self.queue_response(

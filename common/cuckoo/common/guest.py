@@ -303,12 +303,11 @@ class StagerHelper:
     STAGER_BINARY = ""
     MONITOR_BINARY = ""
 
-    def __init__(self, agent, task, analysis, result_ip, result_port, logger):
+    def __init__(self, agent, task, analysis, resultserver, logger):
         self.agent = agent
         self.task = task
         self.analysis = analysis
-        self.result_ip = result_ip
-        self.result_port = result_port
+        self.resultserver = resultserver
 
         self.log = logger
 
@@ -380,7 +379,7 @@ class TmStage(StagerHelper):
     def _build_settings(debug, resultserver, options, target, is_archive):
         return json.dumps({
             "debug": debug,
-            "host": resultserver,
+            "host": f"{resultserver.listen_ip}:{resultserver.listen_port}",
             "launch": [],
             "clock": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "options": options,
@@ -398,7 +397,7 @@ class TmStage(StagerHelper):
 
         options = self.analysis.settings.options
         settings = self._build_settings(
-            debug=True, resultserver=f"{self.result_ip}:{self.result_port}",
+            debug=True, resultserver=self.resultserver,
             options=options, target=target, is_archive=is_archive
         )
 

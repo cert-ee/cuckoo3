@@ -1,0 +1,10 @@
+# A dictionary list of remote Cuckoo instances that are running in node mode.
+# This is used in a distributed Cuckoo setup.
+remote_nodes:
+{% for name, node in remote_nodes.items() %}
+  {{ name }}:
+    # The remote node API url. This is not the Cuckoo API.
+    api_url: {{ node.api_url}}
+    # Remote node API key.
+    api_key: {{ node.api_key }}
+{% endfor %}

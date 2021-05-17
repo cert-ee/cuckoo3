@@ -35,8 +35,7 @@ class StandardTask(TaskFlow):
 
         self.log.debug("Using stager.", stager=stager_cls.name)
         stager = stager_cls(
-            self.agent, self.task, self.analysis, self.result_ip,
-            self.result_port, self.log
+            self.agent, self.task, self.analysis, self.resultserver, self.log
         )
 
         try:

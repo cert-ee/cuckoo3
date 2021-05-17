@@ -11,7 +11,7 @@ from .cfgextr import C2, Key, UnexpectedDataError, ConfigExtractor
 
 class Emotet(ConfigExtractor):
 
-    FAMILY = "Emotet"
+    FAMILY = "emotet"
     YARA = """
     rule Emotet {
         strings:

@@ -141,8 +141,10 @@ def stop_queue_listener():
         return
 
     _queue_listener.stop()
+
     for handler in _queue_listener.handlers:
         handler.close()
+
 
 _KV_KEY = "_cuckoo_kv"
 
@@ -256,6 +258,28 @@ class CuckooWatchedFileHandler(handlers.WatchedFileHandler):
         except Exception:
             self.handleError(record)
 
+
+class _MappedHandler:
+
+    def __init__(self, handler):
+        self.handler = handler
+        self.count = 1
+
+    def closable(self):
+        return self.count < 1
+
+    def increment_users(self):
+        self.count += 1
+
+    def decrement_users(self):
+        self.count -= 1
+
+    def close(self):
+        self.handler.close()
+
+    def __str__(self):
+        return f"<Handler={self.handler}, usercount={self.count}>"
+
 class MultiLogfileHandler(logging.Handler):
 
     def __init__(self, mapkey):
@@ -271,41 +295,46 @@ class MultiLogfileHandler(logging.Handler):
 
     def map_handler(self, key, handler):
         with self._map_lock:
-            if key in self._key_handler_map:
+            existing = self._key_handler_map.get(key)
+            if existing:
                 raise KeyError(
-                    f"Cannot add handler for key {key}. A mapped "
-                    f"handler already exists. "
-                    f"{self._key_handler_map[key]}"
+                    f"Cannot add handler for key: {key}. "
+                    f"A mapped handler already exists. {existing}"
                 )
 
-            self._key_handler_map[key] = handler
+            self._key_handler_map[key] = _MappedHandler(handler)
+
+    def add_handler_user(self, key):
+        with self._map_lock:
+            mapped_handler = self._key_handler_map.get(key)
+            if mapped_handler:
+                mapped_handler.increment_users()
+                return mapped_handler.handler
+
+            return None
 
     def unmap_handler(self, key):
         with self._map_lock:
-            handler = self._key_handler_map.pop(key, None)
-            if handler is None:
+            mapped_handler = self._key_handler_map.get(key)
+            if not mapped_handler:
                 raise KeyError(f"No handler is mapped for key {key}")
 
-            handler.close()
+            mapped_handler.decrement_users()
+            if mapped_handler.closable():
+                self._key_handler_map.pop(key, None)
+                mapped_handler.close()
 
     def handle(self, record):
         map_key_val = record.__dict__.get(_KV_KEY, {}).get(self._mapkey)
         if not map_key_val:
             return
-            # raise KeyError(
-            #     f"Missing mapping key '{self._mapkey}'. Cannot lookup mapped "
-            #     f"receiver for LogRecord: {record}"
-            # )
 
-        handler = self._key_handler_map.get(map_key_val)
-        if not handler:
+        # _MappedHandler instance
+        mapped_handler = self._key_handler_map.get(map_key_val)
+        if not mapped_handler:
             return
-            # raise KeyError(
-            #     f"Cannot emit to unmapped receiver: {map_key_val} for "
-            #     f"LogRecord: {record}"
-            # )
 
-        handler.handle(record)
+        mapped_handler.handler.handle(record)
 
     def close(self):
         super().close()
@@ -354,8 +383,10 @@ class CuckooLogger:
     def log_msg(self, level, msg, extra_kvs):
         self._logger.log(level, msg, extra={_KV_KEY: extra_kvs})
 
-    def log_exception(self, m, extra_kvs):
-        self._logger.exception(m, extra={_KV_KEY: extra_kvs})
+    def log_exception(self, m, exc_info, extra_kvs):
+        self._logger.exception(
+            m, exc_info=exc_info, extra={_KV_KEY: extra_kvs}
+        )
 
     def debug(self, m, **kwargs):
         self.log_msg(logging.DEBUG, m, kwargs)
@@ -369,13 +400,13 @@ class CuckooLogger:
     def error(self, m, **kwargs):
         self.log_msg(logging.ERROR, m, kwargs)
 
-    def exception(self, m, **kwargs):
-        self.log_exception(m, kwargs)
+    def exception(self, m, exc_info=True, **kwargs):
+        self.log_exception(m, exc_info, kwargs)
 
     def fatal_error(self, m, includetrace=True, **kwargs):
         m = f"Exited on error: {m}"
         if includetrace:
-            self.log_exception(m, kwargs)
+            self.log_exception(m, True, kwargs)
         else:
             self.log_msg(logging.ERROR, m, kwargs)
         sys.exit(1)
@@ -393,8 +424,6 @@ class CuckooGlobalLogger(CuckooLogger):
         super().__init__(logging.getLogger(name))
 
 
-# TODO make thread safe. It currently as it is only used once per process per
-# task/analysis id.
 class _KeyBasedFileLogger(CuckooLogger):
     """Adds a MultiLogfileHandler to the specified logger name if it has not
      yet been added. Adds a file_handler for the given key afterwards.
@@ -445,27 +474,32 @@ class _KeyBasedFileLogger(CuckooLogger):
         raise NotImplementedError
 
     def _add_to_multihandler(self):
-        # Use the module default file log handler and formatter
-        logfile_handler = file_handler(self._filepath, mode="a")
+        with self._multi_handler_lock:
+            logfile_handler = self._multi_handler.add_handler_user(self.key)
+            if logfile_handler:
+                self._logfile_handler = logfile_handler
+            else:
+                # Use the module default file log handler and formatter
+                logfile_handler = file_handler(self._filepath, mode="a")
 
-        # The tasklog will always be debug for now. The debug messages
-        # for tasks will not be written to the cuckoo.log or console if
-        # the global level is higher than debug.
-        logfile_handler.setLevel(logging.DEBUG)
-        logfile_handler.setFormatter(
-            file_formatter(file_log_fmt_str, logtime_fmt_str)
-        )
+                # The tasklog will always be debug for now. The debug messages
+                # for tasks will not be written to the cuckoo.log or console if
+                # the global level is higher than debug.
+                logfile_handler.setLevel(logging.DEBUG)
+                logfile_handler.setFormatter(
+                    file_formatter(file_log_fmt_str, logtime_fmt_str)
+                )
 
-        self._logfile_handler = logfile_handler
-        self._multi_handler.map_handler(self.key, logfile_handler)
+                self._logfile_handler = logfile_handler
+                self._multi_handler.map_handler(self.key, logfile_handler)
 
     def log_msg(self, level, m, extra_kvs):
         extra_kvs[self._MAP_KEY] = self.key
         super().log_msg(level, m, extra_kvs)
 
-    def log_exception(self, m, extra_kvs):
+    def log_exception(self, m, exc_info, extra_kvs):
         extra_kvs[self._MAP_KEY] = self.key
-        super().log_exception(m, extra_kvs)
+        super().log_exception(m, exc_info, extra_kvs)
 
     def close(self):
         if self._logfile_handler:

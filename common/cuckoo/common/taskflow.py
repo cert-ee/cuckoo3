@@ -15,14 +15,12 @@ class TaskFlow:
 
     INTERVAL_CALL_WAIT = 1
 
-    def __init__(self, machine, task, analysis, agent, result_ip,
-                 result_port, tasklog):
+    def __init__(self, machine, task, analysis, agent, resultserver, tasklog):
 
         self.machine = machine
         self.task = task
         self.analysis = analysis
-        self.result_ip = result_ip
-        self.result_port = result_port
+        self.resultserver = resultserver
         self.log = tasklog
 
         self.agent = agent

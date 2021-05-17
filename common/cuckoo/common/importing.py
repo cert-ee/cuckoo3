@@ -13,7 +13,8 @@ from . import analyses
 from .clients import ImportControllerClient, ActionFailedError
 from .storage import (
     AnalysisPaths, TaskPaths, split_analysis_id, create_analysis_folder,
-    Binaries, File, Paths, move_file, delete_file, TASK_PREFIX, taskdir_name
+    Binaries, File, Paths, move_file, delete_file, TASK_PREFIX, taskdir_name,
+    merge_logdata
 )
 from .strictcontainer import Analysis, Task
 
@@ -95,7 +96,7 @@ def _should_ignore(zipinfo):
 
     return False
 
-def _get_unzippables(zipped_data, passwordbytes=None):
+def _get_unzippables(zipped_data, passwordbytes=None, ignore_filesnames=[]):
     zip_file = zipped_data.zip_fp
 
     unzippables = []
@@ -112,21 +113,30 @@ def _get_unzippables(zipped_data, passwordbytes=None):
         if _should_ignore(file):
             continue
 
+        if file.filename in ignore_filesnames:
+            continue
+
         unzippables.append(file.filename)
 
     return unzippables
 
-def _unzip_zipped_data(zipped_data, unzip_path, passwordbytes=None):
+def _unzip_zipped_data(zipped_data, unzip_path, unzippables=[],
+                       passwordbytes=None):
     if not os.path.isdir(unzip_path):
         raise AnalysisImportError(
             f"Unzip path is not a directory: {unzip_path}"
         )
 
-    unzippables = _get_unzippables(zipped_data, passwordbytes=passwordbytes)
+    if not unzippables:
+        unzippables = _get_unzippables(
+            zipped_data, passwordbytes=passwordbytes
+        )
+
     if not unzippables:
         raise AnalysisImportError("Nothing to unzip after filtering")
 
     zipped_data.zip_fp.extractall(path=unzip_path, members=unzippables)
+
 
 class ZippedData:
 
@@ -156,6 +166,17 @@ class ZippedData:
 
     def unzip(self, unpack_path):
         _unzip_zipped_data(self, unpack_path)
+
+    def get_zipinfo(self, filename):
+        try:
+            info = self.zip_fp.getinfo(filename)
+        except KeyError:
+            return None
+
+        if not _should_ignore(info):
+            return info
+
+        return None
 
     def open_zipfile(self):
         with self._lock:
@@ -209,6 +230,18 @@ class ZippedAnalysis(ZippedData):
             self._analysis = _read_analysisjson(self)
 
         return self._analysis
+
+class ZippedTaskResult(ZippedData):
+
+    def unzip(self, unpack_path):
+        # Never overwrite task.json. It should never be edited by a node.
+        # Unpack task.log separately and append its contents to the existing
+        # task.log
+        unzippables = _get_unzippables(
+            self, ignore_filesnames=["task.json", "task.log"]
+        )
+        _unzip_zipped_data(self, unpack_path, unzippables=unzippables)
+
 
 class ZippedNodeWork(ZippedAnalysis):
 
@@ -360,7 +393,7 @@ class TaskZipper(Zipper):
 
         return self._arcroot
 
-    def _get_task_zippables(self):
+    def _get_task_zippables(self, ignore_filenames=[]):
         task_path = TaskPaths.path(self.task_id)
         zippables = []
         for curpath, dirs, files in os.walk(task_path, followlinks=False):
@@ -371,6 +404,9 @@ class TaskZipper(Zipper):
                 )
 
             for name in files:
+                if name in ignore_filenames:
+                    continue
+
                 zippables.append(
                     self._make_zippable_file(os.path.join(curpath, name))
                 )
@@ -379,6 +415,23 @@ class TaskZipper(Zipper):
 
     def _get_all_zippables(self):
         return self._get_task_zippables()
+
+class TaskResultZipper(TaskZipper):
+
+    WRAPPER_CLASS = ZippedTaskResult
+
+    def __init__(self, task_id):
+        super().__init__(None, task_id)
+
+    @property
+    def archive_root(self):
+        if not self._arcroot:
+            self._arcroot = TaskPaths.path(self.task_id)
+
+        return self._arcroot
+
+    def _get_all_zippables(self):
+        return self._get_task_zippables(ignore_filenames=["task.json"])
 
 
 class NodeWorkZipper(TaskZipper):
@@ -580,3 +633,17 @@ def notify():
             f"Failed to notify import controller of new analyses. "
             f"Is import mode running? {e}"
         )
+
+def unpack_noderesult(zip_path, task_id):
+    task_path = TaskPaths.path(task_id)
+    if not task_path.exists():
+        raise AnalysisImportError(
+            f"Cannot unpack, task path {task_path} does not exist."
+        )
+
+    result = ZippedTaskResult(zip_path)
+    logfile = result.get_zipinfo("task.log")
+    if logfile:
+        merge_logdata(TaskPaths.tasklog(task_id), result.zip_fp.read(logfile))
+
+    result.unzip(task_path)

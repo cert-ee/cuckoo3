@@ -8,7 +8,8 @@ import copy
 from .storage import TaskPaths, make_task_id
 from .strictcontainer import Task, Errors
 from .log import CuckooGlobalLogger
-from . import db, machines
+from .machines import find_in_lists
+from . import db
 
 log = CuckooGlobalLogger(__name__)
 
@@ -32,6 +33,7 @@ class NotAllTasksCreatedError(TaskCreationError):
 class HumanStates:
     PENDING = "Pending"
     RUNNING = "Running"
+    RUN_COMPLETED = "Run completed"
     PENDING_POST = "Pending post"
     REPORTED = "Reported"
     FATAL_ERROR = "Fatal error"
@@ -39,6 +41,7 @@ class HumanStates:
 class States:
     PENDING = "pending"
     RUNNING = "running"
+    RUN_COMPLETED = "run_completed"
     PENDING_POST = "pending_post"
     REPORTED = "reported"
     FATAL_ERROR = "fatal_error"
@@ -46,6 +49,7 @@ class States:
     _HUMAN = {
         PENDING: HumanStates.PENDING,
         RUNNING: HumanStates.RUNNING,
+        RUN_COMPLETED: HumanStates.RUN_COMPLETED,
         PENDING_POST: HumanStates.PENDING_POST,
         REPORTED: HumanStates.REPORTED,
         FATAL_ERROR: HumanStates.FATAL_ERROR
@@ -76,11 +80,11 @@ def _make_task_dirs(task_id):
         os.mkdir(dirpath)
 
 
-def _create_task(analysis, task_number, platform="", machine_tags=set(),
-                 os_version="", machine_name=None):
+def _create_task(nodes_tracker, analysis, task_number, platform="",
+                 machine_tags=set(), os_version="", machine_name=None):
 
     if machine_name:
-        if not machines.get_by_name(machine_name):
+        if not find_in_lists(nodes_tracker.machine_lists, name=machine_name):
             raise MissingResourceError(
                 f"Machine {machine_name} does not exist"
             )
@@ -89,7 +93,10 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
         if machine_tags and not isinstance(machine_tags, set):
             machine_tags = set(machine_tags)
 
-        machine = machines.find(platform, os_version, machine_tags)
+        machine = find_in_lists(
+            nodes_tracker.machine_lists, platform=platform,
+            os_version=os_version, tags=machine_tags
+        )
         if not machine:
             raise MissingResourceError(
                 f"No machine with platform: '{platform}'. "
@@ -125,7 +132,7 @@ def _create_task(analysis, task_number, platform="", machine_tags=set(),
 
     return task_values
 
-def create_all(analysis):
+def create_all(analysis, nodes_tracker):
     tasks = []
     tasknum = 1
     resource_errors = []
@@ -134,7 +141,7 @@ def create_all(analysis):
         for machine_name in analysis.settings.machines:
             try:
                 tasks.append(_create_task(
-                    analysis, task_number=tasknum,
+                    nodes_tracker, analysis, task_number=tasknum,
                     machine_name=machine_name
                 ))
                 tasknum += 1
@@ -144,7 +151,7 @@ def create_all(analysis):
         for platform in analysis.settings.platforms:
             try:
                 tasks.append(_create_task(
-                    analysis, task_number=tasknum,
+                    nodes_tracker, analysis, task_number=tasknum,
                     platform=platform["platform"],
                     os_version=platform["os_version"],
                     machine_tags=platform["tags"]
@@ -152,7 +159,6 @@ def create_all(analysis):
                 tasknum += 1
             except MissingResourceError as e:
                 resource_errors.append(str(e))
-
 
     if not tasks:
         raise NoTasksCreatedError(

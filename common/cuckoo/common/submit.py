@@ -5,15 +5,16 @@
 import json
 import os.path
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from threading import RLock
 
 from .analyses import (
     Kinds as AnalysisKinds, AnalysisError, Settings, get_state,
     States as AnalysisStates
 )
 from .clients import StateControllerClient, ActionFailedError
-from .machines import read_machines_dump, set_machines_dump
+from .machines import read_machines_dump, MachinesList, find_in_lists
 from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
 from .strictcontainer import Analysis, SubmittedFile
 
@@ -38,36 +39,6 @@ def _write_analysis(analysis_id, settings, target_strictcontainer):
     # discover all newly created analyses this way after it receives a
     # notify message.
     Path(Paths.untracked(analysis_id)).touch()
-
-_DEFAULT_SETTINGS = {
-    "timeout": 120,
-    "priority": 1,
-    "platforms": [],
-    "machines": [],
-    "manual": False,
-    "dump_memory": False,
-    "options": {},
-    "enforce_timeout": True
-}
-
-def load_machines_dump(default=None):
-    """Loads and sets a machines dump made by the MachineryManager. Must be
-    loaded before machine information can be verified and thus is required
-    before being able to create new submissions."""
-    dump_path = Path(Paths.machinestates())
-    if not dump_path.is_file():
-        if default is not None:
-            set_machines_dump(default)
-            return
-
-        raise SubmissionError(
-            "Machine dump does not exist. No machines have ever been loaded. "
-            "Start Cuckoo to load these from the machine configurations and "
-            "automatically create machine dumps."
-        )
-
-    dump = read_machines_dump(dump_path)
-    set_machines_dump(dump)
 
 def _is_correct_extrpath(extrpath):
     if not isinstance(extrpath, list):
@@ -104,10 +75,53 @@ def find_extrpath_fileid(analysis_id, fileid):
 
     return extrpath
 
-class SettingsMaker:
+class SettingsVerifier:
 
-    def __init__(self):
-        self._settings = deepcopy(_DEFAULT_SETTINGS)
+    @staticmethod
+    def verify_settings(settings, machine_lists):
+        errs = []
+        SettingsVerifier.verify_platforms(settings, machine_lists, errs)
+
+        if errs:
+            raise SubmissionError(
+                "One or more invalid settings were specified: "
+                f"{'. '.join(errs)}"
+            )
+
+    @staticmethod
+    def verify_platforms(settings, machine_lists, error_list):
+        for mlist in machine_lists:
+            if not mlist.loaded:
+                error_list.append(
+                    "Cannot verify any machine settings. No machines are "
+                    "loaded"
+                )
+                return
+
+        for platform in settings.platforms:
+            os_name = platform.get("platform")
+            os_version = platform.get("os_version")
+            tags = platform.get("tags", [])
+
+            machine = find_in_lists(
+                machine_lists, platform=os_name, os_version=os_version,
+                tags=set(tags)
+            )
+            if not machine:
+                err = f"No machine with platform: {os_name}"
+                if os_version:
+                    err += f", os version: {os_version}"
+                if tags:
+                    err += f", tags: {', '.join(tags)}"
+
+                error_list.append(err)
+
+
+class SettingsHelper:
+
+    def __init__(self, default_settings, machine_lists):
+        self._settings = deepcopy(default_settings)
+        self._machine_lists = machine_lists
 
     def set_timeout(self, timeout):
         if timeout is None:
@@ -193,10 +207,105 @@ class SettingsMaker:
 
     def make_settings(self):
         try:
-            return Settings(**self._settings)
+            s = Settings(**self._settings)
+            SettingsVerifier.verify_settings(s, self._machine_lists)
+            return s
         except (ValueError, TypeError, AnalysisError) as e:
             raise SubmissionError(e)
 
+class SettingsMaker:
+
+    RELOAD_MINS = 5
+
+    def __init__(self):
+        self.machines = MachinesList()
+        self.default = {
+            "timeout": 120,
+            "priority": 1,
+            "platforms": [],
+            "machines": [],
+            "manual": False,
+            "dump_memory": False,
+            "options": {},
+            "enforce_timeout": True
+        }
+        self._machine_dump_path = None
+        self._dmp_load_lock = RLock()
+
+        self._last_modify_time = None
+        self._last_reload = None
+
+    def _dump_modify_dt(self):
+        return datetime.fromtimestamp(
+                self._machine_dump_path.stat().st_mtime
+            )
+
+    def _should_reload_dump(self):
+        if not self._last_reload or not self._last_modify_time:
+            return True
+
+        # Check if the dump file changed if the last reload is at least
+        # RELOAD MINS minutes ago
+        if datetime.utcnow() - self._last_reload < timedelta(
+                minutes=self.RELOAD_MINS
+        ):
+            return False
+
+        # Only reload if the dump file was actually modified since last check
+        if self._dump_modify_dt() == self._last_modify_time:
+            return False
+
+        return True
+
+    def _reload_if_needed(self):
+        with self._dmp_load_lock:
+            if not self._should_reload_dump():
+                return
+
+            self.reload_machines_dump()
+
+    def set_machinesdump_path(self, dump_path):
+        dump_path = Path(dump_path)
+        if not dump_path.is_file():
+            raise SubmissionError(
+                "Machine dump does not exist. No machines have ever been "
+                "loaded. Start Cuckoo to load these from the machine "
+                "configurations and automatically create machine dumps."
+            )
+
+        self._machine_dump_path = dump_path
+
+    def reload_machines_dump(self):
+        """Loads and sets a machines dump made by the scheduler. Must be
+        loaded before machine information can be verified and thus is required
+        before being able to create new submissions."""
+        if not self._machine_dump_path:
+            raise SubmissionError("No machine dump path has been configured")
+
+        if not self._machine_dump_path.is_file():
+            raise SubmissionError(
+                "Configured machines dump path does not exist. "
+            )
+
+        with self._dmp_load_lock:
+            self._last_modify_time = self._dump_modify_dt()
+            self._last_reload = datetime.utcnow()
+            self.machines = read_machines_dump(self._machine_dump_path)
+
+    def new_settings(self, machinelists=[]):
+        """The machine list must have been loaded before if no
+        machinelist(s) are provided"""
+        if machinelists:
+            return SettingsHelper(self.default, machinelists)
+        else:
+            self._reload_if_needed()
+            return SettingsHelper(self.default, [self.machines])
+
+
+# Global settings maker that can be initialized once and used by any module
+# that imports it. Currently done like this to not have to load machine dumps
+# and default settings from multiple places/modules within one process.
+settings_maker = SettingsMaker()
 
 def file(filepath, settings, file_name=""):
     try:

@@ -60,7 +60,7 @@ def main(ctx, cwd, debug, quiet):
     from cuckoo.common.shutdown import (
         register_shutdown, call_registered_shutdowns
     )
-    from .startup import start_cuckoo
+    from .startup import start_cuckoo2, start_cuckoo_controller
 
     def _stopmsg():
         print("Stopping Cuckoo..")
@@ -68,7 +68,7 @@ def main(ctx, cwd, debug, quiet):
     register_shutdown(_stopmsg, order=1)
 
     try:
-        start_cuckoo(ctx.loglevel)
+        start_cuckoo_controller(ctx.loglevel)
     except StartupError as e:
         exit_error(f"Failure during Cuckoo startup: {e}")
     finally:
@@ -160,32 +160,32 @@ def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
 def submission(target, platform, timeout, priority):
     """Create a new file analysis"""
     from cuckoo.common import submit
-    from cuckoo.common.storage import  enumerate_files
+    from cuckoo.common.storage import enumerate_files, Paths
 
     try:
-        submit.load_machines_dump()
+        submit.settings_maker.set_machinesdump_path(Paths.machinestates())
     except submit.SubmissionError as e:
         exit_error(f"Submission failed: {e}")
 
     try:
-        s_maker = submit.SettingsMaker()
-        s_maker.set_timeout(timeout)
-        s_maker.set_priority(priority)
-        s_maker.set_manual(False)
+        s_helper = submit.settings_maker.new_settings()
+        s_helper.set_timeout(timeout)
+        s_helper.set_priority(priority)
+        s_helper.set_manual(False)
 
         for p_v in platform:
             # Split platform,version into usable values
             platform_version = p_v.split(",", 1)
 
             if len(platform_version) == 2:
-                s_maker.add_platform(
+                s_helper.add_platform(
                     platform=platform_version[0],
                     os_version=platform_version[1]
                 )
             else:
-                s_maker.add_platform(platform=platform_version[0])
+                s_helper.add_platform(platform=platform_version[0])
 
-        settings = s_maker.make_settings()
+        settings = s_helper.make_settings()
     except submit.SubmissionError as e:
         exit_error(f"Submission failed: {e}")
 

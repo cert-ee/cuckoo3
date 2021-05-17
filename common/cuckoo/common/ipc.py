@@ -10,6 +10,8 @@ import select
 import time
 import stat
 
+import asyncio
+
 from .log import CuckooGlobalLogger
 
 class IPCError(Exception):
@@ -376,3 +378,30 @@ def request_unix_socket(sock_path, message_dict, timeout=0):
             return client.recv_json_message()
     finally:
         client.cleanup()
+
+
+async def a_request_unix_socket(sock_path, message_dict):
+    """Asynchronously send the given message to the given unix socket and wait
+     for a response."""
+    try:
+        reader, writer = await asyncio.open_unix_connection(str(sock_path))
+    except FileNotFoundError:
+        raise IPCError(f"Unix socket {sock_path} does not exist")
+
+    try:
+        writer.write(f"{json.dumps(message_dict)}\n".encode())
+        await writer.drain()
+    except OSError as e:
+        raise IPCError(
+            f"Failed to send message to socket: {sock_path}. Error: {e}"
+        )
+
+    try:
+        data = await reader.readuntil(separator=b"\n")
+        writer.close()
+    except OSError as e:
+        raise IPCError(
+            f"Failed to read message from socket: {sock_path}. Error: {e}"
+        )
+
+    return json.loads(data.decode())

@@ -36,6 +36,37 @@ class IllegalFilePath(CancelResult):
 class ResultServersNotStartedError(Exception):
     pass
 
+class ExistingResultServer:
+
+    def __init__(self, socket_path, listen_ip, listen_port):
+        self.socket_path = socket_path
+        self.listen_ip = listen_ip
+        self.listen_port = listen_port
+
+    def to_dict(self):
+        return {
+            "socket_path": str(self.socket_path),
+            "listen_ip": self.listen_ip,
+            "listen_port": self.listen_port
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            socket_path=d["socket_path"],
+            listen_ip=d["listen_ip"], listen_port=d["listen_port"]
+        )
+
+    def __str__(self):
+        return f"{self.listen_ip}:{self.listen_port}"
+
+    def __eq__(self, other):
+        return (self.listen_ip, self.listen_port) \
+               != (other.listen_ip, other.port)
+
+    def __hash__(self):
+        return hash(self.listen_ip + str(self.listen_port))
+
 class _ResultServerTracker:
     """Simple wrapper around a set to keep track of existing resultservers and
      retrieve information needed to use them."""
@@ -49,7 +80,9 @@ class _ResultServerTracker:
                 f"Socket path does not exist: {socket_path}"
             )
 
-        self._servers.add((socket_path, listen_ip, listen_port))
+        self._servers.add(
+            ExistingResultServer(socket_path, listen_ip, listen_port)
+        )
 
     def get(self):
         """Retrieve a running resultserver. Returns its unix sock path,
@@ -154,41 +187,41 @@ class WriteLimiter:
         self.fp.flush()
 
 class FileUpload(ProtocolHandler):
-     def init(self):
-         self.max_upload_size = 1024 * 1024 * 128 # TODO read from config
+    def init(self):
+        self.max_upload_size = 1024 * 1024 * 128 # TODO read from config
 
-     async def handle(self):
-         dir_fname = await self.reader.readline()
-         path_helper, dirpart, fname = sanitize_dumppath(dir_fname.decode())
+    async def handle(self):
+        dir_fname = await self.reader.readline()
+        path_helper, dirpart, fname = sanitize_dumppath(dir_fname.decode())
 
-         newfile = repr(f"{dirpart}/{fname}")
-         self.task.log.debug("New file upload starting.", newfile=newfile)
+        newfile = repr(f"{dirpart}/{fname}")
+        self.task.log.debug("New file upload starting.", newfile=newfile)
 
-         try:
-             self.fd = open(path_helper(self.task.task_id, fname), "xb")
-         except OSError as e:
-             if e.errno == errno.EEXIST:
-                 raise CancelResult(
-                     f"Task {self.task.task_id} file upload {newfile}"
-                     f"file overwrite attempt stopped."
-                 )
+        try:
+            self.fd = open(path_helper(self.task.task_id, fname), "xb")
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                raise CancelResult(
+                    f"Task {self.task.task_id} file upload {newfile}"
+                    f"file overwrite attempt stopped."
+                )
 
-             raise CancelResult(f"Unhandled error: {e}")
+            raise CancelResult(f"Unhandled error: {e}")
 
-         try:
-             await copy_to_fd(
-                 self.reader, self.fd, self.max_upload_size, readsize=2048
-             )
-         except MaxBytesWritten as e:
-             raise CancelResult(
-                 f"Task {self.task_id} file upload {dirpart}/{fname!r}"
-                 f" cancelled. {e}"
-             )
-         finally:
-             self.task.log.debug(
-                 "File upload finished.", newfile=newfile,
-                 size=bytes_to_human(self.fd.tell())
-             )
+        try:
+            await copy_to_fd(
+                self.reader, self.fd, self.max_upload_size, readsize=2048
+            )
+        except MaxBytesWritten as e:
+            raise CancelResult(
+                f"Task {self.task_id} file upload {dirpart}/{fname!r}"
+                f" cancelled. {e}"
+            )
+        finally:
+            self.task.log.debug(
+                "File upload finished.", newfile=newfile,
+                size=bytes_to_human(self.fd.tell())
+            )
 
 class _MappedTask:
 
@@ -315,7 +348,7 @@ class _AsyncResultServer:
             writer.close()
             task_mapping.asynctasks.discard(task)
 
-        async_task = asyncio.Task(self.handle_protocol(handler))
+        async_task = self.loop.create_task(self.handle_protocol(handler))
         task_mapping.asynctasks.add(async_task)
         async_task.add_done_callback(cleanup)
 

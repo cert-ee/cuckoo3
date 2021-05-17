@@ -125,7 +125,7 @@ def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
     has already been set."""
     for pkgname, subpkg, pkg in find_cuckoo_packages():
-        conf_typeloaders = get_conf_typeloaders(pkg)
+        conf_typeloaders, _ = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
             continue
 
@@ -176,11 +176,14 @@ def load_configurations():
         if subpkg in custom_load:
             continue
 
-        conf_typeloaders = get_conf_typeloaders(pkg)
+        conf_typeloaders, exclude = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
             continue
 
         for confname in conf_typeloaders:
+            if confname in exclude:
+                continue
+
             confpath = Paths.config(file=confname, subpkg=subpkg)
             if not os.path.isfile(confpath):
                 raise config.MissingConfigurationFileError(

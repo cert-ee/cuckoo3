@@ -81,12 +81,16 @@ def get_conf_typeloaders(cuckoo_package):
     try:
         config = import_module(pkgname)
     except ModuleNotFoundError:
-        return None
+        return None, None
 
     if not hasattr(config, "typeloaders"):
-        return None
+        return None, None
 
-    return config.typeloaders
+    exclude_autoload = []
+    if hasattr(config, "exclude_autoload"):
+        exclude_autoload = config.exclude_autoload
+
+    return config.typeloaders, exclude_autoload
 
 def enumerate_plugins(package_path, namespace, class_, attributes={}):
 

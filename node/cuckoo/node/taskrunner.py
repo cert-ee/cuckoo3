@@ -17,11 +17,14 @@ from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.machines import Machine
 from cuckoo.common.shutdown import register_shutdown
 from cuckoo.common.startup import init_global_logging
-from cuckoo.common.storage import AnalysisPaths, TaskPaths, Paths, cuckoocwd
+from cuckoo.common.storage import (
+    AnalysisPaths, TaskPaths, Paths, cuckoocwd, UnixSocketPaths
+)
 from cuckoo.common.strictcontainer import Task, Analysis
 from cuckoo.common.taskflow import TaskFlowError
 
 from .taskflow import StandardTask
+from .resultserver import ExistingResultServer
 
 log = CuckooGlobalLogger(__name__)
 
@@ -29,12 +32,11 @@ class _FlowRunner(Thread):
     """Runs a given taskflow in a thread"""
 
     def __init__(self, taskflow_cls, task_id, analysis_id, machine,
-                 result_ip, result_port):
+                 resultserver):
         super().__init__()
         self.taskflow_cls = taskflow_cls
         self.machine = machine
-        self.result_ip = result_ip
-        self.result_port = result_port
+        self.resultserver = resultserver
 
         self.task = Task.from_file(TaskPaths.taskjson(task_id))
         self.analysis = Analysis.from_file(
@@ -43,7 +45,7 @@ class _FlowRunner(Thread):
         self.agent = Agent(self.machine.ip)
         self.taskflow = taskflow_cls(
             self.machine, self.task, self.analysis,
-            self.agent, result_ip, result_port, TaskLogger(__name__, task_id)
+            self.agent, resultserver, TaskLogger(__name__, task_id)
         )
         self.do_run = True
 
@@ -57,7 +59,7 @@ class _FlowRunner(Thread):
         self.taskflow.log.debug("Sending task done state to state controller")
         try:
             message_unix_socket(
-                Paths.unix_socket("statecontroller.sock"),
+                UnixSocketPaths.node_state_controller(),
                 {
                     "subject": "taskrundone",
                     "analysis_id": self.analysis.id,
@@ -74,7 +76,7 @@ class _FlowRunner(Thread):
         )
         try:
             message_unix_socket(
-                Paths.unix_socket("statecontroller.sock"),
+                UnixSocketPaths.node_state_controller(),
                 {
                     "subject": "taskrunfailed",
                     "analysis_id": self.analysis.id,
@@ -104,8 +106,7 @@ class _FlowRunner(Thread):
     def remove_from_resultserver(self):
         try:
             ResultServerClient.remove(
-                Paths.unix_socket("resultserver.sock"),
-                self.machine.ip, self.task.id
+                self.resultserver.socket_path, self.machine.ip, self.task.id
             )
         except ActionFailedError as e:
             self.taskflow.log.error(
@@ -178,8 +179,7 @@ class _FlowRunner(Thread):
         )
         try:
             ResultServerClient.add(
-                Paths.unix_socket("resultserver.sock"),
-                self.machine.ip, self.task.id
+                self.resultserver.socket_path, self.machine.ip, self.task.id
             )
         except ActionFailedError as e:
             raise TaskFlowError(
@@ -230,8 +230,7 @@ class TaskRunner(UnixSocketServer):
     """Accepts new tasks to run. Looks up a task flow for the matching
     task kind and runs the flow in a _FlowRunner."""
 
-    _MIN_KEYS = {"task_id", "analysis_id", "kind",
-                 "result_ip", "result_port", "machine"}
+    _MIN_KEYS = {"task_id", "analysis_id", "kind", "resultserver", "machine"}
 
     def __init__(self, sockpath, cuckoocwd, loglevel=logging.DEBUG):
         super().__init__(sockpath)
@@ -245,16 +244,17 @@ class TaskRunner(UnixSocketServer):
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))
 
-    def start_new_taskflow(self, task_id, analysis_id, kind,
-                           result_ip, result_port, machine):
+    def start_new_taskflow(self, task_id, analysis_id, kind, resultserver,
+                           machine):
         taskflow_cls = _supported_flowkinds.get(kind)
         if not taskflow_cls:
             raise TaskFlowError(f"Flow kind {kind!r} not supported")
 
         try:
             m = Machine.from_dict(machine)
+            rs = ExistingResultServer.from_dict(resultserver)
             flowrunner = _FlowRunner(
-                taskflow_cls, task_id, analysis_id, m, result_ip, result_port
+                taskflow_cls, task_id, analysis_id, m, rs
             )
         except Exception as e:
             log.exception(

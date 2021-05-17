@@ -479,7 +479,9 @@ def _dump_to_cache(loaded_values, filename, subpkg):
 
 def load_config(filepath, subpkg="", cache_config=True):
     if not os.path.isfile(filepath):
-        raise FileNotFoundError(f"Configuration file {filepath} not found.")
+        raise MissingConfigurationFileError(
+            f"Configuration file {filepath} not found."
+        )
 
     if subpkg:
         pkgname = f"cuckoo.{subpkg}"
@@ -495,7 +497,7 @@ def load_config(filepath, subpkg="", cache_config=True):
         )
 
     from .packages import get_conf_typeloaders
-    loaders = get_conf_typeloaders(cuckoopkg)
+    loaders, _ = get_conf_typeloaders(cuckoopkg)
 
     filename = os.path.basename(filepath)
     loader = loaders.get(filename)

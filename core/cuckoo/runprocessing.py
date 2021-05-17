@@ -25,8 +25,6 @@ from cuckoo.processing.worker import (
     PreProcessingRunner, AnalysisContext, TaskContext, PostProcessingRunner
 )
 
-from . import started
-
 log = CuckooGlobalLogger(__name__)
 
 class PluginWorkerError(Exception):
@@ -271,8 +269,9 @@ class _ProcessingJob:
 
 class ProcessingWorkerHandler(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, cuckooctx):
         super().__init__()
+        self.ctx = cuckooctx
         self.do_run = True
         self.unready_workers = []
         self.connected_workers = {}
@@ -531,14 +530,14 @@ class ProcessingWorkerHandler(threading.Thread):
             )
 
     def controller_workdone(self, worker):
-        started.state_controller.work_done(
+        self.ctx.state_controller.work_done(
             worktype=worker["worktype"],
             analysis_id=worker["job"].analysis_id,
             task_id=worker["job"].task_id
         )
 
     def controller_workfail(self, worker):
-        started.state_controller.work_failed(
+        self.ctx.state_controller.work_failed(
             worktype=worker["worktype"],
             analysis_id=worker["job"].analysis_id,
             task_id=worker["job"].task_id

@@ -4,6 +4,7 @@
 
 from cuckoo.common import config
 
+exclude_autoload = []
 typeloaders = {
     "kvm.yaml": {
         "dsn": config.String(default_val="qemu:///system"),

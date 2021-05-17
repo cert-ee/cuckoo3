@@ -68,11 +68,6 @@ class Kinds:
 class Settings(_Settings):
 
     def check_constraints(self):
-        if not machines.machines_loaded():
-            raise AnalysisError(
-                "Cannot verify any machine settings. No machines are loaded."
-            )
-
         errors = []
         if self.priority < 1:
             errors.append("Priority must be 1 at least")
@@ -81,28 +76,6 @@ class Settings(_Settings):
                 "It is not possible to specify platforms and specific "
                 "machines at the same time"
             )
-        for machine in self.machines:
-            try:
-                machines.get_by_name(machine)
-            except KeyError:
-                errors.append(f"Machine with name '{machine}' does not exist")
-
-        if self.platforms:
-            for platform in self.platforms:
-                os_name = platform.get("platform")
-                os_version = platform.get("os_version")
-                tags = platform.get("tags", [])
-                found = machines.find(
-                    platform=os_name, os_version=os_version, tags=set(tags)
-                )
-                if not found:
-                    err = f"No machine with platform: {os_name}"
-                    if os_version:
-                        err += f", os version: {os_version}"
-                    if tags:
-                        err += f", tags: {', '.join(tags)}"
-
-                    errors.append(err)
 
         if errors:
             raise AnalysisError(

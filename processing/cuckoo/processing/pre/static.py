@@ -1,6 +1,7 @@
 # Copyright (C) 2020 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
+import os.path
 
 from cuckoo.common.storage import Paths, Binaries
 
@@ -32,6 +33,8 @@ class FileInfoGather(Processor):
         target = self.ctx.result.get("target")
 
         file_path, _ = Binaries.path(Paths.binaries(), target.sha256)
+        if os.path.getsize(file_path) < 1:
+            return {}
 
         data = {}
         subkey = None

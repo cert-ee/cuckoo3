@@ -13,8 +13,8 @@ from cuckoo.common.startup import (
     init_global_logging, load_configurations, init_database,
     init_elasticsearch, StartupError
 )
-from cuckoo.common.storage import cuckoocwd
-from cuckoo.common.submit import load_machines_dump
+from cuckoo.common.storage import cuckoocwd, Paths
+from cuckoo.common.submit import settings_maker
 from cuckoo.common.result import retriever
 from cuckoo.common.clients import APIClient
 from cuckoo.common.config import cfg
@@ -48,7 +48,11 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
     shutdown.set_call_original_handlers(call_original=True)
     try:
         init_global_logging(loglevel, logfile, warningsonly=["asyncio"])
-        load_machines_dump(default={})
+
+        machine_dump = Paths.machinestates()
+        if machine_dump.is_file():
+            settings_maker.set_machinesdump_path(machine_dump)
+
         load_configurations()
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):

@@ -4,6 +4,7 @@
 
 from cuckoo.common import config
 
+exclude_autoload = []
 typeloaders = {
     "identification.yaml": {
         "tags": config.Dict(

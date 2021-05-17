@@ -16,10 +16,7 @@ from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, delete_file
 from cuckoo.common.strictcontainer import (
     Analysis, Task, Identification, Pre, Post
 )
-from cuckoo.common.submit import SettingsMaker, SubmissionError
-
-from . import started
-from .scheduler import task_queue
+from cuckoo.common.submit import settings_maker, SubmissionError
 
 log = CuckooGlobalLogger(__name__)
 
@@ -68,7 +65,7 @@ def track_untracked(worktracker):
 
         # Queue the newly tracked analyses for identification.
         for analysis_id in tracked:
-            started.processing_handler.identify(analysis_id)
+            worktracker.ctx.processing_handler.identify(analysis_id)
 
         # Remove all analysis id files from the untracked dir.
         for analysis_id in analysis_ids:
@@ -119,7 +116,9 @@ def handle_identification_done(worktracker):
         )
         analysis.state = newstate
         analyses.write_changes(analysis)
-        started.processing_handler.pre_analysis(worktracker.analysis_id)
+        worktracker.ctx.processing_handler.pre_analysis(
+            worktracker.analysis_id
+        )
 
 
 def handle_pre_done(worktracker):
@@ -159,7 +158,7 @@ def handle_pre_done(worktracker):
     # This is not a bug. This is the intended operation of auto tagging. It
     # should stop analyses before creating tasks that are not useful to run.
     try:
-        tasks, resource_errs = task.create_all(analysis)
+        tasks, resource_errs = task.create_all(analysis, worktracker.ctx.nodes)
     except task.TaskCreationError as e:
         worktracker.log.error(
             "Failed to create tasks for analysis", error=e
@@ -185,21 +184,22 @@ def handle_pre_done(worktracker):
     # the task can start as soon as it is queued.
     analyses.write_changes(analysis)
 
-    task_queue.queue_many(tasks)
-    started.scheduler.newtask()
+    worktracker.ctx.scheduler.queue_many(*tasks)
 
 def handle_manual_done(worktracker, settings_dict):
-    s_maker = SettingsMaker()
+    s_helper = settings_maker.new_settings(
+        machinelists=worktracker.ctx.nodes.machine_lists
+    )
     # We overwrite all settings, but want to retain the 'manual' setting
     # to be able to recognize it was used after this step.
-    s_maker.set_manual(True)
+    s_helper.set_manual(True)
 
     try:
-        s_maker.set_priority(settings_dict.get("priority"))
-        s_maker.set_timeout(settings_dict.get("timeout"))
-        s_maker.set_platforms_list(settings_dict.get("platforms", []))
-        s_maker.set_extraction_path(settings_dict.get("extrpath"))
-        settings = s_maker.make_settings()
+        s_helper.set_priority(settings_dict.get("priority"))
+        s_helper.set_timeout(settings_dict.get("timeout"))
+        s_helper.set_platforms_list(settings_dict.get("platforms", []))
+        s_helper.set_extraction_path(settings_dict.get("extrpath"))
+        settings = s_helper.make_settings()
     except SubmissionError as e:
         worktracker.log.error(
             "Failed to update settings for manual state analysis",
@@ -216,7 +216,7 @@ def handle_manual_done(worktracker, settings_dict):
     # Write the new settings to the analysis file
     analyses.write_changes(worktracker.analysis)
 
-    started.processing_handler.pre_analysis(worktracker.analysis_id)
+    worktracker.ctx.processing_handler.pre_analysis(worktracker.analysis_id)
 
 def handle_post_done(worktracker):
     report_path = TaskPaths.report(worktracker.task_id)
@@ -304,19 +304,17 @@ def set_failed(worktracker, worktype):
         )
 
 def handle_task_done(worktracker):
-    started.scheduler.task_ended(worktracker.task_id)
     task.merge_run_errors(worktracker.task)
 
     worktracker.log.debug("Queueing task for post analysis processing.")
     worktracker.task.state = task.States.PENDING_POST
     task.write_changes(worktracker.task)
-    started.processing_handler.post_analysis(
+    worktracker.ctx.processing_handler.post_analysis(
         worktracker.analysis_id, worktracker.task_id
     )
 
 def set_task_failed(worktracker):
     worktracker.log.info("Setting task to state failed")
-    started.scheduler.task_ended(worktracker.task_id)
     task.merge_run_errors(worktracker.task)
     worktracker.task.state = task.States.FATAL_ERROR
     worktracker.analysis.update_task(
@@ -334,7 +332,8 @@ def set_task_running(worktracker):
 
 class _WorkTracker:
 
-    def __init__(self, func,  **kwargs):
+    def __init__(self, cuckooctx, func,  **kwargs):
+        self.ctx = cuckooctx
         self._func = func
         self.analysis_id = kwargs.pop("analysis_id", None)
         self.task_id = kwargs.pop("task_id", None)
@@ -375,7 +374,6 @@ class _WorkTracker:
                     f"Task {self.task_id} does not exist."
                 )
             self.task = Task.from_file(TaskPaths.taskjson(self.task_id))
-
 
     def run_work(self):
         self._func(self, **self._func_kwargs)
@@ -424,10 +422,8 @@ class StateControllerWorker(threading.Thread):
             finally:
                 worktracker.close()
 
-
     def stop(self):
         self.do_run = False
-
 
 class StateController(UnixSocketServer):
 
@@ -436,8 +432,9 @@ class StateController(UnixSocketServer):
     # as writing scores from tasks to analyses can cause race conditions.
     NUM_STATE_CONTROLLER_WORKERS = 1
     
-    def __init__(self, controller_sock_path):
+    def __init__(self, controller_sock_path, cuckooctx):
         super().__init__(controller_sock_path)
+        self.ctx = cuckooctx
 
         self.workers = []
         self.work_queue = queue.Queue()
@@ -457,7 +454,7 @@ class StateController(UnixSocketServer):
                 f"Kwargs dict must be a dict. Got: {type(kwargsdict)}"
             )
 
-        self.work_queue.put(_WorkTracker(func, **kwargsdict))
+        self.work_queue.put(_WorkTracker(self.ctx, func, **kwargsdict))
 
     def work_done(self, **kwargs):
         self.queue_call(

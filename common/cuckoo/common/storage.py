@@ -277,6 +277,7 @@ def make_task_id(analysis_id, task_number):
 
 
 TASK_PREFIX = "task_"
+TASK_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}_[0-9]{0,3}"
 
 def taskdir_name(task_id):
     return f"{TASK_PREFIX}{split_task_id(task_id)[2]}"
@@ -409,8 +410,19 @@ class TaskPaths:
     def report(task_id):
         return TaskPaths._path(task_id, "report.json")
 
+    @staticmethod
+    def zipped_results(task_id):
+        # Still call the split so any invalid task IDs will not be passed to
+        # the next part. Split acts as a validator.
+        analysis_id = task_to_analysis_id(task_id)
+        return AnalysisPaths.path(analysis_id).joinpath(f"{task_id}.zip")
 
-class Paths(object):
+    @staticmethod
+    def nodework_zip(task_id):
+        split_task_id(task_id)
+        return Paths.exported(f"{task_id}.zip")
+
+class Paths:
 
     @staticmethod
     def unix_socket(sockname):
@@ -421,6 +433,10 @@ class Paths(object):
     @staticmethod
     def dbfile():
         return cuckoocwd.root.joinpath("cuckoo.db")
+
+    @staticmethod
+    def queuedb():
+        return cuckoocwd.root.joinpath(RootDirs.OPERATIONAL, "taskqueue.db")
 
     @staticmethod
     def analysis(analysis):
@@ -501,6 +517,32 @@ class Paths(object):
     @staticmethod
     def safelist_db():
         return Paths.safelist("safelist.db")
+
+class UnixSocketPaths:
+
+    @staticmethod
+    def task_runner():
+        return Paths.unix_socket("taskrunner.sock")
+
+    @staticmethod
+    def node_state_controller():
+        return Paths.unix_socket("nodestatecontroller.sock")
+
+    @staticmethod
+    def state_controller():
+        return Paths.unix_socket("statecontroller.sock")
+
+    @staticmethod
+    def machinery_manager():
+        return Paths.unix_socket("machinerymanager.sock")
+
+    @staticmethod
+    def result_server():
+        return Paths.unix_socket("resultserver.sock")
+
+    @staticmethod
+    def result_retriever():
+        return Paths.unix_socket("resultretriever.sock")
 
 def create_analysis_folder(day, identifier):
     try:
@@ -659,52 +701,31 @@ class Binaries:
 class _DataHasher:
 
     def __init__(self, data=None):
-
-        self._progress = False
-        self._md5 = None
-        self._sha1 = None
-        self._sha256 = None
-        self._sha512 = None
+        self._md5 = hashlib.md5()
+        self._sha1 = hashlib.sha1()
+        self._sha256 = hashlib.sha256()
+        self._sha512 = hashlib.sha512()
 
         if data:
             self.calculate(data)
 
     @property
     def md5(self):
-        if not self._progress:
-            raise ValueError("No hashes are calculated. Cannot return any.")
-
         return self._md5.hexdigest()
 
     @property
     def sha1(self):
-        if not self._progress:
-            raise ValueError("No hashes are calculated. Cannot return any.")
-
         return self._sha1.hexdigest()
 
     @property
     def sha256(self):
-        if not self._progress:
-            raise ValueError("No hashes are calculated. Cannot return any.")
-
         return self._sha256.hexdigest()
 
     @property
     def sha512(self):
-        if not self._progress:
-            raise ValueError("No hashes are calculated. Cannot return any.")
-
         return self._sha512.hexdigest()
 
     def calculate(self, data_chunk):
-        if not self._progress:
-            self._md5 = hashlib.md5()
-            self._sha1 = hashlib.sha1()
-            self._sha256 = hashlib.sha256()
-            self._sha512 = hashlib.sha512()
-            self._progress = True
-
         self._md5.update(data_chunk)
         self._sha1.update(data_chunk)
         self._sha256.update(data_chunk)
@@ -928,3 +949,18 @@ def delete_file(path):
         )
 
     os.unlink(path)
+
+def random_filename(extension=""):
+    uniquename = uuid.uuid4()
+    if extension:
+        return f"{uniquename}.{extension}"
+
+    return str(uniquename)
+
+def merge_logdata(logfile_path, logdata):
+    # Use append for existing file and add line by line. We do this
+    # because the logfile could be in use while we append. Large appends
+    # can result in mangled data.
+    with open(logfile_path, "a") as fp:
+        for line in logdata.split(b"\n"):
+            fp.write(f"{line.decode()}\n")

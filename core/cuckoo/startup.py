@@ -1,83 +1,35 @@
 # Copyright (C) 2020 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
+import logging
 import os
+import threading
 import time
 from threading import Thread
 
 from cuckoo.common import config, shutdown
 from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
-from cuckoo.common.packages import get_conftemplates, enumerate_plugins
+from cuckoo.common.packages import get_conftemplates
 from cuckoo.common.startup import StartupError
-from cuckoo.common.storage import Paths, cuckoocwd
+from cuckoo.common.storage import Paths, UnixSocketPaths, cuckoocwd
+
+from .scheduler2 import NodesTracker
 
 log = CuckooGlobalLogger(__name__)
 
-from . import started
 
 """All Cuckoo startup helper functions that start or prepare components 
 must be declared here and register a stopping or cleanup method 
 with shutdown.register_shutdown if anything has to be stopped 
 on Cuckoo shutdown"""
 
-
-def start_machinerymanager():
-    from cuckoo.common.machines import read_machines_dump
-    from cuckoo.machineries.abstracts import Machinery
-    from .machinery import (
-        MachineryManager, load_machineries, MachineryManagerError, shutdown_all
-    )
-
-    all_machineries = enumerate_plugins(
-        "cuckoo.machineries.modules", globals(), Machinery
-    )
-    enabled = config.cfg("cuckoo", "machineries")
-
-    machinery_classes = []
-    for machinery_class in all_machineries:
-        if not machinery_class.name:
-            continue
-
-        if machinery_class.name.lower() in enabled:
-            machinery_classes.append(machinery_class)
-
-    # Load the machine states file if it is present.
-    machine_states = {}
-    dump_path = Paths.machinestates()
-    if os.path.isfile(dump_path):
-        machine_states = read_machines_dump(dump_path)
-
-    try:
-        load_machineries(machinery_classes, machine_states=machine_states)
-    except MachineryManagerError as e:
-        raise StartupError(f"Machinery loading failure: {e}")
-
-    # Register the machinery stopping method as one that must be called last
-    # to ensure any machines started during shutdown is still stopped.
-    shutdown.register_shutdown(shutdown_all, order=999)
-
-    sockpath = Paths.unix_socket("machinerymanager.sock")
-    if os.path.exists(sockpath):
-        raise StartupError(
-            f"Machinery manager socket path already exists: {sockpath}"
-        )
-
-    manager = MachineryManager(sockpath)
-    started.machinery_manager = manager
-
-    shutdown.register_shutdown(manager.stop)
-
-    manager_th = Thread(target=manager.start)
-    manager_th.start()
-
-def start_processing_handler():
+def start_processing_handler(cuckooctx):
     from .runprocessing import ProcessingWorkerHandler
-    started.processing_handler = ProcessingWorkerHandler()
-    started.processing_handler.daemon = True
-    shutdown.register_shutdown(started.processing_handler.stop)
+    cuckooctx.processing_handler = ProcessingWorkerHandler(cuckooctx)
+    cuckooctx.processing_handler.daemon = True
+    shutdown.register_shutdown(cuckooctx.processing_handler.stop)
 
-    started.processing_handler.set_worker_amount(
+    cuckooctx.processing_handler.set_worker_amount(
         identification=config.cfg(
             "cuckoo.yaml", "processing", "worker_amount", "identification"
         ),
@@ -85,135 +37,48 @@ def start_processing_handler():
         post=config.cfg("cuckoo.yaml", "processing", "worker_amount", "post")
     )
 
-    started.processing_handler.start()
+    cuckooctx.processing_handler.start()
 
-    while started.processing_handler.do_run:
-        if started.processing_handler.setup_finished():
+    while cuckooctx.processing_handler.do_run:
+        if cuckooctx.processing_handler.setup_finished():
             break
 
         time.sleep(1)
 
-    if started.processing_handler.has_failed_workers():
+    if cuckooctx.processing_handler.has_failed_workers():
         raise StartupError("One or more processing workers failed to start")
 
-def start_statecontroller():
+def start_statecontroller(cuckooctx):
     from .control import StateController
-    sockpath = Paths.unix_socket("statecontroller.sock")
-    if os.path.exists(sockpath):
+    sockpath = UnixSocketPaths.state_controller()
+    if sockpath.exists():
         raise StartupError(
             f"Failed to start state controller: "
             f"Unix socket path already exists: {sockpath}"
         )
 
-    started.state_controller = StateController(sockpath)
-    shutdown.register_shutdown(started.state_controller.stop)
+    cuckooctx.state_controller = StateController(sockpath, cuckooctx)
+    shutdown.register_shutdown(cuckooctx.state_controller.stop)
 
     # Check if any untracked analyses exist after starting
-    started.state_controller.track_new_analyses()
+    cuckooctx.state_controller.track_new_analyses()
 
     # Check if there are any analyses that have been exported and for
     # which their location has not been updated yet.
-    started.state_controller.set_remote()
+    cuckooctx.state_controller.set_remote()
 
-    state_th = Thread(target=started.state_controller.start)
+    state_th = Thread(target=cuckooctx.state_controller.start)
     state_th.start()
 
-def start_resultserver():
-    from .resultserver import ResultServer, servers
-    from multiprocessing import Process
+def make_scheduler(cuckooctx, task_queue):
+    from .scheduler2 import Scheduler
+    sched = Scheduler(cuckooctx, task_queue)
 
-    sockpath = Paths.unix_socket("resultserver.sock")
-    if os.path.exists(sockpath):
-        raise StartupError(
-            "Resultserver unix socket already/still exists. "
-            "Remove it there is no other Cuckoo instance running"
-            f" using the specified Cuckoo CWD. {sockpath}"
-        )
+    # Add scheduler to context for usage by other components
+    cuckooctx.scheduler = sched
 
-    ip = config.cfg("cuckoo", "resultserver", "listen_ip")
-    port = config.cfg("cuckoo", "resultserver", "listen_port")
-    rs = ResultServer(
-        sockpath, cuckoocwd.root, ip, port, loglevel=get_global_loglevel()
-    )
-    log.debug(
-        "Starting resultserver.", listenip=ip, listenport=port,
-        sockpath=sockpath, cwd=cuckoocwd.root
-    )
-    rs_proc = Process(target=rs.start)
-
-    def _rs_stopper():
-        rs_proc.terminate()
-
-    shutdown.register_shutdown(_rs_stopper)
-    rs_proc.start()
-
-    waited = 0
-    MAXWAIT = 5
-    while not os.path.exists(sockpath):
-        if waited >= MAXWAIT:
-            raise StartupError(
-                f"Resultserver was not started after {MAXWAIT} seconds."
-            )
-
-        if not rs_proc.is_alive():
-            raise StartupError("Resultserver stopped unexpectedly")
-        waited += 0.5
-        time.sleep(0.5)
-
-    log.debug("Resultserver process started.", pid=rs_proc.pid)
-
-    servers.add(sockpath, ip, port)
-
-def start_taskrunner():
-    from .taskrunner import TaskRunner
-    from multiprocessing import Process
-
-    sockpath = Paths.unix_socket("taskrunner.sock")
-    if os.path.exists(sockpath):
-        raise StartupError(
-            f"Task runner socket path already exists: {sockpath}"
-        )
-
-    taskrunner = TaskRunner(
-        sockpath, cuckoocwd.root, loglevel=get_global_loglevel()
-    )
-    runner_proc = Process(target=taskrunner.start)
-
-    def _taskrunner_stopper():
-        runner_proc.terminate()
-        runner_proc.join(timeout=30)
-
-    # This should be stopped as one of the first components. This way, tasks
-    # that are stopped during a run can still more cleanly stop.
-    shutdown.register_shutdown(_taskrunner_stopper, order=2)
-    runner_proc.start()
-
-    waited = 0
-    MAXWAIT = 5
-    while not os.path.exists(sockpath):
-        if waited >= MAXWAIT:
-            raise StartupError(
-                f"Task runner was not started after {MAXWAIT} seconds."
-            )
-
-        if not runner_proc.is_alive():
-            raise StartupError("Task runner stopped unexpectedly")
-        waited += 0.5
-        time.sleep(0.5)
-
-def start_scheduler():
-    from cuckoo.common import task
-    from .scheduler import task_queue, Scheduler
-
-    pending = task.db_find_state(task.States.PENDING)
-
-    if pending:
-        task_queue.queue_many(pending)
-
-    started.scheduler = Scheduler()
-    shutdown.register_shutdown(started.scheduler.stop, order=2)
-
-    started.scheduler.start()
+    # Ensure schedule stop is always called second (after stop message)
+    shutdown.register_shutdown(sched.stop, order=2)
 
 def add_machine(machinery_name, name, label, ip, platform, os_version="",
                 mac_address=None, interface=None, snapshot=None, tags=[]):
@@ -316,7 +181,142 @@ def start_importmode(loglevel):
     start_importcontroller()
 
 
-def start_cuckoo(loglevel):
+# def start_cuckoo(loglevel):
+#     from multiprocessing import set_start_method
+#     set_start_method("spawn")
+# 
+#     from cuckoo.common.config import MissingConfigurationFileError
+#     from cuckoo.common.startup import (
+#         init_elasticsearch, init_database, load_configurations,
+#         init_global_logging
+#     )
+# 
+#     # Initialize globing logging to cuckoo.log
+#     init_global_logging(loglevel, Paths.log("cuckoo.log"))
+# 
+#     log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
+#     log.info("Loading configurations")
+#     try:
+#         load_configurations()
+#     except MissingConfigurationFileError as e:
+#         raise StartupError(f"Missing configuration file: {e}")
+# 
+#     init_elasticsearch(create_missing_indices=True)
+# 
+#     log.info("Starting resultserver")
+#     start_resultserver()
+#     log.info("Loading machineries and starting machinery manager")
+#     start_machinerymanager()
+#     log.info("Initializing database")
+#     init_database()
+#     log.info("Starting processing handler and workers")
+#     start_processing_handler()
+#     log.info("Starting task runner")
+#     start_taskrunner()
+#     log.info("Starting state controller")
+#     start_statecontroller()
+#     log.info("Starting scheduler")
+#     start_scheduler()
+
+def start_localnode(cuckooctx):
+    from cuckoo.node.startup import start_local
+
+    from .nodeclient import LocalStreamReceiver, LocalNodeClient
+    stream_receiver = LocalStreamReceiver()
+    nodectx = start_local(stream_receiver)
+
+    client = LocalNodeClient(cuckooctx, nodectx.node)
+    stream_receiver.set_client(client)
+
+def start_resultretriever(nodeapi_clients):
+    from .retriever import ResultRetriever
+    from multiprocessing import Process
+
+    sockpath = UnixSocketPaths.result_retriever()
+    if sockpath.exists():
+        raise StartupError(
+            f"Result retriever socket path already exists: {sockpath}"
+        )
+
+    retriever = ResultRetriever(
+        sockpath, cuckoocwd.root, get_global_loglevel()
+    )
+
+    for client in nodeapi_clients:
+        retriever.add_node(client.name, client)
+
+    runner_proc = Process(target=retriever.start)
+
+    def _retriever_stopper():
+        runner_proc.terminate()
+        runner_proc.join(timeout=30)
+
+    shutdown.register_shutdown(_retriever_stopper)
+    runner_proc.start()
+
+    waited = 0
+    MAXWAIT = 5
+    while not sockpath.exists():
+        if waited >= MAXWAIT:
+            raise StartupError(
+                f"Result retriever was not started after {MAXWAIT} seconds."
+            )
+
+        if not runner_proc.is_alive():
+            raise StartupError("Result retriever stopped unexpectedly")
+        waited += 0.5
+        time.sleep(0.5)
+
+def make_node_api_clients():
+    from cuckoo.common.clients import NodeAPIClient, ClientError
+    node_clients = []
+    for name, values in config.cfg("distributed.yaml", "remote_nodes").items():
+        client = NodeAPIClient(
+            values["api_url"], values["api_key"], node_name=name
+        )
+
+        log.debug("Loading remote node client", node=name, url=client.api_url)
+        try:
+            client.ping()
+        except ClientError as e:
+            raise StartupError(f"Error contacting remote node {name}. {e}")
+
+        node_clients.append(client)
+
+    return node_clients
+
+def make_remote_node_clients(cuckooctx, node_api_clients):
+    from .nodeclient import RemoteNodeClient, NodeClientLoop, NodeActionError
+    import asyncio
+
+    loop = asyncio.new_event_loop()
+    wrapper = NodeClientLoop(loop)
+
+    shutdown.register_shutdown(wrapper.stop)
+
+    remotes_nodes = []
+    for api in node_api_clients:
+        remote_node = RemoteNodeClient(cuckooctx, api, wrapper)
+        try:
+            remote_node.init()
+            loop.run_until_complete(remote_node.start_reader())
+        except NodeActionError as e:
+            raise StartupError(e)
+
+        remotes_nodes.append(remote_node)
+        cuckooctx.nodes.add_node(remote_node)
+
+    return remotes_nodes, wrapper
+
+class CuckooCtx:
+
+    def __init__(self):
+        self.nodes = NodesTracker()
+        self.scheduler = None
+        self.state_controller = None
+        self.processing_handler = None
+
+def start_cuckoo_controller(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
 
@@ -325,30 +325,99 @@ def start_cuckoo(loglevel):
         init_elasticsearch, init_database, load_configurations,
         init_global_logging
     )
+    from cuckoo.common.log import set_logger_level
+    from .queue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
 
-    log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
+    set_logger_level("urllib3.connectionpool", logging.ERROR)
+
+    log.info("Starting Cuckoo controller", cwd=cuckoocwd.root)
     log.info("Loading configurations")
     try:
         load_configurations()
+        config.load_config(Paths.config("distributed.yaml"))
     except MissingConfigurationFileError as e:
         raise StartupError(f"Missing configuration file: {e}")
 
+    log.debug("Loading remote nodes")
+    api_clients = make_node_api_clients()
     init_elasticsearch(create_missing_indices=True)
 
-    log.info("Starting resultserver")
-    start_resultserver()
-    log.info("Loading machineries and starting machinery manager")
-    start_machinerymanager()
-    log.info("Initializing database")
+    log.debug("Initializing database")
     init_database()
-    log.info("Starting processing handler and workers")
-    start_processing_handler()
-    log.info("Starting task runner")
-    start_taskrunner()
-    log.info("Starting state controller")
-    start_statecontroller()
-    log.info("Starting scheduler")
-    start_scheduler()
+
+    log.debug("Starting result retriever")
+    start_resultretriever(api_clients)
+
+    log.debug("Initializing task queue")
+    task_queue = TaskQueue(Paths.queuedb())
+    cuckooctx = CuckooCtx()
+
+    remote_nodes, loop_wrapper = make_remote_node_clients(
+        cuckooctx, api_clients
+    )
+
+    threading.Thread(target=loop_wrapper.start).start()
+
+    make_scheduler(cuckooctx, task_queue)
+
+    log.debug("Starting processing handler and workers")
+    start_processing_handler(cuckooctx)
+
+    log.debug("Starting state controller")
+    start_statecontroller(cuckooctx)
+
+    log.debug("Starting scheduler")
+    cuckooctx.scheduler.start()
+
+
+
+def start_cuckoo2(loglevel):
+    try:
+        from multiprocessing import set_start_method
+        set_start_method("spawn")
+
+        from cuckoo.common.config import MissingConfigurationFileError
+        from cuckoo.common.startup import (
+            init_elasticsearch, init_database, load_configurations,
+            init_global_logging
+        )
+        from .queue import TaskQueue
+
+        # Initialize globing logging to cuckoo.log
+        init_global_logging(loglevel, Paths.log("cuckoo.log"))
+
+        log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
+        log.info("Loading configurations")
+        try:
+            load_configurations()
+        except MissingConfigurationFileError as e:
+            raise StartupError(f"Missing configuration file: {e}")
+
+        init_elasticsearch(create_missing_indices=True)
+
+        log.debug("Initializing database")
+        init_database()
+
+        log.debug("Initializing task queue")
+        task_queue = TaskQueue(Paths.queuedb())
+        cuckooctx = CuckooCtx()
+
+        log.debug("Starting local task node")
+        start_localnode(cuckooctx)
+
+        make_scheduler(cuckooctx, task_queue)
+
+        log.debug("Starting processing handler and workers")
+        start_processing_handler(cuckooctx)
+
+        log.debug("Starting state controller")
+        start_statecontroller(cuckooctx)
+
+        log.debug("Starting scheduler")
+        cuckooctx.scheduler.start()
+    except Exception as e:
+        log.exception("failed", error=e)
+        raise StartupError(e)

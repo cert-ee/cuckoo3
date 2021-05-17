@@ -102,7 +102,7 @@ class Target(CuckooDBDTable):
     sha256 = sqlalchemy.Column(sqlalchemy.String(64), nullable=True)
     sha512 = sqlalchemy.Column(sqlalchemy.String(128), nullable=True)
 
-class DBMS(object):
+class DBMS:
 
     def __init__(self):
         self.initialized = False
@@ -110,12 +110,12 @@ class DBMS(object):
         self.engine = None
         self.connection_string = ""
 
-    def initialize(self, dsn, tablebaseclass):
+    def initialize(self, dsn, tablebaseclass, timeout=60):
         if self.initialized:
             self.cleanup()
 
         engine = sqlalchemy.create_engine(
-            dsn, poolclass=NullPool, connect_args={"timeout": 60}
+            dsn, poolclass=NullPool, connect_args={"timeout": timeout}
         )
         tablebaseclass.metadata.create_all(engine)
 

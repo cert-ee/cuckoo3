@@ -345,7 +345,7 @@ class Pcapreader(Processor):
                 if proto == "dns" and self.dnsserver_sl.is_safelisted(host):
                     continue
 
-                if not host in hosts:
+                if host not in hosts:
                     hosts.append(host)
 
         return results

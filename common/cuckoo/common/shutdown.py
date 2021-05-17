@@ -4,6 +4,8 @@
 
 import os
 import signal
+import threading
+import traceback
 from threading import Lock, Thread
 
 from .log import CuckooGlobalLogger
@@ -40,6 +42,9 @@ def register_shutdown(stop_method, order=10):
     _shutdown_methods.append((stop_method, order))
 
 def call_registered_shutdowns():
+
+    # Acquire and never release lock to prevent registered shutdowns
+    # from being called multiple times.
     if not _teardown_lock.acquire(blocking=False):
         return
 
@@ -50,17 +55,52 @@ def call_registered_shutdowns():
     for shutmethod, _ in _shutdown_methods:
         _currently_teardown = shutmethod
         try:
+            log.debug("Calling shutdown method", method=shutmethod)
             shutmethod()
         except Exception as e:
             log.exception(
-                "Error while calling shutdown method.",
+                "Error while calling shutdown method",
                 error=e, method=shutmethod
             )
+
+        _currently_teardown = None
+
+_debugprint_lock = threading.Lock()
+
+def _print_shutdown_debuginfo():
+    if not _debugprint_lock.acquire(blocking=False):
+        return
+
+    try:
+        import sys
+        frames = sys._current_frames()
+        msg = f"\n<--- Shutdown debug info start (PID: {os.getpid()})--->\n"
+        msg += f"Number of existing threads: {len(frames)}"
+
+        for thread_id, frame in frames.items():
+            msg += f"\n--- Thread {thread_id} stack ---\n"
+            msg += "".join(traceback.format_stack(frame))
+
+        msg += "\n<--- Shutdown debug info end--->\n\n"
+        sys.stderr.write(msg)
+    finally:
+        _debugprint_lock.release()
+
+
+_debug_counter = 0
 
 def _wrap_call_registered_shutdowns(sig, frame):
     if _teardown_lock.locked():
         if _currently_teardown:
             print(f"Teardown is currently at: {_currently_teardown}")
+
+        global _debug_counter
+        _debug_counter += 1
+        # Print the stacks of existing threads after receiving signal spam
+        # Useful in case of unexpected shutdown freezes/slow shutdowns.
+        if _debug_counter >= 6:
+            _print_shutdown_debuginfo()
+
         return
 
     # Delegate the actual handling of the signal to a new thread as IO

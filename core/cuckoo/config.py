@@ -27,6 +27,8 @@ class Machinery(config.String):
                 f"Machinery module '{value}' does not exist."
             )
 
+
+exclude_autoload = ["distributed.yaml"]
 typeloaders = {
     "cuckoo.yaml": {
         "machineries": config.List(Machinery, value=["kvm"]),
@@ -61,8 +63,7 @@ typeloaders = {
         "remote_storage": {
             "api_url": config.HTTPUrl(allow_empty=True),
             "api_key": config.String(sensitive=True, allow_empty=True)
-        }
-
+        },
     },
     "reporting.yaml": {
         "elasticsearch": {
@@ -78,5 +79,11 @@ typeloaders = {
             "max_result_window": config.Int(default_val=10000),
             "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
         }
+    },
+    "distributed.yaml": {
+        "remote_nodes": config.NestedDictionary("example1", {
+            "api_url": config.HTTPUrl(default_val="http://127.0.1:8090"),
+            "api_key": config.String(sensitive=True),
+        })
     }
 }

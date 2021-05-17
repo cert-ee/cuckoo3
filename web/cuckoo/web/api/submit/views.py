@@ -29,7 +29,7 @@ class SubmitFile(APIView):
         req_settings = serializer.data["settings"]
         final_settings = {}
         try:
-            s_maker = submit.SettingsMaker()
+            s_maker = submit.settings_maker.new_settings()
             s_maker.set_manual(req_settings.get("manual"))
             s_maker.set_timeout(req_settings.get("timeout"))
             s_maker.set_priority(req_settings.get("priority"))

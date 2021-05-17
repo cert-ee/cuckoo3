@@ -14,7 +14,6 @@ log = CuckooGlobalLogger(__name__)
 
 from cuckoo.common.machines import get_available
 
-from . import started
 from .machinery import acquire_available, unlock
 
 class _TaskQueue:

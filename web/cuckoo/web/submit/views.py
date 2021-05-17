@@ -4,7 +4,6 @@
 
 from cuckoo.common import submit, analyses
 from cuckoo.common.config import cfg
-from cuckoo.common.machines import get_platforms_versions
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
     HttpResponseNotFound
@@ -18,7 +17,8 @@ _available_platforms = [
         ),
         "platform": platform,
         "os_version": [os_version for os_version in os_versions]
-     } for platform, os_versions in get_platforms_versions().items()
+     } for platform, os_versions in
+    submit.settings_maker.machines.get_platforms_versions().items()
 ]
 
 class SubmitFile(View):
@@ -31,7 +31,7 @@ class SubmitFile(View):
             return HttpResponseBadRequest()
 
         try:
-            s_maker = submit.SettingsMaker()
+            s_maker = submit.settings_maker.new_settings()
             s_maker.set_manual(True)
             analysis_id = submit.file(
                 uploaded.temporary_file_path(), s_maker.make_settings(),
