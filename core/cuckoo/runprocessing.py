@@ -95,7 +95,9 @@ class WorkReceiver(UnixSocketServer):
 
         shutdown.register_shutdown(_stop_wrapper)
 
-        cuckoocwd.set(self.cuckoocwd)
+        cuckoocwd.set(
+            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
+        )
         init_global_logging(
             self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
             warningsonly=["elasticsearch", "asyncio"]
@@ -379,7 +381,7 @@ class ProcessingWorkerHandler(threading.Thread):
 
         log.info(f"Starting {worktype} worker.", workername=name)
         worker = WorkReceiver(
-            sockpath, worktype, name, cuckoocwd.root,
+            sockpath, worktype, name, cuckoocwd,
             loglevel=get_global_loglevel()
         )
         proc = multiprocessing.Process(target=worker.start)

@@ -29,6 +29,7 @@ class MachineNotAvailable(NodeError):
 class NodeMsgTypes:
 
     TASK_STATE = "task_state"
+    MACHINE_DISABLED = "machine_disabled"
 
 class NodeTaskStates:
     TASK_FAILED = "task_failed"
@@ -131,6 +132,9 @@ class InfoStreamReceiver:
     def task_state(self, task_id, state):
         raise NotImplementedError
 
+    def disabled_machine(self, machine_name, reason):
+        raise NotImplementedError
+
 class NodeInfoStream:
 
     def __init__(self, stream_receiver):
@@ -138,6 +142,9 @@ class NodeInfoStream:
 
     def task_state(self, task_id, state):
         self.receiver.task_state(task_id, state)
+
+    def disabled_machine(self, machine_name, reason):
+        self.receiver.disabled_machine(machine_name, reason)
 
 
 class _TaskStartWorker(threading.Thread):
@@ -200,8 +207,7 @@ class _TasksTracker:
             self._tasks[taskwork.task.id] = taskwork
 
     def task_started(self, task_id):
-        with self._lock:
-            self.set_state(task_id, NodeTaskStates.TASK_RUNNING)
+        self.set_state(task_id, NodeTaskStates.TASK_RUNNING)
 
     def task_failed(self, task_id):
         self.task_ended(task_id, NodeTaskStates.TASK_FAILED)

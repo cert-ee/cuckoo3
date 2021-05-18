@@ -57,10 +57,28 @@ class LocalStreamReceiver(InfoStreamReceiver):
             self.node_client.task_failed(task_id)
         elif state == NodeTaskStates.TASK_DONE:
             self.node_client.task_done(task_id)
+        elif state == NodeTaskStates.TASK_RUNNING:
+            pass
         else:
             log.error(
                 "Unhandled task state update", task_id=task_id, state=state
             )
+
+    def disabled_machine(self, machine_name, reason):
+        log.warning(
+            "Received machine disable event", machine=machine_name,
+            reason=reason
+        )
+        try:
+            machine = self.node_client.machines.get_by_name(machine_name)
+        except KeyError:
+            log.error(
+                "Received machine disabled event for unknown machine",
+                machine=machine_name, disable_reason=reason
+            )
+            return
+
+        self.node_client.machines.mark_disabled(machine, reason)
 
 class NodeClientLoop:
 
@@ -173,6 +191,14 @@ class NodeClientLoop:
 class NodeClient:
 
     @property
+    def name(self):
+        raise NotImplementedError
+
+    @property
+    def ready(self):
+        raise NotImplementedError
+
+    @property
     def machines(self):
         raise NotImplementedError
 
@@ -209,6 +235,37 @@ class RemoteNodeClient(NodeClient):
 
         return self._machines
 
+    async def _handle_taskstate(self, task_id, state):
+        log.debug("Received new task state", task_id=task_id, state=state)
+        if state == NodeTaskStates.TASK_FAILED:
+            await self.loop_wrapper.newtask(
+                self._task_failed, args=(task_id, True)
+            )
+        elif state == NodeTaskStates.TASK_DONE:
+            await self.loop_wrapper.newtask(
+                self._task_done, args=(task_id,)
+            )
+        elif state == NodeTaskStates.TASK_RUNNING:
+            pass
+        else:
+            log.error("Unhandled task state", state=state, task_id=task_id)
+
+    async def _handle_disabled_machine(self, name, reason):
+        log.warning(
+            "Received machine disable event", node=self.name,
+            machine=name, reason=reason
+        )
+        try:
+            machine = self.machines.get_by_name(name)
+        except KeyError:
+            log.error(
+                "Received machine disabled event for unknown machine",
+                node=self.name, machine=name, disable_reason=reason
+            )
+            return
+
+        self.machines.mark_disabled(machine, reason)
+
     async def _event_msg(self, msgdict):
         msgtype = msgdict.get("type")
         if msgtype == NodeMsgTypes.TASK_STATE:
@@ -217,16 +274,15 @@ class RemoteNodeClient(NodeClient):
             if not self.assigned_tasks.have_task(task_id):
                 return
 
-            if state == NodeTaskStates.TASK_FAILED:
-                await self.loop_wrapper.newtask(
-                    self._task_failed, args=(task_id, True)
-                )
-            elif state == NodeTaskStates.TASK_DONE:
-                await self.loop_wrapper.newtask(
-                    self._task_done, args=(task_id,)
-                )
-            else:
-                log.error("Unhandled task state", state=state, task_id=task_id)
+            await self._handle_taskstate(task_id, state)
+
+        if msgtype == NodeMsgTypes.MACHINE_DISABLED:
+            name = msgdict.get("machine_name")
+            reason = msgdict.get("reason", "")
+            if not name:
+                return
+
+            await self._handle_disabled_machine(name, reason)
         else:
             log.error("Unhandled message type", msgtype=msgtype)
             return
@@ -269,6 +325,10 @@ class RemoteNodeClient(NodeClient):
             raise NodeActionError(f"Failed retrieving machine list: {e}")
 
     async def _start_task(self, startable_task):
+        log.debug(
+            "Asking node to start work for task",
+            task_id=startable_task.task.id, node=self.name
+        )
         try:
             await self.client.start_task(
                 startable_task.task.id, startable_task.machine.name
@@ -290,7 +350,10 @@ class RemoteNodeClient(NodeClient):
         return True
 
     async def _upload_and_start(self, nodework, startable_task):
-        log.error("In upload and start")
+        log.debug(
+            "Uploading work for task", task_id=startable_task.task.id,
+            node=self.name
+        )
         with nodework:
             try:
                 await self.client.upload_taskwork(nodework.path)
@@ -339,6 +402,10 @@ class RemoteNodeClient(NodeClient):
         )
 
     async def _retrieve_result(self, startable_task):
+        log.debug(
+            "Asking result retriever to get result",
+            task_id=startable_task.task.id, node=self.name
+        )
         try:
             await ResultRetrieverClient.retrieve_result(
                 UnixSocketPaths.result_retriever(), startable_task.task.id,
@@ -405,11 +472,19 @@ class LocalNodeClient(NodeClient):
     def __init__(self, cuckooctx, localnode):
         self.ctx = cuckooctx
         self.node = localnode
-        self._machines = localnode.machinery.machines.copy()
+        self._machines = localnode.ctx.machinery_manager.machines.copy()
 
         self.assigned_tasks = AssignedTasks()
         self._lock = Lock()
         cuckooctx.nodes.add_node(self)
+
+    @property
+    def name(self):
+        return "local"
+
+    @property
+    def ready(self):
+        return True
 
     @property
     def machines(self):

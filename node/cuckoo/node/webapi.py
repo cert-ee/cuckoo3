@@ -2,23 +2,20 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+import asyncio
 import json
 from collections import deque
-
-import asyncio
-
 from aiohttp import web
 from aiohttp_sse import sse_response
 
+from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 from cuckoo.common.machines import serialize_machinelists
 from cuckoo.common.storage import (
     random_filename, delete_file, Paths, AnalysisPaths, split_analysis_id,
     create_analysis_folder, TaskPaths, TASK_ID_REGEX
 )
-from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 
 from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
-
 
 MAX_UPLOAD_SIZE = 1024 * 1024 * 1024
 
@@ -72,6 +69,28 @@ class StateSSE(InfoStreamReceiver):
             "type": NodeMsgTypes.TASK_STATE, "task_id": task_id, "state": state
         }))
 
+    def disabled_machine(self, machine_name, reason):
+        self._add_stream_data(
+            json.dumps({
+                "type": NodeMsgTypes.MACHINE_DISABLED,
+                "machine_name": machine_name,
+                "reason": reason
+            })
+        )
+
+class _CountedAsyncLock:
+
+    def __init__(self):
+        self.lock = asyncio.Lock()
+        self.waiters = 0
+
+    def increment_waiters(self):
+        self.waiters += 1
+
+    def decrement_waiters(self):
+        self.waiters -= 1
+
+
 class API:
 
     def __init__(self, nodectx, eventstreamer):
@@ -82,7 +101,17 @@ class API:
 
     async def get_lock(self, analysis_id):
         async with self._analyses_lock:
-            return self._analysis_locks.setdefault(analysis_id, asyncio.Lock())
+            counted_lock = self._analysis_locks.setdefault(
+                analysis_id, _CountedAsyncLock()
+            )
+            counted_lock.increment_waiters()
+            return counted_lock
+
+    async def return_lock(self, counted_lock, analysis_id):
+        async with self._analyses_lock:
+            counted_lock.decrement_waiters()
+            if counted_lock.waiters < 1:
+                self._analysis_locks.pop(analysis_id)
 
     async def ping(self, request):
         return web.Response()
@@ -111,7 +140,11 @@ class API:
             return resp
 
     async def upload_work(self, request):
-        reader = await request.multipart()
+        try:
+            reader = await request.multipart()
+        except (KeyError, ValueError):
+            return web.HTTPBadRequest()
+
         field = await reader.next()
         if field.name != "file":
             return web.json_response({"error": "Bad field name"}, status=400)
@@ -140,21 +173,25 @@ class API:
             try:
                 analysis_path = AnalysisPaths.path(nodework.analysis.id)
 
-                lock = await self.get_lock(nodework.analysis.id)
-                async with lock:
-                    # Create the analysis dir if it does not exist. This means
-                    # no other tasks of this analysis have been unpacked here
-                    # yet.
-                    if not analysis_path.exists():
-                        date, identifier = split_analysis_id(
-                            nodework.analysis.id
-                        )
-                        create_analysis_folder(date, identifier)
-                        nodework.unzip(analysis_path, task_only=False)
-                    else:
-                        # Only unpack the task work folder contents if the
-                        # analysis folder already exists.
-                        nodework.unzip(analysis_path, task_only=True)
+                counted_lock = await self.get_lock(nodework.analysis.id)
+                try:
+                    async with counted_lock.lock:
+                        # Create the analysis dir if it does not exist. This
+                        # means no other tasks of this analysis have been
+                        # unpacked here yet.
+                        if not analysis_path.exists():
+                            date, identifier = split_analysis_id(
+                                nodework.analysis.id
+                            )
+                            create_analysis_folder(date, identifier)
+                            nodework.unzip(analysis_path, task_only=False)
+                        else:
+                            # Only unpack the task work folder contents if the
+                            # analysis folder already exists.
+                            nodework.unzip(analysis_path, task_only=True)
+                finally:
+                    await self.return_lock(counted_lock, nodework.analysis.id)
+
             except AnalysisImportError as e:
                 return web.json_response(
                     {"error": f"Work unpacking failed: {e}"}, status=400
