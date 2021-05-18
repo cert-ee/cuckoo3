@@ -512,11 +512,20 @@ class NodeEventReader:
         self._evsource = None
         self._ses = None
         self.last_id = 0
+        self.stopped = False
+
+    @property
+    def opened(self):
+        return self._evsource.ready_state == sse_client.READY_STATE_OPEN
 
     async def close(self):
         if self._evsource.ready_state != sse_client.READY_STATE_CLOSED:
             await self._evsource.close()
             await self._ses.close()
+
+    async def stop_reading(self):
+        self.stopped = True
+        await self.close()
 
     async def open(self):
         ses = ClientSession(timeout=ClientTimeout(sock_read=0))
@@ -566,7 +575,7 @@ class NodeEventReader:
             if evsource.ready_state != sse_client.READY_STATE_CLOSED:
                 await self.close()
 
-            self._readend_cb()
+            await self._readend_cb()
 
 class ResultRetrieverClient:
 

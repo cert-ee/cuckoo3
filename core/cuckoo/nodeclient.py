@@ -219,6 +219,7 @@ class RemoteNodeClient(NodeClient):
 
         self._machines = None
         self._events_open = False
+        self._fatal_error = False
 
     @property
     def name(self):
@@ -226,7 +227,7 @@ class RemoteNodeClient(NodeClient):
 
     @property
     def ready(self):
-        return self._machines and self._events_open
+        return self._machines and self._events_open and not self._fatal_error
 
     @property
     def machines(self):
@@ -287,9 +288,32 @@ class RemoteNodeClient(NodeClient):
             log.error("Unhandled message type", msgtype=msgtype)
             return
 
-    def _event_read_end(self):
+    async def _open_eventreader(self):
+        while not self.events.stopped:
+            if self.events.opened:
+                break
+
+            # TODO on successful re-open. Retrieve machine list again,
+            # cancel all tasks on that node and resubmit them.
+            try:
+                await self.events.open()
+                await self.loop_wrapper.newtask(
+                    self.events.read_stream,
+                    stopper_cb=self.events.stop_reading
+                )
+                break
+            except ClientError as e:
+                log.error(
+                    "Failed to re-open event stream. Trying again in 10 "
+                    "seconds", error=e, node=self.name
+                )
+                await asyncio.sleep(10, self.loop_wrapper.loop)
+
+    async def _event_read_end(self):
         self._events_open = False
         log.error("READ END")
+        if not self.events.stopped:
+            await self.loop_wrapper.newtask(self._open_eventreader)
 
     def _event_conn_err(self, e):
         self._events_open = False
@@ -312,7 +336,7 @@ class RemoteNodeClient(NodeClient):
             raise NodeActionError(f"Failed to open event reader. {e}")
 
         await self.loop_wrapper.newtask(
-            self.events.read_stream, stopper_cb=self.events.close
+            self.events.read_stream, stopper_cb=self.events.stop_reading
         )
 
     def init(self):

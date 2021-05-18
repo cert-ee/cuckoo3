@@ -15,14 +15,9 @@ from .nodeclient import NodeActionError
 
 log = CuckooGlobalLogger(__name__)
 
-# TODO propagate machine errors from node as event and disabled machine on
-# correct node here. Disabled node on error, check node state before scheduling
-# to it.
-
 
 class SchedulerError(Exception):
     pass
-
 
 class NodesTracker:
 
@@ -32,11 +27,22 @@ class NodesTracker:
 
     @property
     def machine_lists(self):
-        return [node.machines for node in self._nodes]
+        return [node.machines for node in self._get_ready_nodes()]
+
+    def _get_ready_nodes(self):
+        nodes = []
+        for node in self._nodes:
+            if not node.ready:
+                log.warning("Node not ready for use", node=node.name)
+                continue
+
+            nodes.append(node)
+
+        return nodes
 
     def machines_available(self):
         total = 0
-        for node in self._nodes:
+        for node in self._get_ready_nodes():
             total += node.machines.available_count
 
         return total > 0
@@ -46,7 +52,7 @@ class NodesTracker:
         self.machinelist_dumper.add_machinelist(node.machines)
 
     def find_available(self, queued_task):
-        for node in self._nodes:
+        for node in self._get_ready_nodes():
             machine = node.machines.acquire_available(
                 queued_task.id, platform=queued_task.platform,
                 os_version=queued_task.os_version,
@@ -79,7 +85,9 @@ class StartableTask:
         return self._logger
 
     def task_running(self):
-        self.ctx.state_controller.task_running(task_id=self.task.id)
+        self.ctx.state_controller.task_running(
+            task_id=self.task.id, analysis_id=self.task.analysis_id
+        )
 
     def assign_to_node(self):
         self.node.add_task(self)
@@ -89,6 +97,7 @@ class StartableTask:
             return
 
         self.node.machines.release(self.machine)
+        self.ctx.scheduler.inform_change()
         self._released = True
 
     def close(self):
@@ -143,22 +152,7 @@ class TaskStarter(threading.Thread):
                     startable_task.task.id
                 )
             else:
-                self.ctx.state_controller.task_running(
-                    task_id=startable_task.task.id
-                )
-
-            # TODO Don
-            # Finish task starter and start them
-            # handle exceptions
-            # Make startup for default config of 1 localnode
-            # update machinery manager to use new _mark_disabled. Still using the global one.
-            # Handle state from local task started/completed state "stream"
-            # Weekend httpio layer/endpoints etc
-            # task uploading
-            # result retrieving
-            # State controller multi workers. Meaning: rewrite/check logger
-            # because it had issues with multiple FPs. Also add lock per analysis ID.
-            # Only 1 worker may update tasks/states for an analysis.
+                startable_task.task_running()
 
 class Scheduler:
 
@@ -219,6 +213,9 @@ class Scheduler:
                     return
 
                 wf.mark_scheduled(task)
+
+    def inform_change(self):
+        self._change_event.set()
 
     def start(self):
         for _ in range(self.NUM_TASK_STARTERS):

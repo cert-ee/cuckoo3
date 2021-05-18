@@ -41,7 +41,7 @@ def _handle_state(worktracker, state):
 
     if state == "success":
         _handle_task_success(worktracker)
-    elif state == "fail":
+    elif state == "failed":
         _handle_task_failed(worktracker)
     else:
         raise NodeStateControlError(f"Cannot handle unexpected state: {state}")
@@ -84,8 +84,14 @@ class StateControllerWorker(threading.Thread):
                     function=worktracker.func, args=worktracker.func_args,
                     error=e
                 )
-                worktracker.ctx.node.set_task_failed(worktracker.task_id)
-                # TODO stream task failed event in try/except
+                try:
+                    worktracker.ctx.node.set_task_failed(worktracker.task_id)
+                except Exception as e:
+                    log.exception(
+                        "Failed to set task to failed after failure",
+                        function=worktracker.func, args=worktracker.func_args,
+                        error=e
+                    )
             finally:
                 worktracker.close()
 
