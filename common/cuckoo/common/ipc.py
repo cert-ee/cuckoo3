@@ -403,5 +403,9 @@ async def a_request_unix_socket(sock_path, message_dict):
         raise IPCError(
             f"Failed to read message from socket: {sock_path}. Error: {e}"
         )
+    except EOFError as e:
+        raise IPCError(
+            f"Unexpected end of message from socket: {sock_path}. Error: {e}"
+        )
 
     return json.loads(data.decode())
