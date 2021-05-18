@@ -18,7 +18,8 @@ typeloaders = {
                 "snapshot": config.String(allow_empty=True),
                 "interface": config.String(allow_empty=True),
                 "tags": config.List(
-                    config.String, ["exampletag1", "exampletag2"]
+                    config.String, ["exampletag1", "exampletag2"],
+                    allow_empty=True
                 )
         })
     }
