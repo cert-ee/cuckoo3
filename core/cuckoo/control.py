@@ -332,9 +332,10 @@ def set_task_running(worktracker):
 
 class _WorkTracker:
 
-    def __init__(self, cuckooctx, func,  **kwargs):
+    def __init__(self, cuckooctx, func,  analysis_locker, **kwargs):
         self.ctx = cuckooctx
         self._func = func
+        self._locker = analysis_locker
         self.analysis_id = kwargs.pop("analysis_id", None)
         self.task_id = kwargs.pop("task_id", None)
 
@@ -344,11 +345,27 @@ class _WorkTracker:
         self.task = None
         self.log = None
 
+        if self.analysis_id:
+            analysis_locker.inform_work(self.analysis_id)
+
         self.errtracker = ErrorTracker()
-        self._load_strictdicts()
+
+    def __enter__(self):
+        if self.analysis_id:
+            l = self._locker.get_analysis_lock(self.analysis_id)
+            if l.locked:
+                log.warning("MUST WAIT. ANALYSIS IS LOCKED", analysis_id=self.analysis_id)
+            return l.acquire()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.analysis_id:
+            l = self._locker.get_analysis_lock(self.analysis_id)
+            self._locker.inform_work_done(self.analysis_id)
+            l.release()
 
     def init(self):
         self._make_logger()
+        self._load_strictdicts()
 
     def _make_logger(self):
         if self.task_id:
@@ -410,32 +427,76 @@ class StateControllerWorker(threading.Thread):
             except queue.Empty:
                 continue
 
-            try:
-                worktracker.init()
-                worktracker.run_work()
-            except Exception as e:
-                worktracker.log.exception(
-                    "Failed to run handler function",
-                    function=worktracker._func, args=worktracker._func_kwargs,
-                    error=e
-                )
-            finally:
-                worktracker.close()
+            with worktracker:
+                try:
+                    worktracker.init()
+                    worktracker.run_work()
+                except Exception as e:
+                    worktracker.log.exception(
+                        "Failed to run handler function",
+                        function=worktracker._func,
+                        args=worktracker._func_kwargs,
+                        error=e
+                    )
+                finally:
+                    worktracker.close()
 
     def stop(self):
         self.do_run = False
+
+class _AnalysisLock:
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.waiters = 0
+
+    def decrement_waiters(self):
+        self.waiters -= 1
+
+    def increment_waiters(self):
+        self.waiters += 1
+
+
+class _AnalysisLocker:
+
+    def __init__(self):
+        self._trackerlock = threading.Lock()
+        self._locks = {}
+
+    def inform_work(self, analysis_id):
+        with self._trackerlock:
+            a_lock = self._locks.setdefault(analysis_id, _AnalysisLock())
+            a_lock.increment_waiters()
+
+    def inform_work_done(self, analysis_id):
+        with self._trackerlock:
+            a_lock = self._locks[analysis_id]
+            a_lock.decrement_waiters()
+
+            log.warning("LOCK WAITERS AFTER DECREMENT", analysis_id=analysis_id, waiters=a_lock.waiters)
+
+            if a_lock.waiters < 1:
+                self._locks.pop(analysis_id)
+
+    def get_analysis_lock(self, analysis_id):
+        l = self._locks[analysis_id]
+        log.warning("CONTROLLER ANALYSIS LOCK STATE", analysis_id=analysis_id, waiters=l.waiters)
+        return l.lock
+        # return self._locks[analysis_id].lock
+
 
 class StateController(UnixSocketServer):
 
     # Keep amount of worker to 1 for now to prevent db locking issues with
     # sqlite. 1 thread should be enough. Also because not all steps, such
     # as writing scores from tasks to analyses can cause race conditions.
-    NUM_STATE_CONTROLLER_WORKERS = 1
+    NUM_STATE_CONTROLLER_WORKERS = 6
     
     def __init__(self, controller_sock_path, cuckooctx):
         super().__init__(controller_sock_path)
         self.ctx = cuckooctx
 
+        self._locker = _AnalysisLocker()
         self.workers = []
         self.work_queue = queue.Queue()
         self.subject_handler = {
@@ -454,7 +515,9 @@ class StateController(UnixSocketServer):
                 f"Kwargs dict must be a dict. Got: {type(kwargsdict)}"
             )
 
-        self.work_queue.put(_WorkTracker(self.ctx, func, **kwargsdict))
+        self.work_queue.put(_WorkTracker(
+            self.ctx, func, self._locker, **kwargsdict
+        ))
 
     def work_done(self, **kwargs):
         self.queue_call(
@@ -485,7 +548,8 @@ class StateController(UnixSocketServer):
     def task_running(self, **kwargs):
         self.queue_call(
             set_task_running, {
-                "task_id": kwargs["task_id"]
+                "task_id": kwargs["task_id"],
+                "analysis_id": kwargs["analysis_id"]
             }
         )
 
