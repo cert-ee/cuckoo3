@@ -4,16 +4,18 @@
 
 import queue
 import socket
-
 import threading
+import time
 
+from cuckoo.common import shutdown
+from cuckoo.common.clients import ClientError
+from cuckoo.common.importing import unpack_noderesult, AnalysisImportError
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.log import CuckooGlobalLogger, exit_error
-from cuckoo.common.importing import unpack_noderesult, AnalysisImportError
-from cuckoo.common.clients import NodeAPIClient, ClientError
-from cuckoo.common.storage import TaskPaths, Paths, split_task_id, cuckoocwd
 from cuckoo.common.startup import init_global_logging
-from cuckoo.common import shutdown
+from cuckoo.common.storage import (
+    TaskPaths, Paths, split_task_id, cuckoocwd, delete_file
+)
 
 log = CuckooGlobalLogger(__name__)
 
@@ -52,16 +54,17 @@ class _DownloadWork:
             raise DownloadWorkException(e)
 
     def unpack_result(self):
+        zip_path = TaskPaths.zipped_results(self.task_id)
         try:
-            unpack_noderesult(
-                TaskPaths.zipped_results(self.task_id), self.task_id
-            )
+            unpack_noderesult(zip_path, self.task_id)
         except AnalysisImportError as e:
             log.warning(
                 "Error during result unpacking", task_id=self.task_id,
                 error=e
             )
             raise DownloadWorkException(e)
+
+        delete_file(zip_path)
 
     def send_response(self, msgdict):
         try:
@@ -75,6 +78,19 @@ class _DownloadWork:
     def close(self):
         self._closer_func(self.readerwriter)
 
+class _Stopwatch:
+
+    def __init__(self):
+        self._start = None
+
+    def start(self):
+        self._start = time.monotonic()
+
+    def stop(self):
+        if not self._start:
+            raise ValueError("Stopwatch never started")
+
+        return time.monotonic() - self._start
 
 class _RetrieveWorker(threading.Thread):
 
@@ -94,7 +110,16 @@ class _RetrieveWorker(threading.Thread):
             except queue.Empty:
                 continue
 
+            log.debug(
+                "Starting retrieving work", task_id=work.task_id,
+                node=work.node.name
+            )
+
+            s = _Stopwatch()
+            s.start()
+
             try:
+                log.debug("Starting download", task_id=work.task_id)
                 try:
                     work.download_result()
                 except DownloadWorkException as e:
@@ -103,6 +128,12 @@ class _RetrieveWorker(threading.Thread):
                     )
                     continue
 
+                log.debug(
+                    "Finished download", task_id=work.task_id, took=s.stop()
+                )
+
+                s.start()
+                log.debug("Starting unpack", task_id=work.task_id)
                 try:
                     work.unpack_result()
                 except DownloadWorkException as e:
@@ -111,14 +142,23 @@ class _RetrieveWorker(threading.Thread):
                     )
                     continue
 
+                log.debug(
+                    "Finished unpack", task_id=work.task_id, took=s.stop()
+                )
+
                 work.send_response(_make_response(success=True))
             finally:
                 work.close()
 
+            log.debug(
+                "Finished retrieving work", task_id=work.task_id,
+                node=work.node.name
+            )
+
 
 class ResultRetriever(UnixSocketServer):
 
-    NUM_WORKERS = 2
+    NUM_WORKERS = 4
 
     def __init__(self, manager_sock_path, cuckoocwd, loglevel):
         super().__init__(manager_sock_path)
@@ -134,7 +174,9 @@ class ResultRetriever(UnixSocketServer):
         self.nodes[name] = nodeclient
 
     def init(self):
-        cuckoocwd.set(self.cuckoocwd)
+        cuckoocwd.set(
+            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
+        )
         shutdown.register_shutdown(self.stop)
         init_global_logging(
             self.loglevel, Paths.log("retriever.log"), use_logqueue=False
@@ -216,6 +258,7 @@ class ResultRetriever(UnixSocketServer):
             self.untrack(readerwriter.sock)
 
     def handle_message(self, sock, msg):
+        log.debug("New message", msg=msg)
         readerwriter = self.socks_readers[sock]
         try:
             task_id = msg["task_id"]
