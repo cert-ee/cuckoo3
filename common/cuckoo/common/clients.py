@@ -537,7 +537,7 @@ class NodeEventReader:
             self.client.event_endpoint, session=ses, headers=headers,
         )
         try:
-            await evsource.connect(sse_client.DEFAULT_MAX_CONNECT_RETRY)
+            await evsource.connect(retry=0)
             self._ses = ses
             self._evsource = evsource
             if self._conn_cb:
