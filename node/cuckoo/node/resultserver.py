@@ -418,11 +418,13 @@ class ResultServer(UnixSocketServer):
         self._rs = None
 
     def init(self):
-        cuckoocwd.set(self.cuckoocwd)
+        cuckoocwd.set(
+            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
+        )
         register_shutdown(self.stop)
 
         init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
+            self.loglevel, Paths.log("resultserver.log"), use_logqueue=False,
             warningsonly=["asyncio"]
         )
 

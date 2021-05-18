@@ -339,7 +339,9 @@ class TaskRunner(UnixSocketServer):
         self.cleanup()
 
     def start(self):
-        cuckoocwd.set(self.cuckoocwd)
+        cuckoocwd.set(
+            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
+        )
         register_shutdown(self.stop)
 
         init_global_logging(
