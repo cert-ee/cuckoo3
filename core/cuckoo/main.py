@@ -4,26 +4,20 @@
 
 import os
 import click
-import platform
 import logging
 
-from cuckoo.common.storage import cuckoocwd, Paths
+from cuckoo.common.storage import cuckoocwd, Paths, InvalidCWDError
 from cuckoo.common.log import (
     exit_error, print_info, print_error, print_warning
 )
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
+@click.option("--distributed", is_flag=True, help="Start Cuckoo in distributed mode")
 @click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
 @click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
 @click.pass_context
-def main(ctx, cwd, debug, quiet):
-    if platform.system().lower() != "linux":
-        exit_error(
-            "Currently Cuckoo3 is still in development and "
-            "will only run on Linux."
-        )
-
+def main(ctx, cwd, distributed, debug, quiet):
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -38,7 +32,11 @@ def main(ctx, cwd, debug, quiet):
             f"running Cuckoo with this CWD path"
         )
 
-    cuckoocwd.set(cwd)
+    try:
+        cuckoocwd.set(cwd)
+    except InvalidCWDError as e:
+        exit_error(f"Invalid Cuckoo working directory: {e}")
+
     if quiet:
         ctx.loglevel = logging.WARNING
     elif debug:
@@ -60,7 +58,11 @@ def main(ctx, cwd, debug, quiet):
     from cuckoo.common.shutdown import (
         register_shutdown, call_registered_shutdowns
     )
-    from .startup import start_cuckoo2, start_cuckoo_controller
+
+    if distributed:
+        from .startup import start_cuckoo_controller as start_cuckoo
+    else:
+        from .startup import start_cuckoo
 
     def _stopmsg():
         print("Stopping Cuckoo..")
@@ -68,7 +70,7 @@ def main(ctx, cwd, debug, quiet):
     register_shutdown(_stopmsg, order=1)
 
     try:
-        start_cuckoo_controller(ctx.loglevel)
+        start_cuckoo(ctx.loglevel)
     except StartupError as e:
         exit_error(f"Failure during Cuckoo startup: {e}")
     finally:
@@ -76,15 +78,16 @@ def main(ctx, cwd, debug, quiet):
 
 @main.command("createcwd")
 @click.option("--regen-configs", is_flag=True)
+@click.option("--update-directories", is_flag=True)
 @click.pass_context
-def create_cwd(ctx, regen_configs):
+def create_cwd(ctx, update_directories, regen_configs):
     """Create the specified Cuckoo CWD"""
     from cuckoo.common.startup import StartupError
     from cuckoo.common.startup import create_configurations
 
     cwd_path = ctx.parent.cwd_path
     if os.path.isdir(ctx.parent.cwd_path):
-        if not regen_configs:
+        if not regen_configs and not update_directories:
             exit_error(f"Path {cwd_path} already exists.")
 
         if not cuckoocwd.is_valid(cwd_path):
@@ -93,12 +96,21 @@ def create_cwd(ctx, regen_configs):
                 f"Cannot regenerate configurations."
             )
 
-        try:
-            create_configurations()
-            print_info("Re-created missing configuration files")
-            return
-        except StartupError as e:
-            exit_error(f"Failure during configuration generation: {e}")
+        if regen_configs:
+            try:
+                create_configurations()
+                print_info("Re-created missing configuration files")
+                return
+            except StartupError as e:
+                exit_error(f"Failure during configuration generation: {e}")
+
+        if update_directories:
+            try:
+                cuckoocwd.update_missing()
+                print_info("Created missing directories")
+                return
+            except InvalidCWDError as e:
+                exit_error(f"Failed during directory updating: {e}")
 
     cuckoocwd.create(cwd_path)
     cuckoocwd.set(cwd_path)

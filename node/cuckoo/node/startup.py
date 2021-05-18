@@ -1,9 +1,7 @@
 # Copyright (C) 2020 - 2021 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-import logging
 
-from cuckoo.common.startup import load_configurations
 import os
 import time
 from threading import Thread
@@ -12,11 +10,12 @@ from cuckoo.common import config, shutdown
 from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.startup import StartupError
+from cuckoo.common.startup import load_configurations
 from cuckoo.common.storage import Paths, UnixSocketPaths, cuckoocwd
 
-log = CuckooGlobalLogger(__name__)
 from cuckoo.node.node import Node
 
+log = CuckooGlobalLogger(__name__)
 
 def start_taskrunner():
     from cuckoo.node.taskrunner import TaskRunner
@@ -29,7 +28,7 @@ def start_taskrunner():
         )
 
     taskrunner = TaskRunner(
-        sockpath, cuckoocwd.root, loglevel=get_global_loglevel()
+        sockpath, cuckoocwd, loglevel=get_global_loglevel()
     )
     runner_proc = Process(target=taskrunner.start)
 
@@ -55,7 +54,7 @@ def start_taskrunner():
         waited += 0.5
         time.sleep(0.5)
 
-def start_nodestatecontrol(node, threaded=False):
+def start_nodestatecontrol(nodectx, threaded=False):
     from cuckoo.node.control import NodeTaskController
     sockpath = UnixSocketPaths.node_state_controller()
     if sockpath.exists():
@@ -64,7 +63,8 @@ def start_nodestatecontrol(node, threaded=False):
             f"Unix socket path already exists: {sockpath}"
         )
 
-    state_controller = NodeTaskController(sockpath, node)
+    state_controller = NodeTaskController(sockpath, nodectx)
+    nodectx.state_controller = state_controller
     shutdown.register_shutdown(state_controller.stop)
 
     if threaded:
@@ -103,7 +103,7 @@ def start_machinerymanager(nodectx):
             f"Machinery manager socket path already exists: {sockpath}"
         )
 
-    manager = MachineryManager(sockpath)
+    manager = MachineryManager(sockpath, nodectx)
     nodectx.machinery_manager = manager
     shutdown.register_shutdown(manager.stop)
     shutdown.register_shutdown(manager.shutdown_all, order=999)
@@ -136,7 +136,7 @@ def start_resultserver():
     ip = config.cfg("cuckoo", "resultserver", "listen_ip")
     port = config.cfg("cuckoo", "resultserver", "listen_port")
     rs = ResultServer(
-        sockpath, cuckoocwd.root, ip, port, loglevel=get_global_loglevel()
+        sockpath, cuckoocwd, ip, port, loglevel=get_global_loglevel()
     )
     log.debug(
         "Starting resultserver.", listenip=ip, listenport=port,
@@ -167,46 +167,29 @@ def start_resultserver():
 
     servers.add(sockpath, ip, port)
 
-# def start_node(loglevel):
-#     from multiprocessing import set_start_method
-#     from cuckoo.common.startup import init_global_logging
-#
-#     set_start_method("spawn")
-#     cuckoocwd.set(cuckoocwd.DEFAULT)
-#     print("asd")
-#
-#     init_global_logging(loglevel, Paths.log("node.log"))
-#     load_configurations()
-#     n = Node()
-#     start_resultserver()
-#     start_machinerymanager()
-#     start_taskrunner()
-#     shutdown.register_shutdown(n.stop)
-#     n.add_work("20210318-96A6FD_1", "windows10x64_1")
-#     n.start()
-#     start_statecontroller(n)
-
 class NodeCtx:
 
     def __init__(self):
         self.node = None
         self.machinery_manager = None
-        self.state_control = None
+        self.state_controller = None
         self.zip_results = False
 
 def start_local(stream_receiver):
     ctx = NodeCtx()
+    # Results should not be zipped if it is a local node.
+    ctx.zip_results = False
     start_resultserver()
     start_machinerymanager(ctx)
     start_taskrunner()
-    node = Node(ctx.machinery_manager, stream_receiver)
+    node = Node(ctx, stream_receiver)
     ctx.node = node
     shutdown.register_shutdown(node.stop)
     node.start()
-    start_nodestatecontrol(ctx.node, threaded=True)
+    start_nodestatecontrol(ctx, threaded=True)
     return ctx
 
-def start_remote(loglevel=None):
+def start_remote(loglevel, api_host="localhost", api_port=8090):
     from cuckoo.node.webapi import make_api_runner
     from multiprocessing import set_start_method
     from cuckoo.common.startup import init_global_logging
@@ -215,11 +198,12 @@ def start_remote(loglevel=None):
     set_start_method("spawn")
     cuckoocwd.set(cuckoocwd.DEFAULT, analyses_dir="nodework")
 
-    init_global_logging(loglevel or logging.DEBUG, Paths.log("node.log"))
+    init_global_logging(loglevel, Paths.log("node.log"))
     load_configurations()
 
-
     ctx = NodeCtx()
+
+    # Results should be zipped after a task finished
     ctx.zip_results = True
     start_resultserver()
     start_machinerymanager(ctx)
@@ -231,22 +215,12 @@ def start_remote(loglevel=None):
     shutdown.register_shutdown(node.stop)
 
     ctx.node = node
-
     node.start()
 
     try:
-        runner.create_site()
+        runner.create_site(host=api_host, port=api_port)
     except OSError as e:
         raise StartupError(e)
 
     threading.Thread(target=runner.run_forever).start()
     start_nodestatecontrol(ctx)
-
-# if __name__ == "__main__":
-#
-#     try:
-#         start_remote()
-#     except StartupError as e:
-#         print(f"Startup failed: {e}")
-#     finally:
-#         shutdown.call_registered_shutdowns()

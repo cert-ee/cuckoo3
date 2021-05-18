@@ -180,44 +180,6 @@ def start_importmode(loglevel):
     log.info("Starting import controller")
     start_importcontroller()
 
-
-# def start_cuckoo(loglevel):
-#     from multiprocessing import set_start_method
-#     set_start_method("spawn")
-# 
-#     from cuckoo.common.config import MissingConfigurationFileError
-#     from cuckoo.common.startup import (
-#         init_elasticsearch, init_database, load_configurations,
-#         init_global_logging
-#     )
-# 
-#     # Initialize globing logging to cuckoo.log
-#     init_global_logging(loglevel, Paths.log("cuckoo.log"))
-# 
-#     log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
-#     log.info("Loading configurations")
-#     try:
-#         load_configurations()
-#     except MissingConfigurationFileError as e:
-#         raise StartupError(f"Missing configuration file: {e}")
-# 
-#     init_elasticsearch(create_missing_indices=True)
-# 
-#     log.info("Starting resultserver")
-#     start_resultserver()
-#     log.info("Loading machineries and starting machinery manager")
-#     start_machinerymanager()
-#     log.info("Initializing database")
-#     init_database()
-#     log.info("Starting processing handler and workers")
-#     start_processing_handler()
-#     log.info("Starting task runner")
-#     start_taskrunner()
-#     log.info("Starting state controller")
-#     start_statecontroller()
-#     log.info("Starting scheduler")
-#     start_scheduler()
-
 def start_localnode(cuckooctx):
     from cuckoo.node.startup import start_local
 
@@ -239,7 +201,7 @@ def start_resultretriever(nodeapi_clients):
         )
 
     retriever = ResultRetriever(
-        sockpath, cuckoocwd.root, get_global_loglevel()
+        sockpath, cuckoocwd, get_global_loglevel()
     )
 
     for client in nodeapi_clients:
@@ -372,9 +334,7 @@ def start_cuckoo_controller(loglevel):
     log.debug("Starting scheduler")
     cuckooctx.scheduler.start()
 
-
-
-def start_cuckoo2(loglevel):
+def start_cuckoo(loglevel):
     try:
         from multiprocessing import set_start_method
         set_start_method("spawn")
