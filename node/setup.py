@@ -4,6 +4,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import setuptools
+import platform
 import sys
 
 if sys.version[0] == "2":
@@ -11,6 +12,9 @@ if sys.version[0] == "2":
         "The latest version of Cuckoo is Python >=3.6 only. Any Cuckoo version "
         "earlier than 3.0.0 supports Python 2."
     )
+
+if platform.system().lower() != "linux":
+    sys.exit("Cuckoo 3 only supports Linux hosts")
 
 setuptools.setup(
     name="Cuckoo-node",
@@ -43,6 +47,8 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         "Cuckoo-common==0.1.0",
-        "Cuckoo-machineries==0.1.0"
+        "Cuckoo-machineries==0.1.0",
+        "aiohttp>=3.6.2, <3.7",
+        "aiohttp-sse>=2.0.0, <2.1"
     ],
 )

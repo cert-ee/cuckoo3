@@ -4,6 +4,7 @@
 # See the file 'docs/LICENSE' for copying permission.
 
 import setuptools
+import platform
 import sys
 
 if sys.version[0] == "2":
@@ -11,6 +12,9 @@ if sys.version[0] == "2":
         "The latest version of Cuckoo is Python >=3.6 only. Any Cuckoo version"
         " earlier than 3.0.0 supports Python 2."
     )
+
+if platform.system().lower() != "linux":
+    sys.exit("Cuckoo 3 only supports Linux hosts")
 
 setuptools.setup(
     name="Cuckoo",
