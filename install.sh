@@ -21,4 +21,5 @@ pip install -e ./common
 pip install -e ./processing
 pip install -e ./machineries
 pip install -e ./web
+pip install -e ./node
 pip install -e ./core
