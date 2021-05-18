@@ -455,7 +455,7 @@ class NodeAPIClient:
         except MachineListError as e:
             raise ClientError(f"Failed to read machine list: {e}")
 
-    def download_result(self, task_id, file_path, chunk_size=10*1024):
+    def download_result(self, task_id, file_path, chunk_size=256*1024):
         if os.path.exists(file_path):
             raise ClientError(f"Path already exists: {file_path}")
 
