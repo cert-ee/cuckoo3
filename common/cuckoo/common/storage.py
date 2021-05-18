@@ -69,10 +69,11 @@ class _CWDDirs:
     @classmethod
     def create(cls, create_in: Path):
         for dirpath in cls.list_paths():
-            create_in.joinpath(dirpath).mkdir(exist_ok=True, mode=cls.MODE)
-            child_cwddirs = cls.CHILD_DIRS.get(dirpath.path)
+            parent = create_in.joinpath(dirpath)
+            parent.mkdir(exist_ok=True, mode=cls.MODE)
+            child_cwddirs = cls.CHILD_DIRS.get(dirpath.name)
             if child_cwddirs:
-                child_cwddirs.create(dirpath)
+                child_cwddirs.create(parent)
 
 
 class StorageDirs(_CWDDirs):
@@ -114,16 +115,24 @@ class RootDirs(_CWDDirs):
     def list_names(cls):
         return [cls.CONF, cls.STORAGE, cls.OPERATIONAL, cls.LOG]
 
+CWD_ENVVAR = "CUCKOO_CWD"
+
 class _CuckooCWD:
 
-    DEFAULT_NAME = ".cuckoocwd"
+    _DEFAULT_NAME = ".cuckoocwd"
     _CWD_FILE_NAME = ".cuckoocwd"
-
-    DEFAULT = Path.home().joinpath(DEFAULT_NAME)
 
     def __init__(self):
         self._dir = None
         self._analyses_dir = None
+
+    @property
+    def DEFAULT(self):
+        path = os.environ.get(CWD_ENVVAR)
+        if path:
+            return Path(path)
+
+        return Path.home().joinpath(self._DEFAULT_NAME)
 
     @property
     def root(self):
@@ -147,11 +156,11 @@ class _CuckooCWD:
 
     @staticmethod
     def exists(path):
-        return path.exists()
+        return Path(path).exists()
 
     @staticmethod
     def is_valid(path):
-        return path.joinpath(_CuckooCWD._CWD_FILE_NAME).is_file()
+        return Path(path).joinpath(_CuckooCWD._CWD_FILE_NAME).is_file()
 
     @staticmethod
     def have_permission(path):
@@ -174,7 +183,7 @@ class _CuckooCWD:
         if self._dir:
             _remove_deletion_dir(self._dir)
 
-        self._dir = Path(path)
+        self._dir = path
 
         # The analyses dir can be changed. A "remote" Cuckoo node can be on the
         # same machine and might share a cwd, but it should not interact
@@ -182,7 +191,7 @@ class _CuckooCWD:
         # data it works with. It must be completely invisible to the caller of
         # any path helpers that this happens, though.
         self._analyses_dir = analyses_dir
-        os.environ["CUCKOO_CWD"] = str(path)
+        os.environ[CWD_ENVVAR] = str(path)
         _add_deletion_dir(self._dir)
 
     @staticmethod
@@ -202,6 +211,14 @@ class _CuckooCWD:
         # Create empty file with specific name so that a given directory
         # can later be identified as a Cuckoo cwd
         cwdroot.joinpath(_CuckooCWD._CWD_FILE_NAME).touch()
+
+    def update_missing(self):
+        """Create missing directories and new files"""
+        # Note: Currently only copies missing files if the file's directory
+        # does not exist yet. TODO: create updating helper that solves this.
+        cwdroot = self.root
+        RootDirs.create(cwdroot)
+        _CuckooCWD._add_package_cwdfiles(cwdroot)
 
     @staticmethod
     def _add_package_cwdfiles(path):
