@@ -2,6 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from secrets import token_hex
+
 from cuckoo.common import config
 
 class Machinery(config.String):
@@ -84,6 +86,9 @@ typeloaders = {
         "remote_nodes": config.NestedDictionary("example1", {
             "api_url": config.HTTPUrl(default_val="http://127.0.1:8090"),
             "api_key": config.String(sensitive=True),
-        })
+        }),
+        "node_settings": {
+            "api_key": config.String(sensitive=True, default_val=token_hex(32))
+        }
     }
 }

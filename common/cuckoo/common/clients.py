@@ -1,24 +1,21 @@
-# Copyright (C) 2020 Cuckoo Foundation.
+# Copyright (C) 2020 - 2021 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import os.path
-
-import aiohttp
 import asyncio
-import requests
 import json.decoder
+import os.path
 from urllib.parse import urljoin
-
-from aiohttp_sse_client import client as sse_client
-from aiohttp.client_exceptions import ClientError as aiohttpClientError
+import aiohttp
+import requests
 from aiohttp import ClientSession, ClientTimeout
+from aiohttp.client_exceptions import ClientError as aiohttpClientError
+from aiohttp_sse_client import client as sse_client
 
 from .ipc import (
     request_unix_socket, message_unix_socket, ResponseTimeoutError, IPCError,
     a_request_unix_socket
 )
-
 from .machines import read_machines_dump_dict, MachineListError
 
 class ClientError(Exception):
@@ -253,10 +250,8 @@ def _response_ctx(response):
 
 async def _aiohttp_response_ctx(response):
     try:
-        print("RES CTX")
         r_json = await response.json()
     except (json.JSONDecodeError, aiohttp.client_exceptions.ClientError):
-        print("AAAAAA")
         r_json = None
 
     return _Responsectx(response.status, r_json)
@@ -276,8 +271,8 @@ def _raise_for_status(responsectx, endpoint, expected_status=200):
         )
     elif code == 401:
         raise APIPermissionDenied(
-            f"The given api key does not have permission to access "
-            f"endpoint: {endpoint}"
+            f"Incorrect authentication method/api key or key does not have "
+            f"permission to access endpoint. Endpoint: {endpoint}"
         )
     elif code == 404:
         raise APIDoesNotExistError(
@@ -425,15 +420,20 @@ class NodeAPIClient:
     def event_endpoint(self):
         return urljoin(self.api_url, "events")
 
-    def get_headers(self):
+    def get_headers(self, encode_token=True):
+        token = f"token {self._api_key}"
+
+        # Requests needs the token to be encoded, otherwise it will try to
+        # encode it as latin-1, which will fail with some characters.
+        # aiohttp only accepts strings as header values.
         return {
-            "Authorization": f"token {self._api_key}"
+            "Authorization": token if not encode_token else token.encode()
         }
 
     def ping(self):
         api = urljoin(self.api_url, "ping")
         try:
-            res = requests.get(api, timeout=5)
+            res = requests.get(api, timeout=5, headers=self.get_headers())
         except requests.exceptions.RequestException as e:
             raise ClientError(f"Node API ping failed. {e}")
 
@@ -443,7 +443,7 @@ class NodeAPIClient:
     def machine_list(self):
         api = urljoin(self.api_url, f"machines")
         try:
-            res = requests.get(api, timeout=5)
+            res = requests.get(api, timeout=5, headers=self.get_headers())
         except requests.exceptions.RequestException as e:
             raise ClientError(f"Retrieving machine list failed. {e}")
 
@@ -462,7 +462,8 @@ class NodeAPIClient:
         api = urljoin(self.api_url, f"task/{task_id}")
 
         try:
-            with requests.get(api, stream=True) as r:
+            headers = self.get_headers()
+            with requests.get(api, stream=True, headers=headers) as r:
                 if r.status_code != 200:
                     _raise_for_status(_response_ctx(r), api, 200)
 
@@ -481,7 +482,10 @@ class NodeAPIClient:
         try:
             async with aiohttp.ClientSession() as ses:
                 with open(zip_path, "rb") as fp:
-                    res = await ses.post(api, data={"file": fp})
+                    res = await ses.post(
+                        api, data={"file": fp},
+                        headers=self.get_headers(encode_token=False)
+                    )
         except aiohttpClientError as e:
             raise ClientError(f"Error during work upload. {e}")
 
@@ -491,9 +495,14 @@ class NodeAPIClient:
     async def start_task(self, task_id, machine_name):
         api = urljoin(self.api_url, f"task/{task_id}/start")
 
-        async with aiohttp.ClientSession(timeout=ClientTimeout(sock_read=1)) as ses:
+        async with aiohttp.ClientSession(
+                timeout=ClientTimeout(sock_read=5)
+        ) as ses:
             try:
-                res = await ses.post(api, json={"machine_name": machine_name})
+                res = await ses.post(
+                    api, json={"machine_name": machine_name},
+                    headers=self.get_headers(encode_token=False)
+                )
             except aiohttp.client_exceptions.ClientError as e:
                 raise ClientError(f"Error during task start request. {e}")
 
@@ -529,7 +538,7 @@ class NodeEventReader:
 
     async def open(self):
         ses = ClientSession(timeout=ClientTimeout(sock_read=0))
-        headers = self.client.get_headers()
+        headers = self.client.get_headers(encode_token=False)
         if self.last_id:
             headers["Last-Event-Id"] = str(self.last_id)
 

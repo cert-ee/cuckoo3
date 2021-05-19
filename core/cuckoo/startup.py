@@ -161,7 +161,6 @@ def start_importmode(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
 
-    from cuckoo.common.config import MissingConfigurationFileError
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
@@ -174,7 +173,7 @@ def start_importmode(loglevel):
     log.info("Loading configurations")
     try:
         load_configurations()
-    except MissingConfigurationFileError as e:
+    except config.MissingConfigurationFileError as e:
         raise StartupError(f"Missing configuration file: {e}")
 
     log.info("Starting import controller")
@@ -282,7 +281,6 @@ def start_cuckoo_controller(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
 
-    from cuckoo.common.config import MissingConfigurationFileError
     from cuckoo.common.startup import (
         init_elasticsearch, init_database, load_configurations,
         init_global_logging
@@ -300,8 +298,10 @@ def start_cuckoo_controller(loglevel):
     try:
         load_configurations()
         config.load_config(Paths.config("distributed.yaml"))
-    except MissingConfigurationFileError as e:
+    except config.MissingConfigurationFileError as e:
         raise StartupError(f"Missing configuration file: {e}")
+    except config.ConfigurationError as e:
+        raise StartupError(e)
 
     log.debug("Loading remote nodes")
     api_clients = make_node_api_clients()
@@ -339,7 +339,6 @@ def start_cuckoo(loglevel):
         from multiprocessing import set_start_method
         set_start_method("spawn")
 
-        from cuckoo.common.config import MissingConfigurationFileError
         from cuckoo.common.startup import (
             init_elasticsearch, init_database, load_configurations,
             init_global_logging
@@ -353,7 +352,7 @@ def start_cuckoo(loglevel):
         log.info("Loading configurations")
         try:
             load_configurations()
-        except MissingConfigurationFileError as e:
+        except config.MissingConfigurationFileError as e:
             raise StartupError(f"Missing configuration file: {e}")
 
         init_elasticsearch(create_missing_indices=True)

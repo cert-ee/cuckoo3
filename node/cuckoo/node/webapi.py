@@ -4,12 +4,14 @@
 
 import asyncio
 import json
+import hmac
 from collections import deque
 from aiohttp import web
 from aiohttp_sse import sse_response
 
 from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 from cuckoo.common.machines import serialize_machinelists
+from cuckoo.common.config import cfg
 from cuckoo.common.storage import (
     random_filename, delete_file, Paths, AnalysisPaths, split_analysis_id,
     create_analysis_folder, TaskPaths, TASK_ID_REGEX
@@ -18,6 +20,32 @@ from cuckoo.common.storage import (
 from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
 
 MAX_UPLOAD_SIZE = 1024 * 1024 * 1024
+
+@web.middleware
+async def check_token(request, handler):
+    token_key = request.headers.get("Authorization")
+    if not token_key:
+        return web.HTTPUnauthorized()
+
+    try:
+        token, key = token_key.split(" ", 1)
+        token = token.strip()
+        key = key.strip().encode()
+    except (ValueError, UnicodeEncodeError):
+        return web.HTTPUnauthorized()
+    except UnicodeEncodeError:
+        return web.HTTPServerError(reason="Failed to encode password to bytes")
+
+    if token.lower() != "token":
+        return web.HTTPUnauthorized(reason="Incorrect authentication type")
+
+    if not hmac.compare_digest(
+            key, cfg("distributed.yaml", "node_settings", "api_key").encode()
+    ):
+        return web.HTTPUnauthorized()
+
+    return await handler(request)
+
 
 class StateSSE(InfoStreamReceiver):
 
@@ -255,9 +283,9 @@ class APIRunner:
         await self.runner.shutdown()
         await self.site.stop()
         await self.runner.cleanup()
+        self.loop.stop()
 
     def stop(self):
-        self.loop.stop()
         asyncio.run_coroutine_threadsafe(self._stop(), self.loop)
 
     def create_site(self, host="localhost", port=8080):
@@ -268,12 +296,13 @@ class APIRunner:
 
     def run_forever(self):
         self.loop.run_forever()
+        self.loop.close()
 
 def make_api_runner(nodectx):
     loop = asyncio.new_event_loop()
     statesse = StateSSE(loop)
     api = API(nodectx, statesse)
-    app = web.Application()
+    app = web.Application(middlewares=[check_token])
     app.add_routes([
         web.get("/ping", api.ping),
         web.get("/machines", api.get_machines),

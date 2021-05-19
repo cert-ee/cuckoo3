@@ -199,10 +199,15 @@ def start_remote(loglevel, api_host="localhost", api_port=8090):
     cuckoocwd.set(cuckoocwd.DEFAULT, analyses_dir="nodework")
 
     init_global_logging(loglevel, Paths.log("node.log"))
-    load_configurations()
+    try:
+        load_configurations()
+        config.load_config(Paths.config("distributed.yaml"))
+    except config.MissingConfigurationFileError as e:
+        raise StartupError(f"Missing configuration file: {e}")
+    except config.ConfigurationError as e:
+        raise StartupError(e)
 
     ctx = NodeCtx()
-
     # Results should be zipped after a task finished
     ctx.zip_results = True
     start_resultserver()

@@ -8,3 +8,9 @@ remote_nodes:
     # Remote node API key.
     api_key: {{ node.api_key }}
 {% endfor %}
+
+# The settings used if the Cuckoo install is started as a Cuckoo node.
+node_settings:
+  # The node API key. This must be configured in the main Cuckoo's
+  # remote_nodes configuration section.
+  api_key: {{ node_settings.api_key }}
