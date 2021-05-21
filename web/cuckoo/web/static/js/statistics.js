@@ -78,15 +78,9 @@
       },
       options: {
         color: colorScheme,
-        // responsive: false,
         maintainAspectRatio: false,
-        animation: {
-          duration: 0
-        },
-        datasets: {
-          bar: { backgroundColor: colorScheme },
-          line: { fill: 'origin' }
-        },
+        animation: false,
+        datasets: {},
         plugins: {
           legend: {
             display: false
@@ -94,21 +88,66 @@
         }
       }
     };
+
     // create a line chart for chart.type = line
     if(type === 'line') {
+
+      chartSetup.options.datasets.line = {
+        fill: 'origin',
+        pointRadius: 3,
+        pointHitRadius: 10,
+        pointBackgroundColor: 'rgb(15,72,90)',
+        pointBorderColor: 'rgb(255,255,255)',
+        borderColor: 'rgba(46,148,241,.7)',
+        pointBorderWidth: 2,
+        borderWidth: 5,
+        borderCapStyle: 'round', // 'round', 'butt' or 'square'
+        borderJoinStyle: 'round', // 'bevel', 'round' or 'miter'
+        backgroundColor: 'rgba(46,148,241,.5)'
+      }
+
+      // scales configuration
+      chartSetup.options.scales = {
+        x: {
+          type: 'time',
+          time: {
+            displayFormats: {
+              year: "yy",
+              month: "LLL yy"
+            }
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      };
+
+      // tooltip setup
+      chartSetup.options.plugins.tooltip = {
+
+      }
+
+      // populate datasets from json body
       chartSetup.data.datasets.push({
         label: name,
         data: data.map(p => {
           return {
-            x: p.label,
+            x: new Date(p.label),
             y: p.value
           }
         })
       });
+
+      // render line chart
       const chart = new Chart(ctx, chartSetup);
+
     }
+
     // create a bar chart for chart.type = bar
     if(type == 'bar') {
+      chartSetup.options.datasets.bar = {
+        backgroundColor: colorScheme
+      };
       chartSetup.data.labels = data.map(p => p.label);
       chartSetup.data.datasets.push({
         label: name,
