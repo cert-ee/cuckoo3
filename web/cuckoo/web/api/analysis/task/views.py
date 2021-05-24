@@ -2,6 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from django.http import FileResponse
+
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -87,3 +89,18 @@ class CompositeTask(APIView):
             return Response({"error": str(e)}, status=500)
 
         return Response(composite.to_dict())
+
+class Pcap(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, analysis_id, task_id):
+        try:
+            task = retriever.get_task(analysis_id, task_id)
+            pcap_fp = task.pcap
+        except ResultDoesNotExistError:
+            return Response(status=404)
+
+        return FileResponse(
+            pcap_fp, as_attachment=True, filename=f"{task_id}.pcap"
+        )

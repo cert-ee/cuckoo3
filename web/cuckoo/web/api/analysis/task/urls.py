@@ -11,7 +11,8 @@ register_converter(converters.TaskId, "task_id")
 
 urlpatterns = [
     path("<task_id:task_id>", views.Task.as_view()),
-    path("<task_id:task_id>/post",views.Post.as_view()),
+    path("<task_id:task_id>/post", views.Post.as_view()),
     path("<task_id:task_id>/machine", views.Machine.as_view()),
-    path("<task_id:task_id>/composite",views.CompositeTask.as_view()),
+    path("<task_id:task_id>/composite", views.CompositeTask.as_view()),
+    path("<task_id:task_id>/pcap", views.Pcap.as_view())
 ]

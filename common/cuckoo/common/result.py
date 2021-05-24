@@ -8,7 +8,9 @@ from .strictcontainer import (
     Analysis, Task, Identification, Pre, Post, StrictContainer
 )
 from .machines import Machine
-from .clients import APIError, APIServerError, APIDoesNotExistError
+from .clients import (
+    APIError, APIServerError, APIDoesNotExistError, ClientError
+)
 
 class ResultError(Exception):
     pass
@@ -165,6 +167,9 @@ class TaskResult(Result):
     def _load_machine(self, missing_default=None):
         raise NotImplementedError
 
+    def _get_pcap_fp(self):
+        raise NotImplementedError
+
     def load_requested(self, missing_report_default=None):
         if Results.ANALYSIS in self._include:
             self._load_analysis()
@@ -195,6 +200,10 @@ class TaskResult(Result):
             self._load_machine()
 
         return self._machine
+
+    @property
+    def pcap(self):
+        return self._get_pcap_fp()
 
     def to_dict(self):
         d = {}
@@ -251,11 +260,19 @@ class LocalTaskResult(TaskResult):
                 f"Invalid machine.json: {e}"
             )
 
+    def _get_pcap_fp(self):
+        pcap_path = TaskPaths.pcap(self.task_id)
+        if not pcap_path.is_file():
+            raise ResultDoesNotExistError("No PCAP found for task")
+
+        return open(pcap_path, "rb")
+
 class RemoteTask(TaskResult):
 
-    def __init__(self, analysis_id, task_id, data, include):
+    def __init__(self, analysis_id, task_id, api_client, data={}, include=[]):
         super().__init__(analysis_id, task_id, include)
         self._data = data
+        self._api = api_client
 
     def _load_task(self):
         d = self._data.get("task")
@@ -318,6 +335,14 @@ class RemoteTask(TaskResult):
             self._post = Post(**d)
         except (ValueError, KeyError, TypeError) as e:
             raise InvalidResultDataError(f"Invalid report.json: {e}")
+
+    def _get_pcap_fp(self):
+        try:
+            return self._api.task_pcap(self.analysis_id, self.task_id)
+        except APIDoesNotExistError:
+            raise ResultDoesNotExistError("No PCAP found for task")
+        except ClientError as e:
+            raise ResultError(f"Failed to retrieve PCAP: {e}")
 
 class RemoteAnalysis(AnalysisResult):
 
@@ -392,6 +417,11 @@ class ResultRetriever:
                 f"Analysis {analysis_id} does not exist."
             )
 
+        if not include:
+            return RemoteTask(
+                analysis_id, task_id, self.api_client, {}, include
+            )
+
         try:
             data = self.api_client.task_composite(
                 analysis_id, task_id, retrieve=include
@@ -403,9 +433,9 @@ class ResultRetriever:
         except APIError as e:
             raise ResultError(e)
 
-        return RemoteTask(analysis_id, task_id, data, include)
+        return RemoteTask(analysis_id, task_id, self.api_client, data, include)
 
-    def get_task(self, analysis_id, task_id, include):
+    def get_task(self, analysis_id, task_id, include=[]):
         if not isinstance(include, list):
             include = list(include)
 
@@ -453,6 +483,7 @@ class ResultRetriever:
             )
 
         return LocalAnalysisResult(analysis_id, include)
+
 
 
 retriever = ResultRetriever()

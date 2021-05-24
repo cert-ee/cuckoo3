@@ -333,6 +333,28 @@ class APIClient:
 
         return res.json()
 
+    def _do_streamdownload(self, endpoint, expected_status=200):
+        url = urljoin(self._host, endpoint)
+        try:
+            res = requests.get(url, headers=self._make_headers(), stream=True)
+        except requests.exceptions.ConnectionError as e:
+            raise ClientConnectionError(
+                f"Failed to connect to API endpoint {self._host}. {e}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"API request failed: {e}")
+
+        if res.status_code != expected_status:
+            _raise_for_status(_response_ctx(res), endpoint, expected_status)
+
+        res.raw.decode_content = True
+        return res.raw
+
+    def task_pcap(self, analysis_id, task_id):
+        return self._do_streamdownload(
+            f"/analysis/{analysis_id}/task/{task_id}/pcap"
+        )
+
     def analysis(self, analysis_id):
         return self._do_json_get(
             f"/analysis/{analysis_id}", expected_status=200
@@ -342,7 +364,6 @@ class APIClient:
         return self._do_json_get(
             f"/analysis/{analysis_id}/pre", expected_status=200
         )
-
 
     def identification(self, analysis_id):
         return self._do_json_get(

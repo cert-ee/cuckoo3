@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from django.urls import path, register_converter
+from django.urls import path, register_converter, include
 
 from cuckoo.web import converters
 from . import views
@@ -18,5 +18,9 @@ urlpatterns = [
     path(
         "<analysis_id:analysis_id>/manualstatus",
         views.ReadyForManual.as_view()
+    ),
+    path(
+        "<analysis_id:analysis_id>/task/",
+        include("cuckoo.web.uiapi.analyses.task.urls")
     )
 ]
