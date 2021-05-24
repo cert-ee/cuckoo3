@@ -157,6 +157,9 @@ class SettingsHelper:
         self._settings["extrpath"] = extrpath
 
     def add_platform(self, platform, os_version="", tags=[]):
+        if not platform:
+            raise SubmissionError(f"Platform cannot be empty")
+
         if not isinstance(platform, str):
             raise SubmissionError(f"platform must be a string. {platform!r}")
         if not isinstance(os_version, str):
@@ -291,6 +294,10 @@ class SettingsMaker:
             self._last_modify_time = self._dump_modify_dt()
             self._last_reload = datetime.utcnow()
             self.machines = read_machines_dump(self._machine_dump_path)
+
+    def available_platforms(self):
+        self._reload_if_needed()
+        return self.machines.get_platforms_versions()
 
     def new_settings(self, machinelists=[]):
         """The machine list must have been loaded before if no

@@ -85,7 +85,7 @@ typeloaders = {
     "distributed.yaml": {
         "remote_nodes": config.NestedDictionary("example1", {
             "api_url": config.HTTPUrl(default_val="http://127.0.1:8090"),
-            "api_key": config.String(sensitive=True),
+            "api_key": config.String(sensitive=True, default_val="examplekey"),
         }),
         "node_settings": {
             "api_key": config.String(sensitive=True, default_val=token_hex(32))

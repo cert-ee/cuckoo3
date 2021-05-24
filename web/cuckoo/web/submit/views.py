@@ -11,15 +11,16 @@ from django.http import (
 from django.shortcuts import render, redirect
 from django.views import View
 
-_available_platforms = [
-    {   "default": platform == cfg(
-            "cuckoo", "platform", "default_platform", "platform"
-        ),
-        "platform": platform,
-        "os_version": [os_version for os_version in os_versions]
-     } for platform, os_versions in
-    submit.settings_maker.machines.get_platforms_versions().items()
-]
+def _make_web_platforms(available_platforms):
+    return [
+        {
+            "default": platform == cfg(
+                "cuckoo", "platform", "default_platform", "platform"
+            ),
+            "platform": platform,
+            "os_version": [os_version for os_version in os_versions]
+        } for platform, os_versions in available_platforms.items()
+    ]
 
 class SubmitFile(View):
     def get(self, request):
@@ -80,7 +81,11 @@ class Settings(View):
             request, template_name="submit/settings.html.jinja2",
             context={
                 "unpacked": filetree,
-                "possible_settings": {"platforms" :_available_platforms},
+                "possible_settings": {
+                    "platforms" :_make_web_platforms(
+                        submit.settings_maker.available_platforms()
+                    )
+                },
                 "analysis_id": analysis_id
             }
         )

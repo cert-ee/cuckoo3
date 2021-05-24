@@ -31,7 +31,7 @@ class Settings(View):
 
     @method_decorator(accepts_json)
     def put(self, request, analysis_id):
-        s_maker = submit.SettingsMaker()
+        s_maker = submit.settings_maker.new_settings()
         try:
             s_maker.set_manual(True)
             s_maker.set_timeout(request.json.get("timeout"))
