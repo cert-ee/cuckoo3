@@ -1,24 +1,22 @@
-<div id="tab-misp" hidden>
-  {% call ui_box(title="MISP", has_padding=False, collapsed=False) %}
-    <table class="table">
-      <thead>
+{% call ui_box(title="MISP", has_padding=False, collapsed=False) %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>IOC</th>
+        <th>Description</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in report.misp %}
         <tr>
-          <th>ID</th>
-          <th>IOC</th>
-          <th>Description</th>
-          <th>Date</th>
+          <td class="is-vtop"><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+          <td class="is-monospace has-auto-width is-break is-vtop">{{ m.ioc }}</td>
+          <td class="is-vtop">{{ m.description }}</td>
+          <td class="is-vtop is-datetime">{{ m.datetime|formatisodatetime }}</td>
         </tr>
-      </thead>
-      <tbody>
-        {% for m in report.misp %}
-          <tr>
-            <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
-            <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
-            <td>{{ m.description }}</td>
-            <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endcall %}
-</div>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}

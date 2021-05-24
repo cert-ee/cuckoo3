@@ -104,15 +104,19 @@
     @extend .no-border-bottom
 
 .no-radius
-  border-radius: 0
+  border-radius: 0 !important
   &-left
-    border-top-left-radius: 0
-    border-bottom-left-radius: 0
+    border-top-left-radius: 0 !important
+    border-bottom-left-radius: 0 !important
   &-right
-    border-top-right-radius: 0
-    border-bottom-right-radius: 0
+    border-top-right-radius: 0 !important
+    border-bottom-right-radius: 0 !important
 
-.hidden
+.no-shadow
+  box-shadow: none !important
+
+.hidden,
+[hidden]
   position: absolute
   overflow: hidden
   clip: rect(0 0 0 0)
@@ -150,4 +154,12 @@ button[disabled]
 
 .is-sticky
   position: sticky
+  z-index: 100
   top: 0
+
+.no-overflow
+  overflow: hidden
+  &-x
+    overflow-x: hidden
+  &-y
+    overflow-y: hidden

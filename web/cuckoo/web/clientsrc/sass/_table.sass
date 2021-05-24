@@ -6,7 +6,7 @@
   border-collapse: collapse
 
   &.has-border
-    td
+    & > tbody > td
       border-bottom: 1px solid $border
 
   &.has-layout-fixed
@@ -31,6 +31,10 @@
       word-wrap: break-word
       word-break: break-all
       min-width: 10rem
+    &.is-vtop
+      vertical-align: top
+    &.is-vbottom
+      vertical-align: bottom
     &.has-ellipsis
       white-space: nowrap
       overflow: hidden
@@ -85,9 +89,9 @@
   // table-cell styles
   td
     font-size: .8em
-    // word-wrap: break-word
-    // word-break: break-all
-    // min-width: 10rem
+
+    .table
+      font-size: 1.2em
 
   // table header styles
   thead
@@ -121,56 +125,57 @@
       background-color: $light-matte
 
   // tbody-specific styles
-  tbody
-    tr
-      &:nth-child(odd):not([class^="separator-"])
-        background-color: $row-odd
-        &:hover
-          background-color: mix($row-odd, $yellow, 95%)
-      &:nth-child(even)
-        background-color: $row-even
-        &:hover
-          background-color: mix($row-even, $yellow, 95%)
-      &.has-background-red
-        background-color: $red
-        color: $white
-        &:hover
-          background-color: shade($red, .1)
+  &.has-striped-rows
+    & > tbody
+      & > tr
+        &:nth-child(odd):not([class^="separator-"])
+          background-color: $row-odd
+          &:hover
+            background-color: mix($row-odd, $yellow, 95%)
+        &:nth-child(even)
+          background-color: $row-even
+          &:hover
+            background-color: mix($row-even, $yellow, 95%)
+        &.has-background-red
+          background-color: $red
+          color: $white
+          &:hover
+            background-color: shade($red, .1)
 
-      &.is-shown
-        background-color: $blue !important
-        color: $white
-        a, .is-link
-          color: inherit
-        td
-          background-color: transparent
-          font-weight: 700
-
-      &.separator
-        background-color: $white
-        font-size: .9em
-        font-weight: 800
-        text-transform: uppercase
-        border-top: 0.0625rem solid $border
-        border-bottom: 0.0625rem solid $border
-        border: 0
-        text-align: center
-
-        &-bar
+        &.is-shown
+          background-color: $blue !important
+          color: $white
+          a, .is-link
+            color: inherit
           td
-            background: linear(white, $border, 50%)
-            padding: 0
-            box-shadow: inset 0 .1rem 0 rgba($white, .5)
-            border-top: 0.0625rem solid $border
-            border-bottom: 0.0625rem solid $border
+            background-color: transparent
+            font-weight: 700
 
-        &.is-beveled
-          background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .9) 100%)
-          box-shadow: inset 0px -2px 0px $border, inset 0px 2px 0px #FFFFFF
-          text-shadow: 0 0.0625rem 0 rgba($white, 1)
+    tr.separator
+      background-color: $white
+      font-size: .9em
+      font-weight: 800
+      text-transform: uppercase
+      border-top: 0.0625rem solid $border
+      border-bottom: 0.0625rem solid $border
+      border: 0
+      text-align: center
 
-        &:hover
-          background-color: $white
+      &-bar
+        td
+          background-image: linear-gradient(white, $border)
+          padding: $gap/2 $gap
+          box-shadow: inset 0 .1rem 0 rgba($white, .5)
+          border-top: 0.0625rem solid $border
+          border-bottom: 0.0625rem solid $border
+
+      &.is-beveled
+        background: linear-gradient(180deg, #EEEEEE 23.44%, tint($blue, .9) 100%)
+        box-shadow: inset 0px -2px 0px $border, inset 0px 2px 0px #FFFFFF
+        text-shadow: 0 0.0625rem 0 rgba($white, 1)
+
+      &:hover
+        background-color: $white
 
   // sticky header/footer modifier - snaps the table heading to the top of the element
   &.has-sticky-header,

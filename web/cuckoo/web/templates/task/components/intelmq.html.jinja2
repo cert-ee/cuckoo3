@@ -1,31 +1,29 @@
-<div id="tab-intelmq" hidden>
-  {% call ui_box(title="IntelMQ", has_padding=False, collapsible=False) %}
-    <table class="table has-sticky-header">
-      <thead>
+{% call ui_box(title="IntelMQ", has_padding=False, collapsible=False) %}
+  <table class="table has-sticky-header has-striped-rows">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Type</th>
+        <th>IOC</th>
+        <th>Taxonomy</th>
+        <th>Time Source</th>
+        <th>Time Observation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in report.intelmq %}
         <tr>
-          <th>Provider</th>
-          <th>Type</th>
-          <th>IOC</th>
-          <th>Taxonomy</th>
-          <th>Time Source</th>
-          <th>Time Observation</th>
+          <td>
+            <p class="has-text-weight-heavy no-margin-y has-text-small">{{ result.feed_provider }}</p>
+            <p class="no-margin-bottom has-text-small">{{ result.feed_name }}</p>
+          </td>
+          <td>{{ result.classification_type }}</td>
+          <td class="is-wrapped has-ellipsis" data-click-to-copy data-value="{{ result.ioc }}">{{ result.ioc }}</td>
+          <td>{{ result.classification_taxonomy }}</td>
+          <td class="is-mini">{{ result.time_source|formatisodatetime }}</td>
+          <td class="is-mini">{{ result.time_observation|formatisodatetime }}</td>
         </tr>
-      </thead>
-      <tbody>
-        {% for result in report.intelmq %}
-          <tr>
-            <td>
-              <p class="has-text-weight-heavy no-margin-y has-text-small">{{ result.feed_provider }}</p>
-              <p class="no-margin-bottom has-text-small">{{ result.feed_name }}</p>
-            </td>
-            <td>{{ result.classification_type }}</td>
-            <td class="is-wrapped has-ellipsis" data-click-to-copy data-value="{{ result.ioc }}">{{ result.ioc }}</td>
-            <td>{{ result.classification_taxonomy }}</td>
-            <td class="is-mini">{{ result.time_source|formatisodatetime }}</td>
-            <td class="is-mini">{{ result.time_observation|formatisodatetime }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endcall %}
-</div>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}

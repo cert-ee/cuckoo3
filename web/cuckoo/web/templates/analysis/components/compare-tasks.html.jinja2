@@ -1,0 +1,14 @@
+{% call ui_box(title="Compare") %}
+  <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
+  <form class="form" method="POST" id="compare-tasks">
+    {% for task in analysis.tasks %}
+      <div class="control is-checkbox">
+        <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" />
+        <label class="label" for="{{ task.id }}">{{ task.id }}</label>
+      </div>
+    {% endfor %}
+    <div class="control">
+      <input type="submit" value="Compare" class="button is-blue" disabled />
+    </div>
+  </form>
+{% endcall %}

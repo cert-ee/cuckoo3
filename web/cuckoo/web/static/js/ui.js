@@ -194,7 +194,7 @@ function handlePageTabs(tabContext) {
       if(results.length > 0 && !hasActiveTab()) {
         results.forEach(result => result.dispatchEvent(new Event("click")));
       }
-    })
+    });
   }
 
   if(!hasActiveTab() && links.length > 0) {
@@ -228,7 +228,7 @@ function toggleVisibility(element, force=null, event) {
   else
     element.toggleAttribute('hidden');
 
-  // approach 1: if the dispatcher sent an event, take the target of the event
+  // if the dispatcher sent an event, take the target of the event
   // to indicate said toggleable visibility for appropriate style changes.
   if(event) {
     if(element.getAttribute('hidden') === null) {
@@ -416,7 +416,7 @@ function handlePasswordHide(input) {
 
 /**
  * This enables interactions on tag lists such as; 'type-to-tag'
- * @param * @param {HTMLElement} tagList - the password field to toggle
+ * @param {HTMLElement} tagList - the password field to toggle
  * @return {null}
  */
 function handleTagInput(tagList) {
@@ -594,6 +594,67 @@ function handleClickToCopy(elem) {
 }
 
 /**
+ * A simple API for filtering through a list of data by typing a string
+ * @param {HTMLElement} searchBar - the text field to bind the search event to
+ * @example
+ *    <input type="search" data-enhance="#my-list-of-strings" />
+ *    <ul id="my-list-of-strings">
+ *      <li data-search-value="foo">Foo</li>
+ *      <li data-search-value="bar">Bar</li>
+ *      <li data-search-value="baz">Baz</li>
+ *    </ul>
+ * @note The data-enhance attribute in the search input field has to point to
+ *       an element on the page with that referenced id. The elements to filter
+ *       within that context has to have an attribute 'data-search-value' that
+ *       contains the searching context to match against.
+ */
+function handleInlineSearch(searchBar) {
+  const searchElement = document.querySelector(searchBar.dataset.enhance);
+  if(!searchElement) return;
+
+  let hidden = [],
+      shown = [],
+      value = "",
+      attributes = [...searchElement.querySelectorAll('[data-search-value]')],
+      status     = [...document.querySelectorAll('[data-search-status="'+searchElement.id+'"]')];
+
+  function update() {
+    status.forEach(stat => stat.textContent = shown.length);
+    searchElement.classList.toggle('has-no-results', !shown.length);
+  }
+
+  function search(ev) {
+    value = ev.target.value;
+    hidden = [];
+    shown = [];
+
+    if(value.length) {
+      attributes.forEach(el => {
+        if(el.dataset.searchValue.indexOf(value) > -1)
+          shown.push(el);
+        else
+          hidden.push(el);
+      });
+    } else {
+      attributes.forEach(att => att.removeAttribute('hidden'));
+      shown = attributes;
+    }
+
+    hidden.forEach(el => el.setAttribute('hidden', true));
+    shown.forEach((el, i) => {
+      el.classList.toggle('is-odd', !(i % 2));
+      el.removeAttribute('hidden');
+    });
+
+    if(status.length)
+      update();
+  }
+
+  searchBar.addEventListener('keyup', search);
+  searchBar.dispatchEvent(new KeyboardEvent('keyup'));
+}
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -604,17 +665,15 @@ function applyHandler(sel=null, fn=null) {
   return null;
 }
 
-/**
- * document ready state initializer
- */
 document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.navbar .navbar-toggle', handleNavbar);
   applyHandler('.input[type="file"][data-enhance]', handleFileInput);
   applyHandler('.input[type="password"][data-enhance]', handlePasswordHide);
   applyHandler('.list.is-tree[data-enhance]', handleListTree);
-  applyHandler('.tabbar[data-enhance]', handlePageTabs);
   applyHandler('.tag-list[data-enhance]', handleTagInput);
   applyHandler('[data-popover]', handlePopover);
   applyHandler('[data-tooltip]', handleTooltip);
   applyHandler('[data-click-to-copy]', handleClickToCopy);
+  applyHandler('.input[type="search"][data-enhance]', handleInlineSearch);
+  // applyHandler('.tabbar[data-enhance]', handlePageTabs);
 });

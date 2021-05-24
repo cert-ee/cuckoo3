@@ -1,0 +1,22 @@
+{% call ui_box(title="MISP", has_padding=False) %}
+  <table class="table has-striped-rows">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>IOC</th>
+        <th>Description</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in pre.misp %}
+        <tr>
+          <td><a class="is-link" href="{{ m.url }}" target="_blank" title="Open in MISP">{{ m.id }}</a></td>
+          <td class="is-monospace has-auto-width">{{ m.ioc }}</td>
+          <td>{{ m.description }}</td>
+          <td class="is-datetime">{{ m.datetime|formatisodatetime }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}

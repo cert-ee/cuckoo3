@@ -6,8 +6,38 @@
   <li>
     <p class="label">Analysis</p>
     <ul>
-      <li><a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Overview</a></li>
-      <li><a class="{% if report_page == 'static' %}is-active{% endif %}" href="{{ url('Analysis/static', args=[analysis_id]) }}">Static analysis</a></li>
+      <li>
+        <a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Analysis</a>
+        {% if pre %}
+          <ul>
+            {% if pre.static.pe %}
+              <li>
+                <a role="tab" href="#pefiles">PE File</a>
+              </li>
+            {% endif %}
+            {% if pre.virustotal %}
+              <li>
+                <a role="tab" href="#virus-total">Antivirus</a>
+              </li>
+            {% endif %}
+            {% if pre.misp %}
+              <li>
+                <a role="tab" href="#misp">MISP</a>
+              </li>
+            {% endif %}
+            {% if pre.intelmq %}
+              <li>
+                <a role="tab" href="#intelmq">IntelMQ</a>
+              </li>
+            {% endif %}
+            {% if pre.static.office %}
+              <li>
+                <a role="tab" href="#office">Office</a>
+              </li>
+            {% endif %}
+          </ul>
+        {% endif %}
+      </li>
     </ul>
     {% if analysis %}
       <p class="label">Tasks</p>
@@ -31,12 +61,12 @@
             {% endif %}
           </a>
           {% if report and task.id == t.id %}
-            <ul class="has-text-small">
+            <ul>
               {% for component in report_components %}
                 {# only display if the report has the corresponding property #}
                 {% if report[component] %}
                   <li>
-                    <a href="#tab-{{component}}" data-tabbar="#taskReport">
+                    <a role="tab" href="#{{component}}{% if component == 'network' %}:host{% endif %}">
                       {% if report_component_labels[loop.index-1] %}
                         {{ report_component_labels[loop.index-1] }}
                       {% else %}

@@ -1,0 +1,219 @@
+{# PE Timestamp / imphash #}
+<div class="columns is-divided">
+  <div class="column no-margin-left">
+    {% call ui_box(title="PE Timestamp",display_title=False) %}
+      <p class="label no-margin-top">PE Timestamp</p>
+      <p class="is-monospace no-margin">{{ pre.static.pe.pe_timestamp|formatisodatetime }}</p>
+    {% endcall %}
+  </div>
+  <div class="column no-margin-right">
+    {% call ui_box(title="PE Timestamp",display_title=False) %}
+      <p class="label no-margin-top">PE Imphash</p>
+      <p class="is-monospace no-margin">{{ pre.static.pe.pe_imphash }}</p>
+    {% endcall %}
+  </div>
+</div>
+{# PE Sections #}
+{% call ui_box(title="PE Sections", has_padding=False) %}
+  {{ render_table(
+        data=pre.static.pe.pe_sections,
+        cols=["name","virtual_address","virtual_size","size_of_data","entropy"],
+        labels=["Name", "Address","Size","Data Size", "Entropy"],
+        style=["is-monospace","is-monospace","is-monospace","is-monospace","is-monospace"],
+        has_sticky_header=True,
+  )}}
+{% endcall %}
+{# PE Resources #}
+{% call ui_box(title="PE Resources", has_padding=False) %}
+  {{ render_table(
+        data=pre.static.pe.pe_resources,
+        cols=["name","offset","size","language","sublanguage","filetype"],
+        labels=["Name", "Offset","Size","Language","Sub-Language","File type"],
+        style=["is-monospace","is-monospace","is-monospace","is-monospace","is-monospace",None],
+        has_sticky_header=True
+  )}}
+{% endcall %}
+{# PE Sigatures #}
+{% call ui_box(title="PE Signatures", has_padding=False) %}
+  {% for signature in pre.static.pe.signatures %}
+    <nav class="tabbar" data-enhance>
+      <p class="tabbar-link has-half-opacity">
+        {% if signature.issuer %}
+          {% if signature.issuer.commonName %}
+            {{ signature.issuer.commonName }}
+          {% else %}
+            Signature
+          {% endif %}
+        {% else %}
+            Signature
+        {% endif %}
+      </p>
+      <a href="#pesig-results-{{loop.index}}" class="tabbar-link is-active">Results</a>
+      <a href="#pesig-raw-{{loop.index}}" class="tabbar-link">JSON</a>
+    </nav>
+    <div id="pesig-results-{{loop.index}}">
+      <div class="columns is-gapless is-divided">
+        <div class="column">
+          <table class="table has-border has-striped-rows">
+            <tbody>
+              <tr class="separator">
+                <td colspan="2">Issuer</td>
+              </tr>
+              {% if signature.issuer %}
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Common name</strong>
+                  </td>
+                  <td>
+                    {% if signature.issuer.commonName %}
+                      {{ signature.issuer.commonName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Unit name</strong>
+                  </td>
+                  <td>
+                    {% if signature.issuer.organizationalUnitName %}
+                      {{ signature.issuer.organizationalUnitName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Country</strong>
+                  </td>
+                  <td>
+                    {% if signature.issuer.countryName %}
+                      {{ signature.issuer.countryName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Organization</strong>
+                  </td>
+                  <td>
+                    {% if signature.issuer.organizationName %}
+                      {{ signature.issuer.organizationName }}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="2">
+                    <p>No issuer</p>
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        <div class="column">
+          <table class="table has-border has-striped-rows">
+            <tbody>
+              <tr class="separator">
+                <td colspan="2">Subject</td>
+              </tr>
+              {% if signature.subject %}
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Name</strong>
+                  </td>
+                  <td>
+                    {% if signature.subject.commonName %}
+                      {{ signature.subject.commonName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Locality name</strong>
+                  </td>
+                  <td>
+                    {% if signature.subject.localityName %}
+                      {{ signature.subject.localityName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>State / Province name</strong>
+                  </td>
+                  <td>
+                    {% if signature.subject.stateOrProvinceName %}
+                      {{ signature.subject.stateOrProvinceName }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="is-auto-width has-text-right">
+                    <strong>Country</strong>
+                  </td>
+                  <td>
+                    {% if signature.subject.countryName %}
+                      {{ signature.subject.countryName }}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="2">
+                    <p>No subject</p>
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="pesig-raw-{{loop.index}}" hidden>
+      <div class="box has-background-light has-inset-shadow has-padding no-radius">
+        {# <div class="buttons-conjoined has-margin-x has-text-small has-hover-fadein">
+            <button class="button is-beveled" data-tooltip="Use dark syntax theme"><i class="fas fa-adjust  button-icon"></i></button>
+            <button class="button is-beveled" data-tooltip="Switch font style"><i class="fas fa-font button-icon"></i></button>
+            <button class="button is-beveled" data-tooltip="Expand all sections"><i class="fas fa-plus-square button-icon"></i></button>
+            <button class="button is-beveled" data-tooltip="Collapse all sections"><i class="fas fa-minus-square button-icon"></i></button>
+          </div> #}
+        {{ render_dict(signature) }}
+      </div>
+    </div>
+  {% else %}
+    <p class="has-padding no-margin">No signatures.</p>
+  {% endfor %}
+{% endcall %}
+{# PE Imports & Exports #}
+<div class="columns is-divided">
+  <div class="column no-margin-left">
+    {% call ui_box(title="PE Imports", has_padding=False) %}
+      {% if pre.static.pe.pe_imports[0] %}
+        {{ render_table(
+              data=pre.static.pe.pe_imports[0].imports,
+              cols=["name","address"],
+              labels=["Name", "Address"],
+              style=["is-monospace","is-monospace"],
+              has_sticky_header=True
+        )}}
+      {% else %}
+        <p class="has-margin-x">No data</p>
+      {% endif %}
+    {% endcall %}
+  </div>
+  <div class="column no-margin-right">
+    {% call ui_box(title="PE Exports", has_padding=False) %}
+      {% if pre.static.pe.pe_exports[0] %}
+        {{ render_table(
+              data=pre.static.pe.pe_exports[0].exports,
+              cols=["name","address"],
+              labels=["Name", "Address"],
+              style=["is-monospace","is-monospace"],
+              has_sticky_header=True
+        )}}
+      {% else %}
+        <p class="has-margin-x">No data</p>
+      {% endif %}
+    {% endcall %}
+  </div>
+</div>

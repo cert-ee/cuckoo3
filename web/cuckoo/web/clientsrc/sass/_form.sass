@@ -2,6 +2,23 @@
 // This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 // See the file 'docs/LICENSE' for copying permission.
 
+// input control wrapper
+.input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
+  @extend %input-reset
+  padding: calc((#{$gap}/2) - .025rem)
+  background: $white
+  border: .05rem solid $border
+  box-shadow: inset 0 .1rem .062rem rgba(0,0,0,.1)
+  border-radius: $radius
+  &.is-small
+    width: 4rem
+  &:focus
+    border: .05rem solid shade($border, .2)
+
+.input[type="checkbox"],
+.input[type="radio"]
+  margin: 0
+
 // wrapper for a form control and a label
 .field
   margin: $gap 0
@@ -51,7 +68,7 @@
       opacity: 1
     input[type="file"]
       @extend .hidden
-  
+
   &.is-checkable
     padding: $gap/2 0
     .label
@@ -93,21 +110,6 @@
   &.is-set-title
     font-size: 1.1em
 
-// input control wrapper
-.input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
-  @extend %input-reset
-  padding: $gap/2
-  background: $white
-  border: .05rem solid $border
-  &.is-small
-    width: 4rem
-  &:focus
-    border: .05rem solid shade($border, .2)
-
-.input[type="checkbox"],
-.input[type="radio"]
-  margin: 0
-
 // a special standalone control variety, including a label and a control in one
 // element
 .field.is-inline
@@ -141,68 +143,3 @@
         background: $light
         border-color: $border
         border-radius: $radius
-
-
-// redoing the entirety of a field. This is a much more simplified way.
-// @update Nope! This is bulky, I will remove this ASAP in favor of achieving
-// the same with inline forms using one or two modifiers
-.field-block
-  padding: $gap
-  border: 0.0625rem solid $border
-  border-radius: $radius*2
-  background: rgba($black, 0)
-
-  &:hover
-    background: rgba($black, .03)
-
-  .control
-    height: auto
-    &.has-addon
-      border-color: transparent
-      background-color: transparent
-
-  .input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-  .label
-    @extend .no-padding
-
-  .input:not([type="file"]):not([type="checkbox"]):not([type="radio"])
-    border: 0
-    background: transparent
-
-  .is-error
-    @extend .no-margin-y
-    font-size: .7em
-    &:before
-      display: none
-
-  .label > .is-error
-    float: right
-
-  // special support for columns to basically create 2-d layout forms
-  &.has-columns
-    @extend .no-padding
-    & > .columns
-      @extend .is-vtop
-      @extend .is-vstretch
-      @extend .is-divided
-      & > .column
-        @extend .has-padding
-        margin-left: 0
-        margin-right: 0
-        border-style: solid
-        border-color: $border
-        border-width: 0 0.0625rem 0 0
-
-        &:last-child
-          border-width: 0
-
-  &-group &:not(:first-child):not(:last-child)
-    border-radius: 0
-  &-group &:first-child
-    border-bottom-left-radius: 0
-    border-bottom-right-radius: 0
-  &-group &:last-child
-    border-top-left-radius: 0
-    border-top-right-radius: 0
-  &-group &:not(:first-child)
-    border-top: 0

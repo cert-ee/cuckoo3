@@ -1,0 +1,55 @@
+[
+   {
+    "name":"Family counts",
+    "description":"Counts per family this month",
+    "data":[
+      { "value":10, "label":"Emotet" },
+      { "value":31, "label":"Dridex" },
+      { "value": 15, "label": "Locky" },
+      { "value": 70, "label": "Wannacry" },
+      { "value": 120, "label": "RAT" }
+    ],
+    "type":"bar"
+   },
+   {
+    "name":"Daily submissions",
+    "description":"Submission counts this month",
+    "data":[
+      { "value":10, "label":"2021-05-10" },
+      { "value":31, "label":"2021-05-11" },
+      { "value":20, "label":"2021-05-12" },
+      { "value": 57, "label":"2021-05-13" },
+      { "value": 127, "label":"2021-05-14" },
+      { "value": 13, "label":"20231-05-15" },
+      { "value": 42, "label":"2021-05-16" },
+      { "value":10, "label":"2021-05-17" },
+      { "value":31, "label":"2021-05-18" },
+      { "value":20, "label":"2021-05-19" },
+      { "value": 57, "label":"2021-05-20" },
+      { "value": 127, "label":"2021-05-21" },
+      { "value": 13, "label":"20231-05-22" },
+      { "value": 42, "label":"2021-05-23" },
+      { "value":10, "label":"2021-05-24" },
+      { "value":31, "label":"2021-05-25" },
+      { "value":20, "label":"2021-05-26" },
+      { "value": 57, "label":"2021-05-27" },
+      { "value": 127, "label":"2021-05-28" },
+      { "value": 13, "label":"20231-05-29" },
+      { "value": 42, "label":"2021-05-30" },
+      { "value":10, "label":"2021-05-31" },
+      { "value":31, "label":"2021-06-01" },
+      { "value":20, "label":"2021-06-02" },
+      { "value": 57, "label":"2021-06-03" },
+      { "value": 127, "label":"2021-06-04" },
+      { "value": 13, "label":"20231-06-05" },
+      { "value": 42, "label":"2021-06-06" },
+      { "value":31, "label":"2021-06-07" },
+      { "value":20, "label":"2021-06-08" },
+      { "value": 57, "label":"2021-06-09" },
+      { "value": 127, "label":"2021-06-10" }
+    ],
+    "type":"line",
+	  "min":0,
+	  "max": 100
+   }
+]

@@ -1,0 +1,48 @@
+{% call ui_box(title="Task") %}
+  <div class="columns has-padding is-divided">
+    <div class="column is-auto">
+      <div class="ratio-1-1">
+        <div class="ratio-content">
+          <p class="{{ color_text(report.score) }} has-text-huge no-margin"><strong>{{ report.score }}</strong><sub class="has-text-light">/10</sub></p>
+        </div>
+        <div class="ratio-content is-bottom has-text-small has-half-opacity">Task score</div>
+      </div>
+    </div>
+    <div class="column">
+      <h3 class="no-margin-bottom is-monospace">
+        <strong>{{ report.task_id }}</strong>
+        <span class="pull-right has-half-opacity">{{ task.state|taskstatehuman }}</span>
+      </h3>
+      <p class="has-line-break has-text-small">
+        <span class="icon">
+          <i class="far fa-file"></i>
+        </span> {{ analysis.target.filename }}
+      </p>
+      <ul class="list is-horizontal no-margin-bottom has-text-small">
+        <li title="Date of creation">
+          <span class="icon">
+            <i class="far fa-calendar"></i>
+          </span> {{ analysis.created_on | formatdatetime }}
+        </li>
+        <li>
+          <span class="icon">
+            <i class="fas fa-compact-disc"></i>
+          </span> {{ analysis.target.size | filesizeformat }}
+        </li>
+        <li class="is-monospace">
+          <span class="icon">
+            <i class="fas fa-terminal"></i>
+          </span> {{ analysis.target.media_type }}
+        </li>
+      </ul>
+      {% if report.families|length %}
+        <div class="tag-list has-margin-top">
+          <span class="label">Detected families:</span>
+          {% for family in report.families %}
+            <span class="tag no-margin-top is-red">{{ family }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endcall %}

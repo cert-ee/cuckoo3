@@ -4,7 +4,7 @@
 
 {# sets a (for now) fake redirect timer #}
 {% block page_script %}
-  <script type="text/javascript">
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const apiState          = document.querySelector('#state');
       const stateMessage      = apiState.querySelector('.api-state-message');
@@ -15,12 +15,6 @@
       // a redirect to the settings page has to occur.
       function manualStatus(id) {
         return new Promise((resolve, reject) => {
-
-          // if(!window.csrf_token)
-          //   return reject({
-          //     state_desc: "Client error",
-          //     error: "No CSRF token available."
-          //   });
 
           fetch(`/api/analyses/${id}/manualstatus`, {
             headers: {
@@ -56,12 +50,16 @@
             stateMessage.classList.toggle('has-text-red', error != undefined);
             if(error) {
               // do not start a new poll as we received a fatal error.
-              stateMessage.textContent = state_desc;
-              stateDescription.textContent = error;
-              stateIcon.classList.remove('fa-spinner');
-              stateIcon.classList.remove('fa-spin');
-              stateIcon.classList.add('fa-ban');
-              stateIcon.classList.add('is-red')
+              // stateMessage.textContent = state_desc;
+              // stateDescription.textContent = error;
+              // stateIcon.classList.remove('fa-spinner');
+              // stateIcon.classList.remove('fa-spin');
+              // stateIcon.classList.add('fa-ban');
+              // stateIcon.classList.add('is-red');
+
+              // @TODO redirect to analysis page with the id, the error is rendered
+              // on that page.
+              window.location = '/analysis/{{analysis_id}}';
             } else {
               // display the current state description and time a new poll.
               stateMessage.textContent = state_desc;
@@ -70,6 +68,7 @@
           });
       }
 
+      // @TODO poll or poll(), idk
       setTimeout(poll(), 5000);
     });
   </script>

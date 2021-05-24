@@ -2,9 +2,40 @@
 {% set active_page = "dashboard" %}
 {% set title = "Dashboard" %}
 
+{% from 'macros.html.jinja2' import custom_cuckoo_loader %}
+
+{% block page_script %}
+  <script src="{{ static('js/chart.min.js') }}"></script>
+  <script src="{{ static('js/luxon.min.js') }}"></script>
+  <script src="{{ static('js/chartjs-adapter-luxon.min.js') }}"></script>
+  <script src="{{ static('js/statistics.js') }}"></script>
+{% endblock %}
+
 {% block body %}
-  <div class="container">
-    <h3>Welcome to Cuckoo</h3>
-    <p>This is a placeholder dashboard view.</p>
-  </div>
+  <!-- <nav class="columns is-divided">
+    <div class="column">
+      <div class="field">
+        <label class="label">X</label>
+        <div class="control is-select">
+          <select class="input" name="x-axis" id="x-axis-value">
+            <option>Time</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="column">
+      <div class="field">
+        <label class="label">Y</label>
+        <div class="control is-select">
+          <select class="input" name="x-axis" id="x-axis-value">
+            <option>Total analyses</option>
+            <option>Malicious analyses</option>
+            <option>File types</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </nav> -->
+  <div>{{ custom_cuckoo_loader() }}</div>
+  <div class="grid-2x2 has-border-bottom" id="statistics"></div>
 {% endblock %}

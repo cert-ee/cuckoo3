@@ -1,0 +1,69 @@
+<p class="has-half-opacity">Recorded SMTP traffic.</p>
+{% for smtp in report.network.smtp %}
+  <div class="box has-background-white no-padding-x has-shadow no-overflow has-border-x">
+
+    <div class="columns is-justified box no-margin-top is-vcenter">
+      <div class="column is-fill has-text-right is-monospace">{{ smtp.srcip }}:{{ smtp.srcport }}</div>
+      <div class="column is-auto no-line-break">
+        <span class="tag is-rounded no-padding-x">
+          <span class="icon"><i class="fas fa-chevron-right"></i></span>
+        </span>
+      </div>
+      <div class="column is-fill is-monospace">{{ smtp.dstip }}:{{ smtp.dstport }}</div>
+    </div>
+
+    <div class="columns is-divided">
+      <div class="column">
+        <table class="table has-striped-rows has-border">
+          <tr class="separator-bar">
+            <td colspan="2"><strong>Request</strong></td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>From</strong></td>
+            <td>{{ smtp.request.mail_from | join(', ') }}</td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>To</strong></td>
+            <td>{{ smtp.request.mail_to | join(', ') }}</td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>Authentication type</strong></td>
+            <td>{{ smtp.request.auth_type }}</td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>Username</strong></td>
+            <td>{{ smtp.request.username }}</td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>Password</strong></td>
+            <td>{{ smtp.request.password }}</td>
+          </tr>
+          <tr>
+            <td class="has-text-right is-vtop no-line-break"><strong>Headers</strong></td>
+            <td class="no-padding-left">
+              <table class="table">
+                {% for key in smtp.request.headers %}
+                  <tr>
+                    <td class="no-padding-y is-auto-width"><strong>{{ key }}</strong></td>
+                    <td class="no-padding-y">{{ smtp.request.headers[key] }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          <tr class="separator-bar">
+            <td colspan="2"><strong>Response</strong></td>
+          </tr>
+          <tr>
+            <td class="has-text-right no-line-break"><strong>banner</strong></td>
+            <td>{{ smtp.response.banner }}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="column">
+        <h4 class="clearfix">Mail body</h4>
+        <pre class="code-block has-text-small"><code>{{ smtp.request.mail_body }}</code></pre>
+      </div>
+    </div>
+  </div>
+{% endfor %}

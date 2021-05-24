@@ -3,6 +3,8 @@
 {% set active_level = 'settings' %}
 {% set title = "Configure submission" %}
 
+{% from 'macros.html.jinja2' import render_dict, ui_box %}
+
 {# custom javascript with specific functionality for this page. note: it uses functionalities defined in ui.js #}
 {% block page_script %}
   <script>
@@ -14,7 +16,7 @@
       });
     }());
   </script>
-  <script type="text/javascript" src="{{ static('js/submit.settings.js') }}"></script>
+  <script src="{{ static('js/submit.settings.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -24,6 +26,11 @@
       <div class="columns is-divided">
         {# Sample information #}
         <div class="column">
+          {% if debug_template_data %}
+            {% call ui_box(title="Template data", collapsed=True) %}
+              {{ render_dict(unpacked) }}
+            {% endcall %}
+          {% endif %}
           {% if unpacked.children|length > 0 %}
             <div class="box has-shadow">
               <div class="control is-checkable">
@@ -44,8 +51,8 @@
                 <div class="column no-margin">
                   <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
                 </div>
-                <div class="column">
-                  <h3 class="no-margin-y">{{ unpacked.filename }}</h3>
+                <div class="column is-fill">
+                  <h3 class="no-margin-y has-text-wrapped">{{ unpacked.filename }}</h3>
                   <ul class="list is-horizontal has-text-small no-margin">
                     <li>{{ unpacked.finger.magic_human }}</li>
                     <li>{{ unpacked.size | filesizeformat }}</li>
@@ -61,11 +68,13 @@
         {# Options / profile box #}
         <div class="column">
           <div class="box has-shadow no-padding-x">
-            <nav class="tabbar" data-enhance>
-              <a href="#options-form" class="tabbar-link is-active">Options</a>
+            <nav class="tabbar" role="tablist">
+              <a role="tab" href="#options" class="tabbar-link is-active">Options</a>
+              {# <a role="tab" href="#profile" class="tabbar-link">Profile</a> #}
             </nav>
             <div class="box no-padding">
-              <div id="options-form">{% include "submit/partial/options.html.jinja2" %}</div>
+              <div role="region" id="options">{% include "submit/partial/options.html.jinja2" %}</div>
+              {# <div role="region" id="profile">{% include "submit/partial/profile.html.jinja2" %}</div> #}
             </div>
           </div>
           <div class="box has-shadow" id="conclude-analysis">

@@ -106,7 +106,7 @@
                 <div class="control is-tags tag-list">
                   <div class="tag control has-addon no-padding-right">
                     <div class="addon is-left has-half-opacity"><i class="fas fa-tag"></i></div>
-                    <input class="input is-small" type="text" placeholder="New tag" data-tag-value />
+                    <input class="input is-small no-shadow" type="text" placeholder="New tag" data-tag-value />
                     <button type="button" class="addon is-right button is-dark is-small no-radius-right" data-add-tag>
                       <i class="fas fa-plus"></i>
                     </button>
@@ -173,6 +173,9 @@
   function finishSubmission() {
 
     const { analysis_id } = window.Application;
+    const selectedFile = document.querySelector('input[name="selected-file"]:checked');
+    if(!selectedFile)
+      return handleError('No file has been selected. Select a file and try again.');
     if(!analysis_id)
       return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
 

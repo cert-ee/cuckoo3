@@ -4,6 +4,8 @@
   {%- for child in unpacked.children recursive %}
 
     {% set uniq.value = uniq.value + 1 %}
+    {% set has_error = child.error %}
+    {% set is_selectable = (has_error or not child.selectable and child.type != 'directory') %}
 
     <li class="{% if child.type in ["container", "directory"] %}is-parent{% endif %}" {% if child.type == 'file' and not child.selectable %}hidden{% endif %}>
       <input type="checkbox" id="{{ uniq.value }}-container" class="list-collapse" />
@@ -14,10 +16,11 @@
       {% else %}
         <label for="{{ uniq.value }}" title="{{ child.finger.magic_human }}">
       {% endif %}
-        <div class="columns is-divided has-tiny-gaps {% if not child.selectable and child.type != 'directory' %}is-disabled{% endif %}">
+        {# <div class="columns is-divided has-tiny-gaps {% if not child.selectable and child.type != 'directory' %}is-disabled{% endif %}"> #}
+          <div class="columns is-divided has-tiny-gaps {% if not child.selectable and child.type != 'directory' %}is-disabled{% endif %}">
           {% if child.type != "directory" %}
             <div class="column is-auto">
-              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} {% if not child.selectable and child.type != 'container' %}data-uninteresting{% endif %} />
+              <input type="radio" name="selected-file" id="{{ uniq.value }}"  value="{{ child.id }}"{% if child.selected %}checked{% endif %} {% if not child.selectable and child.type != 'container' %}data-uninteresting{% endif %} {% if has_error %}disabled{% endif %} />
             </div>
           {% endif %}
           <div class="column is-auto">
@@ -37,8 +40,12 @@
             {% endif %}
             {% if child.type in ["file", "container"] %}
               <ul class="list is-horizontal has-text-small has-margin-top no-margin-left no-padding-left">
-                <li>{{ child.size|filesizeformat }}</li>
-                <li>{{ child.finger.magic_human }}</li>
+                {% if not has_error %}
+                  <li>{{ child.size|filesizeformat }}</li>
+                  <li>{{ child.finger.magic_human }}</li>
+                {% else %}
+                  <li class="is-error">{{ child.error }}</li>
+                {% endif %}
               </ul>
             {% endif %}
           </div>

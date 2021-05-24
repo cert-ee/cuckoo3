@@ -1,0 +1,34 @@
+{#
+  Data-To-View pluralization. This dictionary ensures some control over dynamically
+  rendered data views.
+
+  set is_active: True for the active page to initialize on
+  set ui_label to replace original key name with a humanized version
+#}
+{% set report_network_pluralizations = {
+  'host': { 'ui_label': 'Host' },
+  'domain': { 'ui_label': 'Domain' },
+  'tcp': { 'ui_label': 'TCP' },
+  'udp': { 'ui_label': 'UDP' },
+  'dns': { 'ui_label': 'DNS' },
+  'http': { 'ui_label': 'HTTP' },
+  'smtp': { 'ui_label': 'SMTP' }
+} %}
+
+{% call ui_box(title="Network analysis", collapsed=False, has_padding=False) %}
+  <nav class="tabbar no-margin-bottom is-sticky" role="tablist">
+    {% for key in report.network %}
+      {% set plural = report_network_pluralizations[key] | default({}) %}
+      {% set is_active = (loop.index == 1) %}
+      <a role="tab" class="tabbar-link {% if loop.index == 1 %}is-active{% endif %}" href="#network:{{ key }}">{{ plural.ui_label | default(key) }}</a>
+    {% endfor %}
+    <a class="button is-green tabbar-button has-margin-right" href="#">Download pcap</a>
+  </nav>
+  {% for key in report.network %}
+    {% set plural = report_network_pluralizations[key] | default({}) %}
+    {% set is_active = (loop.index == 1) %}
+    <div role="region" id="network:{{key}}" class="box no-margin-y has-background-light" {% if not is_active %}hidden{% endif %}>
+      {% include "task/components/network/"+key+".html.jinja2" %}
+    </div>
+  {% endfor %}
+{% endcall %}

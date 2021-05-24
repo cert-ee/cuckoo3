@@ -1,0 +1,57 @@
+{% macro ttp_template(ttp) %}
+  <span class="box is-inline has-background-blue has-text-center has-margin-right" style="margin-top: .25rem; margin-bottom: .25rem;">
+    <span class="tag is-white has-margin-right">{{ ttp.id }}</span>
+    <a title="View on attack.mitre.org" href="{{ ttp.reference }}" target="_blank">
+      <strong>{{ ttp.name }}</strong>
+    </a>
+  </span>
+{% endmacro %}
+
+{% macro find_ttps(category) %}
+  {% for ttp in analysis.ttps %}
+    {% if category in ttp.tactics %}
+      {{ ttp_template(ttp) }}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% call ui_box(title="Mitre ATT&CK", id="mitre", has_padding=False) %}
+  <table class="table has-striped-rows">
+    <tr>
+      <th class="has-text-small has-text-right">Reconnaissance</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Reconnaissance') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Resource Development</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Resource Development') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Initial Access</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Initial Access') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Execution</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Execution') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Persistence</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Persistence') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Privilege Escalation</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Privilege Escalation') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Defense Evasion</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Defense Evasion') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Credential Access</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Credential Access') }}</td>
+    </tr>
+    <tr>
+      <th class="has-text-small has-text-right">Discovery</th>
+      <td style="padding-top: .25rem; padding-bottom: .25rem;">{{ find_ttps(category='Discovery') }}</td>
+    </tr>
+  </table>
+{% endcall %}

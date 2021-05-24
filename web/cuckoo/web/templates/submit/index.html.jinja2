@@ -2,37 +2,89 @@
 {% set active_page = "submit" %}
 {% set title = "Submit" %}
 
+{% block page_script %}
+<script src="{{ static("js/submit.form.js") }}"></script>
+{% endblock %}
+
 {% block body %}
   {% include "submit/partial/tabbar.html.jinja2" %}
+
   <section class="section">
     <div class="container is-fixed is-smol">
-      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data">
+      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data" id="submit-sample">
         {{ csrf_input }}
-        <nav class="tabbar has-padding-x has-margin-bottom" data-enhance>
-          <a href="#options-form" class="tabbar-link is-active">File</a>
-          {# <a href="#options-form" class="tabbar-link">URL</a> #}
+        <nav role="tablist" class="tabbar has-padding-x has-margin-bottom">
+          <a role="tab" href="#submit-file" class="tabbar-link">File</a>
+          <a role="tab" href="#submit-url" class="tabbar-link">URL</a>
         </nav>
-        <h4 class="label is-set-title has-margin has-padding clear-box">
-          Submit a sample by uploading a file or archive
-          <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
-        </h4>
-        <hr class="separator" />
-        <div class="box is-big has-background-fade no-margin-bottom has-text-center" id="file-dropzone">
-          <div class="field no-margin-top">
-            <div class="control is-file has-text-center">
-              <label class="file-trigger" for="file">Select file</label>
-              <input class="input" type="file" id="file" name="file" data-enhance />
+        <div role="region" id="submit-file">
+          <h4 class="label is-set-title has-margin has-padding clear-box">
+            Submit a sample by uploading a file or archive
+            <a class="is-link pull-right" href="#" title="Go to documentation" data-tooltip><i class="fas fa-book"></i></a>
+          </h4>
+          <div class="box is-big has-background-fade no-margin-bottom has-text-center has-border-y" id="file-dropzone">
+            <div class="container-inline is-medium is-center">
+              <div class="field no-margin-top">
+                <div class="control is-file has-text-center">
+                  <label class="file-trigger" for="file">Select file</label>
+                  <input class="input" type="file" id="file" name="file" data-enhance required />
+                </div>
+                <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
+              </div>
             </div>
-            <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
+          </div>
+          <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
+            <div class="column">
+              <div class="columns is-gapless">
+                <div class="column">
+                  <div class="field no-margin-y">
+                    <div class="control is-checkable">
+                      <input type="checkbox" value="yes" id="has-password" name="password" />
+                      <label for="has-password">Password encrypted</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="column has-padding-left" id="password-field" hidden>
+                  <div class="field no-margin-y">
+                    <div class="control">
+                      <input class="input" type="text" id="password" name="password" placeholder="Password" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <input type="submit" class="button is-blue no-margin-bottom" value="Configure analysis" />
+            </div>
           </div>
         </div>
-        <hr class="separator no-margin-top" />
-        <div class="columns is-gapless is-between has-margin has-padding-x">
-          <div class="column">&nbsp;</div>
-          <div class="column">
-            <input type="submit" class="button is-blue" />
+
+        {# demonstrational extra tab for window state implementation #}
+        <div role="region" id="submit-url" hidden>
+          <div class="has-padding">
+            <h4 class="label is-set-title clear-box no-margin-y has-margin-x">
+              Submit a web URL
+              <a class="is-link pull-right" href="#" title="Go to documentation" data-tooltip><i class="fas fa-book"></i></a>
+            </h4>
+          </div>
+          <div class="box has-background-fade no-radius has-border-y">
+            <div class="container-inline is-medium is-center">
+              <div class="field">
+                <div class="control">
+                  <label class="label" for="url">URL</label>
+                  <input class="input" type="text" id="url" name="url" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
+            <div class="column">&nbsp;</div>
+            <div class="column">
+              <input type="submit" class="button is-blue" value="Configure analysis" />
+            </div>
           </div>
         </div>
+
       </form>
     </div>
   </section>

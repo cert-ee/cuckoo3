@@ -62,3 +62,45 @@
   transition: opacity 100ms linear
   &:hover
     opacity: 1
+
+// defines a block for standing out the brand of the app with a few
+// effects
+.stand-out
+
+  text-align: center
+  margin-top: 7rem
+
+  &.out
+    display: block
+
+  &-logo,
+  &-payoff,
+  &-continue
+      opacity: 1
+      transition: opacity 1s ease-in-out
+      margin: $gap * 2 0
+      .out > &
+        opacity: 0
+        transition: none
+
+  &-payoff
+    transition-delay: .5s
+
+  &-continue
+    transition-delay: 1s
+
+.loader
+  margin: $gap*2 auto
+  text-align: center
+  width: 15rem
+  height: 15rem
+  background-color: $white
+  border-radius: 7.5rem
+  .loader-icon
+    display: flex
+    align-items: center
+    justify-content: center
+    img, svg
+      width: 75%
+  & > p
+    margin-top: 0
