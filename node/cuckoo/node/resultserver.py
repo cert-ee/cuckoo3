@@ -507,7 +507,7 @@ class ResultServer(UnixSocketServer):
 
         try:
             socket.inet_aton(ip)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OSError):
             self.respond(readerwriter, _RSResponses.fail("Invalid ip"))
             return
 
