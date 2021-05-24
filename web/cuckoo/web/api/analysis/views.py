@@ -5,15 +5,12 @@
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 
 from cuckoo.common.result import (
     retriever, ResultDoesNotExistError, InvalidResultDataError, Results
 )
 
 class Analysis(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request, analysis_id):
         try:
@@ -29,8 +26,6 @@ class Analysis(APIView):
 
 class Identification(APIView):
 
-    permission_classes = (IsAuthenticated,)
-
     def get(self, request, analysis_id):
         try:
             ident = retriever.get_analysis(
@@ -44,8 +39,6 @@ class Identification(APIView):
         return Response(ident.to_dict())
 
 class Pre(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request, analysis_id):
         try:
@@ -67,8 +60,6 @@ class CompositeRequest(serializers.Serializer):
     )
 
 class CompositeAnalysis(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request, analysis_id):
         serializer = CompositeRequest(data=request.data)

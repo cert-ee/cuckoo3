@@ -7,15 +7,12 @@ from django.http import FileResponse
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 
 from cuckoo.common.result import (
     retriever, ResultDoesNotExistError, InvalidResultDataError, Results
 )
 
 class Task(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request, analysis_id, task_id):
         try:
@@ -31,8 +28,6 @@ class Task(APIView):
 
 class Post(APIView):
 
-    permission_classes = (IsAuthenticated,)
-
     def get(self, request, analysis_id, task_id):
         try:
             post = retriever.get_task(
@@ -46,8 +41,6 @@ class Post(APIView):
         return Response(post.to_dict())
 
 class Machine(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request, analysis_id, task_id):
         try:
@@ -70,8 +63,6 @@ class CompositeRequest(serializers.Serializer):
 
 class CompositeTask(APIView):
 
-    permission_classes = (IsAuthenticated,)
-
     def post(self, request, analysis_id, task_id):
         serializer = CompositeRequest(data=request.data)
         if not serializer.is_valid():
@@ -91,8 +82,6 @@ class CompositeTask(APIView):
         return Response(composite.to_dict())
 
 class Pcap(APIView):
-
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request, analysis_id, task_id):
         try:
