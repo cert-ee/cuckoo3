@@ -328,7 +328,11 @@ def set_task_failed(worktracker):
 def set_task_running(worktracker):
     worktracker.log.debug("Setting task to state running")
     worktracker.task.state = task.States.RUNNING
+    worktracker.analysis.update_task(
+        worktracker.task.id, state=worktracker.task.state
+    )
     task.write_changes(worktracker.task)
+    analyses.write_changes(worktracker.analysis)
 
 class _WorkTracker:
 
