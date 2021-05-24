@@ -13,7 +13,7 @@ from httpreplay import (
 from cuckoo.common import safelist
 from cuckoo.common.log import set_logger_level, CuckooGlobalLogger
 from cuckoo.common.storage import TaskPaths, Paths
-from cuckoo.processing.errors import PluginError
+from cuckoo.processing.errors import PluginError, DisablePluginError
 from cuckoo.processing.signatures.pattern import (
     PatternScanner, PatternSignatureError
 )
@@ -40,6 +40,9 @@ class Pcapreader(Processor):
         cls.dnsserver_sl.load_safelist()
 
     def init(self):
+        if not TaskPaths.pcap(self.ctx.task.id).is_file():
+            raise DisablePluginError("No PCAP available")
+
         self.ip_sl.clear_temp()
 
         self.tcp_handlers = {
@@ -362,6 +365,9 @@ class NetworkPatternSignatures(Processor):
         cls.scanner = None
         # Read all network pattern signature yml files.
         networksigs_dir = Paths.pattern_signatures("network")
+        if not networksigs_dir.is_dir():
+            return
+
         for sigfile in os.listdir(networksigs_dir):
             if not sigfile.endswith((".yml", ".yaml")):
                 continue
@@ -396,7 +402,7 @@ class NetworkPatternSignatures(Processor):
 
     def init(self):
         if not self.scanner:
-            return
+            raise DisablePluginError("No network pattern signature scanner")
 
         self.match_tracker = self.scanner.new_tracker()
 
