@@ -461,14 +461,13 @@ class TmStage(StagerHelper):
 
         self.dump_payload_log(stderr)
 
-        # Very ugly check until we can properly separate info, warn, and fatal
-        # log messages. All messages are now in stderr. TODO fix
         for line in stderr.split("\n"):
-            if "Failed to" in line or "Payload error" in line:
-                if "image=" not in line and "command=" not in line:
-                    raise PayloadExecFailed(
-                        f"Payload execution failed: {line}. {stderr}"
-                    )
+            for m in ("Failed to", "Payload error", "Exception"):
+                if m in line:
+                    if "image=" not in line and "command=" not in line:
+                        raise PayloadExecFailed(
+                            f"Payload execution failed: {line}. {stderr}"
+                        )
 
         # Kill the agent. We no longer are using the analyzer, making it
         # useless to leave it running. It only increases the chance of it
