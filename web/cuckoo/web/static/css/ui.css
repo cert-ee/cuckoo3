@@ -701,7 +701,7 @@ a.button, .control.is-file a.file-trigger {
   width: 100%;
   border-collapse: collapse;
 }
-.table.has-border > tbody > td {
+.table.has-border > tbody > tr > td {
   border-bottom: 1px solid #CCCCCC;
 }
 .table.has-layout-fixed {
@@ -860,29 +860,27 @@ a.button, .control.is-file a.file-trigger {
   background-color: transparent;
   font-weight: 700;
 }
-.table.has-striped-rows tr.separator {
+.table tr.separator {
   background-color: #FFFFFF;
   font-size: 0.9em;
   font-weight: 800;
   text-transform: uppercase;
   border-top: 0.0625rem solid #CCCCCC;
   border-bottom: 0.0625rem solid #CCCCCC;
-  border: 0;
   text-align: center;
 }
-.table.has-striped-rows tr.separator-bar td {
+.table tr.separator-bar td {
   background-image: linear-gradient(white, #CCCCCC);
   padding: 0.375rem 0.75rem;
-  box-shadow: inset 0 0.1rem 0 rgba(255, 255, 255, 0.5);
-  border-top: 0.0625rem solid #CCCCCC;
-  border-bottom: 0.0625rem solid #CCCCCC;
 }
-.table.has-striped-rows tr.separator.is-beveled {
+.table tr.separator.is-beveled {
   background: linear-gradient(180deg, #EEEEEE 23.44%, #eaf4fe 100%);
-  box-shadow: inset 0px -2px 0px #CCCCCC, inset 0px 2px 0px #FFFFFF;
   text-shadow: 0 0.0625rem 0 white;
 }
-.table.has-striped-rows tr.separator:hover {
+.table tr.separator.has-normal-text {
+  text-transform: none;
+}
+.table tr.separator:hover {
   background-color: #FFFFFF;
 }
 .table.has-sticky-header, .table.has-sticky-footer {
