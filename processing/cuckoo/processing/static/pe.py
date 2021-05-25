@@ -261,11 +261,13 @@ class PEFile:
                 for symbol in entry.imports:
                     symbols.append({
                         "address": hex(symbol.address),
-                        "name": "" if not symbol.name else symbol.name.decode()
+                        "name": "" if not symbol.name else symbol.name.decode(
+                            errors="replace"
+                        )
                     })
 
                 imports.append({
-                    "dll": entry.dll.decode(),
+                    "dll": entry.dll.decode(errors="replace"),
                     "imports": symbols
                 })
             except pefile.PEFormatError:
@@ -286,7 +288,9 @@ class PEFile:
                     self._pe.OPTIONAL_HEADER.ImageBase + symbol.address
                 ),
                 "ordinal": symbol.ordinal,
-                "name": "" if not symbol.name else symbol.name.decode()
+                "name": "" if not symbol.name else symbol.name.decode(
+                    errors="replace"
+                )
             })
 
         return exports
@@ -297,7 +301,9 @@ class PEFile:
         for section in self._pe.sections:
             try:
                 sections.append({
-                    "name": section.Name.strip(b"\x00").decode(),
+                    "name": section.Name.strip(b"\x00").decode(
+                        errors="replace"
+                    ),
                     "virtual_address": f"{section.VirtualAddress:#010x}",
                     "virtual_size": f"{section.Misc_VirtualSize:#010x}",
                     "size_of_data": f"{section.SizeOfRawData:#010x}",
@@ -370,8 +376,8 @@ class PEFile:
                     for row in info_entry.StringTable:
                         for col in row.entries.items():
                             infos.append({
-                                "name": col[0].decode(),
-                                "value": col[1].decode()
+                                "name": col[0].decode(errors="replace"),
+                                "value": col[1].decode(errors="replace")
                             })
                 elif hasattr(info_entry, "Var"):
                     for entry in info_entry.Var:
@@ -409,7 +415,7 @@ class PEFile:
 
         try:
              pdb_path = self._pe.DIRECTORY_ENTRY_DEBUG[0].entry.PdbFileName
-             return pdb_path.strip(b"\x00").decode()
+             return pdb_path.strip(b"\x00").decode(errors="replace")
         except (pefile.PEFormatError, IndexError):
             return None
 
