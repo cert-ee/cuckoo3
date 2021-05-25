@@ -183,12 +183,10 @@ class Pcapreader(Processor):
             "dstip": dstip,
             "dstport": dstport,
             "srcip": srcip,
-            "srcport": srcport
+            "srcport": srcport,
+            "tx_size": 0 if not sent else len(sent),
+            "rx_size": 0 if not recv else len(recv)
         }
-        if sent:
-            tcp["tx_size"] = len(sent)
-        if recv:
-            tcp["rx_size"] = len(recv)
 
         tracker.setdefault("tcp", []).append(tcp)
 
