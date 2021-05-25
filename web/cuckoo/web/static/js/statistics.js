@@ -114,7 +114,8 @@
             displayFormats: {
               year: "yy",
               month: "LLL yy"
-            }
+            },
+            tooltipFormat: 'yyyy-LL-dd'
           }
         },
         y: {
@@ -124,8 +125,13 @@
 
       // tooltip setup
       chartSetup.options.plugins.tooltip = {
-
-      }
+        callbacks: {
+          label: label => false,
+          footer: data => data.map(p => p.formattedValue).join(','),
+          yAlign: 'top',
+          xAlign: 'center'
+        }
+      };
 
       // populate datasets from json body
       chartSetup.data.datasets.push({
