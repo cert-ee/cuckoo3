@@ -286,7 +286,7 @@ def start_cuckoo_controller(loglevel):
         init_global_logging
     )
     from cuckoo.common.log import set_logger_level
-    from .queue import TaskQueue
+    from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
@@ -343,7 +343,7 @@ def start_cuckoo(loglevel):
             init_elasticsearch, init_database, load_configurations,
             init_global_logging
         )
-        from .queue import TaskQueue
+        from .taskqueue import TaskQueue
 
         # Initialize globing logging to cuckoo.log
         init_global_logging(loglevel, Paths.log("cuckoo.log"))
