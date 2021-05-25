@@ -2162,6 +2162,16 @@ button[disabled] {
   top: 0;
 }
 
+.has-overflow {
+  overflow: auto;
+}
+.has-overflow-x {
+  overflow-x: auto;
+}
+.has-overflow-y {
+  overflow-y: auto;
+}
+
 .no-overflow {
   overflow: hidden;
 }
