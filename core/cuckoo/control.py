@@ -16,6 +16,7 @@ from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, delete_file
 from cuckoo.common.strictcontainer import (
     Analysis, Task, Identification, Pre, Post
 )
+from cuckoo.common.machines import Machine
 from cuckoo.common.submit import settings_maker, SubmissionError
 
 log = CuckooGlobalLogger(__name__)
@@ -238,7 +239,7 @@ def handle_post_done(worktracker):
 
     # Update the score and state of this task in the analysis json.
     worktracker.analysis.update_task(
-        worktracker.task.id, score=post.score, state=worktracker.task.state
+        worktracker.task.id, score=post.score, state=worktracker.task.state,
     )
 
     # Update analysis score, tags, and detected families
@@ -325,11 +326,12 @@ def set_task_failed(worktracker):
     update_final_analysis_state(worktracker)
     analyses.write_changes(worktracker.analysis)
 
-def set_task_running(worktracker):
+def set_task_running(worktracker, machine):
     worktracker.log.debug("Setting task to state running")
     worktracker.task.state = task.States.RUNNING
     worktracker.analysis.update_task(
-        worktracker.task.id, state=worktracker.task.state
+        worktracker.task.id, state=worktracker.task.state,
+        platform=machine.platform, os_version=machine.os_version
     )
     task.write_changes(worktracker.task)
     analyses.write_changes(worktracker.analysis)
@@ -553,7 +555,8 @@ class StateController(UnixSocketServer):
         self.queue_call(
             set_task_running, {
                 "task_id": kwargs["task_id"],
-                "analysis_id": kwargs["analysis_id"]
+                "analysis_id": kwargs["analysis_id"],
+                "machine": kwargs["machine"]
             }
         )
 

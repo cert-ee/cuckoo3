@@ -440,7 +440,8 @@ class Analysis(StrictContainer):
         "errors", "target", "score", "tasks", "families", "tags", "ttps"
     )
 
-    def update_task(self, task_id, score=None, state=""):
+    def update_task(self, task_id, score=None, state="", platform="",
+                    os_version=""):
         for task in self.tasks:
             if task["id"] == task_id:
 
@@ -449,6 +450,11 @@ class Analysis(StrictContainer):
 
                 if state:
                     task["state"] = state
+
+                if platform and os_version:
+                    if not task["os_version"]:
+                        task["platform"] = platform
+                        task["os_version"] = os_version
 
                 self.set_updated(["tasks"])
                 break

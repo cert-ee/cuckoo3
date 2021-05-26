@@ -386,10 +386,11 @@ class MachineListDumper:
     lists was last made. min_dump_wait is a number in seconds."""
 
     def __init__(self, min_dump_wait=300):
-        self.lists = []
+        self.lists = set()
 
         self._min_dump_wait = min_dump_wait
         self._last_dump = None
+        self._lists_changed = False
 
     def lists_changed(self):
         for mlist in self.lists:
@@ -410,17 +411,24 @@ class MachineListDumper:
         return False
 
     def should_dump(self):
-        return self.dump_wait_reached() and self.lists_changed()
+        return self.dump_wait_reached() and self.lists_changed() \
+               or self._lists_changed
 
     def make_dump(self, path):
         dump_machine_lists(path, *self.lists)
         self._last_dump = datetime.utcnow()
 
+        self._lists_changed = False
         for mlist in self.lists:
             mlist.clear_updated()
 
     def add_machinelist(self, machine_list):
-        self.lists.append(machine_list)
+        self.lists.add(machine_list)
+        self._lists_changed = True
+
+    def remove_machinelist(self, machine_list):
+        self.lists.discard(machine_list)
+        self._lists_changed = True
 
 
 def find_in_lists(machine_lists, name="", platform="", os_version="",
