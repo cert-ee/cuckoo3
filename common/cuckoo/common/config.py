@@ -325,6 +325,73 @@ class Dict(TypeLoader):
                 f"Expected type dict, got {type(value).__name__}"
             )
 
+
+class DictList(TypeLoader):
+
+    def __init__(self, child_typeloaders, value=None, default_val=None,
+                 required=True, allow_empty=False):
+        self.child_typeloaders = child_typeloaders
+
+        super().__init__(value=value, default_val=default_val,
+                         required=required, allow_empty=allow_empty)
+
+    @property
+    def usable_value(self):
+        if self.is_empty(self.value):
+            return []
+
+        return self.value
+
+    def is_empty(self, value):
+        return not value or value is None
+
+    def parse(self, value):
+        if not isinstance(value, list):
+            raise IncorrectTypeError(
+                f"Expected type list, got {type(value).__name__}"
+            )
+
+        dict_list = []
+        for entry in value:
+            if not isinstance(entry, dict):
+                raise IncorrectTypeError(
+                    f"Entry in dictionary list must be type dict, "
+                    f"got {type(value).__name__}"
+                )
+
+            dict_entry = {}
+            for k, v in entry.items():
+                typeloader = self.child_typeloaders.get(k)
+                if not typeloader:
+                    continue
+
+                dict_entry[k] = typeloader.__class__(value=v)
+
+            dict_list.append(dict_entry)
+
+        return dict_list
+
+    def constraints(self, value):
+        if not isinstance(value, list):
+            raise IncorrectTypeError(
+                f"Expected type list, got {type(value).__name__}"
+            )
+
+        for entry in value:
+            if not isinstance(entry, dict):
+                raise IncorrectTypeError(
+                    f"Entry in dictionary list must be type dict, "
+                    f"got {type(value).__name__}"
+                )
+
+            for k, v in entry.items():
+                typeloader = self.child_typeloaders.get(k)
+                if not typeloader:
+                    continue
+
+                typeloader.check_constraints(v.value)
+
+
 class NestedDictionary:
 
     def __init__(self, parentkey, child_typeloaders, required=True):
@@ -332,7 +399,6 @@ class NestedDictionary:
         self.parentkey = parentkey
         self.child_typeloaders = child_typeloaders
         self.required = required
-        self.parentkey = parentkey
         self.default = child_typeloaders
         self.value = {}
 
@@ -365,7 +431,7 @@ def platformconditional(default, **kwargs):
     plat_val = kwargs.get(plat)
     if plat_val:
         return plat_val
-    return  default
+    return default
 
 def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
     def _typeloader_to_yamlval(obj):
@@ -604,7 +670,7 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
             )
         except IncorrectTypeError as e:
             raise ConfigurationError(
-                f"Value of key {key} has an incorrect type. {e}"
+                f"Value of key '{key}' has an incorrect type. {e}"
             )
 
         loader.value = parsed

@@ -7,5 +7,42 @@ remote_storage:
   # API key does not need administrator privileges
   api_key: {{ remote_storage.api_key }}
 
-search:
-  enabled: {{ search.enabled }}
+elasticsearch:
+  # The Elasticsearch settings must be configured to be able to use any of
+  # the features in this section.
+
+  # Enable or disable the Cuckoo web results search functionality
+  web_search:
+    enabled: {{ elasticsearch.web_search.enabled }}
+
+  # Enable or disable Cuckoo web results statistics. Detected family, behavior
+  # graphs, etc.
+  statistics:
+    enabled: {{ elasticsearch.statistics.enabled }}
+
+    # All enabled charts types and the time ranges over which they
+    # should display data. Available range: daily, weekly, monthly, yearly.
+    charts:
+    {% for chart in elasticsearch.statistics.charts %}
+    - chart_type: {{ chart.chart_type }}
+      time_range: {{ chart.time_range }}
+    {% endfor %}
+
+  # The Elasticsearch hosts where results are reported to during processing.
+  # Should be one ore more host:port combinations.
+  hosts:
+  {% for host in elasticsearch.hosts %}
+    - {{ host }}
+  {% endfor %}
+
+  indices:
+    # The names to use when searching Elasticsearch. Each name must be unique
+    # and should also be used in reporting.
+    names:
+      analyses: {{ elasticsearch.indices.names.analyses }}
+      tasks: {{ elasticsearch.indices.names.tasks }}
+      events: {{ elasticsearch.indices.names.events }}
+
+  # The max result window that will be used in searches. The Elasticsearch default is 10000. This
+  # window has impact in how far back you can search with queries that match a large amount of documents.
+  max_result_window: {{ elasticsearch.max_result_window }}

@@ -24,7 +24,7 @@
         <a href="/analyses" class="button is-white">View analyses</a>
         <a href="/submit" class="button is-blue">Submit a file</a>
         <a href="/analyses" class="button is-white">Compare tasks</a>
-        {% if "search" | nav_enabled %}
+        {% if "search" | feature_enabled %}
           <a href="/search" class="button is-white is-small">Search analyses</a>
         {% endif %}
         <div class="has-margin-top">

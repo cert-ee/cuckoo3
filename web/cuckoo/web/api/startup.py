@@ -13,8 +13,7 @@ from django.db import connections, DEFAULT_DB_ALIAS
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error
 from cuckoo.common.startup import (
-    init_global_logging, load_configurations, init_database,
-    init_elasticsearch, StartupError
+    init_global_logging, load_configurations, init_database, StartupError
 )
 from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common.submit import settings_maker
@@ -77,10 +76,8 @@ def init_api(cuckoo_cwd, loglevel, logfile=""):
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()
-        init_elasticsearch(create_missing_indices=False)
     except StartupError as e:
         exit_error(f"Failed to initialize Cuckoo API. {e}")
-
 
 
 def start_api(host="127.0.0.1", port=8000, autoreload=False):

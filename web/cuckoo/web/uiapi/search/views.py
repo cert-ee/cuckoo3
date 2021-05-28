@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 
-
 from cuckoo.common.elastic import search, ElasticSearchError, SearchError
 from cuckoo.common.config import cfg
 
@@ -16,7 +15,10 @@ class Search(View):
 
     @method_decorator(accepts_json)
     def post(self, request):
-        if not cfg("reporting", "elasticsearch", "enabled"):
+        if not cfg(
+            "web.yaml", "elasticsearch", "web_search", "enabled",
+            subpkg="web"
+        ):
             return JsonResponse(
                 {
                     "error": "Search feature is not available when "
