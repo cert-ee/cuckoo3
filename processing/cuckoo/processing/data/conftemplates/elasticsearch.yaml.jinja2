@@ -1,0 +1,26 @@
+# Elasticsearch reporting
+# Enable/disable the Elasticsearch indexing of analyses, task, and
+# event information. Web search and statistics can only be used
+# if the configured Elasticsearch instance is populated with results.
+enabled: {{ enabled }}
+
+indices:
+  # The names to use when creating indices. Each name must be unique.
+  names:
+    analyses: {{ indices.names.analyses }}
+    tasks: {{ indices.names.tasks }}
+    events: {{ indices.names.events }}
+
+# The timeout before a connection error occurs during the indexing of a document.
+# The Elasticsearch default is 10 seconds. A higher timeout is required when indexing large documents.
+timeout: {{ timeout }}
+
+# The max result window that will be used in searches. The Elasticsearch default is 10000. This
+# window has impact in how far back you can search with queries that match a large amount of documents.
+max_result_window: {{ max_result_window }}
+
+# The Elasticsearch hosts. Should be one ore more host:port combinations.
+hosts:
+{% for host in hosts %}
+- {{ host }}
+{% endfor %}

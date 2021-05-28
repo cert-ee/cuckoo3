@@ -2,6 +2,7 @@
   "mappings": {
     "properties": {
       "ts": {"type": "long"},
+      "score": {"type": "integer"},
       "analysis_id": {
         "type": "keyword"
       },
@@ -9,6 +10,12 @@
         "type": "keyword"
       },
       "families": {
+        "type": "keyword"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "ttps": {
         "type": "keyword"
       },
       "submitted": {

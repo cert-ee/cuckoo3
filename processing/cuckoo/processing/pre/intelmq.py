@@ -71,13 +71,3 @@ class IntelMQInfoGather(Processor):
             return []
 
         return events
-
-
-# TODO woe
-# config processing intelmq afmaken
-# config reporting moet iets van een accuracy veld of een vrije
-# dict bij die opgestuurd wordt met elk event. <--
-# pre en post module + disk json dump toevoegen
-# misp reporting maken. Kan zonder account.
-# testen als account er is.
-

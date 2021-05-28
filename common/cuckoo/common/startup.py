@@ -16,29 +16,15 @@ log = CuckooGlobalLogger(__name__)
 class StartupError(Exception):
     pass
 
-def init_elasticsearch(create_missing_indices=False):
-
-    if not config.cfg("reporting", "elasticsearch", "enabled"):
-        return
+def init_elasticsearch(hosts, indice_names, timeout=300,
+                       max_result_window=10000,
+                       create_missing_indices=False):
 
     from cuckoo.common.elastic import manager, ElasticSearchError
 
-    analyses = config.cfg(
-        "reporting", "elasticsearch", "indices", "names", "analyses"
-    )
-    tasks = config.cfg(
-        "reporting", "elasticsearch", "indices", "names", "tasks"
-    )
-    events = config.cfg(
-        "reporting", "elasticsearch", "indices", "names", "events"
-    )
-    timeout = config.cfg("reporting", "elasticsearch", "timeout")
-    max_result_window = config.cfg(
-        "reporting", "elasticsearch", "max_result_window"
-    )
     manager.configure(
-        hosts=config.cfg("reporting", "elasticsearch", "hosts"),
-        analyses_index=analyses, tasks_index=tasks, events_index=events,
+        hosts=hosts, analyses_index=indice_names["analyses"],
+        tasks_index=indice_names["tasks"], events_index=indice_names["events"],
         timeout=timeout, max_result_window=max_result_window
     )
     try:
@@ -60,7 +46,8 @@ def init_elasticsearch(create_missing_indices=False):
         else:
             log.warning("One or more Elasticsearch indices missing")
 
-def init_global_logging(level, filepath="", use_logqueue=True, warningsonly=[]):
+def init_global_logging(level, filepath="", use_logqueue=True,
+                        warningsonly=[]):
     import logging
     from .log import (
         start_queue_listener, stop_queue_listener, set_level,

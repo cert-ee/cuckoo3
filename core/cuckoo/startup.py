@@ -283,8 +283,7 @@ def start_cuckoo_controller(loglevel):
     set_start_method("spawn")
 
     from cuckoo.common.startup import (
-        init_elasticsearch, init_database, load_configurations,
-        init_global_logging
+        init_database, load_configurations, init_global_logging
     )
     from cuckoo.common.log import set_logger_level
     from .taskqueue import TaskQueue
@@ -306,7 +305,7 @@ def start_cuckoo_controller(loglevel):
 
     log.debug("Loading remote nodes")
     api_clients = make_node_api_clients()
-    init_elasticsearch(create_missing_indices=True)
+    _init_elasticsearch_pre_startup()
 
     log.debug("Initializing database")
     init_database()
@@ -334,14 +333,35 @@ def start_cuckoo_controller(loglevel):
     log.debug("Starting scheduler")
     cuckooctx.scheduler.start()
 
+def _init_elasticsearch_pre_startup():
+    # Elasticsearch initialization before starting processing workers.
+    # This init is responsible for ensuring the indices will exist.
+
+    if not config.cfg("elasticsearch.yaml", "enabled", subpkg="processing"):
+        return
+
+    from cuckoo.common.startup import init_elasticsearch
+
+    hosts = config.cfg("elasticsearch.yaml", "hosts", subpkg="processing")
+    indices = config.cfg(
+        "elasticsearch.yaml", "indices", "names", subpkg="processing"
+    )
+    timeout = config.cfg("elasticsearch.yaml", "timeout", subpkg="processing")
+    max_result = config.cfg(
+        "elasticsearch.yaml", "max_result_window", subpkg="processing"
+    )
+    init_elasticsearch(
+        hosts, indices, timeout=timeout, max_result_window=max_result,
+        create_missing_indices=True
+    )
+
 def start_cuckoo(loglevel):
     try:
         from multiprocessing import set_start_method
         set_start_method("spawn")
 
         from cuckoo.common.startup import (
-            init_elasticsearch, init_database, load_configurations,
-            init_global_logging
+            init_database, load_configurations, init_global_logging
         )
         from .taskqueue import TaskQueue
 
@@ -355,7 +375,7 @@ def start_cuckoo(loglevel):
         except config.MissingConfigurationFileError as e:
             raise StartupError(f"Missing configuration file: {e}")
 
-        init_elasticsearch(create_missing_indices=True)
+        _init_elasticsearch_pre_startup()
 
         log.debug("Initializing database")
         init_database()
