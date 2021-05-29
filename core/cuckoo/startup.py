@@ -188,6 +188,7 @@ def start_localnode(cuckooctx):
 
     client = LocalNodeClient(cuckooctx, nodectx.node)
     stream_receiver.set_client(client)
+    cuckooctx.nodes.add_node(client)
 
 def start_resultretriever(nodeapi_clients):
     from .retriever import ResultRetriever
@@ -272,7 +273,7 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
 class CuckooCtx:
 
     def __init__(self):
-        self.nodes = NodesTracker()
+        self.nodes = NodesTracker(self)
         self.scheduler = None
         self.state_controller = None
         self.processing_handler = None
@@ -282,11 +283,10 @@ def start_cuckoo_controller(loglevel):
     set_start_method("spawn")
 
     from cuckoo.common.startup import (
-        init_elasticsearch, init_database, load_configurations,
-        init_global_logging
+        init_database, load_configurations, init_global_logging
     )
     from cuckoo.common.log import set_logger_level
-    from .queue import TaskQueue
+    from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
@@ -305,7 +305,7 @@ def start_cuckoo_controller(loglevel):
 
     log.debug("Loading remote nodes")
     api_clients = make_node_api_clients()
-    init_elasticsearch(create_missing_indices=True)
+    _init_elasticsearch_pre_startup()
 
     log.debug("Initializing database")
     init_database()
@@ -316,14 +316,13 @@ def start_cuckoo_controller(loglevel):
     log.debug("Initializing task queue")
     task_queue = TaskQueue(Paths.queuedb())
     cuckooctx = CuckooCtx()
+    make_scheduler(cuckooctx, task_queue)
 
     remote_nodes, loop_wrapper = make_remote_node_clients(
         cuckooctx, api_clients
     )
 
     threading.Thread(target=loop_wrapper.start).start()
-
-    make_scheduler(cuckooctx, task_queue)
 
     log.debug("Starting processing handler and workers")
     start_processing_handler(cuckooctx)
@@ -334,16 +333,37 @@ def start_cuckoo_controller(loglevel):
     log.debug("Starting scheduler")
     cuckooctx.scheduler.start()
 
+def _init_elasticsearch_pre_startup():
+    # Elasticsearch initialization before starting processing workers.
+    # This init is responsible for ensuring the indices will exist.
+
+    if not config.cfg("elasticsearch.yaml", "enabled", subpkg="processing"):
+        return
+
+    from cuckoo.common.startup import init_elasticsearch
+
+    hosts = config.cfg("elasticsearch.yaml", "hosts", subpkg="processing")
+    indices = config.cfg(
+        "elasticsearch.yaml", "indices", "names", subpkg="processing"
+    )
+    timeout = config.cfg("elasticsearch.yaml", "timeout", subpkg="processing")
+    max_result = config.cfg(
+        "elasticsearch.yaml", "max_result_window", subpkg="processing"
+    )
+    init_elasticsearch(
+        hosts, indices, timeout=timeout, max_result_window=max_result,
+        create_missing_indices=True
+    )
+
 def start_cuckoo(loglevel):
     try:
         from multiprocessing import set_start_method
         set_start_method("spawn")
 
         from cuckoo.common.startup import (
-            init_elasticsearch, init_database, load_configurations,
-            init_global_logging
+            init_database, load_configurations, init_global_logging
         )
-        from .queue import TaskQueue
+        from .taskqueue import TaskQueue
 
         # Initialize globing logging to cuckoo.log
         init_global_logging(loglevel, Paths.log("cuckoo.log"))
@@ -355,7 +375,7 @@ def start_cuckoo(loglevel):
         except config.MissingConfigurationFileError as e:
             raise StartupError(f"Missing configuration file: {e}")
 
-        init_elasticsearch(create_missing_indices=True)
+        _init_elasticsearch_pre_startup()
 
         log.debug("Initializing database")
         init_database()
@@ -363,11 +383,10 @@ def start_cuckoo(loglevel):
         log.debug("Initializing task queue")
         task_queue = TaskQueue(Paths.queuedb())
         cuckooctx = CuckooCtx()
+        make_scheduler(cuckooctx, task_queue)
 
         log.debug("Starting local task node")
         start_localnode(cuckooctx)
-
-        make_scheduler(cuckooctx, task_queue)
 
         log.debug("Starting processing handler and workers")
         start_processing_handler(cuckooctx)

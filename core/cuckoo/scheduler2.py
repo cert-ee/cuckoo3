@@ -21,7 +21,8 @@ class SchedulerError(Exception):
 
 class NodesTracker:
 
-    def __init__(self):
+    def __init__(self, cuckooctx):
+        self.ctx = cuckooctx
         self._nodes = []
         self.machinelist_dumper = MachineListDumper(min_dump_wait=300)
 
@@ -49,7 +50,14 @@ class NodesTracker:
 
     def add_node(self, node):
         self._nodes.append(node)
+
+    def notready_cb(self, node):
+        self.machinelist_dumper.remove_machinelist(node.machines)
+        self.ctx.scheduler.inform_change()
+
+    def ready_cb(self, node):
         self.machinelist_dumper.add_machinelist(node.machines)
+        self.ctx.scheduler.inform_change()
 
     def find_available(self, queued_task):
         for node in self._get_ready_nodes():
@@ -86,7 +94,8 @@ class StartableTask:
 
     def task_running(self):
         self.ctx.state_controller.task_running(
-            task_id=self.task.id, analysis_id=self.task.analysis_id
+            task_id=self.task.id, analysis_id=self.task.analysis_id,
+            machine=self.machine
         )
 
     def assign_to_node(self):

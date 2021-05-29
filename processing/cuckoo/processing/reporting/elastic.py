@@ -7,7 +7,8 @@ import os.path
 
 from cuckoo.common.config import cfg
 from cuckoo.common.elastic import (
-    index_analysis, index_events, index_task, ElasticSearchError
+    index_analysis, index_events, index_task, ElasticSearchError,
+    update_analysis
 )
 from cuckoo.common.startup import init_elasticsearch
 from cuckoo.common.storage import TaskPaths
@@ -19,17 +20,32 @@ class ElasticSearch(Reporter):
 
     @classmethod
     def enabled(cls):
-        return cfg("reporting", "elasticsearch", "enabled")
+        return cfg("elasticsearch.yaml", "enabled", subpkg="processing")
 
     @classmethod
     def init_once(cls):
-        init_elasticsearch(create_missing_indices=True)
+        hosts = cfg("elasticsearch.yaml", "hosts", subpkg="processing")
+        indices = cfg(
+            "elasticsearch.yaml", "indices", "names", subpkg="processing"
+        )
+        timeout = cfg("elasticsearch.yaml", "timeout", subpkg="processing")
+        max_result = cfg(
+            "elasticsearch.yaml", "max_result_window", subpkg="processing"
+        )
+        init_elasticsearch(
+            hosts, indices, timeout=timeout, max_result_window=max_result,
+            create_missing_indices=False
+        )
 
     def report_pre_analysis(self):
         try:
             index_analysis(
-                self.ctx.analysis, self.ctx.result.get("target"),
-                self.ctx.signature_tracker.signatures
+                analysis=self.ctx.analysis,
+                target=self.ctx.result.get("target"),
+                signatures=self.ctx.signature_tracker.signatures,
+                tags=self.ctx.tag_tracker.tags,
+                families=self.ctx.family_tracker.families,
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
             )
         except ElasticSearchError as e:
             self.ctx.log.warning("Failed to index analysis.", error=e)
@@ -174,9 +190,21 @@ class ElasticSearch(Reporter):
                         subtype=subtype
                     )
 
+    def _update_analysis(self):
+        try:
+            update_analysis(
+                analysis_id=self.ctx.analysis.id,
+                tags=self.ctx.tag_tracker.tags,
+                families=self.ctx.family_tracker.families,
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
+            )
+        except ElasticSearchError as e:
+            self.ctx.log.warning("Failed to update analysis.", error=e)
+
     def report_post_analysis(self):
         self._store_behavioral_events()
         self._store_network_events()
+        self._update_analysis()
         try:
             index_task(
                 task=self.ctx.task, score=self.ctx.signature_tracker.score,

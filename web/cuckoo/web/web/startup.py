@@ -17,6 +17,7 @@ from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common.submit import settings_maker
 from cuckoo.common.result import retriever
 from cuckoo.common.clients import APIClient
+from cuckoo.common.resultstats import chartdata_maker, StatisticsError
 from cuckoo.common.config import cfg
 
 import cuckoo.web
@@ -32,6 +33,31 @@ def _init_remote_storage():
         cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
     )
     retriever.set_api_client(api)
+
+def _init_elasticsearch_web():
+    hosts = cfg("web.yaml", "elasticsearch", "hosts", subpkg="web")
+    indices = cfg(
+        "web.yaml", "elasticsearch", "indices", "names", subpkg="web"
+    )
+    max_window = cfg(
+        "web.yaml", "elasticsearch", "max_result_window", subpkg="web"
+    )
+
+    init_elasticsearch(hosts, indices, max_result_window=max_window,
+                       create_missing_indices=False)
+
+def _init_statistics_web():
+    charts = cfg(
+        "web.yaml", "elasticsearch", "statistics", "charts", subpkg="web"
+    )
+
+    try:
+        for chart in charts:
+            chartdata_maker.add_chart(
+                name=chart["chart_type"], rangetype=chart["time_range"]
+            )
+    except StatisticsError as e:
+        raise StartupError(f"Failed initializing statistics chart data. {e}")
 
 def init_web(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
@@ -57,7 +83,19 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()
-        init_elasticsearch(create_missing_indices=False)
+
+        search = cfg(
+            "web.yaml", "elasticsearch", "web_search", "enabled", subpkg="web"
+        )
+        stats = cfg(
+            "web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web"
+        )
+        if search or stats:
+            _init_elasticsearch_web()
+
+        if stats:
+            _init_statistics_web()
+
     except StartupError as e:
         exit_error(f"Failed to initialize Cuckoo web. {e}")
 

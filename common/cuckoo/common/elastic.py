@@ -141,6 +141,7 @@ class _ESManager:
 
     def _create_index(self, name, index_mapping):
         try:
+            log.debug("Creating index", index_name=name)
             self.client.indices.create(name, body=index_mapping)
             log.debug("Created index", index_name=name)
         except ElasticsearchException as e:
@@ -179,7 +180,7 @@ _INDEX_KEYWORDS = {
 _FILTER_PREFIXES = tuple(_PREFIX_INDEX.keys())
 
 def _make_ts():
-    return int(str(time.time()).replace(".", ""))
+    return int(time.time() * 1000)
 
 def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
 
@@ -205,7 +206,7 @@ def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
             f"Failed to create event entry in Elasticsearch. {e}"
         )
 
-def index_analysis(analysis, target, signatures):
+def index_analysis(analysis, target, signatures, tags, families, ttps):
     body = {
         "ts": _make_ts(),
         "analysis_id": analysis.id,
@@ -215,7 +216,10 @@ def index_analysis(analysis, target, signatures):
         },
         "signatures": {
             "name": [sig.short_description for sig in signatures]
-        }
+        },
+        "tags": tags,
+        "ttps": ttps,
+        "families": families
     }
 
     submitted = analysis.submitted
@@ -285,6 +289,104 @@ def index_task(task, score, machine, signatures, tags, families,
             f"Failed to create task entry in Elasticsearch. {e}"
         )
 
+_unique_script_template = """
+for (p in params.%FIELD%) {
+    if(!ctx._source.%FIELD%.contains(p)) {
+        ctx._source.%FIELD%.add(p)
+    }
+}"""
+
+def update_analysis(analysis_id, tags=[], families=[], ttps=[]):
+    params = {}
+    script = ""
+    for key, values in (
+            ("tags", tags), ("families", families), ("ttps", ttps)
+    ):
+        if not values:
+            continue
+
+        params[key] = values
+        script += _unique_script_template.replace("%FIELD%", key)
+
+    if not params:
+        return
+
+    try:
+        manager.client.update(
+            index=manager.index_realname(_Indices.ANALYSES), id=analysis_id,
+            body={
+                "script": {
+                    "source": script,
+                    "params": params
+                }
+            }
+        )
+    except ElasticsearchException as e:
+        raise ElasticSearchError(
+            f"Failed to update analysis entry in Elasticsearch. {e}"
+        )
+
+def _unique_values_field(index, field, start, end):
+    start_ts = int(start.timestamp() * 1000)
+    end_ts = int(end.timestamp() * 1000)
+
+    query = elasticsearch_dsl.Search(using=manager.client, index=index).filter(
+        "range", ts={
+            "gte": start_ts,
+            "lte": end_ts
+        }
+    )
+    query.aggs.bucket("valcount", elasticsearch_dsl.A("terms", field=field))
+    try:
+        response = query.execute()
+    except ElasticsearchException as e:
+        raise ElasticSearchError(
+            f"Failed to read unique values of field: {field} on index {index} "
+            f"from {start} to {end}. {e}"
+        )
+
+    vals_counts = []
+    for entry in response.aggregations.valcount.buckets:
+        vals_counts.append((entry["key"], entry["doc_count"]))
+
+    return vals_counts
+
+def analysis_unique_values_field(field, start, end):
+    return _unique_values_field(
+        manager.index_realname(_Indices.ANALYSES), field=field, start=start,
+        end=end
+    )
+
+    # q = elasticsearch_dsl.Search(using=manager.client, index="tasks")
+    # q = q.query("term", tags="stealer").filter(
+    #     "range", ts={"gte": 1621953866613, "lte": 1621954066613}
+    # )
+    # r = q.count()
+
+def _count_index_fieldvals(index, field, value, start, end):
+    start_ts = int(start.timestamp() * 1000)
+    end_ts = int(end.timestamp() * 1000)
+    query = elasticsearch_dsl.Search(using=manager.client, index=index)
+    query = query.query("term", **{field: value}).filter(
+        "range", ts={
+            "gte": start_ts,
+            "lte": end_ts
+        }
+    )
+    try:
+       return query.count()
+    except ElasticsearchException as e:
+        raise ElasticSearchError(
+            f"Failed to count values of field: {field} on index {index} "
+            f"from {start} to {end}. {e}"
+        )
+
+
+def analysis_count_field_val(field, value, start, end):
+    return _count_index_fieldvals(
+        manager.index_realname(_Indices.ANALYSES), field=field, value=value,
+        start=start, end=end
+    )
 
 _query_pattern = {
     "analysis.target.md5": re.compile("^[a-f0-9]{32}$", re.IGNORECASE),
@@ -314,7 +416,7 @@ class _SearchQueryParser:
         elif len(filter_fields) == 2:
             search = {
                 "type": filter_fields[0],
-                "subtype":filter_fields[1],
+                "subtype": filter_fields[1],
                 "values": argsstr
             }
 

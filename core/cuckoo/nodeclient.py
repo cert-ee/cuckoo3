@@ -312,6 +312,7 @@ class RemoteNodeClient(NodeClient):
     async def _event_read_end(self):
         self._events_open = False
         log.error("READ END")
+        self.ctx.nodes.notready_cb(self)
         if not self.events.stopped:
             await self.loop_wrapper.newtask(self._open_eventreader)
 
@@ -321,6 +322,7 @@ class RemoteNodeClient(NodeClient):
 
     def _event_conn_opened(self):
         self._events_open = True
+        self.ctx.nodes.ready_cb(self)
         log.error("OPENED")
 
     async def start_reader(self):
@@ -500,7 +502,7 @@ class LocalNodeClient(NodeClient):
 
         self.assigned_tasks = AssignedTasks()
         self._lock = Lock()
-        cuckooctx.nodes.add_node(self)
+        self.ctx.nodes.ready_cb(self)
 
     @property
     def name(self):

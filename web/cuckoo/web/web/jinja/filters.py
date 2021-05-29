@@ -8,8 +8,13 @@ from cuckoo.common.analyses import States as AnalysisStates
 from cuckoo.common.config import cfg
 from cuckoo.common.task import States as TaskStates
 
-_enabled_navs = {
-    "search": cfg("reporting", "elasticsearch", "enabled")
+_enabled_features = {
+    "search": cfg(
+        "web.yaml", "elasticsearch", "web_search", "enabled", subpkg="web"
+    ),
+    "statistics": cfg(
+        "web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web"
+    )
 }
 
 def do_formatdatetime(value, fmt="%Y-%m-%d %H:%M"):
@@ -27,13 +32,13 @@ def do_humanstate(value):
 def do_taskstatehuman(value):
     return TaskStates.to_human(value)
 
-def nav_enabled(name):
-    return _enabled_navs.get(name, True)
+def feature_enabled(name):
+    return _enabled_features.get(name, True)
 
 filters = {
     "formatdatetime": do_formatdatetime,
     "formatisodatetime": do_formatisodatetime,
     "humanstate": do_humanstate,
     "taskstatehuman": do_taskstatehuman,
-    "nav_enabled": nav_enabled
+    "feature_enabled": feature_enabled
 }

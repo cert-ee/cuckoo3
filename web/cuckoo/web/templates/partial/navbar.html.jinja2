@@ -22,7 +22,7 @@
       <a href="{{ url(href) }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
     {% endfor %}
   </div>
-  {% if "search" | nav_enabled %}
+  {% if "search" | feature_enabled %}
     <div class="navbar-end">
       <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="{{ url('Search/index') }}">Search</a>
     </div>

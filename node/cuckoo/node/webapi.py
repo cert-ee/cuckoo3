@@ -9,6 +9,7 @@ from collections import deque
 from aiohttp import web
 from aiohttp_sse import sse_response
 
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 from cuckoo.common.machines import serialize_machinelists
 from cuckoo.common.config import cfg
@@ -18,6 +19,8 @@ from cuckoo.common.storage import (
 )
 
 from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
+
+log = CuckooGlobalLogger(__name__)
 
 MAX_UPLOAD_SIZE = 1024 * 1024 * 1024
 
@@ -280,10 +283,13 @@ class APIRunner:
         self.site = None
 
     async def _stop(self):
-        await self.runner.shutdown()
-        await self.site.stop()
-        await self.runner.cleanup()
-        self.loop.stop()
+        try:
+            await self.site.stop()
+            await self.runner.shutdown()
+            await self.runner.cleanup()
+            self.loop.stop()
+        except Exception as e:
+            log.exception("Failure during stop routine.", error=e)
 
     def stop(self):
         asyncio.run_coroutine_threadsafe(self._stop(), self.loop)
@@ -291,7 +297,9 @@ class APIRunner:
     def create_site(self, host="localhost", port=8080):
         asyncio.set_event_loop(self.loop)
         self.loop.run_until_complete(self.runner.setup())
-        self.site = web.TCPSite(self.runner, host=host, port=port)
+        self.site = web.TCPSite(
+            self.runner, host=host, port=port, shutdown_timeout=1
+        )
         self.loop.run_until_complete(self.site.start())
 
     def run_forever(self):

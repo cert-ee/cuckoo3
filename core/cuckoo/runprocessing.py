@@ -141,9 +141,11 @@ class WorkReceiver(UnixSocketServer):
                 )
                 return False
 
+            usable_classes = []
             for plugin_class in plugin_classes:
                 try:
-                    plugin_class.init_once()
+                    if plugin_class.enabled():
+                        plugin_class.init_once()
                 except Exception as e:
                     log.exception(
                         "Failed to initialize plugin class",
@@ -151,9 +153,11 @@ class WorkReceiver(UnixSocketServer):
                     )
                     return False
 
+                usable_classes.append(plugin_class)
+
             stage_classes = self.plugin_classes.setdefault(self.worktype, {})
             plugintype_classes = stage_classes.setdefault(plugintype, [])
-            plugintype_classes.extend(plugin_classes)
+            plugintype_classes.extend(usable_classes)
 
         return True
 

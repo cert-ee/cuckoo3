@@ -67,21 +67,6 @@ typeloaders = {
             "api_key": config.String(sensitive=True, allow_empty=True)
         },
     },
-    "reporting.yaml": {
-        "elasticsearch": {
-            "enabled": config.Boolean(default_val=False),
-            "indices": {
-                "names": {
-                    "analyses": config.String(default_val="analyses"),
-                    "tasks": config.String(default_val="tasks"),
-                    "events": config.String(default_val="events")
-                },
-            },
-            "timeout": config.Int(default_val=300),
-            "max_result_window": config.Int(default_val=10000),
-            "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
-        }
-    },
     "distributed.yaml": {
         "remote_nodes": config.NestedDictionary("example1", {
             "api_url": config.HTTPUrl(default_val="http://127.0.1:8090"),

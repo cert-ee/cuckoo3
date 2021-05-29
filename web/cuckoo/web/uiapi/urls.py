@@ -6,5 +6,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path("analyses/", include("uiapi.analyses.urls")),
-    path("search", include("uiapi.search.urls"))
+    path("search", include("uiapi.search.urls")),
+    path("statistics/", include("uiapi.statistics.urls"))
 ]
