@@ -1,25 +1,43 @@
 #!/bin/bash
 
-# TMP solution to install latest sflock dev changes before it is released as a package.
-tmpdir="$(mktemp -d)/sflockmaster.zip"
-wget -O "$tmpdir" "https://github.com/Evert0x/sflock/archive/master.zip"
-if [ $? -ne 0 ]; then
-    echo "Failed to download sflock master from Github"
+if ! [[ -d "../deps" ]];
+then
+  echo "../deps does not exist"
+  exit 1
 fi
 
-pip install "$tmpdir"
 
-# TMP solution to install latest roach dev changes before it is released as a package.
-tmpdir="$(mktemp -d)/roach.zip"
-wget -O "$tmpdir" "https://github.com/Evert0x/roach/archive/master.zip"
-if [ $? -ne 0 ]; then
-    echo "Failed to download roach master from Github"
-fi
-pip install "$tmpdir"
+# TMP solution until new versions of sflock etc are released to PyPI
+declare -a deplist=("../deps/sflock" "../deps/roach" "../deps/httpreplay")
 
-pip install -e ./common
-pip install -e ./processing
-pip install -e ./machineries
-pip install -e ./web
-pip install -e ./node
-pip install -e ./core
+for dep in ${deplist[@]}
+do
+  if ! [[ -d "$dep" ]]; then
+    echo "Missing dependecy: $dep"
+    exit 1
+  fi
+
+  pip install -e "$dep"
+  if [ $? -ne 0 ]; then
+      echo "Install of $dep failed"
+      exit
+  fi
+done
+
+pip install -U requests
+
+declare -a pkglist=("./common" "./processing" "./machineries" "./web" "./node" "./core")
+
+for pkg in ${pkglist[@]}
+do
+  if ! [[ -d "$pkg" ]]; then
+    echo "Missing package: $pkg"
+    exit 1
+  fi
+
+  pip install -e "$pkg"
+  if [ $? -ne 0 ]; then
+      echo "Install of $pkg failed"
+      exit 1
+  fi
+done
