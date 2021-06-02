@@ -198,7 +198,7 @@ class ResultRetriever(UnixSocketServer):
             self.workers.append(worker)
             worker.start()
 
-        self.start_accepting(select_timeout=1)
+        self.start_accepting(timeout=1)
 
         for worker in self.workers:
             log.debug("Waiting for retriever worker to stop")

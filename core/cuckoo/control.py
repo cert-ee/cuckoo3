@@ -626,7 +626,7 @@ class StateController(UnixSocketServer):
             worker.start()
 
         self.create_socket()
-        self.start_accepting(select_timeout=1)
+        self.start_accepting(timeout=1)
 
 class ImportController(StateController):
     # Keep amount of worker to 1 for now to prevent db locking issues with
