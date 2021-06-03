@@ -14,7 +14,7 @@ from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import cuckoocwd, TaskPaths, Paths, split_task_id
-from cuckoo.common.utils import bytes_to_human
+from cuckoo.common.utils import bytes_to_human, fds_to_hardlimit
 
 log = CuckooGlobalLogger(__name__)
 
@@ -157,7 +157,6 @@ class ProtocolHandler(object):
     def close(self):
         if self.fd:
             self.fd.close()
-            self.fd = None
 
     async def handle(self):
         raise NotImplementedError
@@ -219,7 +218,7 @@ class FileUpload(ProtocolHandler):
             )
         finally:
             self.task.log.debug(
-                "File upload finished.", newfile=newfile,
+                "File upload ended.", newfile=newfile,
                 size=bytes_to_human(self.fd.tell())
             )
 
@@ -239,7 +238,11 @@ class _MappedTask:
                 task.cancel()
                 await task
             except asyncio.CancelledError:
-                self.log.debug("Cancelled async task.", asynctask=task)
+                pass
+            except Exception as e:
+                self.log.exception(
+                    "Unexpected error during asyncio task cancel", error=e
+                )
 
         self.log.close()
 
@@ -315,7 +318,7 @@ class _AsyncResultServer:
 
         return proto_handler, protos[0]
 
-    async def handle_protocol(self, protocol_instance):
+    async def handle_protocol(self, protocol_instance, writer):
         protocol_instance.init()
         try:
             await protocol_instance.handle()
@@ -323,6 +326,9 @@ class _AsyncResultServer:
             protocol_instance.task.log.warning(
                 "Result for task cancelled.", error=e
             )
+        finally:
+            protocol_instance.close()
+            writer.close()
 
     async def new_result(self, reader, writer):
         ip, port = writer.get_extra_info("peername")
@@ -330,27 +336,44 @@ class _AsyncResultServer:
             task_mapping = self.get_task_mapping(ip)
         except UnmappedIPError as e:
             log.error("Failed to store new task result.", error=e)
+            writer.close()
             return
 
         try:
             protocol_handler, protocol = await self.get_protocolhandler(reader)
+        except ConnectionError:
+            # Ignore, upload was likely stopped because of end of task.
+            return
         except CancelResult as e:
             task_mapping.log.warning(
                 "Task result cancelled during initialization.",
                 task_id=task_mapping.task_id, error=e
             )
+            writer.close()
             return
 
         handler = protocol_handler(task_mapping, reader)
 
-        def cleanup(task):
-            handler.close()
-            writer.close()
-            task_mapping.asynctasks.discard(task)
+        def _cleanup_cb(task):
+            try:
+                exp = task.exception()
+                if exp:
+                    log.exception(
+                        "Unhandled exception during asyncio task",
+                        error=exp, exc_info=exp
+                    )
+            except asyncio.CancelledError:
+                pass
+            finally:
+                handler.close()
+                writer.close()
+                task_mapping.asynctasks.discard(task)
 
-        async_task = self.loop.create_task(self.handle_protocol(handler))
+        async_task = self.loop.create_task(
+            self.handle_protocol(handler, writer)
+        )
         task_mapping.asynctasks.add(async_task)
-        async_task.add_done_callback(cleanup)
+        async_task.add_done_callback(_cleanup_cb)
 
     def start(self, listen_ip, listen_port):
         """Start the asyncresultserver on the given ip:port and handle
@@ -428,10 +451,28 @@ class ResultServer(UnixSocketServer):
             warningsonly=["asyncio"]
         )
 
+        try:
+            changed, newmax = fds_to_hardlimit()
+            if changed:
+                log.info(
+                    "Changed maximum file descriptors to hard limit for "
+                    "current process",
+                    newmax=newmax
+                )
+        except ResourceWarning as e:
+            log.error(
+                "Error while increasing maximum file descriptors", error=e
+            )
+        except OSError as e:
+            exit_error(
+                f"Failure during increasing of maximum file descriptors: {e}"
+            )
+
         # Initialize here, as we are currently using multiprocessing.Process
         # to start this in a new process. _AsyncResultServer uses an RLock,
         # which cannot be pickled. This causes Process creation to fail.
         self._rs = _AsyncResultServer()
+
 
     def _start_all(self):
         try:
