@@ -22,9 +22,12 @@
       <a href="{{ url(href) }}" class="navbar-link {% if id == active_page %}is-active{% endif %}">{{ caption|e }}</a>
     {% endfor %}
   </div>
-  {% if "search" | feature_enabled %}
-    <div class="navbar-end">
-      <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="{{ url('Search/index') }}">Search</a>
+  <div class="navbar-end">
+    <div class="navbar-loader" id="loader" hidden>
+      <i class="fas fa-circle-notch fa-spin"></i>
     </div>
-  {% endif %}
+    {% if "search" | feature_enabled %}
+      <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="{{ url('Search/index') }}">Search</a>
+    {% endif %}
+  </div>
 </nav>

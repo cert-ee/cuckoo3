@@ -665,6 +665,18 @@ function applyHandler(sel=null, fn=null) {
   return null;
 }
 
+// starts the async loader symbol
+function startLoader(next) {
+  document.querySelector('#loader').removeAttribute('hidden')
+  if(next) next();
+}
+
+// stops the async loader symbol
+function stopLoader(next) {
+  document.querySelector('#loader').setAttribute('hidden', true);
+  if(next) next();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   applyHandler('.navbar .navbar-toggle', handleNavbar);
   applyHandler('.input[type="file"][data-enhance]', handleFileInput);

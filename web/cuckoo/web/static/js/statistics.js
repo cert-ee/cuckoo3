@@ -2,9 +2,18 @@
 
   const apiURL      = window.location.origin + "/api/statistics/charts";
   const container   = document.querySelector('#statistics');
-  const loader      = document.querySelector('.loader.loader-cuckoo');
-  const colorScheme = ['#003f5c','#f95d6a','#ffa600','#2f4b7c','#a05195','#d45087','#665191'];
-  const defaults    = { color: colorScheme, maintainAspectRatio: false, animation: false };
+  const colorScheme = [
+    '#FF0000','#00FF00','#0000FF','#FFFF00','#00FFFF','#FF00FF',
+    '#0048BA','#B0BF1A','#7CB9E8','#C0E8D5','#72A0C1','#FFBF00','#3DDC84','#FF91AF',
+    '#FE6F5E','#79443B','#003f5c','#f95d6a','#ffa600','#2f4b7c','#a05195','#d45087',
+    '#665191','#D891EF','#A67B5B','#E03C31','#0047AB','#DC143C','#006400','#555555',
+    '#6F00FF'
+  ];
+
+  const defaults    = {
+    maintainAspectRatio: false,
+    animation: false
+  };
   let lto; // timeout cache
 
   // utility: convert hex value to rgb
@@ -17,26 +26,6 @@
         values.push(alpha);
       return `rgba(${values.join(',')})`;
     }
-  }
-
-  // starts the async loader symbol
-  window.startLoader = function startLoader(next) {
-    if(lto) clearTimeout(lto);
-    loader.classList.remove('loader-hidden');
-    lto = setTimeout(() => {
-      loader.classList.remove('loader-out');
-      if(next instanceof Function) next();
-    }, 10);
-  }
-
-  // stops the async loader symbol
-  window.stopLoader = function stopLoader(next) {
-    loader.classList.add('loader-out');
-    if(lto) clearTimeout(lto);
-    lto = setTimeout(() => {
-      loader.classList.add('loader-hidden');
-      if(next instanceof Function) next();
-    }, 500);
   }
 
   /*
@@ -126,10 +115,24 @@
     const { datasets, labels } = data;
     const isMultiple = (datasets.length > 1);
 
+    // DEBUG
+    // let extr = ['spyware','trojan','ransomware']
+    // let lines = 3;
+    // while(lines > 0) {
+    //   let ds = {...data.datasets[0]};
+    //   let dp = [];
+    //   data.datasets[0].data.forEach(() => dp.push(Math.floor(Math.random() * 100)));
+    //   let lb = extr[lines];
+    //   ds.label = lb;
+    //   ds.data = dp;
+    //   data.datasets.push(ds);
+    //   lines--;
+    // }
+
     data.datasets = datasets.map((set, i) => {
-      set.pointBackgroundColor = rgbfy(colorScheme[i]);
-      set.backgroundColor = rgbfy(colorScheme[i], .5);
-      set.borderColor = rgbfy(colorScheme[i], 1);
+      set.pointBackgroundColor = rgbfy(colorScheme[i % colorScheme.length + 1]);
+      set.backgroundColor = rgbfy(colorScheme[i % colorScheme.length + 1], .5);
+      set.borderColor = rgbfy(colorScheme[i % colorScheme.length + 1], 1);
       return set;
     });
 
@@ -139,8 +142,10 @@
       options: {
         ...defaults,
         datasets: {
+          scaleFontColor: '#FFFFFF',
           line: {
-            fill: 'origin',
+            fill: false,
+            // fill: 'origin',
             pointRadius: 2,
             pointHitRadius: 10,
             pointBorderWidth: 1,
@@ -152,13 +157,13 @@
         scales: {
           y: {
             beginAtZero: true,
-            stacked: isMultiple
+            // stacked: isMultiple
           }
         },
         plugins: {
           tooltip: {
             callbacks: {
-              label: label => false,
+              // label: label => false,
               yAlign: 'top',
               xAlign: 'center'
             }
@@ -168,7 +173,7 @@
           }
         },
         interaction: {
-          intersect: false
+          // intersect: false
         }
       }
     });
@@ -202,10 +207,8 @@
 
   }
 
-  setTimeout(() => {
-    stopLoader(() => {
-      if(statistics.length) statistics.forEach(renderChart);
-    });
-  }, 1000);
+  stopLoader(() => {
+    if(statistics.length) statistics.forEach(renderChart);
+  });
 
 }());
