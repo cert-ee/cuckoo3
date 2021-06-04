@@ -99,8 +99,7 @@ class WorkReceiver(UnixSocketServer):
             self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
         )
         init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
-            warningsonly=["elasticsearch", "asyncio"]
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
         )
 
         log.debug("Loading configuration files", worker=self.name)
@@ -228,6 +227,9 @@ class WorkReceiver(UnixSocketServer):
             return
 
         try:
+            processing_ctx.log.info(
+                "Starting work", worker=self.name, worktype=self.worktype
+            )
             runner.start()
 
             if processing_ctx.completed:
@@ -386,7 +388,7 @@ class ProcessingWorkerHandler(threading.Thread):
         log.info(f"Starting {worktype} worker.", workername=name)
         worker = WorkReceiver(
             sockpath, worktype, name, cuckoocwd,
-            loglevel=get_global_loglevel()
+            loglevel=self.ctx.loglevel
         )
         proc = multiprocessing.Process(target=worker.start)
         proc.daemon = True
@@ -417,7 +419,7 @@ class ProcessingWorkerHandler(threading.Thread):
             "Requeuing job from worker", workername=worker["name"], job=job,
             worktype=worktype
         )
-        self.queues[worktype].insert(job)
+        self.queues[worktype].insert(0, job)
 
     def stop_worker(self, worker):
         log.debug("Stopping worker", workername=worker["name"])

@@ -53,8 +53,19 @@ def init_global_logging(level, filepath="", use_logqueue=True,
         start_queue_listener, stop_queue_listener, set_level,
         add_rootlogger_handler, set_logger_level, logtime_fmt_str,
         file_handler, file_formatter, file_log_fmt_str, console_formatter,
-        console_handler, console_log_fmt_str
+        console_handler, console_log_fmt_str, WARNINGSONLY, VERBOSE,
+        enable_verbose
     )
+
+    if not warningsonly:
+        warningsonly = WARNINGSONLY
+
+    # The custom VERBOSE level is only so we know when not to ignore
+    # other modules than the Cuckoo ones. If it is set, any attempts to
+    # increase logging levels higher than debug will be ignored.
+    if level == VERBOSE:
+        enable_verbose()
+        level = logging.DEBUG
 
     # Set the Cuckoo log module level. This level will be set to
     # each handler added and logger created using the cuckoo log module.

@@ -6,7 +6,7 @@ import click
 import logging
 import os
 
-from cuckoo.common.log import exit_error, print_info
+from cuckoo.common.log import exit_error, print_info, VERBOSE
 from cuckoo.common.storage import (
     cuckoocwd, Paths, StorageDirs, InvalidCWDError
 )
@@ -15,10 +15,11 @@ from cuckoo.common.storage import (
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.option("-h", "--host", default="localhost", help="Host to bind the node API server on")
 @click.option("-p", "--port", default=8090, help="Port to bind the node API server on")
+@click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
 @click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
 @click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
 @click.pass_context
-def main(ctx, host, port, cwd, debug, quiet):
+def main(ctx, host, port, cwd, debug, quiet, verbose):
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -38,10 +39,12 @@ def main(ctx, host, port, cwd, debug, quiet):
     except InvalidCWDError as e:
         exit_error(f"Invalid Cuckoo working directory: {e}")
 
-    if quiet:
-        ctx.loglevel = logging.WARNING
+    if verbose:
+        ctx.loglevel = VERBOSE
     elif debug:
         ctx.loglevel = logging.DEBUG
+    elif quiet:
+        ctx.loglevel = logging.WARNING
     else:
         ctx.loglevel = logging.INFO
 

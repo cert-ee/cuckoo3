@@ -8,16 +8,17 @@ import logging
 
 from cuckoo.common.storage import cuckoocwd, Paths, InvalidCWDError
 from cuckoo.common.log import (
-    exit_error, print_info, print_error, print_warning
+    exit_error, print_info, print_error, print_warning, VERBOSE
 )
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.option("--distributed", is_flag=True, help="Start Cuckoo in distributed mode")
-@click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
+@click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
+@click.option("-d", "--debug", is_flag=True, help="Enable debug logging")
 @click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
 @click.pass_context
-def main(ctx, cwd, distributed, debug, quiet):
+def main(ctx, cwd, distributed, debug, quiet, verbose):
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -37,10 +38,12 @@ def main(ctx, cwd, distributed, debug, quiet):
     except InvalidCWDError as e:
         exit_error(f"Invalid Cuckoo working directory: {e}")
 
-    if quiet:
-        ctx.loglevel = logging.WARNING
+    if verbose:
+        ctx.loglevel = VERBOSE
     elif debug:
         ctx.loglevel = logging.DEBUG
+    elif quiet:
+        ctx.loglevel = logging.WARNING
     else:
         ctx.loglevel = logging.INFO
 

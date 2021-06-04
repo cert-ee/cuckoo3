@@ -10,10 +10,6 @@ from pathlib import Path
 from datetime import datetime
 from urllib.parse import urljoin
 
-from .log import set_logger_level
-
-set_logger_level("pymisp", logging.WARNING)
-
 class MispError(Exception):
     pass
 

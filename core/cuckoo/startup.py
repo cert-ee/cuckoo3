@@ -184,13 +184,13 @@ def start_localnode(cuckooctx):
 
     from .nodeclient import LocalStreamReceiver, LocalNodeClient
     stream_receiver = LocalStreamReceiver()
-    nodectx = start_local(stream_receiver)
+    nodectx = start_local(stream_receiver, cuckooctx.loglevel, )
 
     client = LocalNodeClient(cuckooctx, nodectx.node)
     stream_receiver.set_client(client)
     cuckooctx.nodes.add_node(client)
 
-def start_resultretriever(nodeapi_clients):
+def start_resultretriever(cuckooctx, nodeapi_clients):
     from .retriever import ResultRetriever
     from multiprocessing import Process
 
@@ -201,7 +201,7 @@ def start_resultretriever(nodeapi_clients):
         )
 
     retriever = ResultRetriever(
-        sockpath, cuckoocwd, get_global_loglevel()
+        sockpath, cuckoocwd, cuckooctx.loglevel
     )
 
     for client in nodeapi_clients:
@@ -237,7 +237,7 @@ def make_node_api_clients():
             values["api_url"], values["api_key"], node_name=name
         )
 
-        log.debug("Loading remote node client", node=name, url=client.api_url)
+        log.info("Loading remote node client", node=name, url=client.api_url)
         try:
             client.ping()
         except ClientError as e:
@@ -274,6 +274,7 @@ class CuckooCtx:
 
     def __init__(self):
         self.nodes = NodesTracker(self)
+        self.loglevel = logging.DEBUG
         self.scheduler = None
         self.state_controller = None
         self.processing_handler = None
@@ -285,13 +286,10 @@ def start_cuckoo_controller(loglevel):
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
-    from cuckoo.common.log import set_logger_level
     from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
-
-    set_logger_level("urllib3.connectionpool", logging.ERROR)
 
     log.info("Starting Cuckoo controller", cwd=cuckoocwd.root)
     log.info("Loading configurations")
@@ -310,12 +308,15 @@ def start_cuckoo_controller(loglevel):
     log.debug("Initializing database")
     init_database()
 
+    cuckooctx = CuckooCtx()
+    cuckooctx.loglevel = loglevel
+
     log.debug("Starting result retriever")
-    start_resultretriever(api_clients)
+    start_resultretriever(cuckooctx, api_clients)
 
     log.debug("Initializing task queue")
     task_queue = TaskQueue(Paths.queuedb())
-    cuckooctx = CuckooCtx()
+
     make_scheduler(cuckooctx, task_queue)
 
     remote_nodes, loop_wrapper = make_remote_node_clients(
@@ -383,6 +384,7 @@ def start_cuckoo(loglevel):
         log.debug("Initializing task queue")
         task_queue = TaskQueue(Paths.queuedb())
         cuckooctx = CuckooCtx()
+        cuckooctx.loglevel = loglevel
         make_scheduler(cuckooctx, task_queue)
 
         log.debug("Starting local task node")

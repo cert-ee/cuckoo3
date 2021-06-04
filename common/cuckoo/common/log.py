@@ -19,6 +19,21 @@ logging.addLevelName(logging.WARNING, "WARN")
 # Set the root level to DEBUG so we can easily use per-handler levels
 logging.getLogger().setLevel(logging.DEBUG)
 
+WARNINGSONLY = [
+    "aiohttp_sse_client",
+    "urllib3",
+    "elasticsearch",
+    "asyncio",
+    "pymisp"
+]
+
+VERBOSE = logging.DEBUG - 1
+_VERBOSE_ENABLED = False
+
+def enable_verbose():
+    global _VERBOSE_ENABLED
+    _VERBOSE_ENABLED = True
+
 class ColorText:
     @staticmethod
     def color(text, color_code):
@@ -106,6 +121,9 @@ def add_rootlogger_handler(handler):
     logging.getLogger().addHandler(handler)
 
 def set_logger_level(loggername, level):
+    if _VERBOSE_ENABLED and level > logging.DEBUG:
+        return
+
     logging.getLogger(loggername).setLevel(level)
 
 def get_global_loglevel():

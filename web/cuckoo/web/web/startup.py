@@ -73,7 +73,7 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
     # any Cuckoo specific shutdown handlers.
     shutdown.set_call_original_handlers(call_original=True)
     try:
-        init_global_logging(loglevel, logfile, warningsonly=["asyncio"])
+        init_global_logging(loglevel, logfile)
 
         machine_dump = Paths.machinestates()
         if machine_dump.is_file():

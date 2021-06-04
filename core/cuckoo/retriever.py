@@ -200,6 +200,8 @@ class ResultRetriever(UnixSocketServer):
 
         self.start_accepting(timeout=1)
 
+        # Shutdown routine to stop workers. "start_accepting" blocks until
+        # it is stopped.
         for worker in self.workers:
             log.debug("Waiting for retriever worker to stop")
             worker.join(timeout=20)

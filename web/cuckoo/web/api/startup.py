@@ -67,7 +67,7 @@ def init_api(cuckoo_cwd, loglevel, logfile=""):
 
     load_app()
     try:
-        init_global_logging(loglevel, logfile, warningsonly=["asyncio"])
+        init_global_logging(loglevel, logfile)
         machines_dump = Paths.machinestates()
         if machines_dump.is_file():
             settings_maker.set_machinesdump_path(machines_dump)

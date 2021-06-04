@@ -447,8 +447,7 @@ class ResultServer(UnixSocketServer):
         register_shutdown(self.stop)
 
         init_global_logging(
-            self.loglevel, Paths.log("resultserver.log"), use_logqueue=False,
-            warningsonly=["asyncio"]
+            self.loglevel, Paths.log("resultserver.log"), use_logqueue=False
         )
 
         try:

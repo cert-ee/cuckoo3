@@ -137,9 +137,10 @@ class TaskStarter(threading.Thread):
             except queue.Empty:
                 continue
 
-            log.debug(
+            log.info(
                 "Assigning startable task to node",
-                task_id=startable_task.task.id, node=startable_task.node.name
+                task_id=startable_task.task.id, node=startable_task.node.name,
+                machine=startable_task.machine.name
             )
             try:
                 startable_task.assign_to_node()
@@ -210,7 +211,7 @@ class Scheduler:
                 try:
                     log.debug(
                         "Adding entry to task starter queue", task_id=task.id,
-                        machine=machine.name, node=node
+                        machine=machine.name, node=node.name
                     )
                     self._queue_startable(
                         StartableTask(self.ctx, task, machine, node)
