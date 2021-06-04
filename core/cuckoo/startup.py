@@ -23,6 +23,15 @@ must be declared here and register a stopping or cleanup method
 with shutdown.register_shutdown if anything has to be stopped 
 on Cuckoo shutdown"""
 
+class CuckooCtx:
+
+    def __init__(self):
+        self.nodes = NodesTracker(self)
+        self.loglevel = logging.DEBUG
+        self.scheduler = None
+        self.state_controller = None
+        self.processing_handler = None
+
 def start_processing_handler(cuckooctx):
     from .runprocessing import ProcessingWorkerHandler
     cuckooctx.processing_handler = ProcessingWorkerHandler(cuckooctx)
@@ -141,7 +150,7 @@ def add_machine(machinery_name, name, label, ip, platform, os_version="",
     finally:
         shutil.rmtree(tmpdir)
 
-def start_importcontroller():
+def start_importcontroller(cuckooctx):
     from .control import ImportController
     sockpath = Paths.unix_socket("importcontroller.sock")
     if os.path.exists(sockpath):
@@ -150,7 +159,7 @@ def start_importcontroller():
             f"Unix socket path already exists: {sockpath}"
         )
 
-    import_controller = ImportController(sockpath)
+    import_controller = ImportController(sockpath, cuckooctx)
     shutdown.register_shutdown(import_controller.stop)
 
     # Check if any untracked analyses exist after starting
@@ -165,6 +174,9 @@ def start_importmode(loglevel):
         init_database, load_configurations, init_global_logging
     )
 
+    ctx = CuckooCtx()
+    ctx.loglevel = loglevel
+
     # Initialize globing logging to importmode.log
     init_global_logging(loglevel, Paths.log("importmode.log"))
     init_database()
@@ -177,7 +189,7 @@ def start_importmode(loglevel):
         raise StartupError(f"Missing configuration file: {e}")
 
     log.info("Starting import controller")
-    start_importcontroller()
+    start_importcontroller(ctx)
 
 def start_localnode(cuckooctx):
     from cuckoo.node.startup import start_local
@@ -269,15 +281,6 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
         cuckooctx.nodes.add_node(remote_node)
 
     return remotes_nodes, wrapper
-
-class CuckooCtx:
-
-    def __init__(self):
-        self.nodes = NodesTracker(self)
-        self.loglevel = logging.DEBUG
-        self.scheduler = None
-        self.state_controller = None
-        self.processing_handler = None
 
 def start_cuckoo_controller(loglevel):
     from multiprocessing import set_start_method

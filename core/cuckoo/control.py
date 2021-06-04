@@ -48,7 +48,7 @@ def import_importables(worktracker):
 
             path = Paths.importables(importable)
             try:
-                analysis = import_analysis(path)
+                analysis = import_analysis(str(path), delete_after_import=True)
                 log.debug("Imported analysis", analysis=analysis.id)
             except AnalysisImportError as e:
                 log.warning("Import failed", importable=path, error=e)
@@ -618,8 +618,8 @@ class StateController(UnixSocketServer):
 class ImportController(StateController):
     NUM_STATE_CONTROLLER_WORKERS = 1
 
-    def __init__(self, controller_sock_path):
-        super().__init__(controller_sock_path)
+    def __init__(self, controller_sock_path, cuckooctx):
+        super().__init__(controller_sock_path, cuckooctx)
         self.workers = []
         self.work_queue = queue.Queue()
         self.subject_handler = {
