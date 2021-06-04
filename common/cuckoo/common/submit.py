@@ -158,7 +158,7 @@ class SettingsHelper:
 
     def add_platform(self, platform, os_version="", tags=[]):
         if not platform:
-            raise SubmissionError(f"Platform cannot be empty")
+            raise SubmissionError("Platform cannot be empty")
 
         if not isinstance(platform, str):
             raise SubmissionError(f"platform must be a string. {platform!r}")

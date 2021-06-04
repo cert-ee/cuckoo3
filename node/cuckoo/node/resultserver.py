@@ -213,7 +213,7 @@ class FileUpload(ProtocolHandler):
             )
         except MaxBytesWritten as e:
             raise CancelResult(
-                f"Task {self.task_id} file upload {dirpart}/{fname!r}"
+                f"Task {self.task.task_id} file upload {dirpart}/{fname!r}"
                 f" cancelled. {e}"
             )
         finally:
@@ -532,7 +532,7 @@ class ResultServer(UnixSocketServer):
         if not ip or not task_id or not action:
             self.respond(
                 readerwriter,
-                 _RSResponses.fail("Missing ip, task_id, or action")
+                _RSResponses.fail("Missing ip, task_id, or action")
             )
             return
 

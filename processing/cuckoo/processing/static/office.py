@@ -53,7 +53,7 @@ class OfficeDocument:
             return []
 
         ret = []
-        eps_comments = "\\(([\\w\\s]+)\\)"
+        eps_comments = b"\\(([\\w\\s]+)\\)"
         try:
             for name in z.namelist():
                 if name.lower().endswith(".eps"):

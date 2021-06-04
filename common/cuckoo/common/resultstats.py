@@ -237,7 +237,7 @@ class StatisticsChart:
 
     def __init__(self, daterange, options={}):
         if not isinstance(options, dict):
-            raise StatisticsError(f"Options must be a dictionary")
+            raise StatisticsError("Options must be a dictionary")
 
         self.range = daterange
         self.options = options

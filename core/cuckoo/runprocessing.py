@@ -13,9 +13,7 @@ from cuckoo.common.config import MissingConfigurationFileError
 from cuckoo.common.ipc import (
     UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
 )
-from cuckoo.common.log import (
-    CuckooGlobalLogger, get_global_loglevel
-)
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.startup import init_global_logging, load_configurations
 from cuckoo.common.storage import Paths, cuckoocwd
@@ -45,25 +43,25 @@ class States(object):
 class WorkReceiver(UnixSocketServer):
 
     PLUGIN_BASEPATH = "cuckoo.processing"
-    REPORTING_PLUGIN_PATH = "cuckoo.processing.reporting"
+    REPORTING_PLUGIN_PATH = f"{PLUGIN_BASEPATH}.reporting"
 
     PLUGINS = {
         "identification": {
             "processing": (
-                "cuckoo.processing.identification", abtracts.Processor
+                f"{PLUGIN_BASEPATH}.identification", abtracts.Processor
             ),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         },
         "pre": {
-            "processing": ("cuckoo.processing.pre", abtracts.Processor),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "processing": (f"{PLUGIN_BASEPATH}.pre", abtracts.Processor),
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         },
         "post": {
             "eventconsuming": (
-                "cuckoo.processing.post.eventconsumer", abtracts.EventConsumer
+                f"{PLUGIN_BASEPATH}.post.eventconsumer", abtracts.EventConsumer
             ),
-            "processing": ("cuckoo.processing.post", abtracts.Processor),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "processing": (f"{PLUGIN_BASEPATH}.post", abtracts.Processor),
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         }
     }
 

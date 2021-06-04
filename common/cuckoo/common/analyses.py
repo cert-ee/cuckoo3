@@ -5,7 +5,7 @@
 import json
 import os
 
-from . import db, machines, targets
+from . import db, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import (

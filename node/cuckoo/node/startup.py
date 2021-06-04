@@ -7,7 +7,7 @@ import time
 from threading import Thread
 
 from cuckoo.common import config, shutdown
-from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.startup import StartupError
 from cuckoo.common.startup import load_configurations

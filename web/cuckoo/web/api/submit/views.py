@@ -11,7 +11,7 @@ from cuckoo.common import submit
 
 class FileSubmission(serializers.Serializer):
     file = serializers.FileField()
-    settings = serializers.JSONField()
+    settings = serializers.JSONField(help_text="A settings dictionary")
 
 class SubmitFile(APIView):
 

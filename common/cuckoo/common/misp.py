@@ -2,7 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import logging
 import pymisp
 import requests.exceptions
 
@@ -144,7 +143,7 @@ class MispClient:
         self._misp_url = misp_url
         try:
             self._client = pymisp.PyMISP(
-                url=misp_url, key=api_key, ssl=verify_tls
+                url=misp_url, key=api_key, ssl=verify_tls, timeout=timeout
             )
         except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(

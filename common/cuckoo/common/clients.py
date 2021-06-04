@@ -462,7 +462,7 @@ class NodeAPIClient:
             _raise_for_status(_response_ctx(res), api, 200)
 
     def machine_list(self):
-        api = urljoin(self.api_url, f"machines")
+        api = urljoin(self.api_url, "machines")
         try:
             res = requests.get(api, timeout=5, headers=self.get_headers())
         except requests.exceptions.RequestException as e:
@@ -581,7 +581,7 @@ class NodeEventReader:
 
     async def read_stream(self):
         if not self._evsource:
-            raise ClientError(f"No opened event source")
+            raise ClientError("No opened event source")
 
         evsource = self._evsource
         try:

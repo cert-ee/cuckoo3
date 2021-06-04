@@ -139,6 +139,8 @@ class UnixSocketServer:
         self.do_run = False
 
     def track(self, sock, reader):
+        """Track when the socket is ready for reading and store the
+        passed readerwriter in a socket:rw map"""
         self._fd_socks[sock.fileno()] = sock
         self.socks_readers[sock] = reader
         self._poll.register(sock, _POLL_READ)
@@ -252,9 +254,12 @@ class UnixSocketServer:
                 pass
 
     def handle_connection(self, sock, addr):
+        """Called when a new client connects. Call the track method here
+        if the client should be tracked."""
         pass
 
     def handle_message(self, sock, msg):
+        """Called when a new JSON message for a tracked socket arrives."""
         pass
 
 
@@ -297,7 +302,7 @@ class UnixSockClient:
                 time.sleep(3)
 
         if not self.blockingreads:
-            sock.setblocking(0)
+            sock.setblocking(False)
 
         self.sock = sock
         self.reader = ReaderWriter(sock)

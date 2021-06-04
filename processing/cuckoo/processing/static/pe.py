@@ -125,11 +125,11 @@ class _PEx509Cert:
     def _ext_subjectaltname(self, extension, extensions):
         # oid 2.5.29.17 - subjectAltName
         altnames = []
-        for i, name in enumerate(extension.value._general_names):
+        for _, name in enumerate(extension.value._general_names):
             if isinstance(name, str):
                 altnames.append(name)
             elif isinstance(name, general_name.DirectoryName):
-                for i, nameattr in enumerate(name.value):
+                for _, nameattr in enumerate(name.value):
                     altnames.append(nameattr.value)
             elif isinstance(name.value, bytes):
                 altnames.append(base64.b64encode(name.value).decode())

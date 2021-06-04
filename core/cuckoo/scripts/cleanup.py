@@ -45,10 +45,9 @@ def start_export(older_than_days, loglevel, without_confirm=False):
         return
 
     print_info(f"Found {len(analyses)} older than {date}")
-    if not without_confirm:
-        if not click.confirm(
-                f"Export and delete {len(analyses)} analyses? "
-                f"This cannot be undone."
+    if not without_confirm and not click.confirm(
+            f"Export and delete {len(analyses)} analyses? "
+            f"This cannot be undone."
         ):
             return
 
