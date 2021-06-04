@@ -13,7 +13,7 @@ from cuckoo.common.packages import get_conftemplates
 from cuckoo.common.startup import StartupError
 from cuckoo.common.storage import Paths, UnixSocketPaths, cuckoocwd
 
-from .scheduler2 import NodesTracker
+from .scheduler import NodesTracker
 
 log = CuckooGlobalLogger(__name__)
 
@@ -71,7 +71,7 @@ def start_statecontroller(cuckooctx):
     state_th.start()
 
 def make_scheduler(cuckooctx, task_queue):
-    from .scheduler2 import Scheduler
+    from .scheduler import Scheduler
     sched = Scheduler(cuckooctx, task_queue)
 
     # Add scheduler to context for usage by other components

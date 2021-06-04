@@ -1,153 +1,237 @@
-# Copyright (C) 2020 Cuckoo Foundation.
+# Copyright (C) 2020 - 2021 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from collections import namedtuple
-from threading import RLock, Event
+import threading
 
-from cuckoo.common.clients import TaskRunnerClient, ActionFailedError
-from cuckoo.common.config import cfg
-from cuckoo.common.storage import Paths
-from cuckoo.common.log import CuckooGlobalLogger
+import queue
+
+from cuckoo.common.log import CuckooGlobalLogger, TaskLogger
+from cuckoo.common.errors import ErrorTracker
+from cuckoo.common.storage import TaskPaths, Paths
+from cuckoo.common.machines import MachineListDumper
+
+from .nodeclient import NodeActionError
 
 log = CuckooGlobalLogger(__name__)
 
-from cuckoo.common.machines import get_available
 
-from .machinery import acquire_available, unlock
+class SchedulerError(Exception):
+    pass
 
-class _TaskQueue:
-    """Dummy-ish queue. Will be exchange later for a more fitting future-proof
-    queue solution."""
-    # TODO ^
+class NodesTracker:
 
-    _queued_task = namedtuple(
-        "QueuedTask",
-        ["id", "analysis_id", "priority", "created_on", "platform",
-         "os_version", "machine_tags", "kind"]
-    )
-
-    def __init__(self):
-        self._lock = RLock()
-        self._queue = []
+    def __init__(self, cuckooctx):
+        self.ctx = cuckooctx
+        self._nodes = []
+        self.machinelist_dumper = MachineListDumper(min_dump_wait=300)
 
     @property
-    def size(self):
-        with self._lock:
-            return len(self._queue)
+    def machine_lists(self):
+        return [node.machines for node in self._get_ready_nodes()]
 
-    def _sort_queue(self):
-        # Ugly, slow sort for now.
-        # sort on prio and create datetime
-        self._queue.sort(key=lambda r: r.created_on)
-        self._queue.sort(key=lambda r: r.priority, reverse=True)
+    def _get_ready_nodes(self):
+        nodes = []
+        for node in self._nodes:
+            if not node.ready:
+                log.warning("Node not ready for use", node=node.name)
+                continue
 
-    def queue_one(self, task_id, analysis_id, kind, priority, created_on,
-                  platform, os_version=""):
-        with self._lock:
-            self._add_entry(
-                task_id, analysis_id, kind, priority, created_on, platform,
-                os_version
+            nodes.append(node)
+
+        return nodes
+
+    def machines_available(self):
+        total = 0
+        for node in self._get_ready_nodes():
+            total += node.machines.available_count
+
+        return total > 0
+
+    def add_node(self, node):
+        self._nodes.append(node)
+
+    def notready_cb(self, node):
+        self.machinelist_dumper.remove_machinelist(node.machines)
+        self.ctx.scheduler.inform_change()
+
+    def ready_cb(self, node):
+        self.machinelist_dumper.add_machinelist(node.machines)
+        self.ctx.scheduler.inform_change()
+
+    def find_available(self, queued_task):
+        for node in self._get_ready_nodes():
+            machine = node.machines.acquire_available(
+                queued_task.id, platform=queued_task.platform,
+                os_version=queued_task.os_version,
+                tags=queued_task.machine_tags
             )
-            self._sort_queue()
+            if not machine:
+                continue
 
-    def queue_many(self, task_list):
-        """Task list can be a list of dicts or any obj that has the attributes
-        listed in 'QueuedTask'"""
-        with self._lock:
-            for task in task_list:
-                if isinstance(task, dict):
-                    self._add_entry(
-                        task_id=task["id"],
-                        analysis_id=task["analysis_id"],
-                        kind=task["kind"],
-                        priority=task["priority"],
-                        created_on=task["created_on"],
-                        platform=task["platform"],
-                        os_version=task["os_version"],
-                        machine_tags=task["machine_tags"]
-                    )
-                else:
-                    self._add_entry(
-                        task_id=task.id,
-                        analysis_id=task.analysis_id,
-                        kind=task.kind,
-                        priority=task.priority,
-                        created_on=task.created_on,
-                        platform=task.platform,
-                        os_version=task.os_version,
-                        machine_tags=task.machine_tags
-                    )
-            self._sort_queue()
-
-    def _add_entry(self, task_id, analysis_id, kind, priority, created_on,
-                   platform, os_version="", machine_tags=[]):
-        with self._lock:
-            self._queue.append(self._queued_task(
-                id=task_id, analysis_id=analysis_id, priority=priority,
-                created_on=int(created_on.timestamp()), platform=platform,
-                kind=kind, os_version=os_version, machine_tags=machine_tags
-            ))
-
-    def find_work(self):
-        # Search queue for task that needs platform, pop, and return it.
-        with self._lock:
-            for index, task in enumerate(self._queue):
-                machine = acquire_available(
-                    task_id=task.id, platform=task.platform,
-                    os_version=task.os_version, tags=task.machine_tags
-                )
-                if machine:
-                    return self._queue.pop(index), machine
+            return machine, node
 
         return None, None
 
+class StartableTask:
 
-task_queue = _TaskQueue()
+    def __init__(self, cuckooctx, queued_task, machine, node):
+        self.ctx = cuckooctx
+        self.task = queued_task
+        self.machine = machine
+        self.node = node
+
+        self.errtracker = ErrorTracker()
+        self._logger = None
+        self._released = False
+
+    @property
+    def log(self):
+        if not self._logger:
+            self._logger = TaskLogger( __name__, self.task.id)
+
+        return self._logger
+
+    def task_running(self):
+        self.ctx.state_controller.task_running(
+            task_id=self.task.id, analysis_id=self.task.analysis_id,
+            machine=self.machine
+        )
+
+    def assign_to_node(self):
+        self.node.add_task(self)
+
+    def release_resources(self):
+        if self._released:
+            return
+
+        self.node.machines.release(self.machine)
+        self.ctx.scheduler.inform_change()
+        self._released = True
+
+    def close(self):
+        if self.errtracker.has_errors():
+            self.errtracker.to_file(TaskPaths.runerr_json(self.task.id))
+        if self._logger:
+            self._logger.close()
+
+        self.release_resources()
+
+class TaskStarter(threading.Thread):
+
+    def __init__(self, cuckooctx, workqueue):
+        super().__init__()
+        self.workqueue = workqueue
+        self.ctx = cuckooctx
+
+        self._do_run = True
+
+    def stop(self):
+        self._do_run = False
+
+    def run(self):
+
+        while self._do_run:
+            try:
+                startable_task = self.workqueue.get(timeout=1)
+            except queue.Empty:
+                continue
+
+            log.debug(
+                "Assigning startable task to node",
+                task_id=startable_task.task.id, node=startable_task.node.name
+            )
+            try:
+                startable_task.assign_to_node()
+            except NodeActionError as e:
+                startable_task.log.error(
+                    "Failed to start task", task_id=startable_task.task.id,
+                    error=e
+                )
+                startable_task.errtracker.fatal_error(
+                    f"Failed to start task: {e}"
+                )
+                startable_task.node.task_failed(startable_task.task.id)
+            except Exception as e:
+                log.exception(
+                    "Unexpected failure while starting task",
+                    task_id=startable_task.task.id, error=e
+                )
+                startable_task.node.task_failed(
+                    startable_task.task.id
+                )
+            else:
+                startable_task.task_running()
 
 class Scheduler:
 
-    def __init__(self):
+    NUM_TASK_STARTERS = 1
+
+    def __init__(self, cuckooctx, taskqueue):
         self.do_run = True
+        self.ctx = cuckooctx
+        self.taskqueue = taskqueue
 
+        self._task_starters = []
         self._assigned_machines = {}
-        self._change_event = Event()
+        self._change_event = threading.Event()
+        self._startables_queue = queue.Queue()
 
-    def start_task(self, task, machine):
-        log.info(
-            "Requesting task runner to start task.",
-            task_id=task.id, machine=machine.name
+    def queue_task(self, task_id, kind, created_on, analysis_id, priority,
+                   platform, os_version, machine_tags):
+        self.taskqueue.queue_task(
+            task_id, kind, created_on, analysis_id, priority, platform,
+            os_version, machine_tags
         )
-
-        self._assigned_machines[task.id] = machine
-        try:
-            TaskRunnerClient.start_task(
-                Paths.unix_socket("taskrunner.sock"), kind=task.kind,
-                task_id=task.id, analysis_id=task.analysis_id,
-                machine=machine,
-                result_ip=cfg("cuckoo", "resultserver", "listen_ip"),
-                result_port=cfg("cuckoo", "resultserver", "listen_port")
-            )
-            started.state_controller.task_running(task_id=task.id)
-        except ActionFailedError as e:
-            log.error("Failed to start task.", task_id=task.id, error=e)
-            self.task_ended(task.id)
-            started.state_controller.task_failed(
-                task_id=task.id, analysis_id=task.analysis_id
-            )
-
-    def task_ended(self, task_id):
-        machine = self._assigned_machines.pop(task_id, None)
-        if not machine:
-            return
-
-        unlock(machine)
         self._change_event.set()
 
-    def newtask(self):
+    def queue_many(self, *task_dicts):
+        self.taskqueue.queue_many(*task_dicts)
+        self._change_event.set()
+
+    def _queue_startable(self, startable_task):
+        if not self.do_run:
+            raise SchedulerError("Scheduler not running")
+
+        if not self._task_starters:
+            raise SchedulerError("No task starters")
+
+        self._startables_queue.put(startable_task)
+
+    def assign_work(self):
+        with self.taskqueue.get_workfinder() as wf:
+            for task in wf.get_unscheduled_tasks():
+                machine, node = self.ctx.nodes.find_available(task)
+                if not machine:
+                    wf.ignore_similar_tasks(task)
+                    continue
+
+                # Add work to task starter worker queue
+                try:
+                    log.debug(
+                        "Adding entry to task starter queue", task_id=task.id,
+                        machine=machine.name, node=node
+                    )
+                    self._queue_startable(
+                        StartableTask(self.ctx, task, machine, node)
+                    )
+                except SchedulerError as e:
+                    log.warning(
+                        "Failed to add entry to starter worker queue", error=e
+                    )
+                    return
+
+                wf.mark_scheduled(task)
+
+    def inform_change(self):
         self._change_event.set()
 
     def start(self):
+        for _ in range(self.NUM_TASK_STARTERS):
+            starter = TaskStarter(self.ctx, self._startables_queue)
+            self._task_starters.append(starter)
+            starter.start()
+
         self._change_event.set()
         while self.do_run:
             self._change_event.wait(timeout=60)
@@ -157,34 +241,43 @@ class Scheduler:
             if not self.do_run:
                 break
 
-            if task_queue.size < 1:
-                log.debug("No new task(s) ")
+            # Check if a machine lists dump should be made. Dump is used
+            # by other components to see the available platforms etc for
+            # all nodes.
+            if self.ctx.nodes.machinelist_dumper.should_dump():
+                self.ctx.nodes.machinelist_dumper.make_dump(
+                    Paths.machinestates()
+                )
+
+            # Only continue to search for machines if the task queue is not
+            # empty.
+            if self.taskqueue.size < 1:
+                log.debug("No new tasks(s)")
                 self._change_event.clear()
                 continue
 
-            available = get_available()
-            if not available:
+            if not self.ctx.nodes.machines_available():
                 log.debug("No available machines")
                 self._change_event.clear()
                 continue
 
-            tasks_started = False
-            for _ in range(len(available)):
-                task, machine = task_queue.find_work()
-                if not task:
-                    break
-
-                self.start_task(task, machine)
-                tasks_started = True
-
-            # If no tasks were started, this means no machines that are
-            # are currently available can run any of the queued tasks. Wait
-            # until new tasks are submitted or a machine is unlocked.
-            if not tasks_started:
+            # There are tasks and one or mode machines available. Find
+            # work for these idle machines.
+            log.debug("Searching for work to assign")
+            if not self.assign_work():
+                # If no tasks were started, this means no machines that are
+                # are currently available can run any of the queued tasks. Wait
+                # until new tasks are submitted or a machine is unlocked.
                 self._change_event.clear()
 
     def stop(self):
+        if not self.do_run and not self._task_starters:
+            return
+
         self.do_run = False
 
         # Set events so it won't block on these when stopping
         self._change_event.set()
+
+        for starter in self._task_starters:
+            starter.stop()
