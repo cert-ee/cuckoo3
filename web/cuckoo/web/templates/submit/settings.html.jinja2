@@ -28,42 +28,51 @@
         <div class="column">
           {% if debug_template_data %}
             {% call ui_box(title="Template data", collapsed=True) %}
-              {{ render_dict(unpacked) }}
+              {% if unpacked %}
+                {{ render_dict(unpacked) }}
+              {% endif %}
             {% endcall %}
           {% endif %}
-          {% if unpacked.children|length > 0 %}
-            <div class="box has-shadow">
-              <div class="control is-checkable">
-                <input type="checkbox" id="toggle-disabled" checked />
-                <label class="label" for="toggle-disabled">Only show interesting files <span id="count">(<span>0</span> hidden from view)</span></label>
+          {% if analysis.category == 'file' %}
+            {% if unpacked and unpacked.children|length > 0 %}
+              <div class="box has-shadow">
+                <div class="control is-checkable">
+                  <input type="checkbox" id="toggle-disabled" checked />
+                  <label class="label" for="toggle-disabled">Only show interesting files <span id="count">(<span>0</span> hidden from view)</span></label>
+                </div>
               </div>
-            </div>
-          {% endif %}
-          <div class="box has-shadow no-padding-x">
-            <div class="box is-medium has-background-light has-margin-x no-margin-y">
-              <div class="columns is-vcenter {% if not unpacked.selectable %}is-disabled{% endif %}">
-                <div class="column no-margin-x">
-                  <div class="control is-checkable">
-                    <input type="radio" id="toggle-disabled" name="selected-file" value="{{ unpacked.id }}" {% if unpacked.selected %}checked{% endif %} />
-                    <label class="label" for="toggle-disabled"></label>
+              <div class="box has-shadow no-padding-x">
+                <div class="box is-medium has-background-light has-margin-x no-margin-y">
+                  <div class="columns is-vcenter {% if not unpacked.selectable %}is-disabled{% endif %}">
+                    <div class="column no-margin-x">
+                      <div class="control is-checkable">
+                        <input type="radio" id="toggle-disabled" name="selected-file" value="{{ unpacked.id }}" {% if unpacked.selected %}checked{% endif %} />
+                        <label class="label" for="toggle-disabled"></label>
+                      </div>
+                    </div>
+                    <div class="column no-margin">
+                      <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
+                    </div>
+                    <div class="column is-fill">
+                      <h3 class="no-margin-y has-text-wrapped">{{ unpacked.filename }}</h3>
+                      <ul class="list is-horizontal has-text-small no-margin">
+                        <li>{{ unpacked.finger.magic_human }}</li>
+                        <li>{{ unpacked.size | filesizeformat }}</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-                <div class="column no-margin">
-                  <span class="icon is-big"><i class="fas fa-file-archive"></i></span>
-                </div>
-                <div class="column is-fill">
-                  <h3 class="no-margin-y has-text-wrapped">{{ unpacked.filename }}</h3>
-                  <ul class="list is-horizontal has-text-small no-margin">
-                    <li>{{ unpacked.finger.magic_human }}</li>
-                    <li>{{ unpacked.size | filesizeformat }}</li>
-                  </ul>
-                </div>
+                {% include "submit/partial/filetree.html.jinja2" %}
               </div>
-            </div>
-            {% if unpacked.children|length > 0 %}
-              {% include "submit/partial/filetree.html.jinja2" %}
             {% endif %}
-          </div>
+          {% elif analysis.category == 'url' %}
+            <div class="box has-shadow">
+              <strong class="label">Submitted URL:</strong>
+              <h2 class="has-text-wrapped has-text-center no-margin-y box has-background-light has-text-blue">
+                {{ analysis.submitted.url }}
+              </h2>
+            </div>
+          {% endif %}
         </div>
         {# Options / profile box #}
         <div class="column">
