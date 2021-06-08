@@ -11,8 +11,7 @@
 
   <section class="section">
     <div class="container is-fixed is-smol">
-      <form class="box has-shadow no-padding-x form" method="post" action="/submit/" enctype="multipart/form-data" id="submit-sample" onsubmit="startLoader()">
-        {{ csrf_input }}
+      <div class="box has-shadow no-padding-x form">
         <nav role="tablist" class="tabbar has-padding-x has-margin-bottom">
           <a role="tab" href="#submit-file" class="tabbar-link is-active">File</a>
           <a role="tab" href="#submit-url" class="tabbar-link">URL</a>
@@ -27,7 +26,7 @@
               <div class="field no-margin-top">
                 <div class="control is-file has-text-center">
                   <label class="file-trigger" for="file">Select file</label>
-                  <input class="input" type="file" id="file" name="file" data-enhance required />
+                  <input class="input" type="file" id="file" name="file" form="submit-file-form" data-enhance required />
                 </div>
                 <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
               </div>
@@ -39,7 +38,7 @@
                 <div class="column">
                   <div class="field no-margin-y">
                     <div class="control is-checkable">
-                      <input type="checkbox" value="yes" id="has-password" name="password" />
+                      <input type="checkbox" value="yes" id="has-password" name="has-password" form="submit-file-form" />
                       <label for="has-password">Password encrypted</label>
                     </div>
                   </div>
@@ -47,14 +46,14 @@
                 <div class="column has-padding-left" id="password-field" hidden>
                   <div class="field no-margin-y">
                     <div class="control">
-                      <input class="input" type="text" id="password" name="password" placeholder="Password" />
+                      <input class="input" type="text" id="password" name="password" placeholder="Password" form="submit-file-form" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="column">
-              <input type="submit" class="button is-blue no-margin-bottom" value="Configure analysis" />
+              <input type="submit" class="button is-blue no-margin-bottom" value="Configure analysis" form="submit-file-form" />
             </div>
           </div>
         </div>
@@ -72,7 +71,7 @@
               <div class="field">
                 <div class="control">
                   <label class="label" for="url">URL</label>
-                  <input class="input" type="text" id="url" name="url" />
+                  <input class="input" type="text" id="url" name="url" form="submit-url-form" />
                 </div>
               </div>
             </div>
@@ -80,11 +79,17 @@
           <div class="columns is-gapless is-between has-margin no-margin-bottom has-padding-x">
             <div class="column">&nbsp;</div>
             <div class="column">
-              <input type="submit" class="button is-blue" value="Configure analysis" />
+              <input type="submit" class="button is-blue" value="Configure analysis" form="submit-url-form" />
             </div>
           </div>
         </div>
+      </div>
 
+      <form id="submit-file-form" method="post" action="/submit/" enctype="multipart/form-data" onsubmit="startLoader()" hidden>
+        {{ csrf_input }}
+      </form>
+      <form id="submit-url-form" method="post" action="/submit/" onsubmit="startLoader()" hidden>
+        {{ csrf_input }}
       </form>
     </div>
   </section>
