@@ -45,8 +45,10 @@
             </li>
           </ul>
         {% else %}
-          <p class="has-text-wrapped">{{ analysis.submitted.url }}</p>
-          <p><span class="icon">
+          <p class="has-text-wrapped"><span class="icon">
+            <i class="fas fa-link"></i>
+          </span> {{ analysis.submitted.url }}</p>
+          <p class="has-text-small"><span class="icon">
             <i class="far fa-calendar"></i>
           </span> {{ analysis.created_on | formatdatetime }}</p>
         {% endif %}

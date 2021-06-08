@@ -35,7 +35,7 @@
             {% endcall %}
           {% endif %}
           {% if analysis.category == 'file' %}
-            {% if unpacked and unpacked.children|length > 0 %}
+            {% if unpacked %}
               <div class="box has-shadow">
                 <div class="control is-checkable">
                   <input type="checkbox" id="toggle-disabled" checked />
@@ -63,7 +63,9 @@
                     </div>
                   </div>
                 </div>
-                {% include "submit/partial/filetree.html.jinja2" %}
+                {% if unpacked.children|length > 0 %}
+                  {% include "submit/partial/filetree.html.jinja2" %}
+                {% endif %}
               </div>
             {% endif %}
           {% elif analysis.category == 'url' %}
