@@ -21,28 +21,32 @@
           <strong>{{ analysis.id }}</strong>
           <span class="pull-right has-half-opacity">{{ analysis.state|humanstate }}</span>
         </h3>
-        <p class="has-line-break has-text-small">
-          <span class="icon">
-            <i class="far fa-file"></i>
-          </span> {{ analysis.target.filename }}
-        </p>
-        <ul class="list is-horizontal no-margin-bottom has-text-small">
-          <li title="Date of creation">
+        {% if analysis.submitted.category != 'url' %}
+          <p class="has-line-break has-text-small">
             <span class="icon">
-              <i class="far fa-calendar"></i>
-            </span> {{ analysis.created_on | formatdatetime }}
-          </li>
-          <li>
-            <span class="icon">
-              <i class="fas fa-compact-disc"></i>
-            </span> {{ analysis.target.size | filesizeformat }}
-          </li>
-          <li class="is-monospace">
-            <span class="icon">
-              <i class="fas fa-terminal"></i>
-            </span> {{ analysis.target.media_type }}
-          </li>
-        </ul>
+              <i class="far fa-file"></i>
+            </span> {{ analysis.target.filename }}
+          </p>
+          <ul class="list is-horizontal no-margin-bottom has-text-small">
+            <li title="Date of creation">
+              <span class="icon">
+                <i class="far fa-calendar"></i>
+              </span> {{ analysis.created_on | formatdatetime }}
+            </li>
+            <li>
+              <span class="icon">
+                <i class="fas fa-compact-disc"></i>
+              </span> {{ analysis.target.size | filesizeformat }}
+            </li>
+            <li class="is-monospace">
+              <span class="icon">
+                <i class="fas fa-terminal"></i>
+              </span> {{ analysis.target.media_type }}
+            </li>
+          </ul>
+        {% else %}
+          <p class="has-text-wrapped">{{ analysis.submitted.url }}</p>
+        {% endif %}
         {% if analysis.families|length %}
           <div class="tag-list has-margin-top">
             <span class="label">Detected families:</span>
@@ -66,38 +70,45 @@
         <td class="no-line-break"><strong>Category</strong></td>
         <td class="has-line-break">{{ analysis.submitted.category }}</td>
       </tr>
-      <tr>
-        <td class="no-line-break"><strong>File name</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.filename }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Size</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.size | filesizeformat }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Type</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.type }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Media Type</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.media_type }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>MD5</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.md5 }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>SHA1</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.sha1 }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>SHA256</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.sha256 }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>SHA512</strong></td>
-        <td class="has-line-break">{{ analysis.submitted.sha512 }}</td>
-      </tr>
+      {% if analysis.submitted.category != 'url' %}
+        <tr>
+          <td class="no-line-break"><strong>File name</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.filename }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Size</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.size | filesizeformat }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Type</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.type }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Media Type</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.media_type }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>MD5</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.md5 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA1</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.sha1 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA256</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.sha256 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA512</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.sha512 }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td class="no-line-break"><strong>URL</strong></td>
+          <td class="has-line-break">{{ analysis.submitted.url }}</td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
   <table role="region" class="table has-striped-rows" id="overview:settings" hidden>
@@ -144,34 +155,41 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td class="no-line-break"><strong>File name</strong></td>
-        <td class="has-line-break">{{ analysis.target.filename }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Size</strong></td>
-        <td class="has-line-break">{{ analysis.target.size | filesizeformat }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Type</strong></td>
-        <td class="has-line-break">{{ analysis.target.filetype }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>Media Type</strong></td>
-        <td class="has-line-break">{{ analysis.target.media_type }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>MD5</strong></td>
-        <td class="has-line-break">{{ analysis.target.md5 }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>SHA1</strong></td>
-        <td class="has-line-break">{{ analysis.target.sha1 }}</td>
-      </tr>
-      <tr>
-        <td class="no-line-break"><strong>SHA256</strong></td>
-        <td class="has-line-break">{{ analysis.target.sha256 }}</td>
-      </tr>
+      {% if analysis.submitted.category != 'url' %}
+        <tr>
+          <td class="no-line-break"><strong>File name</strong></td>
+          <td class="has-line-break">{{ analysis.target.filename }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Size</strong></td>
+          <td class="has-line-break">{{ analysis.target.size | filesizeformat }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Type</strong></td>
+          <td class="has-line-break">{{ analysis.target.filetype }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>Media Type</strong></td>
+          <td class="has-line-break">{{ analysis.target.media_type }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>MD5</strong></td>
+          <td class="has-line-break">{{ analysis.target.md5 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA1</strong></td>
+          <td class="has-line-break">{{ analysis.target.sha1 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA256</strong></td>
+          <td class="has-line-break">{{ analysis.target.sha256 }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td class="no-line-break"><strong>URL</strong></td>
+          <td class="has-line-break">{{ analysis.target.url }}</td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 {% endcall %}

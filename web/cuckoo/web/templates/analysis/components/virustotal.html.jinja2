@@ -13,10 +13,10 @@
       {% for av in pre.virustotal.avs.values() %}
         <tr>
           <td {% if av.category == 'malicious' %}class="has-text-red"{% endif %}>{{ av.category }}</td>
-          <td>{{ av.engine_name }}</td>
-          <td>{{ av.engine_version }}</td>
-          <td>{{ av.method }}</td>
-          <td>{{ av.result }}</td>
+          <td>{{ av.engine_name|default('-') }}</td>
+          <td>{{ av.engine_version|default('-') }}</td>
+          <td>{{ av.method|default('-') }}</td>
+          <td>{{ av.result|default('-') }}</td>
         </tr>
       {% endfor %}
     </tbody>
