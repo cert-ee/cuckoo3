@@ -10,7 +10,7 @@ from . import views
 register_converter(converters.AnalysisId, "analysis_id")
 
 urlpatterns = [
-    path("", views.SubmitFile.as_view(), name="Submit/submitfile"),
+    path("", views.Submit.as_view(), name="Submit/index"),
     path(
         "waitidentify/<analysis_id:analysis_id>",
         views.WaitIdentify.as_view(), name="Submit/waitidentify"),

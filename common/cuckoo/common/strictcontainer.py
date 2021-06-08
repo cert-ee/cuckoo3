@@ -327,7 +327,7 @@ class SubmittedFile(StrictContainer):
 class SubmittedURL(StrictContainer):
 
     # Look at the parent dict and find the category key. Use this class if
-    # the value is 'file'
+    # the value is 'url'
     PARENT_KEYVAL = ("category", "url")
     FIELDS = {
         "url": str,

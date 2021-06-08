@@ -5,8 +5,8 @@
 import json
 import logging
 import os
-from pathlib import Path
 import zipfile
+from pathlib import Path
 import sflock
 
 from cuckoo.common.log import set_logger_level

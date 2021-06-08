@@ -111,7 +111,7 @@
         </div>
 
         {# tab: static.target/static.pe #}
-        {% if pre.static.pe %}
+        {% if pre.static and pre.static.pe %}
           <div role="region" id="pefiles" hidden>
             {% include "analysis/components/pefiles.html.jinja2" %}
           </div>
@@ -139,7 +139,7 @@
         {% endif %}
 
         {# tab: pre.static.office #}
-        {% if pre.static.office %}
+        {% if pre.static and pre.static.office %}
           <div role="region" id="office" hidden>
             {% include "analysis/components/office.html.jinja2" %}
           </div>

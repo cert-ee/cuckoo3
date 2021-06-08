@@ -448,20 +448,16 @@ class NodeWorkZipper(TaskZipper):
         )
 
         targetzip = AnalysisPaths.zipified_file(self.analysis_id)
+        # Set resolve to False, because the binary path is a symlink
+        # and we want a relative path to the actual symlink in the
+        # analysis directory, not its value.
+        submitted_file = AnalysisPaths.submitted_file(
+            self.analysis_id, resolve=False
+        )
         if targetzip.is_file():
-            zippables.append(
-                self._make_zippable_file(targetzip)
-            )
-        else:
-            # Set resolve to False, because the binary path is a symlink
-            # and we want a relative path to the actual symlink in the
-            # analysis directory, not its value.
-            zippables.append(
-                self._make_zippable_file(
-                    AnalysisPaths.submitted_file(self.analysis_id,
-                                                 resolve=False)
-                )
-            )
+            zippables.append(self._make_zippable_file(targetzip))
+        elif submitted_file.is_file():
+            zippables.append(self._make_zippable_file(submitted_file))
 
         zippables.append(
             self._make_zippable_data(ZippedNodeWork.TASK_ID_FILE, self.task_id)

@@ -12,37 +12,17 @@ class JSONDump(Reporter):
     ORDER = 1
 
     def report_identification(self):
-        dump_path = AnalysisPaths.identjson(self.ctx.analysis.id)
-        ident = self.ctx.result.get("identify", {})
-        submitted = ident.get("submitted", {})
-
+        selected = self.ctx.result.get("selected", {})
         info = {
             "category": self.ctx.analysis.category,
-            "selected": False
+            "selected": selected.get("selected"),
+            "identified": selected.get("identified"),
+            "target": selected.get("target", {}),
+            "ignored": self.ctx.result.get("ignored", [])
         }
-
-        # No file selection happens if the target category is URL. We can
-        # dump the identification.json immediately.
-        if self.ctx.analysis.category == "url":
-            info.update({
-                "selected": True,
-                "identified": True,
-                "target": submitted
-            })
-            Identification(**info).to_file(dump_path)
-            return
-
-        target = self.ctx.result.get("selected", {}).get("target", {})
-        selected = self.ctx.result.get("selected", {}).get("selected")
-        identified = self.ctx.result.get("selected", {}).get("identified")
-        info.update({
-            "selected": selected,
-            "identified": identified,
-            "target": target,
-            "ignored": self.ctx.result.get("ignored")
-        })
-
-        Identification(**info).to_file(dump_path)
+        Identification(**info).to_file(
+            AnalysisPaths.identjson(self.ctx.analysis.id)
+        )
 
     def report_pre_analysis(self):
         include_result = ["virustotal", "static", "misp", "intelmq"]

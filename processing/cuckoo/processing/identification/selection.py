@@ -102,6 +102,25 @@ class Identify(Processor):
             }
         }
 
+class SelectURL(Processor):
+
+    ORDER = 999
+    KEY = "selected"
+    CATEGORY = ["url"]
+
+    def start(self):
+        return {
+            "identified": True,
+            "selected": True,
+            "target": {
+                "url": self.ctx.analysis.submitted.url,
+                "platforms": [
+                    {"platform": p, "os_version":""}
+                    for p in sflock.identify.Platform.ANY
+                ],
+            }
+        }
+
 
 class SelectFile(Processor):
     """The SelectFile module must run as the last module that does anything
