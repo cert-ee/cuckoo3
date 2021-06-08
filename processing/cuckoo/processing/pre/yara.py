@@ -4,13 +4,14 @@
 
 import os
 
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import Paths, Binaries
 
 from ..abtracts import Processor
-from ..static.pe import PEFile
-from ..static.office import OfficeDocument
 from ..errors import PluginError
 from ..signatures.yarasigs import YaraFile, YaraSignatureError
+
+log = CuckooGlobalLogger(__name__)
 
 class StaticYaraRules(Processor):
 
@@ -20,26 +21,30 @@ class StaticYaraRules(Processor):
 
     @classmethod
     def enabled(cls):
-        return len(cls.compiled_rules) > 0
+        yarapath = Paths.yara_signatures("static")
+        if not yarapath.is_dir():
+            return False
+
+        return len(os.listdir(yarapath)) > 0
 
     @classmethod
     def init_once(cls):
-
         yarapath = Paths.yara_signatures("static")
         if not os.path.isdir(yarapath):
             return
-
 
         for filename in os.listdir(yarapath):
             if not filename.endswith((".yar", ".yara")):
                 continue
 
-        try:
-            cls.compiled_rules.append(
-                YaraFile(os.path.join(yarapath, filename))
-            )
-        except YaraSignatureError as e:
-            raise PluginError(f"Error loading Yara rules. {e}")
+            try:
+                rule_path = os.path.join(yarapath, filename)
+                log.debug(
+                    "Loading yara static signature file", filepath=rule_path
+                )
+                cls.compiled_rules.append(YaraFile(rule_path))
+            except YaraSignatureError as e:
+                raise PluginError(f"Error loading Yara rules. {e}")
 
     def start(self):
         if not self.compiled_rules:

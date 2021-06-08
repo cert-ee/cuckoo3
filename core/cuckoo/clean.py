@@ -7,7 +7,7 @@ import tempfile
 import os.path
 from pathlib import Path
 
-from cuckoo.common.storage import  delete_dirtree, Paths
+from cuckoo.common.storage import delete_dirtree, Paths
 from cuckoo.common.importing import (
     AnalysisZipper, AnalysisZippingError
 )
@@ -111,12 +111,12 @@ class AnalysisRemoteExporter:
         return True
 
     def _zip_analysis(self, analysis_id):
-        zipper = AnalysisZipper(analysis_id)
-        zippath = os.path.join(self._tmpdir, f"{analysis_id}.zip")
-        return zipper.make_zip(
-            zippath, ignore_task_dirs=self._ignore_task_dirs,
-            ignore_task_files=self._ignore_task_files
+        zipper = AnalysisZipper(
+            analysis_id, ignore_dirs=self._ignore_task_dirs,
+            ignore_files=self._ignore_task_files
         )
+        zippath = os.path.join(self._tmpdir, f"{analysis_id}.zip")
+        return zipper.make_zip(zippath)
 
     def _upload_to_remote(self, zipped_analysis, analysis_id):
         with zipped_analysis:

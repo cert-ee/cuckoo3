@@ -357,12 +357,6 @@ def analysis_unique_values_field(field, start, end):
         end=end
     )
 
-    # q = elasticsearch_dsl.Search(using=manager.client, index="tasks")
-    # q = q.query("term", tags="stealer").filter(
-    #     "range", ts={"gte": 1621953866613, "lte": 1621954066613}
-    # )
-    # r = q.count()
-
 def _count_index_fieldvals(index, field, value, start, end):
     start_ts = int(start.timestamp() * 1000)
     end_ts = int(end.timestamp() * 1000)

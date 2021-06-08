@@ -9,14 +9,13 @@ import threading
 from cuckoo.common import analyses, task
 from cuckoo.common.config import cfg
 from cuckoo.common.errors import ErrorTracker
-from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.importing import import_analysis, AnalysisImportError
+from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, delete_file
 from cuckoo.common.strictcontainer import (
     Analysis, Task, Identification, Pre, Post
 )
-from cuckoo.common.machines import Machine
 from cuckoo.common.submit import settings_maker, SubmissionError
 
 log = CuckooGlobalLogger(__name__)
@@ -49,7 +48,7 @@ def import_importables(worktracker):
 
             path = Paths.importables(importable)
             try:
-                analysis = import_analysis(path)
+                analysis = import_analysis(str(path), delete_after_import=True)
                 log.debug("Imported analysis", analysis=analysis.id)
             except AnalysisImportError as e:
                 log.warning("Import failed", importable=path, error=e)
@@ -327,7 +326,7 @@ def set_task_failed(worktracker):
     analyses.write_changes(worktracker.analysis)
 
 def set_task_running(worktracker, machine):
-    worktracker.log.debug("Setting task to state running")
+    worktracker.log.info("Setting task to state running")
     worktracker.task.state = task.States.RUNNING
     worktracker.analysis.update_task(
         worktracker.task.id, state=worktracker.task.state,
@@ -358,10 +357,7 @@ class _WorkTracker:
 
     def __enter__(self):
         if self.analysis_id:
-            l = self._locker.get_analysis_lock(self.analysis_id)
-            if l.locked:
-                log.warning("MUST WAIT. ANALYSIS IS LOCKED", analysis_id=self.analysis_id)
-            return l.acquire()
+            return self._locker.get_analysis_lock(self.analysis_id).acquire()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.analysis_id:
@@ -478,24 +474,15 @@ class _AnalysisLocker:
         with self._trackerlock:
             a_lock = self._locks[analysis_id]
             a_lock.decrement_waiters()
-
-            log.warning("LOCK WAITERS AFTER DECREMENT", analysis_id=analysis_id, waiters=a_lock.waiters)
-
             if a_lock.waiters < 1:
                 self._locks.pop(analysis_id)
 
     def get_analysis_lock(self, analysis_id):
-        l = self._locks[analysis_id]
-        log.warning("CONTROLLER ANALYSIS LOCK STATE", analysis_id=analysis_id, waiters=l.waiters)
-        return l.lock
-        # return self._locks[analysis_id].lock
+        return self._locks[analysis_id].lock
 
 
 class StateController(UnixSocketServer):
 
-    # Keep amount of worker to 1 for now to prevent db locking issues with
-    # sqlite. 1 thread should be enough. Also because not all steps, such
-    # as writing scores from tasks to analyses can cause race conditions.
     NUM_STATE_CONTROLLER_WORKERS = 6
     
     def __init__(self, controller_sock_path, cuckooctx):
@@ -626,16 +613,13 @@ class StateController(UnixSocketServer):
             worker.start()
 
         self.create_socket()
-        self.start_accepting(select_timeout=1)
+        self.start_accepting(timeout=1)
 
 class ImportController(StateController):
-    # Keep amount of worker to 1 for now to prevent db locking issues with
-    # sqlite. 1 thread should be enough. Also because not all steps, such
-    # as writing scores from tasks to analyses can cause race conditions.
     NUM_STATE_CONTROLLER_WORKERS = 1
 
-    def __init__(self, controller_sock_path):
-        super().__init__(controller_sock_path)
+    def __init__(self, controller_sock_path, cuckooctx):
+        super().__init__(controller_sock_path, cuckooctx)
         self.workers = []
         self.work_queue = queue.Queue()
         self.subject_handler = {

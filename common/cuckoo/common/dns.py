@@ -15,12 +15,12 @@ class ResolveTracker:
         return list(self._ip_map.get(domain, set()))
 
     def find_domain_all(self, domain):
-        all = set()
+        all_domains = set()
         for entry in self._domain_map.keys():
             if entry.endswith(domain):
-                all.add(entry)
+                all_domains.add(entry)
 
-        return list(all)
+        return list(all_domains)
 
     def add_resolved(self, domain, ip):
         self._domain_map.setdefault(domain, set()).add(ip)

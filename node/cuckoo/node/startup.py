@@ -7,7 +7,7 @@ import time
 from threading import Thread
 
 from cuckoo.common import config, shutdown
-from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.startup import StartupError
 from cuckoo.common.startup import load_configurations
@@ -17,7 +17,7 @@ from cuckoo.node.node import Node
 
 log = CuckooGlobalLogger(__name__)
 
-def start_taskrunner():
+def start_taskrunner(nodectx):
     from cuckoo.node.taskrunner import TaskRunner
     from multiprocessing import Process
 
@@ -28,7 +28,7 @@ def start_taskrunner():
         )
 
     taskrunner = TaskRunner(
-        sockpath, cuckoocwd, loglevel=get_global_loglevel()
+        sockpath, cuckoocwd, loglevel=nodectx.loglevel
     )
     runner_proc = Process(target=taskrunner.start)
 
@@ -121,7 +121,7 @@ def start_machinerymanager(nodectx):
     manager_th = Thread(target=manager.start)
     manager_th.start()
 
-def start_resultserver():
+def start_resultserver(nodectx):
     from cuckoo.node.resultserver import ResultServer, servers
     from multiprocessing import Process
 
@@ -136,7 +136,7 @@ def start_resultserver():
     ip = config.cfg("cuckoo", "resultserver", "listen_ip")
     port = config.cfg("cuckoo", "resultserver", "listen_port")
     rs = ResultServer(
-        sockpath, cuckoocwd, ip, port, loglevel=get_global_loglevel()
+        sockpath, cuckoocwd, ip, port, loglevel=nodectx.loglevel
     )
     log.debug(
         "Starting resultserver.", listenip=ip, listenport=port,
@@ -171,17 +171,19 @@ class NodeCtx:
 
     def __init__(self):
         self.node = None
+        self.loglevel = None
         self.machinery_manager = None
         self.state_controller = None
         self.zip_results = False
 
-def start_local(stream_receiver):
+def start_local(stream_receiver, loglevel):
     ctx = NodeCtx()
+    ctx.loglevel = loglevel
     # Results should not be zipped if it is a local node.
     ctx.zip_results = False
-    start_resultserver()
+    start_resultserver(ctx)
     start_machinerymanager(ctx)
-    start_taskrunner()
+    start_taskrunner(ctx)
     node = Node(ctx, stream_receiver)
     ctx.node = node
     shutdown.register_shutdown(node.stop)
@@ -208,11 +210,12 @@ def start_remote(loglevel, api_host="localhost", api_port=8090):
         raise StartupError(e)
 
     ctx = NodeCtx()
+    ctx.loglevel = loglevel
     # Results should be zipped after a task finished
     ctx.zip_results = True
-    start_resultserver()
+    start_resultserver(ctx)
     start_machinerymanager(ctx)
-    start_taskrunner()
+    start_taskrunner(ctx)
 
     runner = make_api_runner(ctx)
     shutdown.register_shutdown(runner.stop)

@@ -2,10 +2,11 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
+from copy import deepcopy
 import json
 import os
 
-from . import db, machines, targets
+from . import db, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import (
@@ -237,12 +238,13 @@ def merge_target_settings(analysis, target):
                 if platform["platform"] not in allowed_multi:
                     continue
 
+            platform_copy = deepcopy(platform)
             if autotag and target.machine_tags:
-                platform["tags"] = target.machine_tags
+                platform_copy["tags"] = target.machine_tags
             else:
-                platform["tags"] = []
+                platform_copy["tags"] = []
 
-            settings_platforms.append(platform)
+            settings_platforms.append(platform_copy)
 
         analysis.update_settings(platforms=settings_platforms)
 

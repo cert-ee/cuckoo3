@@ -84,7 +84,6 @@ class NodeClientLoop:
 
     def __init__(self, loop):
         self.loop = loop
-        loop.set_debug(True)
         self._task_stopper = {}
         self._asynctasks = set()
         self._stopped = False
@@ -103,7 +102,6 @@ class NodeClientLoop:
                         )
             finally:
                 try:
-                    print(f"Cancelling: {task}")
                     task.cancel()
                     await task
                 except asyncio.CancelledError:
@@ -120,7 +118,6 @@ class NodeClientLoop:
             self.loop.stop()
 
     def _cleanup(self):
-        print("Calling cleanup")
         try:
             self.loop.close()
         except Exception as e:
@@ -130,9 +127,7 @@ class NodeClientLoop:
 
     def stop(self):
         self._stopped = True
-        future = asyncio.run_coroutine_threadsafe(
-            self._stop(), self.loop
-        )
+        asyncio.run_coroutine_threadsafe(self._stop(), self.loop)
 
     def newtask_threadsafe(self, coro, args=(), done_cb=None, stopper_cb=None):
         if self._stopped:
@@ -277,7 +272,7 @@ class RemoteNodeClient(NodeClient):
 
             await self._handle_taskstate(task_id, state)
 
-        if msgtype == NodeMsgTypes.MACHINE_DISABLED:
+        elif msgtype == NodeMsgTypes.MACHINE_DISABLED:
             name = msgdict.get("machine_name")
             reason = msgdict.get("reason", "")
             if not name:
@@ -311,19 +306,19 @@ class RemoteNodeClient(NodeClient):
 
     async def _event_read_end(self):
         self._events_open = False
-        log.error("READ END")
+        log.debug("Node event stream closed", node=self.name)
         self.ctx.nodes.notready_cb(self)
         if not self.events.stopped:
             await self.loop_wrapper.newtask(self._open_eventreader)
 
     def _event_conn_err(self, e):
         self._events_open = False
-        log.error("ERROR", error=e)
+        log.error("Node event stream error", node=self.name, error=e)
 
     def _event_conn_opened(self):
         self._events_open = True
+        log.debug("Node event stream opened", node=self.name)
         self.ctx.nodes.ready_cb(self)
-        log.error("OPENED")
 
     async def start_reader(self):
         self.events = NodeEventReader(
@@ -359,16 +354,18 @@ class RemoteNodeClient(NodeClient):
             await self.client.start_task(
                 startable_task.task.id, startable_task.machine.name
             )
-            log.error("START DONE")
+            log.debug(
+                "Node has started task", task_id=startable_task.task.id,
+                node=self.name
+            )
         except ClientError as e:
-            log.error("START ERROR", error=e)
             startable_task.log.error(
                 "Failed to start remote task",
-                task_id=startable_task.task.id, node=self.client.name,
+                task_id=startable_task.task.id, node=self.name,
                 error=e
             )
             startable_task.errtracker.fatal_error(
-                f"Failed to start remote task. {self.client.name}. {e}"
+                f"Failed to start remote task. {self.name}. {e}"
             )
 
             return False
@@ -377,21 +374,24 @@ class RemoteNodeClient(NodeClient):
 
     async def _upload_and_start(self, nodework, startable_task):
         log.debug(
-            "Uploading work for task", task_id=startable_task.task.id,
+            "Uploading task work to node", task_id=startable_task.task.id,
             node=self.name
         )
         with nodework:
             try:
                 await self.client.upload_taskwork(nodework.path)
-                log.error("Upload done")
+                log.debug(
+                    "Upload task work complete",
+                    task_id=startable_task.task.id, node=self.name
+                )
             except ClientError as e:
                 startable_task.log.error(
                     "Failed to upload work for task.",
-                    task_id=startable_task.task.id, node=self.client.name,
+                    task_id=startable_task.task.id, node=self.name,
                     error=e
                 )
                 startable_task.errtracker.fatal_error(
-                    f"Failed to upload work to node. {self.client.name}. "
+                    f"Failed to upload work to node. {self.name}. "
                     f"{e}"
                 )
                 return await self._task_failed(
@@ -415,7 +415,10 @@ class RemoteNodeClient(NodeClient):
         except AnalysisImportError as e:
             raise NodeActionError(f"Failed to create node work zip. {e}")
 
-        log.error("Starting upload and start")
+        log.debug(
+            "Starting asyncio task for new task",
+            task_id=startable_task.task.id, node=self.name
+        )
         self.loop_wrapper.newtask_threadsafe(
             self._upload_and_start, args=(nodework, startable_task)
         )
@@ -440,11 +443,11 @@ class RemoteNodeClient(NodeClient):
         except ClientError as e:
             startable_task.log.error(
                 "Failed to retrieve result for task.",
-                task_id=startable_task.task.id, node=self.client.name,
+                task_id=startable_task.task.id, node=self.name,
                 error=e
             )
             startable_task.errtracker.fatal_error(
-                f"Failed to retrieve result {self.client.name}. "
+                f"Failed to retrieve result {self.name}. "
                 f"{e}"
             )
             return False

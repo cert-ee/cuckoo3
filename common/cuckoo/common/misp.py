@@ -2,17 +2,12 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-import logging
 import pymisp
 import requests.exceptions
 
 from pathlib import Path
 from datetime import datetime
 from urllib.parse import urljoin
-
-from .log import set_logger_level
-
-set_logger_level("pymisp", logging.WARNING)
 
 class MispError(Exception):
     pass
@@ -148,7 +143,7 @@ class MispClient:
         self._misp_url = misp_url
         try:
             self._client = pymisp.PyMISP(
-                url=misp_url, key=api_key, ssl=verify_tls
+                url=misp_url, key=api_key, ssl=verify_tls, timeout=timeout
             )
         except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(

@@ -96,7 +96,9 @@ class Target(CuckooDBDTable):
     )
     category = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     target = sqlalchemy.Column(sqlalchemy.Text(), nullable=False)
-    media_type = sqlalchemy.Column(sqlalchemy.Text(), nullable=True)
+    media_type = sqlalchemy.Column(
+        sqlalchemy.Text(), nullable=True, default=""
+    )
     md5 = sqlalchemy.Column(sqlalchemy.String(32), nullable=True)
     sha1 = sqlalchemy.Column(sqlalchemy.String(40), nullable=True)
     sha256 = sqlalchemy.Column(sqlalchemy.String(64), nullable=True)

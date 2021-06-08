@@ -29,7 +29,7 @@ def create_key(owner, admin=False):
     from django.db.utils import IntegrityError
 
     passw = "".join(
-        secrets.choice(string.ascii_letters + string.digits) for i in range(32)
+        secrets.choice(string.ascii_letters + string.digits) for _ in range(32)
     )
     try:
         user = User.objects.create_user(

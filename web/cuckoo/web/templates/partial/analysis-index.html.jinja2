@@ -10,7 +10,7 @@
         <a class="{% if report_page == 'sample' %}is-active{% endif %}" href="{{ url('Analysis/index', args=[analysis_id]) }}">Analysis</a>
         {% if pre %}
           <ul>
-            {% if pre.static.pe %}
+            {% if pre.static and pre.static.pe %}
               <li>
                 <a role="tab" href="#pefiles">PE File</a>
               </li>
@@ -30,7 +30,7 @@
                 <a role="tab" href="#intelmq">IntelMQ</a>
               </li>
             {% endif %}
-            {% if pre.static.office %}
+            {% if pre.static and pre.static.office %}
               <li>
                 <a role="tab" href="#office">Office</a>
               </li>

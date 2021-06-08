@@ -18,7 +18,7 @@ class FileInfoGather(Processor):
     _EXTENSION_HANDLER = {
         (".exe", ".dll"): (PEFile, "pe"),
         # Word
-        (".doc", ".docm", ".wbk" ,".dotm", ".dotx",".docb", ".docx",
+        (".doc", ".docm", ".wbk", ".dotm", ".dotx", ".docb", ".docx",
         # Hangul word processor
           ".hwp",
         # Powerpoint

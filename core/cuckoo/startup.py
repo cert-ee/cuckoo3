@@ -8,12 +8,12 @@ import time
 from threading import Thread
 
 from cuckoo.common import config, shutdown
-from cuckoo.common.log import CuckooGlobalLogger, get_global_loglevel
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import get_conftemplates
 from cuckoo.common.startup import StartupError
 from cuckoo.common.storage import Paths, UnixSocketPaths, cuckoocwd
 
-from .scheduler2 import NodesTracker
+from .scheduler import NodesTracker
 
 log = CuckooGlobalLogger(__name__)
 
@@ -22,6 +22,15 @@ log = CuckooGlobalLogger(__name__)
 must be declared here and register a stopping or cleanup method 
 with shutdown.register_shutdown if anything has to be stopped 
 on Cuckoo shutdown"""
+
+class CuckooCtx:
+
+    def __init__(self):
+        self.nodes = NodesTracker(self)
+        self.loglevel = logging.DEBUG
+        self.scheduler = None
+        self.state_controller = None
+        self.processing_handler = None
 
 def start_processing_handler(cuckooctx):
     from .runprocessing import ProcessingWorkerHandler
@@ -71,7 +80,7 @@ def start_statecontroller(cuckooctx):
     state_th.start()
 
 def make_scheduler(cuckooctx, task_queue):
-    from .scheduler2 import Scheduler
+    from .scheduler import Scheduler
     sched = Scheduler(cuckooctx, task_queue)
 
     # Add scheduler to context for usage by other components
@@ -141,7 +150,7 @@ def add_machine(machinery_name, name, label, ip, platform, os_version="",
     finally:
         shutil.rmtree(tmpdir)
 
-def start_importcontroller():
+def start_importcontroller(cuckooctx):
     from .control import ImportController
     sockpath = Paths.unix_socket("importcontroller.sock")
     if os.path.exists(sockpath):
@@ -150,7 +159,7 @@ def start_importcontroller():
             f"Unix socket path already exists: {sockpath}"
         )
 
-    import_controller = ImportController(sockpath)
+    import_controller = ImportController(sockpath, cuckooctx)
     shutdown.register_shutdown(import_controller.stop)
 
     # Check if any untracked analyses exist after starting
@@ -165,6 +174,9 @@ def start_importmode(loglevel):
         init_database, load_configurations, init_global_logging
     )
 
+    ctx = CuckooCtx()
+    ctx.loglevel = loglevel
+
     # Initialize globing logging to importmode.log
     init_global_logging(loglevel, Paths.log("importmode.log"))
     init_database()
@@ -177,20 +189,20 @@ def start_importmode(loglevel):
         raise StartupError(f"Missing configuration file: {e}")
 
     log.info("Starting import controller")
-    start_importcontroller()
+    start_importcontroller(ctx)
 
 def start_localnode(cuckooctx):
     from cuckoo.node.startup import start_local
 
     from .nodeclient import LocalStreamReceiver, LocalNodeClient
     stream_receiver = LocalStreamReceiver()
-    nodectx = start_local(stream_receiver)
+    nodectx = start_local(stream_receiver, cuckooctx.loglevel, )
 
     client = LocalNodeClient(cuckooctx, nodectx.node)
     stream_receiver.set_client(client)
     cuckooctx.nodes.add_node(client)
 
-def start_resultretriever(nodeapi_clients):
+def start_resultretriever(cuckooctx, nodeapi_clients):
     from .retriever import ResultRetriever
     from multiprocessing import Process
 
@@ -201,7 +213,7 @@ def start_resultretriever(nodeapi_clients):
         )
 
     retriever = ResultRetriever(
-        sockpath, cuckoocwd, get_global_loglevel()
+        sockpath, cuckoocwd, cuckooctx.loglevel
     )
 
     for client in nodeapi_clients:
@@ -237,7 +249,7 @@ def make_node_api_clients():
             values["api_url"], values["api_key"], node_name=name
         )
 
-        log.debug("Loading remote node client", node=name, url=client.api_url)
+        log.info("Loading remote node client", node=name, url=client.api_url)
         try:
             client.ping()
         except ClientError as e:
@@ -270,14 +282,6 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
 
     return remotes_nodes, wrapper
 
-class CuckooCtx:
-
-    def __init__(self):
-        self.nodes = NodesTracker(self)
-        self.scheduler = None
-        self.state_controller = None
-        self.processing_handler = None
-
 def start_cuckoo_controller(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
@@ -285,13 +289,10 @@ def start_cuckoo_controller(loglevel):
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
-    from cuckoo.common.log import set_logger_level
     from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
-
-    set_logger_level("urllib3.connectionpool", logging.ERROR)
 
     log.info("Starting Cuckoo controller", cwd=cuckoocwd.root)
     log.info("Loading configurations")
@@ -310,12 +311,15 @@ def start_cuckoo_controller(loglevel):
     log.debug("Initializing database")
     init_database()
 
+    cuckooctx = CuckooCtx()
+    cuckooctx.loglevel = loglevel
+
     log.debug("Starting result retriever")
-    start_resultretriever(api_clients)
+    start_resultretriever(cuckooctx, api_clients)
 
     log.debug("Initializing task queue")
     task_queue = TaskQueue(Paths.queuedb())
-    cuckooctx = CuckooCtx()
+
     make_scheduler(cuckooctx, task_queue)
 
     remote_nodes, loop_wrapper = make_remote_node_clients(
@@ -383,6 +387,7 @@ def start_cuckoo(loglevel):
         log.debug("Initializing task queue")
         task_queue = TaskQueue(Paths.queuedb())
         cuckooctx = CuckooCtx()
+        cuckooctx.loglevel = loglevel
         make_scheduler(cuckooctx, task_queue)
 
         log.debug("Starting local task node")

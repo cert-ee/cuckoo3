@@ -174,4 +174,4 @@ class NodeTaskController(UnixSocketServer):
             worker.start()
 
         self.create_socket()
-        self.start_accepting(select_timeout=1)
+        self.start_accepting(timeout=1)

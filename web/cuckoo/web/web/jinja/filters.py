@@ -23,7 +23,7 @@ def do_formatdatetime(value, fmt="%Y-%m-%d %H:%M"):
 def do_formatisodatetime(value, fmt="%Y-%m-%d %H:%M"):
     try:
         return do_formatdatetime(dateutil.parser.parse(value), fmt)
-    except dateutil.parser.ParserError as e:
+    except dateutil.parser.ParserError:
         return value
 
 def do_humanstate(value):

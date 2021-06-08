@@ -388,12 +388,16 @@ class TmStage(StagerHelper):
         })
 
     def prepare(self):
+        is_archive = False
+        # If the target is a file and has an extraction path, set the target
+        # to the last filename of the extraction path.
         if self.analysis.category == "file" and self.analysis.target.extrpath:
             is_archive = True
             target = self.analysis.target.extrpath[-1]
+        # The target is a file or url. The target attribute gives either a
+        # file name or a url, depending on the container type.
         else:
-            is_archive = False
-            target = self.analysis.target.filename
+            target = self.analysis.target.target
 
         options = self.analysis.settings.options
         settings = self._build_settings(
@@ -415,16 +419,17 @@ class TmStage(StagerHelper):
             pay.add_file(stager_filepath, self.STAGER_BINARY)
             pay.add_file(monitor_filepath, self.MONITOR_BINARY)
 
-            if is_archive:
-                pay.add_file(
-                    AnalysisPaths.zipified_file(self.analysis.id),
-                    "payload.dat"
-                )
-            else:
-                pay.add_file(
-                    AnalysisPaths.submitted_file(self.analysis.id),
-                    "payload.dat"
-                )
+            if self.analysis.category == "file":
+                if is_archive:
+                    pay.add_file(
+                        AnalysisPaths.zipified_file(self.analysis.id),
+                        "payload.dat"
+                    )
+                else:
+                    pay.add_file(
+                        AnalysisPaths.submitted_file(self.analysis.id),
+                        "payload.dat"
+                    )
 
             self.payload = pay
 

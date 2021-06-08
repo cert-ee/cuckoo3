@@ -8,16 +8,17 @@ import logging
 
 from cuckoo.common.storage import cuckoocwd, Paths, InvalidCWDError
 from cuckoo.common.log import (
-    exit_error, print_info, print_error, print_warning
+    exit_error, print_info, print_error, print_warning, VERBOSE
 )
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.option("--distributed", is_flag=True, help="Start Cuckoo in distributed mode")
-@click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
+@click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
+@click.option("-d", "--debug", is_flag=True, help="Enable debug logging")
 @click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
 @click.pass_context
-def main(ctx, cwd, distributed, debug, quiet):
+def main(ctx, cwd, distributed, debug, quiet, verbose):
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -37,10 +38,12 @@ def main(ctx, cwd, distributed, debug, quiet):
     except InvalidCWDError as e:
         exit_error(f"Invalid Cuckoo working directory: {e}")
 
-    if quiet:
-        ctx.loglevel = logging.WARNING
+    if verbose:
+        ctx.loglevel = VERBOSE
     elif debug:
         ctx.loglevel = logging.DEBUG
+    elif quiet:
+        ctx.loglevel = logging.WARNING
     else:
         ctx.loglevel = logging.INFO
 
@@ -160,8 +163,39 @@ def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
     except StartupError as e:
         exit_error(f"Failed to add machine. {e}")
 
+
+def _submit_files(settings, *targets):
+    from cuckoo.common import submit
+    from cuckoo.common.storage import enumerate_files
+    files = []
+    for path in targets:
+        if not os.path.exists(path):
+            yield None, path, "No such file or directory"
+
+        files.extend(enumerate_files(path))
+
+    for path in files:
+        try:
+            analysis_id = submit.file(
+                path, settings, file_name=os.path.basename(path)
+            )
+            yield analysis_id, path, None
+        except submit.SubmissionError as e:
+            yield None, path, e
+
+def _submit_urls(settings, *targets):
+    from cuckoo.common import submit
+    for url in targets:
+        try:
+            analysis_id = submit.url(url, settings)
+            yield analysis_id, url, None
+        except submit.SubmissionError as e:
+            yield None, url, e
+
+
 @main.command("submit")
 @click.argument("target", nargs=-1)
+@click.option("-u", "--url", is_flag=True, help="Submit URL(s) instead of files")
 @click.option(
     "--platform", multiple=True,
     help="The platform and optionally the OS version the analysis task must "
@@ -169,10 +203,10 @@ def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
 )
 @click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds")
 @click.option("--priority", type=int, default=1, help="The priority of this analysis")
-def submission(target, platform, timeout, priority):
+def submission(target, url, platform, timeout, priority):
     """Create a new file analysis"""
     from cuckoo.common import submit
-    from cuckoo.common.storage import enumerate_files, Paths
+    from cuckoo.common.storage import Paths
 
     try:
         submit.settings_maker.set_machinesdump_path(Paths.machinestates())
@@ -201,19 +235,17 @@ def submission(target, platform, timeout, priority):
     except submit.SubmissionError as e:
         exit_error(f"Submission failed: {e}")
 
-    files = []
-    for path in target:
-        files.extend(enumerate_files(path))
+    if url:
+        submitter, kind = _submit_urls, "URL"
+    else:
+        submitter, kind = _submit_files, "file"
 
     try:
-        for path in files:
-            try:
-                analysis_id = submit.file(
-                    path, settings, file_name=os.path.basename(path)
-                )
-                print_info(f"Submitted. {analysis_id} -> {path}")
-            except submit.SubmissionError as e:
-                print_error(f"Failed to submit {path}. {e}")
+        for analysis_id, target, error in submitter(settings, *target):
+            if error:
+                print_error(f"Failed to submit {kind}: {target}. {error}")
+            else:
+                print_info(f"Submitted {kind}: {analysis_id} -> {target}")
     finally:
         try:
             submit.notify()

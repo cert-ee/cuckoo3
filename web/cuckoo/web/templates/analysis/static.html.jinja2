@@ -155,7 +155,7 @@
             {% endcall %}
           </div>
         {% endif %}
-        {% if pre.static.office %}
+        {% if pre.static and pre.static.office %}
           <div id="tab-office" hidden>
             {% call ui_box(title="Extracted macros", has_padding=False) %}
               <table class="table has-border no-border-x">

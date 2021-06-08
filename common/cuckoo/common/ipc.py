@@ -97,6 +97,12 @@ class ReaderWriter(object):
         except socket.error:
             pass
 
+
+_POLL_READREADY = select.POLLIN | select.POLLPRI
+_POLL_CLOSABLE = select.POLLHUP | select.POLLRDHUP | select.POLLERR | \
+                 select.POLLNVAL
+_POLL_READ = _POLL_READREADY | _POLL_CLOSABLE
+
 class UnixSocketServer:
 
     def __init__(self, sock_path):
@@ -104,6 +110,8 @@ class UnixSocketServer:
         self.sock = None
         self.do_run = True
         self.socks_readers = {}
+        self._fd_socks = {}
+        self._poll = None
 
     def create_socket(self, backlog=0):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -122,21 +130,34 @@ class UnixSocketServer:
         os.chmod(self.sock_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         sock.listen(backlog)
+        self._poll = select.poll()
         self.sock = sock
+        self._fd_socks[sock.fileno()] = sock
+        self._poll.register(sock, _POLL_READ)
 
     def stop(self):
         self.do_run = False
 
     def track(self, sock, reader):
+        """Track when the socket is ready for reading and store the
+        passed readerwriter in a socket:rw map"""
+        self._fd_socks[sock.fileno()] = sock
         self.socks_readers[sock] = reader
+        self._poll.register(sock, _POLL_READ)
 
-    def untrack(self, sock):
+    def untrack(self, sock, fd=None):
+        if not fd:
+            fd = sock.fileno()
+
+        if fd > 0:
+            self._poll.unregister(fd)
         try:
             sock.close()
         except socket.error:
             pass
 
         self.socks_readers.pop(sock, None)
+        self._fd_socks.pop(fd, None)
 
     def untrack_all(self):
         for sock in list(self.socks_readers):
@@ -146,71 +167,73 @@ class UnixSocketServer:
         """Called after the select timeout expires"""
         pass
 
-    def start_accepting(self, select_timeout=2):
-        while self.do_run:
-            try:
-                incoming, _o, _e = select.select(
-                    list(self.socks_readers.keys()) + [self.sock], [], [],
-                    select_timeout
-                )
-            except OSError as e:
-                if e.errno == errno.EBADF and not self.do_run:
-                    return
+    def _read_incoming(self, sock):
+        reader = self.socks_readers.get(sock)
+        if not reader:
+            log.warning(
+                "No reader for existing socket connection.",
+                sock=sock
+            )
+            return
 
-                raise
+        while True:
+            try:
+                msg = reader.get_json_message()
+            except (socket.error, ValueError, EOFError,
+                    json.decoder.JSONDecodeError) as e:
+                log.warning(
+                    "Failed to read message. Disconnecting "
+                    "client.", error=e, sock=sock
+                )
+                # Untrack this socket. Clients must follow the
+                # communication rules.
+                self.untrack(sock)
+                break
+
+            except NotConnectedError:
+                self.untrack(sock)
+                break
+
+            if not msg:
+                break
+
+            self.handle_message(sock, msg)
+
+    def start_accepting(self, timeout=2):
+        serv_sock = self.sock
+        while self.do_run:
+            incoming = self._poll.poll(timeout * 1000)
 
             self.timeout_action()
 
             if not incoming:
                 continue
 
-            for sock in incoming:
+            for fd, bitmask in incoming:
+                sock = self._fd_socks[fd]
 
-                # Handle new connection
-                if sock == self.sock:
-                    try:
-                        clientsock, addr = sock.accept()
-                    except OSError as e:
-                        # Can be thrown if connection socket kills connection
-                        # at just the right time.
-                        if e.errno == errno.EBADF:
-                            continue
-
-                        raise
-
-                    clientsock.setblocking(0)
-                    self.handle_connection(clientsock, addr)
-                else:
-                    reader = self.socks_readers.get(sock)
-                    if not reader:
-                        log.warning(
-                            "No reader for existing socket connection.",
-                            sock=sock
-                        )
-                        continue
-
-                    while True:
+                if bitmask & _POLL_READREADY:
+                    if sock is serv_sock:
+                        # Handle new connection
                         try:
-                            msg = reader.get_json_message()
-                        except (socket.error, ValueError, EOFError,
-                                json.decoder.JSONDecodeError) as e:
-                            log.warning(
-                                "Failed to read message. Disconnecting "
-                                "client.", error=e, sock=sock
-                            )
-                            # Untrack this socket. Clients must follow the
-                            # communication rules.
-                            self.untrack(sock)
-                            break
+                            clientsock, addr = sock.accept()
+                        except OSError as e:
+                            if e.errno == errno.EBADF:
+                                continue
 
-                        except NotConnectedError:
-                            self.untrack(sock)
-                            break
+                            raise
 
-                        if not msg:
-                            break
+                        clientsock.setblocking(False)
+                        self.handle_connection(clientsock, addr)
+                    else:
+                        self._read_incoming(sock)
 
-                        self.handle_message(sock, msg)
+                elif bitmask & _POLL_CLOSABLE:
+                    # Untrack and close the socket if anything about the
+                    # connection is reset or closed.
+                    self.untrack(sock, fd=fd)
+                else:
+                    raise IPCError(f"Unhandled poll bitmask: {bitmask}")
 
     def cleanup(self):
         if self.do_run:
@@ -231,9 +254,12 @@ class UnixSocketServer:
                 pass
 
     def handle_connection(self, sock, addr):
+        """Called when a new client connects. Call the track method here
+        if the client should be tracked."""
         pass
 
     def handle_message(self, sock, msg):
+        """Called when a new JSON message for a tracked socket arrives."""
         pass
 
 
@@ -276,7 +302,7 @@ class UnixSockClient:
                 time.sleep(3)
 
         if not self.blockingreads:
-            sock.setblocking(0)
+            sock.setblocking(False)
 
         self.sock = sock
         self.reader = ReaderWriter(sock)

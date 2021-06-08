@@ -17,7 +17,7 @@ def deserialize_disk_json(obj):
         try:
             return dateutil.parser.parse(obj["__isodt__"])
         except (ValueError, OverflowError) as e:
-            raise json.decoder.JSONDecodeError(
+            raise ValueError(
                 "Failed to decode ISO format datetime: {e}"
             ).with_traceback(e.__traceback__)
     return obj
@@ -212,7 +212,7 @@ class StrictContainer:
                 loaded = json.load(
                     fp, object_hook=deserialize_disk_json
                 )
-        except json.decoder.JSONDecodeError as e:
+        except ValueError as e:
             raise ValueError(f"JSON decoding error: {e}")
 
         return cls(**loaded)
@@ -221,12 +221,14 @@ class StrictContainer:
     def from_string(cls, stringdata):
         try:
             loaded = json.loads(stringdata, object_hook=deserialize_disk_json)
-        except json.decoder.JSONDecodeError as e:
+        except ValueError as e:
             raise ValueError(f"JSON decoding error: {e}")
 
         return cls(**loaded)
 
     def check_constraints(self):
+        """Can be implemented if there are value constraints that need to
+        be checked when an instance of this strict container is created."""
         pass
 
     def to_dict(self):
@@ -325,7 +327,7 @@ class SubmittedFile(StrictContainer):
 class SubmittedURL(StrictContainer):
 
     # Look at the parent dict and find the category key. Use this class if
-    # the value is 'file'
+    # the value is 'url'
     PARENT_KEYVAL = ("category", "url")
     FIELDS = {
         "url": str,

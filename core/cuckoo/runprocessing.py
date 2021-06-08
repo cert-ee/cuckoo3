@@ -13,9 +13,7 @@ from cuckoo.common.config import MissingConfigurationFileError
 from cuckoo.common.ipc import (
     UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
 )
-from cuckoo.common.log import (
-    CuckooGlobalLogger, get_global_loglevel
-)
+from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
 from cuckoo.common.startup import init_global_logging, load_configurations
 from cuckoo.common.storage import Paths, cuckoocwd
@@ -45,25 +43,25 @@ class States(object):
 class WorkReceiver(UnixSocketServer):
 
     PLUGIN_BASEPATH = "cuckoo.processing"
-    REPORTING_PLUGIN_PATH = "cuckoo.processing.reporting"
+    REPORTING_PLUGIN_PATH = f"{PLUGIN_BASEPATH}.reporting"
 
     PLUGINS = {
         "identification": {
             "processing": (
-                "cuckoo.processing.identification", abtracts.Processor
+                f"{PLUGIN_BASEPATH}.identification", abtracts.Processor
             ),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         },
         "pre": {
-            "processing": ("cuckoo.processing.pre", abtracts.Processor),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "processing": (f"{PLUGIN_BASEPATH}.pre", abtracts.Processor),
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         },
         "post": {
             "eventconsuming": (
-                "cuckoo.processing.post.eventconsumer", abtracts.EventConsumer
+                f"{PLUGIN_BASEPATH}.post.eventconsumer", abtracts.EventConsumer
             ),
-            "processing": ("cuckoo.processing.post", abtracts.Processor),
-            "reporting": ("cuckoo.processing.reporting", abtracts.Reporter)
+            "processing": (f"{PLUGIN_BASEPATH}.post", abtracts.Processor),
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
         }
     }
 
@@ -99,8 +97,7 @@ class WorkReceiver(UnixSocketServer):
             self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
         )
         init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
-            warningsonly=["elasticsearch", "asyncio"]
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
         )
 
         log.debug("Loading configuration files", worker=self.name)
@@ -228,6 +225,9 @@ class WorkReceiver(UnixSocketServer):
             return
 
         try:
+            processing_ctx.log.info(
+                "Starting work", worker=self.name, worktype=self.worktype
+            )
             runner.start()
 
             if processing_ctx.completed:
@@ -386,7 +386,7 @@ class ProcessingWorkerHandler(threading.Thread):
         log.info(f"Starting {worktype} worker.", workername=name)
         worker = WorkReceiver(
             sockpath, worktype, name, cuckoocwd,
-            loglevel=get_global_loglevel()
+            loglevel=self.ctx.loglevel
         )
         proc = multiprocessing.Process(target=worker.start)
         proc.daemon = True
@@ -417,7 +417,7 @@ class ProcessingWorkerHandler(threading.Thread):
             "Requeuing job from worker", workername=worker["name"], job=job,
             worktype=worktype
         )
-        self.queues[worktype].insert(job)
+        self.queues[worktype].insert(0, job)
 
     def stop_worker(self, worker):
         log.debug("Stopping worker", workername=worker["name"])

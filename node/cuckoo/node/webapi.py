@@ -34,10 +34,10 @@ async def check_token(request, handler):
         token, key = token_key.split(" ", 1)
         token = token.strip()
         key = key.strip().encode()
-    except (ValueError, UnicodeEncodeError):
-        return web.HTTPUnauthorized()
     except UnicodeEncodeError:
         return web.HTTPServerError(reason="Failed to encode password to bytes")
+    except ValueError:
+        return web.HTTPUnauthorized()
 
     if token.lower() != "token":
         return web.HTTPUnauthorized(reason="Incorrect authentication type")
@@ -244,7 +244,7 @@ class API:
         machine_name = data.get("machine_name")
         if not machine_name or not isinstance(machine_name, str):
             return web.json_response(
-                {"error": f"Missing or invalid machine_name"}, status=400
+                {"error": "Missing or invalid machine_name"}, status=400
             )
 
         task_id = request.match_info["task_id"]

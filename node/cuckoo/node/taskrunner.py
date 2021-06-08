@@ -345,8 +345,7 @@ class TaskRunner(UnixSocketServer):
         register_shutdown(self.stop)
 
         init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False,
-            warningsonly=["urllib3.connectionpool"]
+            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
         )
 
         try:

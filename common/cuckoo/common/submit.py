@@ -16,7 +16,7 @@ from .analyses import (
 from .clients import StateControllerClient, ActionFailedError
 from .machines import read_machines_dump, MachinesList, find_in_lists
 from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
-from .strictcontainer import Analysis, SubmittedFile
+from .strictcontainer import Analysis, SubmittedFile, SubmittedURL
 
 class SubmissionError(Exception):
     pass
@@ -158,7 +158,7 @@ class SettingsHelper:
 
     def add_platform(self, platform, os_version="", tags=[]):
         if not platform:
-            raise SubmissionError(f"Platform cannot be empty")
+            raise SubmissionError("Platform cannot be empty")
 
         if not isinstance(platform, str):
             raise SubmissionError(f"platform must be a string. {platform!r}")
@@ -313,6 +313,14 @@ class SettingsMaker:
 # that imports it. Currently done like this to not have to load machine dumps
 # and default settings from multiple places/modules within one process.
 settings_maker = SettingsMaker()
+
+
+def url(url, settings):
+    analysis_id, folder_path = make_analysis_folder()
+    _write_analysis(
+        analysis_id, settings, SubmittedURL(category="url", url=url)
+    )
+    return analysis_id
 
 def file(filepath, settings, file_name=""):
     try:

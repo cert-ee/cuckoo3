@@ -54,7 +54,7 @@ def fileinfo_request(file_hash):
 
 def urlinfo_request(url):
     with vt.Client(_vt_api_key) as client:
-        result =  _do_info_request(client, f"/urls/{vt.url_id(url)}")
+        result = _do_info_request(client, f"/urls/{vt.url_id(url)}")
         if not result:
             return None
 
@@ -83,7 +83,6 @@ def submit_file(path):
 
                 raise VirustotalError(
                     f"Virustotal request failed: {e.message}")
-
 
     return vt_submission.id
 

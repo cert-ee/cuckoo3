@@ -565,7 +565,7 @@ class MachineryManager(UnixSocketServer):
             worker.start()
 
         self.create_socket()
-        self.start_accepting(select_timeout=1)
+        self.start_accepting(timeout=1)
 
     def shutdown_all(self):
         """Shutdown the machines of all loaded machinery modules"""
