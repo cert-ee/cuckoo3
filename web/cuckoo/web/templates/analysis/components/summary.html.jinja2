@@ -46,6 +46,9 @@
           </ul>
         {% else %}
           <p class="has-text-wrapped">{{ analysis.submitted.url }}</p>
+          <p><span class="icon">
+            <i class="far fa-calendar"></i>
+          </span> {{ analysis.created_on | formatdatetime }}</p>
         {% endif %}
         {% if analysis.families|length %}
           <div class="tag-list has-margin-top">

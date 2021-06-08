@@ -9,11 +9,11 @@
       </div>
     </div>
     <div class="column">
+      <h3 class="no-margin-bottom is-monospace">
+        <strong>{{ report.task_id }}</strong>
+        <span class="pull-right has-half-opacity">{{ task.state|taskstatehuman }}</span>
+      </h3>
       {% if analysis.submitted.category != 'url' %}
-        <h3 class="no-margin-bottom is-monospace">
-          <strong>{{ report.task_id }}</strong>
-          <span class="pull-right has-half-opacity">{{ task.state|taskstatehuman }}</span>
-        </h3>
         <p class="has-line-break has-text-small">
           <span class="icon">
             <i class="far fa-file"></i>
@@ -38,6 +38,9 @@
         </ul>
       {% else %}
         <p>{{ analysis.submitted.url }}</p>
+        <p><span class="icon">
+          <i class="far fa-calendar"></i>
+        </span> {{ analysis.created_on | formatdatetime }}</p>
       {% endif %}
       {% if report.families|length %}
         <div class="tag-list has-margin-top">
