@@ -172,14 +172,12 @@
   // submission and proceed to analysis
   function finishSubmission() {
 
-    const { analysis_id } = window.Application;
-    const selectedFile = document.querySelector('input[name="selected-file"]:checked');
-    if(!selectedFile)
-      return handleError('No file has been selected. Select a file and try again.');
+    const { analysis_id, category } = window.Application;
+
     if(!analysis_id)
       return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
 
-    options = {
+    const options = {
       timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
       priority: parseInt(document.querySelector('select[name="priority"]').value),
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
@@ -189,9 +187,15 @@
           os_version: machine.dataset.version,
           tags: t.value.length ? t.value.split(',') : []
         }
-      }),
-      fileid: document.querySelector('input[name="selected-file"]:checked').value
+      })
     };
+
+    if(category == 'file') {
+      const selectedFile = document.querySelector('input[name="selected-file"]:checked');
+      if(!selectedFile)
+        return handleError('No file has been selected. Select a file and try again.');
+      options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
+    }
 
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',

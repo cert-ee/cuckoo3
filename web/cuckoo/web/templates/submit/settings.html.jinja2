@@ -12,7 +12,8 @@
       // when available, store the PUT url in this application scope for access
       // in the settings js file.
       window.Application = Object.assign(window.Application || {}, {
-        analysis_id: "{{ analysis_id }}"
+        analysis_id: "{{ analysis_id }}",
+        category: "{{ analysis.category }}"
       });
     }());
   </script>
