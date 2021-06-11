@@ -39,6 +39,4 @@ def normalize_winpath(path):
                 programdir[:slashat - 1] == "progra~":
             return f"{path[:3]}program files{path[3 + slashat:]}"
 
-
     return path
-

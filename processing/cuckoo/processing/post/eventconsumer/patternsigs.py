@@ -89,7 +89,7 @@ class PatternFinder(EventConsumer):
         if not self.scanner:
             return
 
-        event.pattern_scan(self.scanner)
+        event.pattern_scan(self.scanner, self.taskctx)
 
     def finalize(self):
         if not self.scanner:

@@ -210,7 +210,7 @@ def _translate_injection_event(threemon_injection, ctx):
 
     # Mark the injected process as tracked, since it is now under control
     # of whatever injected it.
-    ctx.processes.set_tracked(threemon_injection.dstpid)
+    ctx.processes.set_tracked(threemon_injection.dstpid, injected=True)
 
     return ProcessInjection(
         ts=threemon_injection.ts, action=normalized_action,
