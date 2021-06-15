@@ -31,7 +31,7 @@ We are currently using Unix sockets. This will likely change as we also have to 
 
 Currently, there are 4 packages:
 
-* Cuckoo - Cuckoo Sandbox core (Cuckoo itself)
+* Cuckoo - Cuckoo core (Cuckoo itself)
 * Cuckoo-common
     * Contains 'common' code that can be used in other packages. Examples: config generation and reading, IPC helpers, Cuckoo CWD logic, and Cuckoo package helpers
     * May NOT import anything from other Cuckoo packages.

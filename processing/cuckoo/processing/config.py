@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common import config
 
@@ -85,7 +84,7 @@ typeloaders = {
                 "galaxy_mitre_attack": config.Boolean(default_val=True),
                 "publish": config.Boolean(default_val=False),
                 "tags": config.List(
-                    config.String, default_val=["Cuckoo Sandbox"],
+                    config.String, default_val=["Cuckoo 3"],
                     allow_empty=True
                 ),
                 "attributes": {
@@ -135,7 +134,7 @@ typeloaders = {
                 allow_empty=True, min_value=0, max_value=100
             ),
             "event_description": config.String(
-                default_val="Cuckoo Sandbox behavioral analysis",
+                default_val="Cuckoo 3 behavioral analysis",
                 allow_empty=True
             )
         }

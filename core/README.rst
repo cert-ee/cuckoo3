@@ -1,6 +1,6 @@
-Cuckoo Sandbox 3
+Cuckoo 3
 
-Cuckoo 3 is still in development. Currently it only runs on Linux.
+Currently Cuckoo 3 only runs on Linux.
 
 Perform the following steps to be able to run Cuckoo 3.
 1. ./install.sh

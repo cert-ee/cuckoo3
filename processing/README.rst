@@ -1,1 +1,1 @@
-Cuckoo Sandbox 3 dynamic and static processing modules.
+Cuckoo 3 dynamic and static processing modules.

@@ -1,6 +1,6 @@
-# Cuckoo Sandbox packages
+# Cuckoo packages
 
-Cuckoo Sandbox 3 consists of multiple packages.
+Cuckoo 3 consists of multiple packages.
 
 A package MUST have a directory called 'data'. This directory is used to ship anything that is not part of the importable code.
 

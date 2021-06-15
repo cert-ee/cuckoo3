@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - https://cuckoosandbox.org/.
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import setuptools
 import platform
@@ -19,8 +18,8 @@ if platform.system().lower() != "linux":
 setuptools.setup(
     name="Cuckoo",
     version="3.0.0",
-    author="Stichting Cuckoo Foundation",
-    author_email="cuckoo@cuckoofoundation.org",
+    author="",
+    author_email="",
     packages=setuptools.find_namespace_packages(include=["cuckoo.*"]),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -40,7 +39,7 @@ setuptools.setup(
         "Topic :: Security",
     ],
     keywords=(
-        "cuckoo sandbox automated malware analysis project threat "
+        "cuckoo automated malware sandbox analysis project threat "
         "intelligence cert soc"
     ),
     python_requires=">=3.6",

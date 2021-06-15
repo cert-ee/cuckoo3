@@ -65,7 +65,7 @@ Components are collections of layout and element bricks that form UI functionali
 <nav class="navbar">
   <div class="navbar-logo">
     <a class="navbar-link" href="/">
-      <img src="/images/cuckoo-light.svg" alt="Cuckoo Sandbox" />
+      <img src="/images/cuckoo-light.svg" alt="Cuckoo" />
     </a>
     <a class="navbar-toggle" title="Expand menu">
       <span></span>

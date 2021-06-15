@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - https://cuckoosandbox.org/.
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import setuptools
 import platform
@@ -19,8 +18,8 @@ if platform.system().lower() != "linux":
 setuptools.setup(
     name="Cuckoo-node",
     version="0.1.0",
-    author="Stichting Cuckoo Foundation",
-    author_email="cuckoo@cuckoofoundation.org",
+    author="",
+    author_email="",
     packages=setuptools.find_namespace_packages(include=["cuckoo.*"]),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -37,7 +36,7 @@ setuptools.setup(
     python_requires=">=3.6",
     url="https://cuckoosandbox.org/",
     license="GPLv3",
-    description="Cuckoo Sandbox sample detonation node",
+    description="Cuckoo sample detonation node",
     zip_safe=False,
     entry_points={
         "console_scripts": [
