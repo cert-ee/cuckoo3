@@ -2,8 +2,6 @@
 {% set active_page = "dashboard" %}
 {% set title = "Dashboard" %}
 
-{% from 'macros.html.jinja2' import custom_cuckoo_loader %}
-
 {% block page_script %}
   <script src="{{ static('js/chart.min.js') }}"></script>
   <script src="{{ static('js/luxon.min.js') }}"></script>
@@ -12,5 +10,5 @@
 {% endblock %}
 
 {% block body %}
-  <div class="grid-2x2 has-border-bottom" id="statistics"></div>
+  <div class="grid-2x2 has-margin-bottom has-padding-bottom" id="statistics"></div>
 {% endblock %}

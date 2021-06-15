@@ -2007,6 +2007,24 @@ ul.process-tree .duration--inner {
   margin-top: 0;
 }
 
+.logo-placeholder {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 3rem;
+  width: 4rem;
+  height: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.logo-placeholder.is-embossed {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-bottom: 0.062rem solid #FFFFFF;
+  border-top: 0.062rem solid rgba(0, 0, 0, 0.1);
+}
+.logo-placeholder.is-big {
+  width: 12rem;
+  height: 3rem;
+}
+
 .no-padding, .banner {
   padding: 0 !important;
 }
