@@ -58,7 +58,7 @@
             <!-- <div class="columns"><span class="tag has-background-white">{chart controls}</span></div> -->
           </div>
           <div class="has-padding-y box-content">
-            <canvas></canvas>
+            <canvas style="height: 16rem"></canvas>
           </div>
         </div>
       </div>
@@ -189,6 +189,8 @@
     let { type, data, name, description  } = stats;
 
     let view = chartView({ name, description });
+    container.appendChild(view);
+
     let chart;
     switch(type) {
       case 'line':
@@ -200,10 +202,9 @@
       default:
         view.querySelector('canvas').remove();
         view.querySelector('.box-content').appendChild(viewError(`'${type}' is not supported as cart type.`))
-
     }
 
-    container.appendChild(view);
+    chart.resize();
 
   }
 
