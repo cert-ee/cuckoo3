@@ -1,0 +1,34 @@
+site_name: Cuckoo docs
+site_url: https://example.com/
+theme:
+  name: readthedocs
+  highlightjs: true
+markdown_extensions:
+- admonition
+- attr_list
+
+plugins:
+- include-markdown
+
+docs_dir: src
+nav:
+- Introduction:
+  - Cuckoo: introduction/cuckoo.md
+  - Sandboxing: introduction/sandboxing.md
+
+- Installation:
+  - Cuckoo installation: installation/cuckoo.md
+  - System dependencies: installation/deps.md
+  - Machinery modules: installation/machineries.md
+  - VM Creation: installation/vmcreation.md
+
+- Configuration:
+  - System settings: configuration/system.md
+  - Cuckoo configuration:
+    - Cuckoo.yaml: configuration/cuckooconfs/cuckooyaml.md
+    - Distributed.yaml: configuration/cuckooconfs/distributedyaml.md
+
+- Usage:
+  - Web API:
+    - Setup: usage/webapi/setup.md
+    - Endpoints: usage/webapi/endpoints.md

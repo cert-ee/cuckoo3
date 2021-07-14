@@ -25,6 +25,7 @@ docs/book/_build/
 .idea/
 .project
 .pydevproject
+docs/site/
 
 # Python package stuff
 .eggs/
