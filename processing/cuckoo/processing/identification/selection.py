@@ -69,8 +69,12 @@ class Identify(Processor):
         # folder.
         original_filename = self.ctx.analysis.submitted.filename
 
+        settings_pass = self.ctx.analysis.settings.password
         try:
-            f = sflock.unpack(submitted_file, filename=original_filename)
+            f = sflock.unpack(
+                submitted_file, filename=original_filename,
+                password=settings_pass
+            )
         except Exception as e:
             self.ctx.log.exception(
                 "Unexpected Sflock unpacking failure", error=e

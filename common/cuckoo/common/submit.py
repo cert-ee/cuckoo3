@@ -6,6 +6,7 @@ import os.path
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
+import shlex
 from threading import RLock
 
 from .analyses import (
@@ -116,15 +117,32 @@ class SettingsVerifier:
                 error_list.append(err)
 
 
+def _make_browser_tag(browser):
+    return f"browser_{browser.lower()}"
+
 class SettingsHelper:
 
     def __init__(self, default_settings, machine_lists):
         self._settings = deepcopy(default_settings)
         self._machine_lists = machine_lists
 
+        self._key_handlers = {
+            "timeout": self.set_timeout,
+            "priority": self.set_priority,
+            "manual": self.set_manual,
+            "extrpath": self.set_extraction_path,
+            "platforms": self.set_platforms_list,
+            "route": self.set_route,
+            "browser": self.set_browser,
+            "command": self.set_command,
+            "password": self.set_password,
+            "orig_filename": self.set_orig_filename
+        }
+
     def set_timeout(self, timeout):
         if timeout is None:
             return
+
         self._settings["timeout"] = timeout
 
     def set_priority(self, priority):
@@ -142,6 +160,37 @@ class SettingsHelper:
 
         self._settings["manual"] = manual
 
+    def _read_browser(self, browser):
+        if browser:
+            if not isinstance(browser, str):
+                raise SubmissionError("Setting 'browser' must be a string")
+
+            return _make_browser_tag(browser)
+
+        return None
+
+    def _check_route(self, route):
+        if route and not isinstance(route, dict):
+            raise SubmissionError("Setting 'route' must be a dictionary")
+
+    def _read_command(self, command):
+        if not command:
+            return []
+
+        if not isinstance(command, list):
+            if not isinstance(command, str):
+                raise SubmissionError(
+                    "Setting 'command' must be a list of strings or a string"
+                )
+
+            return shlex.split(command)
+
+        for arg in command:
+            if not isinstance(arg, str):
+                raise SubmissionError(f"Command args must be strings. {arg!r}")
+
+        return command
+
     def set_extraction_path(self, extrpath):
         if extrpath is None:
             return
@@ -155,7 +204,16 @@ class SettingsHelper:
 
         self._settings["extrpath"] = extrpath
 
-    def add_platform(self, platform, os_version="", tags=[]):
+    def _read_platform_settings(self, settings, tags=[]):
+        browser_tag = self._read_browser(settings.get("browser"))
+        # Add the browser as a machine tag. Machines can show they support
+        # A browser by having the browser_<name> machine tag.
+        if browser_tag:
+            tags.append(_make_browser_tag(browser_tag))
+
+        self._check_route(settings.get("route"))
+
+    def add_platform(self, platform, os_version="", tags=[], settings={}):
         if not platform:
             raise SubmissionError("Platform cannot be empty")
 
@@ -169,33 +227,97 @@ class SettingsHelper:
         if not isinstance(tags, list):
             raise SubmissionError(f"Tags must be a list of strings. {tags!r}")
 
+        if settings and not isinstance(settings, dict):
+            raise SubmissionError(
+                f"Platform settings must be a dictionary. {settings!r}"
+            )
+
         for tag in tags:
             if not isinstance(tag, str):
                 raise SubmissionError(
-                    f"Tags must be a list of strings. Invalid value: {tag}"
+                    f"Tags must be a list of strings. Invalid value: {tag!r}"
                 )
+
+        # Read platform settings. Any additional tags are appended to the
+        # given list.
+        self._read_platform_settings(settings, tags=tags)
+
+        # Add a browser machine tag for the analysis setting browser if it
+        # is set and no platform browser setting is given. We need to set this
+        # because the browser might have been set before adding another
+        # platform
+        analysis_browser = self._settings.get("browser")
+        if analysis_browser and not settings.get("browser"):
+            tags.append(_make_browser_tag(analysis_browser))
 
         self._settings["platforms"].append({
             "platform": platform,
             "os_version": os_version,
-            "tags": list(set(tags))
+            "tags": list(set(tags)),
+            "settings": {
+                "browser": settings.get("browser", ""),
+                "route": settings.get("route", ""),
+                "command": self._read_command(settings.get("command", []))
+            }
         })
 
-    def add_platform_dict(self, platform_version_tags):
+    def add_platform_dict(self, platform_dict):
         err = """Platform dict must have {'platform': '<platform>',
         'os_version': '<optional version>'}"""
-        if not isinstance(platform_version_tags, dict):
+        if not isinstance(platform_dict, dict):
             raise SubmissionError(err)
 
         for k in ("platform", "os_version"):
-            if k not in platform_version_tags:
+            if k not in platform_dict:
                 raise SubmissionError(err)
 
         self.add_platform(
-            platform_version_tags["platform"],
-            os_version=platform_version_tags["os_version"],
-            tags=platform_version_tags.get("tags", [])
+            platform_dict["platform"],
+            os_version=platform_dict["os_version"],
+            tags=platform_dict.get("tags", []),
+            settings=platform_dict.get("settings", {})
         )
+
+    def set_route(self, route):
+        print(f"Setting route to: {route}")
+        self._check_route(route)
+        self._settings["route"] = route
+
+    def set_command(self, command):
+        self._settings["command"] = self._read_command(command)
+
+    def set_browser(self, browser):
+        browser_tag = self._read_browser(browser)
+        self._settings["browser"] = browser
+        if not browser_tag:
+            return
+
+        # Add the browser machine tag to all already added platforms.
+        self.add_machine_tag(browser_tag)
+
+    def set_password(self, password):
+        """Set the password used for archive unpacking"""
+        if not isinstance(password, str):
+            raise SubmissionError("Password must be a string")
+
+        self._settings["password"] = password
+
+    def set_orig_filename(self, use_orig):
+        """Use the original filename, instead of the one identified by
+        the identification stage."""
+        if not isinstance(use_orig, bool):
+            raise SubmissionError("The orig_filename value must be a boolean")
+
+        self._settings["orig_filename"] = use_orig
+
+    def add_machine_tag(self, tag):
+        """Add machine tag to all currently set platforms"""
+        if not isinstance(tag, str):
+            raise SubmissionError(f"Machine tag must be a string. {tag!r}")
+
+        for platform in self._settings["platforms"]:
+            if tag not in platform["tags"]:
+                platform["tags"].append(tag)
 
     def set_platforms_list(self, platforms):
         if not isinstance(platforms, list):
@@ -207,6 +329,14 @@ class SettingsHelper:
         for entry in platforms:
             self.add_platform_dict(entry)
 
+    def from_dict(self, settings_dict):
+        for key, value in settings_dict.items():
+            handler = self._key_handlers.get(key)
+            if not handler:
+                continue
+
+            handler(value)
+
     def make_settings(self):
         try:
             s = Settings(**self._settings)
@@ -214,6 +344,8 @@ class SettingsHelper:
             return s
         except (ValueError, TypeError, AnalysisError) as e:
             raise SubmissionError(e)
+
+
 
 class SettingsMaker:
 
@@ -229,7 +361,12 @@ class SettingsMaker:
             "manual": False,
             "dump_memory": False,
             "options": {},
-            "enforce_timeout": True
+            "enforce_timeout": True,
+            "route": {},
+            "command": [],
+            "orig_filename": False,
+            "password": "",
+            "browser": "",
         }
         self._machine_dump_path = None
         self._dmp_load_lock = RLock()

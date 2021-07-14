@@ -291,9 +291,14 @@ class Settings(StrictContainer):
         "platforms": list,
         "machines": list,
         "extrpath": list,
-        "manual": bool
+        "manual": bool,
+        "route": dict,
+        "command": list,
+        "browser": str,
+        "password": str,
+        "orig_filename": bool
     }
-    ALLOW_EMPTY = ("extrpath",)
+    ALLOW_EMPTY = ("extrpath", "route", "command", "browser", "password")
 
 class Errors(StrictContainer):
 
@@ -346,9 +351,15 @@ class Task(StrictContainer):
         "os_version": str,
         "machine_tags": list,
         "machine": str,
+        "command": list,
+        "route": dict,
+        "browser": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("machine", "machine_tags", "os_version", "errors", "score")
+    ALLOW_EMPTY = (
+        "machine", "machine_tags", "os_version", "errors", "score",
+        "route", "browser", "command"
+    )
 
 class TargetFile(StrictContainer):
 
@@ -404,9 +415,10 @@ class Pre(StrictContainer):
         "signatures": list,
         "target": (TargetFile, TargetURL),
         "category": str,
+        "command": list,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("errors", "signatures")
+    ALLOW_EMPTY = ("errors", "signatures", "command")
 
 class Post(StrictContainer):
 

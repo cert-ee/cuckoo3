@@ -350,6 +350,15 @@ class StagerHelper:
 
         return monitor_path
 
+    def get_command_args(self):
+        if self.task.command:
+            return self.task.command
+
+        if self.analysis.settings.command:
+            return self.analysis.settings.command
+
+        return []
+
     def dump_payload_log(self, logstr):
         with open(TaskPaths.payloadlog(self.task.id), "w") as fp:
             fp.write(logstr)
@@ -374,12 +383,12 @@ class TmStage(StagerHelper):
     STAGER_BINARY = "tmstage.exe"
     MONITOR_BINARY = "threemon.sys"
 
-    @staticmethod
-    def _build_settings(debug, resultserver, options, target, is_archive):
+    def _build_settings(self, debug, resultserver, options, target,
+                        is_archive):
         return json.dumps({
             "debug": debug,
             "host": f"{resultserver.listen_ip}:{resultserver.listen_port}",
-            "launch": [],
+            "launch": self.get_command_args(),
             "clock": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "options": options,
             "target": target,

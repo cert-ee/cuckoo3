@@ -30,12 +30,23 @@ class Settings(View):
 
     @method_decorator(accepts_json)
     def put(self, request, analysis_id):
+        try:
+            analysis = analyses.get_analysis(analysis_id)
+        except analyses.AnalysisError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
         s_maker = submit.settings_maker.new_settings()
         try:
-            s_maker.set_manual(True)
-            s_maker.set_timeout(request.json.get("timeout"))
-            s_maker.set_priority(request.json.get("priority"))
+            # The given settings are overwriting the existing ones. Ensure
+            # a previously given file password is propagated to the new
+            # set of settings.
+            if analysis.settings.password:
+                s_maker.set_password(analysis.settings.password)
 
+            s_maker.from_dict(request.json)
+            # We overwrite all settings, but want to retain the 'manual'
+            # setting to be able to recognize it was used after this step.
+            s_maker.set_manual(True)
             fileid = request.json.get("fileid")
             if fileid:
                 s_maker.set_extraction_path(
@@ -43,8 +54,6 @@ class Settings(View):
                 )
             else:
                 s_maker.set_extraction_path(request.json.get("extrpath", []))
-
-            s_maker.set_platforms_list(request.json.get("platforms", []))
 
             settings = s_maker.make_settings()
             submit.manual_set_settings(analysis_id, settings)

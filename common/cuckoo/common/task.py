@@ -80,7 +80,8 @@ def _make_task_dirs(task_id):
 
 
 def _create_task(nodes_tracker, analysis, task_number, platform="",
-                 machine_tags=set(), os_version="", machine_name=None):
+                 machine_tags=set(), os_version="", machine_name=None,
+                 platform_settings={}):
 
     if machine_name:
         if not find_in_lists(nodes_tracker.machine_lists, name=machine_name):
@@ -119,6 +120,13 @@ def _create_task(nodes_tracker, analysis, task_number, platform="",
         "machine": machine_name or ""
     }
 
+    if platform_settings:
+        task_values.update({
+            "command": platform_settings.get("command"),
+            "route": platform_settings.get("route"),
+            "browser": platform_settings.get("browser")
+        })
+
     task = Task(**task_values)
     task.to_file(TaskPaths.taskjson(task_id))
     analysis.tasks.append({
@@ -153,7 +161,8 @@ def create_all(analysis, nodes_tracker):
                     nodes_tracker, analysis, task_number=tasknum,
                     platform=platform["platform"],
                     os_version=platform["os_version"],
-                    machine_tags=platform["tags"]
+                    machine_tags=platform["tags"],
+                    platform_settings=platform.get("settings")
                 ))
                 tasknum += 1
             except MissingResourceError as e:

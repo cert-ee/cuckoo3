@@ -22,14 +22,34 @@ class Machinery:
         pass
 
     def load_machines(self):
+        labels = []
+        ips = []
         for name, values in self.cfg["machines"].items():
+
+            label = values["label"]
+            ip = values["ip"]
+            if label in labels:
+                raise errors.MachineryError(
+                    f"Cannot load machine {name}. It has label {label!r}, "
+                    f"which already is used for another machine"
+                )
+
+            if ip in ips:
+                raise errors.MachineryError(
+                    f"Cannot load machine {name}. It has IP {ip!r}, "
+                    f"which already is used for another machine"
+                )
+
             machine = machines.Machine(
-                name=name, label=values["label"], ip=values["ip"],
+                name=name, label=label, ip=ip,
                 platform=values["platform"], os_version=values["os_version"],
                 tags=values["tags"], snapshot=values["snapshot"],
                 mac_address=values["mac_address"], machinery=self
             )
             self.machines.append(machine)
+
+            labels.append(label)
+            ips.append(ip)
 
     def list_machines(self):
         """"List machines defined in the configuration of a machinery. Should

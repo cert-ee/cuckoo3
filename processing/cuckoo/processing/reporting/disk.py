@@ -24,7 +24,9 @@ class JSONDump(Reporter):
         )
 
     def report_pre_analysis(self):
-        include_result = ["virustotal", "static", "misp", "intelmq"]
+        include_result = [
+            "virustotal", "static", "misp", "intelmq", "command"
+        ]
         static = {
             "analysis_id": self.ctx.analysis.id,
             "score": self.ctx.signature_tracker.score,

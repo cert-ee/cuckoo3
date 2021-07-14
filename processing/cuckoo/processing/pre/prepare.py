@@ -61,7 +61,7 @@ def _make_ident_relapath(f):
 
     return str(Path(*relaparts[:-1] + (filename,)))
 
-def zipify_target(target_f, zip_path):
+def zipify_target(target_f, zip_path, original_filename=False):
     """Turns any type of archive into an equivalent .zip file."""
     z = zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED)
 
@@ -72,15 +72,17 @@ def zipify_target(target_f, zip_path):
         # Create a relative archive path that uses the identified extension
         # in the file name.
         if child == target_f:
-            relapath = _make_ident_relapath(child)
-            target_relapath = relapath
+            if original_filename:
+                target_relapath = relapath
+            else:
+                relapath = _make_ident_relapath(child)
+                target_relapath = relapath
 
         z.writestr(relapath, child.contents)
 
     z.close()
 
     return target_relapath
-
 
 def find_child_in_tree(file_dict, extraction_paths):
     current = None
@@ -124,6 +126,12 @@ class DetermineTarget(Processor):
 
         extrpath = self.ctx.analysis.settings.extrpath
         if not extrpath:
+            # Do not use the identified filename/extension for the selected file
+            # if the orig_filename setting is set to True.
+            if self.ctx.analysis.settings.orig_filename:
+                name = self.ctx.identification.target.orig_filename
+                self.ctx.identification.target.filename = name
+
             return self.ctx.identification.target
 
         # Find file info in filetree.json
@@ -140,8 +148,15 @@ class DetermineTarget(Processor):
                     f"Path: {extrpath} not found in file tree."
                 )
 
+        # Do not use the identified filename/extension for the selected file
+        # if the orig_filename setting is set to True.
+        if self.ctx.analysis.settings.orig_filename:
+            filename = target["orig_filename"]
+        else:
+            filename = target["filename"]
+
         return TargetFile(
-            filename=target["filename"],
+            filename=filename,
             orig_filename=target["orig_filename"],
             platforms=target["platforms"],
             machine_tags=target["machine_tags"], size=target["size"],
@@ -168,11 +183,19 @@ class CreateZip(Processor):
 
         try:
             f = sflock.unpack(
-                AnalysisPaths.submitted_file(self.ctx.analysis.id)
+                AnalysisPaths.submitted_file(self.ctx.analysis.id),
+                password=self.ctx.analysis.settings.password
             )
         except Exception as e:
-            self.ctx.log.exception("Sflock unpacking failure.", error=e)
+            self.ctx.log.exception(
+                "Unexpected Sflock unpacking failure.", error=e
+            )
             raise CancelProcessing(f"Sflock unpacking failure. {e}")
+
+        if f.mode:
+            raise CancelProcessing(
+                f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
+            )
 
         selected_file = find_target_in_archive(f, target.extrpath)
         if not selected_file:
@@ -190,6 +213,10 @@ class CreateZip(Processor):
         # Also overwrite the extrpath path the target will be located at in the
         # newly created zip. This new path includes a filename+identified
         # file extension.
+        # Re-zip file with original filename if this was specific in the
+        # submission settings. This causes the identified file extension to
+        # be ignored.
         target.extrpath = [zipify_target(
-            selected_file, AnalysisPaths.zipified_file(self.ctx.analysis.id)
+            selected_file, AnalysisPaths.zipified_file(self.ctx.analysis.id),
+            original_filename=self.ctx.analysis.settings.orig_filename
         )]
