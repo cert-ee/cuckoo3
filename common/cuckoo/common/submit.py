@@ -16,7 +16,7 @@ from .analyses import (
 from .clients import StateControllerClient, ActionFailedError
 from .machines import read_machines_dump, MachinesList, find_in_lists
 from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
-from .strictcontainer import Analysis, SubmittedFile, SubmittedURL
+from .strictcontainer import Analysis, SubmittedFile, SubmittedURL, Platform
 
 class SubmissionError(Exception):
     pass
@@ -99,9 +99,9 @@ class SettingsVerifier:
                 return
 
         for platform in settings.platforms:
-            os_name = platform.get("platform")
-            os_version = platform.get("os_version")
-            tags = platform.get("tags", [])
+            os_name = platform.platform
+            os_version = platform.os_version
+            tags = platform.tags
 
             machine = find_in_lists(
                 machine_lists, platform=os_name, os_version=os_version,
@@ -133,6 +133,8 @@ class SettingsHelper:
             "extrpath": self.set_extraction_path,
             "platforms": self.set_platforms_list,
             "route": self.set_route,
+            "route_type": self.set_route_type,
+            "route_option": self.set_route_option,
             "browser": self.set_browser,
             "command": self.set_command,
             "password": self.set_password,
@@ -165,7 +167,12 @@ class SettingsHelper:
             if not isinstance(browser, str):
                 raise SubmissionError("Setting 'browser' must be a string")
 
-            return _make_browser_tag(browser)
+            tag = _make_browser_tag(browser)
+
+            if not find_in_lists(self._machine_lists, tags=set([tag])):
+                raise SubmissionError(f"No machines available with tag: {tag}")
+
+            return tag
 
         return None
 
@@ -204,14 +211,17 @@ class SettingsHelper:
 
         self._settings["extrpath"] = extrpath
 
-    def _read_platform_settings(self, settings, tags=[]):
-        browser_tag = self._read_browser(settings.get("browser"))
-        # Add the browser as a machine tag. Machines can show they support
-        # A browser by having the browser_<name> machine tag.
-        if browser_tag:
-            tags.append(_make_browser_tag(browser_tag))
-
+    def _check_platform_settings(self, settings):
         self._check_route(settings.get("route"))
+
+    def _get_platform(self, platform_index):
+        if not isinstance(platform_index, int) or platform_index < 0:
+            raise SubmissionError("Platform index must be a positive integer")
+
+        try:
+            return self._settings["platforms"][platform_index]
+        except IndexError:
+            raise SubmissionError(f"No platform with index {platform_index}")
 
     def add_platform(self, platform, os_version="", tags=[], settings={}):
         if not platform:
@@ -238,28 +248,19 @@ class SettingsHelper:
                     f"Tags must be a list of strings. Invalid value: {tag!r}"
                 )
 
-        # Read platform settings. Any additional tags are appended to the
-        # given list.
-        self._read_platform_settings(settings, tags=tags)
+        # Verify platform settings.
+        self._check_platform_settings(settings)
 
-        # Add a browser machine tag for the analysis setting browser if it
-        # is set and no platform browser setting is given. We need to set this
-        # because the browser might have been set before adding another
-        # platform
-        analysis_browser = self._settings.get("browser")
-        if analysis_browser and not settings.get("browser"):
-            tags.append(_make_browser_tag(analysis_browser))
-
-        self._settings["platforms"].append({
+        self._settings["platforms"].append(Platform(**{
             "platform": platform,
             "os_version": os_version,
             "tags": list(set(tags)),
             "settings": {
                 "browser": settings.get("browser", ""),
-                "route": settings.get("route", ""),
+                "route": settings.get("route", {}),
                 "command": self._read_command(settings.get("command", []))
             }
-        })
+        }))
 
     def add_platform_dict(self, platform_dict):
         err = """Platform dict must have {'platform': '<platform>',
@@ -278,22 +279,52 @@ class SettingsHelper:
             settings=platform_dict.get("settings", {})
         )
 
-    def set_route(self, route):
-        print(f"Setting route to: {route}")
-        self._check_route(route)
-        self._settings["route"] = route
-
-    def set_command(self, command):
-        self._settings["command"] = self._read_command(command)
-
-    def set_browser(self, browser):
-        browser_tag = self._read_browser(browser)
-        self._settings["browser"] = browser
-        if not browser_tag:
+    def set_route(self, route, platform_index=None):
+        if not route:
             return
 
-        # Add the browser machine tag to all already added platforms.
-        self.add_machine_tag(browser_tag)
+        self._check_route(route)
+
+        if platform_index is None:
+            self._settings["route"] = route
+        else:
+            self._get_platform(platform_index).set_route(**route)
+
+    def set_route_type(self, route_type, platform_index=None):
+        if not isinstance(route_type, str):
+            raise SubmissionError("Route type must be a string")
+
+        if platform_index is None:
+            self._settings["route"]["type"] = route_type
+        else:
+            self._get_platform(platform_index).set_route(type=route_type)
+
+    def set_route_option(self, option, platform_index=None):
+        if not isinstance(option, dict):
+            raise SubmissionError("Route option must be a dictionary")
+
+        if platform_index is None:
+            self._settings["route"].update(option)
+        else:
+            self._get_platform(platform_index).set_route(**option)
+
+    def set_command(self, command, platform_index=None):
+        command_args = self._read_command(command)
+        if platform_index is None:
+            self._settings["command"] = command_args
+        else:
+            self._get_platform(platform_index).set_command(command_args)
+
+    def set_browser(self, browser, platform_index=None):
+        if not browser:
+            return
+
+        browser_tag = self._read_browser(browser)
+        if platform_index is None:
+            self._settings["browser"] = browser
+
+        else:
+            self._get_platform(platform_index).set_browser(browser)
 
     def set_password(self, password):
         """Set the password used for archive unpacking"""
@@ -310,14 +341,22 @@ class SettingsHelper:
 
         self._settings["orig_filename"] = use_orig
 
-    def add_machine_tag(self, tag):
+    def add_machine_tag(self, tag, platform_index=None):
         """Add machine tag to all currently set platforms"""
         if not isinstance(tag, str):
             raise SubmissionError(f"Machine tag must be a string. {tag!r}")
 
-        for platform in self._settings["platforms"]:
-            if tag not in platform["tags"]:
-                platform["tags"].append(tag)
+        if platform_index is None:
+            for platform in self._settings["platforms"]:
+                if tag not in platform.tags:
+                    platform.tags.append(tag)
+        else:
+            if not isinstance(platform_index, int) or platform_index < 0:
+                raise SubmissionError(
+                    "Platform index must be a positive integer"
+                )
+
+                self._get_platform(platform_index).tags.append(tag)
 
     def set_platforms_list(self, platforms):
         if not isinstance(platforms, list):
@@ -329,6 +368,16 @@ class SettingsHelper:
         for entry in platforms:
             self.add_platform_dict(entry)
 
+    def set_setting(self, setting_key, value, platform_index=None):
+        handler = self._key_handlers.get(setting_key)
+        if not handler:
+            raise SubmissionError(f"Unknown setting key: {setting_key!r}")
+
+        if platform_index is None:
+            handler(value)
+        else:
+            handler(value, platform_index=platform_index)
+
     def from_dict(self, settings_dict):
         for key, value in settings_dict.items():
             handler = self._key_handlers.get(key)
@@ -337,9 +386,18 @@ class SettingsHelper:
 
             handler(value)
 
+    @staticmethod
+    def _add_browser_tags(settings):
+        for platform in settings["platforms"]:
+            browser = platform.settings["browser"] or settings["browser"]
+            if browser:
+                platform.tags.append(_make_browser_tag(browser))
+
     def make_settings(self):
         try:
-            s = Settings(**self._settings)
+            settings_copy = deepcopy(self._settings)
+            self._add_browser_tags(settings_copy)
+            s = Settings(**settings_copy)
             SettingsVerifier.verify_settings(s, self._machine_lists)
             return s
         except (ValueError, TypeError, AnalysisError) as e:

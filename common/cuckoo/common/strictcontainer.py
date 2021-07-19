@@ -280,6 +280,40 @@ class StrictContainer:
             super().__setattr__(key, value)
 
 
+class Platform(StrictContainer):
+
+    FIELDS = {
+        "platform": str,
+        "os_version": str,
+        "tags": list,
+        "settings": dict
+    }
+    ALLOW_EMPTY = ("tags", "os_version", "settings")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._loaded["settings"] = {
+            "browser": "",
+            "route": {},
+            "command": []
+        }
+
+    def set_route(self, **kwargs):
+        self.settings.setdefault("route", {}).update(kwargs)
+
+    def set_command(self, command):
+        if not isinstance(command, list):
+            raise TypeError("Command must be list or args")
+
+        self.settings["command"] = command
+
+    def set_browser(self, browser):
+        if not isinstance(browser, str):
+            raise TypeError("Browser must be a string")
+
+        self.settings["browser"] = browser
+
+
 class Settings(StrictContainer):
 
     FIELDS = {
@@ -299,6 +333,13 @@ class Settings(StrictContainer):
         "orig_filename": bool
     }
     ALLOW_EMPTY = ("extrpath", "route", "command", "browser", "password")
+
+    def to_dict(self):
+        d = super().to_dict()
+        d["platforms"] = [
+            p if isinstance(p, dict) else p.to_dict() for p in self.platforms
+        ]
+        return d
 
 class Errors(StrictContainer):
 

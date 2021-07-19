@@ -408,6 +408,11 @@ class TmStage(StagerHelper):
             target = self.analysis.target.target
 
         options = self.analysis.settings.options
+
+        browser = self.task.browser or self.analysis.settings.browser
+        if browser:
+            options["browser"] = browser
+
         settings = self._build_settings(
             debug=True, resultserver=self.resultserver,
             options=options, target=target, is_archive=is_archive
