@@ -75,7 +75,8 @@ def _make_task_dirs(task_id):
         )
 
     for dirpath in (TaskPaths.logfile(task_id),
-                    TaskPaths.procmem_dump(task_id)):
+                    TaskPaths.procmem_dump(task_id),
+                    TaskPaths.screenshot(task_id)):
         os.mkdir(dirpath)
 
 

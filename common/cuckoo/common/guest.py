@@ -207,6 +207,9 @@ class Agent:
         agent_path = self.agent_path()
         self._post("/remove", data={"path": agent_path})
 
+    def delete_file(self, path):
+        self._post("/remove", data={"path": path})
+
     def kill_agent(self):
         """Stop the agent process on the guest"""
         self._get("/kill")
@@ -245,7 +248,6 @@ class Payload:
         self._zip = ZipFile(self._path, mode="w")
 
     def close_zip(self):
-        print(self._zip.namelist())
         self._zip.fp.flush()
         self._zip.close()
 
@@ -441,7 +443,7 @@ class TmStage(StagerHelper):
             options["browser"] = browser
 
         settings = self._build_settings(
-            debug=True, resultserver=self.resultserver,
+            debug=False, resultserver=self.resultserver,
             options=options, target=target, is_archive=is_archive
         )
 
@@ -498,12 +500,12 @@ class TmStage(StagerHelper):
         except AgentError as e:
             raise StagerError(f"Failed to extract payload: {e}")
 
-        command = PureWindowsPath(tmpdir, self.STAGER_BINARY)
+        stager_path = PureWindowsPath(tmpdir, self.STAGER_BINARY)
         try:
             # A timeout is important when delivering the payload in case the
             # agent stops responding.
             stdout, stderr = self.agent.execute(
-                command, cwd=tmpdir, timeout=60 # TODO use task timeout?
+                stager_path, cwd=tmpdir, timeout=60 # TODO use task timeout?
             )
         except AgentError as e:
             raise StagerError(f"Failed to execute stager: {e}")
@@ -517,6 +519,12 @@ class TmStage(StagerHelper):
                         raise PayloadExecFailed(
                             f"Payload execution failed: {line}. {stderr}"
                         )
+
+        # Delete the stager executable.
+        try:
+            self.agent.delete_file(stager_path)
+        except AgentError as e:
+            self.log.warning("Failed to delete stager executable", error=e)
 
         # Kill the agent. We no longer are using the analyzer, making it
         # useless to leave it running. It only increases the chance of it

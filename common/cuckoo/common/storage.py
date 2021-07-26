@@ -395,6 +395,13 @@ class TaskPaths:
         return TaskPaths._path(task_id, "logs", *args)
 
     @staticmethod
+    def screenshot(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "screenshots", filename)
+
+        return TaskPaths._path(task_id, "screenshots")
+
+    @staticmethod
     def payloadlog(task_id):
         return TaskPaths._path(task_id, "payload.log")
 

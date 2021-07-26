@@ -103,7 +103,8 @@ servers = _ResultServerTracker()
 # safelist and mapping to path helper to find the actual path in the CWD
 RESULT_UPLOADABLE = {
     "logs": TaskPaths.logfile,
-    "memory": TaskPaths.procmem_dump
+    "memory": TaskPaths.procmem_dump,
+    "screenshots": TaskPaths.screenshot
 }
 
 # Prevent malicious clients from using potentially dangerous filenames
