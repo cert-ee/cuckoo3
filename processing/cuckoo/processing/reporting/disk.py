@@ -45,7 +45,9 @@ class JSONDump(Reporter):
         Pre(**static).to_file(AnalysisPaths.prejson(self.ctx.analysis.id))
 
     def report_post_analysis(self):
-        include_result = ["misp", "network", "cfgextr", "intelmq"]
+        include_result = [
+            "misp", "network", "cfgextr", "intelmq", "screenshot"
+        ]
 
         post_report = {
             "task_id": self.ctx.task.id,
