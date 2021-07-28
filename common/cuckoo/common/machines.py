@@ -28,7 +28,8 @@ class Machine:
                   snapshot=None, mac_address="", machinery=None,
                  state="UNKNOWN",  locked=False, locked_by="", reserved=False,
                  reserved_by="", disabled=False, disabled_reason="",
-                 machinery_name="", errors=[]):
+                 machinery_name="", errors=[], architecture="",
+                 interface=""):
 
         # Configuration information
         self.name = name
@@ -39,7 +40,8 @@ class Machine:
         self.tags = tags
         self.snapshot = snapshot
         self.mac_address = mac_address
-        self.interface = ""
+        self.architecture = architecture
+        self.interface = interface
 
         self.machinery = machinery
         if machinery:
@@ -129,6 +131,8 @@ class Machine:
             "os_version": self.os_version,
             "tags": tags,
             "snapshot": self.snapshot,
+            "architecture": self.architecture,
+            "interface": self.interface,
             "mac_address": self.mac_address,
             "machinery_name": self.machinery_name,
             "state": self.state,
@@ -159,11 +163,13 @@ class Machine:
         return cls(
             name=d["name"], label=d["label"], ip=d["ip"],
             platform=d["platform"], os_version=d["os_version"],
-            tags=set(d["tags"]), snapshot=d["snapshot"], machinery=None,
-            state=d["state"], locked=d["locked"], locked_by=d["locked_by"],
-            reserved=d["reserved"], reserved_by=d["reserved_by"],
-            disabled=d["disabled"], disabled_reason=d["disabled_reason"],
-            errors=d["errors"], machinery_name=d["machinery_name"]
+            tags=set(d["tags"]), snapshot=d["snapshot"],
+            architecture=d["architecture"], interface=d["interface"],
+            machinery=None, state=d["state"], locked=d["locked"],
+            locked_by=d["locked_by"], reserved=d["reserved"],
+            reserved_by=d["reserved_by"], disabled=d["disabled"],
+            disabled_reason=d["disabled_reason"], errors=d["errors"],
+            machinery_name=d["machinery_name"],
         )
 
 

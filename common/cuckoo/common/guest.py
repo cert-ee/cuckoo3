@@ -543,11 +543,12 @@ _stagers = {
 DEFAULT_MONITOR_FILE = "default"
 
 def find_stager(platform, arch="amd64"):
+    arch = arch.lower()
     monitor_path = Paths.monitor(platform, arch)
     if not monitor_path.is_dir():
         raise StagerError(
-            f"No monitor exists for platform {platform} with "
-            f"archirecture: {arch}"
+            f"No monitor exists for platform '{platform}' with "
+            f"architecture: '{arch}'"
         )
 
     monitor_name = get_default_version(

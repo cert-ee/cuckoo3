@@ -16,6 +16,7 @@ typeloaders = {
                 "mac_address": config.String(allow_empty=True),
                 "snapshot": config.String(allow_empty=True),
                 "interface": config.String(allow_empty=True),
+                "architecture": config.String(default_val="amd64"),
                 "tags": config.List(
                     config.String, ["exampletag1", "exampletag2"],
                     allow_empty=True

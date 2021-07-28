@@ -44,6 +44,8 @@ class Machinery:
                 name=name, label=label, ip=ip,
                 platform=values["platform"], os_version=values["os_version"],
                 tags=values["tags"], snapshot=values["snapshot"],
+                architecture=values["architecture"],
+                interface=values["interface"],
                 mac_address=values["mac_address"], machinery=self
             )
             self.machines.append(machine)
