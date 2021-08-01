@@ -1,20 +1,21 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
-from google.protobuf import message
+from binascii import a2b_hex
 
 from cuckoo.processing import abtracts
-
 from cuckoo.processing.event import registrytools, processtools, filetools
-from . import (
-    file_pb2, inject_pb2, mutant_pb2, network_pb2, process_pb2, registry_pb2,
-    suspicious_pb2
-)
 from cuckoo.processing.event.events import (
     File, FileActions, Process, ProcessStatuses, Registry, RegistryActions,
     RegistryValueTypes, REGISTRY_ACTION_EFFECT, ProcessInjection,
     ProcessInjectActions, NetworkFlow, Mutant, MutantActions, SuspiciousEvent,
     SuspiciousEvents
+)
+from google.protobuf import message
+
+from . import (
+    file_pb2, inject_pb2, mutant_pb2, network_pb2, process_pb2, registry_pb2,
+    suspicious_pb2
 )
 
 _FILE_ACTION_TRANSLATE = {
@@ -290,6 +291,13 @@ def _translate_suspicious_event(threemon_suspicious, ctx):
         args=tuple(args)
     )
 
+def _translate_tls_session(threemon_tlssession, ctx):
+    ctx.tlssessions.add_session(
+        client_random=a2b_hex(threemon_tlssession.arg0),
+        server_random=a2b_hex(threemon_tlssession.arg1),
+        master_secret=a2b_hex(threemon_tlssession.arg2)
+    )
+
 
 _kindmap = {
     1: (process_pb2.Process, _translate_process_event),
@@ -304,6 +312,7 @@ _kindmap = {
     # 14: (whois_pb2.Whois,),
     # 15: (vminfo_pb2.Vminfo,),
     # 16: (mutant_pb2.Event,),
+    105: (network_pb2.MasterSecret, _translate_tls_session)
     # 126: (debug_pb2.Debug,)
 }
 
@@ -324,8 +333,9 @@ class _FileIdTracker:
 
 class _TranslateContext:
 
-    def __init__(self, process_tracker):
-        self.processes = process_tracker
+    def __init__(self, taskctx):
+        self.processes = taskctx.process_tracker
+        self.tlssessions = taskctx.network.tls
         self.file_ids = _FileIdTracker()
 
     def close(self):
@@ -339,7 +349,7 @@ class ThreemonReader(abtracts.LogFileTranslator):
 
     def read_events(self):
         buffreader = self._fp
-        translate_context = _TranslateContext(self._taskctx.process_tracker)
+        translate_context = _TranslateContext(self._taskctx)
         while True:
             start_offset = buffreader.tell()
             header = buffreader.read(4)

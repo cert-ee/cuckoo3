@@ -94,10 +94,23 @@ class AnalysisContext(ProcessingContext):
             AnalysisPaths.processingerr_json(self.analysis.id)
         )
 
+class TLSSessionTracker:
+
+    def __init__(self):
+        self._sessions = {}
+
+    @property
+    def sessions(self):
+        return self._sessions
+
+    def add_session(self, client_random, server_random, master_secret):
+        self._sessions[(client_random, server_random)] = master_secret
+
 class NetworkContext:
 
     def __init__(self):
         self.dns = ResolveTracker()
+        self.tls = TLSSessionTracker()
 
 class TaskContext(ProcessingContext):
 

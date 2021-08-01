@@ -44,14 +44,16 @@ class Pcapreader(Processor):
 
         self.ip_sl.clear_temp()
 
+        tls_secrets = self.ctx.network.tls.sessions
         self.tcp_handlers = {
             25: protohandlers.smtp_handler,
             80: protohandlers.http_handler,
+            443: lambda: protohandlers.https_handler(tls_secrets),
             465: protohandlers.smtp_handler,
             587: protohandlers.smtp_handler,
             8000: protohandlers.http_handler,
             8080: protohandlers.http_handler,
-            "generic": guess.tcp_guessprotocol
+            "generic": lambda: guess.tcp_guessprotocol(tls_secrets)
         }
 
         self.udp_handlers = {
@@ -113,7 +115,10 @@ class Pcapreader(Processor):
         }
 
     def _add_http_entry(self, ts, src, dst, protocol, sent, recv, tracker):
-        data = {}
+        data = {
+            "request": {},
+            "response": {}
+        }
         for httpdata in (sent, recv):
             if not httpdata:
                 continue
@@ -127,7 +132,7 @@ class Pcapreader(Processor):
                     protocol, httpdata
                 )
 
-        if not data:
+        if not data.get("request") and not data.get("response"):
             return
 
         srcip, srcport = src

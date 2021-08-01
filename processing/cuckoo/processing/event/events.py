@@ -326,7 +326,7 @@ INJECTION_ACTION_DESC = {
 
 class ProcessInjection(NormalizedEvent):
 
-    __slots__ = ("action", "pid", "procid", "dstpid", "dstprocid",)
+    __slots__ = ("action", "pid", "procid", "dstpid", "dstprocid")
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.PROCESS_INJECTION
 
@@ -343,6 +343,10 @@ class ProcessInjection(NormalizedEvent):
 
 class NetworkFlow(NormalizedEvent):
 
+    __slots__ = (
+        "pid", "procid", "proto_number", "srcip", "srcport", "dstip", "dstport"
+    )
+    dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.NETFLOW
 
     def __init__(self, ts, pid, procid, proto_number, srcip, srcport, dstip,
@@ -351,14 +355,13 @@ class NetworkFlow(NormalizedEvent):
         self.pid = pid
         self.procid = procid
         self.proto_number = proto_number
-        self.scrip = srcip
+        self.srcip = srcip
         self.srcport = srcport
         self.dstip = dstip
         self.dstport = dstport
 
         self.description = ""
         self.effect = "network_flow"
-
 
 class MutantActions:
     CREATE = "create"

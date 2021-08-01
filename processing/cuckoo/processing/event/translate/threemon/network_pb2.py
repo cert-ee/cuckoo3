@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='threemon',
   syntax='proto3',
   serialized_options=_b('H\002'),
-  serialized_pb=_b('\n\rnetwork.proto\x12\x08threemon\"\x85\x01\n\x0bNetworkFlow\x12\n\n\x02ts\x18\x07 \x01(\r\x12\x0b\n\x03pid\x18\x01 \x01(\x04\x12\x0e\n\x06procid\x18\x08 \x01(\x05\x12\r\n\x05proto\x18\x02 \x01(\r\x12\r\n\x05srcip\x18\x03 \x01(\x07\x12\r\n\x05\x64stip\x18\x04 \x01(\x07\x12\x0f\n\x07srcport\x18\x05 \x01(\r\x12\x0f\n\x07\x64stport\x18\x06 \x01(\rB\x02H\x02\x62\x06proto3')
+  serialized_pb=_b('\n\rnetwork.proto\x12\x08threemon\"\x85\x01\n\x0bNetworkFlow\x12\n\n\x02ts\x18\x07 \x01(\r\x12\x0b\n\x03pid\x18\x01 \x01(\x04\x12\x0e\n\x06procid\x18\x08 \x01(\x05\x12\r\n\x05proto\x18\x02 \x01(\r\x12\r\n\x05srcip\x18\x03 \x01(\x07\x12\r\n\x05\x64stip\x18\x04 \x01(\x07\x12\x0f\n\x07srcport\x18\x05 \x01(\r\x12\x0f\n\x07\x64stport\x18\x06 \x01(\r\"a\n\x0cMasterSecret\x12\n\n\x02ts\x18\x06 \x01(\r\x12\x0b\n\x03pid\x18\x01 \x01(\x04\x12\x0e\n\x06procid\x18\x07 \x01(\x05\x12\x0c\n\x04\x61rg0\x18\x03 \x01(\x0c\x12\x0c\n\x04\x61rg1\x18\x04 \x01(\x0c\x12\x0c\n\x04\x61rg2\x18\x05 \x01(\x0c\x42\x02H\x02\x62\x06proto3')
 )
 
 
@@ -104,7 +104,74 @@ _NETWORKFLOW = _descriptor.Descriptor(
   serialized_end=161,
 )
 
+
+_MASTERSECRET = _descriptor.Descriptor(
+  name='MasterSecret',
+  full_name='threemon.MasterSecret',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='ts', full_name='threemon.MasterSecret.ts', index=0,
+      number=6, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='pid', full_name='threemon.MasterSecret.pid', index=1,
+      number=1, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='procid', full_name='threemon.MasterSecret.procid', index=2,
+      number=7, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='arg0', full_name='threemon.MasterSecret.arg0', index=3,
+      number=3, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='arg1', full_name='threemon.MasterSecret.arg1', index=4,
+      number=4, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='arg2', full_name='threemon.MasterSecret.arg2', index=5,
+      number=5, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=163,
+  serialized_end=260,
+)
+
 DESCRIPTOR.message_types_by_name['NetworkFlow'] = _NETWORKFLOW
+DESCRIPTOR.message_types_by_name['MasterSecret'] = _MASTERSECRET
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 NetworkFlow = _reflection.GeneratedProtocolMessageType('NetworkFlow', (_message.Message,), dict(
@@ -113,6 +180,13 @@ NetworkFlow = _reflection.GeneratedProtocolMessageType('NetworkFlow', (_message.
   # @@protoc_insertion_point(class_scope:threemon.NetworkFlow)
   ))
 _sym_db.RegisterMessage(NetworkFlow)
+
+MasterSecret = _reflection.GeneratedProtocolMessageType('MasterSecret', (_message.Message,), dict(
+  DESCRIPTOR = _MASTERSECRET,
+  __module__ = 'network_pb2'
+  # @@protoc_insertion_point(class_scope:threemon.MasterSecret)
+  ))
+_sym_db.RegisterMessage(MasterSecret)
 
 
 DESCRIPTOR._options = None
