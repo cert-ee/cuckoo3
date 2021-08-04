@@ -430,6 +430,10 @@ class TaskPaths:
         return TaskPaths._path(task_id, "dump.pcap")
 
     @staticmethod
+    def tlsmaster(task_id):
+        return TaskPaths._path(task_id, "tlsmaster.txt")
+
+    @staticmethod
     def report(task_id):
         return TaskPaths._path(task_id, "report.json")
 

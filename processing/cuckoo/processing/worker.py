@@ -104,7 +104,20 @@ class TLSSessionTracker:
         return self._sessions
 
     def add_session(self, client_random, server_random, master_secret):
+        if len(client_random) != 32 or len(server_random) != 32:
+            raise ValueError("Length of client and server random must be 32")
+
+        if len(master_secret) != 48:
+            raise ValueError("Length of master secret must be 48")
+
+        for v in (client_random, server_random, master_secret):
+            if not isinstance(v, bytes):
+                raise TypeError(
+                    "Client and server random and master secrets must be bytes"
+                )
+
         self._sessions[(client_random, server_random)] = master_secret
+
 
 class NetworkContext:
 

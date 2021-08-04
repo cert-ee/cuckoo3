@@ -64,3 +64,16 @@ class JSONDump(Reporter):
                 post_report[resultkey] = self.ctx.result.get(resultkey)
 
         Post(**post_report).to_file(TaskPaths.report(self.ctx.task.id))
+
+
+class TLSMasterSecrets(Reporter):
+
+    def report_post_analysis(self):
+        if not self.ctx.network.tls.sessions:
+            return
+
+        # Write format:
+        # CLIENT_RANDOM <hex client random bytes> <hex secret bytes>
+        with open(TaskPaths.tlsmaster(self.ctx.task.id), "w") as fp:
+            for randoms, secret in self.ctx.network.tls.sessions.items():
+                fp.write(f"CLIENT_RANDOM {randoms[0].hex()} {secret.hex()}\n")
