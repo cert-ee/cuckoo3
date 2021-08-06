@@ -46,7 +46,8 @@ class JSONDump(Reporter):
 
     def report_post_analysis(self):
         include_result = [
-            "misp", "network", "cfgextr", "intelmq", "screenshot"
+            "misp", "network", "cfgextr", "intelmq", "screenshot",
+            "suricata"
         ]
 
         post_report = {

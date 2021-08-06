@@ -3,6 +3,22 @@
 
 from cuckoo.common import config
 
+from .signatures.signature import Levels
+
+class ScoringLevel(config.String):
+
+    def constraints(self, value):
+        super().constraints(value)
+
+        try:
+            Levels.to_score(value)
+        except KeyError:
+            raise config.ConstraintViolationError(
+                f"Invalid score level {value}. "
+                f"Possible levels: {list(Levels.LEVEL_SCORE.keys())}"
+            )
+
+
 exclude_autoload = []
 typeloaders = {
     "identification.yaml": {
@@ -151,5 +167,32 @@ typeloaders = {
         "timeout": config.Int(default_val=300),
         "max_result_window": config.Int(default_val=10000),
         "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
+    },
+    "suricata.yaml": {
+        "enabled": config.Boolean(default_val=False),
+        "unix_sock_path": config.UnixSocketPath(
+            default_val="/var/run/suricata/suricata-command.socket",
+            must_exist=True, readable=True, writable=True
+        ),
+        "process_timeout": config.Int(default_val=60),
+        "evelog_filename": config.String(default_val="eve.json"),
+        "classification_config": config.FilePath(
+            default_val="/etc/suricata/classification.config",
+            must_exist=True, readable=True
+        ),
+        "classtype_scores": config.Dict(
+            element_class=ScoringLevel, default_val={
+                "command-and-control": "known bad",
+                "exploit-kit": "known bad",
+                "domain-c2": "malicious",
+                "trojan-activity": "malicious",
+                "targeted-activity": "likely malicious",
+                "shellcode-detect": "likely malicious",
+                "coin-mining": "likely malicious",
+                "external-ip-check": "suspicious",
+                "non-standard-protocol": "informational"
+            }
+        ),
+        "ignore_sigids": config.List(config.Int, allow_empty=True)
     }
 }

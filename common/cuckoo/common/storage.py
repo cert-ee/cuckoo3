@@ -438,6 +438,13 @@ class TaskPaths:
         return TaskPaths._path(task_id, "report.json")
 
     @staticmethod
+    def suricata(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "suricata", filename)
+
+        return TaskPaths._path(task_id, "suricata")
+
+    @staticmethod
     def zipped_results(task_id):
         # Still call the split so any invalid task IDs will not be passed to
         # the next part. Split acts as a validator.
