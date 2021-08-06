@@ -1,13 +1,6 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
-
-class Levels:
-    INFORMATIONAL = "informational"
-    SUSPICIOUS = "suspicious"
-    MALICIOUS = "malicious"
-
-
 class Scores:
     NOTHING_DETECTED = 0
     INFORMATIONAL = 1
@@ -15,6 +8,29 @@ class Scores:
     LIKELY_MALICIOUS = 8
     MALICIOUS = 9
     KNOWN_BAD = 10
+
+class Levels:
+    INFORMATIONAL = "informational"
+    SUSPICIOUS = "suspicious"
+    LIKELY_MALICIOUS = "likely malicious"
+    MALICIOUS = "malicious"
+    KNOWN_BAD = "known bad"
+
+    LEVEL_SCORE = {
+        INFORMATIONAL: Scores.INFORMATIONAL,
+        SUSPICIOUS: Scores.SUSPICIOUS,
+        LIKELY_MALICIOUS: Scores.LIKELY_MALICIOUS,
+        MALICIOUS: Scores.MALICIOUS,
+        KNOWN_BAD: Scores.KNOWN_BAD
+    }
+
+    @classmethod
+    def to_score(cls, desc):
+        score = cls.LEVEL_SCORE.get(desc.lower())
+        if not score:
+            raise KeyError(f"Unknown score level type: {desc}")
+
+        return score
 
 class Signature:
 
@@ -50,6 +66,16 @@ class Signature:
             ttps=sigdict["ttps"], tags=sigdict["tags"],
             family=sigdict["family"]
         )
+
+    def update_score(self, score):
+        if score <= self.score:
+            return
+
+        if score > self.score:
+            if score > Scores.KNOWN_BAD:
+                self.score = Scores.KNOWN_BAD
+            else:
+                self.score = score
 
     def to_dict(self):
         return {
@@ -105,6 +131,24 @@ class SignatureTracker:
             family=family
         )
 
+    def _update_signature(self, signature, score, iocs=[], ttps=[], tags=[],
+                          family=""):
+        for tag in tags:
+            self._tag_tracker.add_tag(tag)
+            if tag not in signature.tags:
+                signature.tags.append(tag)
+
+        for ttp in ttps:
+            self._ttp_tracker.add_ttp(ttp)
+            if ttp not in signature.ttps:
+                signature.ttps.append(ttp)
+
+        if family:
+            self._family_tracker.add_family(family)
+
+        signature.add_iocs(iocs)
+        signature.update_score(score)
+
     def add_signature(self, score, name, short_description, description="",
                       iocs=[], ttps=[], tags=[], family=""):
 
@@ -116,4 +160,7 @@ class SignatureTracker:
                 family=family
             )
         else:
-            signature.add_iocs(iocs)
+            self._update_signature(
+                signature, score=score, iocs=iocs, ttps=ttps, tags=tags,
+                family=family
+            )
