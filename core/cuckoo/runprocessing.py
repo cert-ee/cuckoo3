@@ -18,6 +18,7 @@ from cuckoo.common.startup import init_global_logging, load_configurations
 from cuckoo.common.storage import Paths, cuckoocwd
 from cuckoo.common import shutdown
 from cuckoo.processing import abtracts
+from cuckoo.processing.errors import DisablePluginError, PluginError
 from cuckoo.processing.worker import (
     PreProcessingRunner, AnalysisContext, TaskContext, PostProcessingRunner
 )
@@ -142,6 +143,13 @@ class WorkReceiver(UnixSocketServer):
                 try:
                     if plugin_class.enabled():
                         plugin_class.init_once()
+                except PluginError as e:
+                    log.error(
+                        "Failed to initialize plugin class",
+                        plugin_class=plugin_class,
+                        worker=self.name, error=e
+                    )
+                    return False
                 except Exception as e:
                     log.exception(
                         "Failed to initialize plugin class",
