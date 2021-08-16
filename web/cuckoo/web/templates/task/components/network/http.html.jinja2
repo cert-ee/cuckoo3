@@ -29,7 +29,7 @@
           <h4>URL</h4>
           <div class="columns is-vcenter no-margin-x no-padding-x">
             <div class="column is-auto no-margin-left"><span class="tag is-white has-text-weight-bold" data-tooltip title="Method">{{ req.request.method }}</span></div>
-            <div class="column is-fill has-line-break"><p class="no-margin">{{ req.request.url }}</p></div>
+            <div class="column is-fill has-line-break"><p class="no-margin">{{ trim_string(str=req.request.url, max_chars=200, copy=True) }}</p></div>
             <div class="column is-auto no-margin-right"><span class="tag is-white has-text-weight-bold" data-tooltip title="Status">{{ req.response.status }}</span></div>
           </div>
         </div>
