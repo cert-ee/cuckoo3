@@ -37,69 +37,77 @@
       <div class="columns is-divided">
         <div class="column">
           <h4 class="has-half-opacity">Request</h4>
-          <table class="table">
-            <tbody>
-              <tr>
-                <td class="has-text-right"><strong>Version</strong></td>
-                <td class="is-break">{{ req.request.version }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right"><strong>method</strong></td>
-                <td class="is-break">{{ req.request.method }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right"><strong>Length</strong></td>
-                <td class="is-break">{{ req.request.length }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right is-vtop"><strong>Headers</strong></td>
-                <td class="no-padding-x">
-                  <table class="table is-monospace">
-                    {% for header in req.request.headers %}
-                      <tr>
-                        <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
-                        <td class="no-padding-y">{{ header.value }}</td>
-                      </tr>
-                    {% endfor %}
-                  </table>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="column">
-          <h4 class="has-half-opacity">Response</h4>
-          <table class="table">
-            <tbody>
-              <tr>
-                <td class="has-text-right"><strong>Version</strong></td>
-                <td class="is-break">{{ req.response.version }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right"><strong>Status</strong></td>
-                <td class="is-break">{{ req.response.status }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right"><strong>Length</strong></td>
-                <td>{{ req.response.length }}</td>
-              </tr>
-              <tr>
-                <td class="has-text-right is-vtop"><strong>Headers</strong></td>
-                <td class="no-padding-x">
-                  <table class="table is-monospace">
-                    <tbody>
-                      {% for header in req.response.headers %}
+          {% if req.response %}
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td class="has-text-right"><strong>Version</strong></td>
+                  <td class="is-break">{{ req.request.version }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right"><strong>method</strong></td>
+                  <td class="is-break">{{ req.request.method }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right"><strong>Length</strong></td>
+                  <td class="is-break">{{ req.request.length }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right is-vtop"><strong>Headers</strong></td>
+                  <td class="no-padding-x">
+                    <table class="table is-monospace">
+                      {% for header in req.request.headers %}
                         <tr>
                           <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
                           <td class="no-padding-y">{{ header.value }}</td>
                         </tr>
                       {% endfor %}
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            {% else %}
+            <p class="column has-half-opacity">No request information</p>
+          {% endif %}
+        </div>
+        <div class="column">
+          <h4 class="has-half-opacity">Response</h4>
+          {% if req.response %}
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td class="has-text-right"><strong>Version</strong></td>
+                  <td class="is-break">{{ req.response.version }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right"><strong>Status</strong></td>
+                  <td class="is-break">{{ req.response.status }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right"><strong>Length</strong></td>
+                  <td>{{ req.response.length }}</td>
+                </tr>
+                <tr>
+                  <td class="has-text-right is-vtop"><strong>Headers</strong></td>
+                  <td class="no-padding-x">
+                    <table class="table is-monospace">
+                      <tbody>
+                        {% for header in req.response.headers %}
+                          <tr>
+                            <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
+                            <td class="no-padding-y">{{ header.value }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          {% else %}
+            <p class="column has-half-opacity">No response information</p>
+          {% endif %}
         </div>
       </div>
     </div>
