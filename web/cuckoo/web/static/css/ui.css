@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* Copyright (C) 2019-2021 Estonian Information System Authority.
- * See the file 'LICENSE' for copying permission. */
+ * * See the file 'LICENSE' for copying permission. */
 .input:not([type=file]):not([type=checkbox]):not([type=radio]), .field.is-inline:not([type=file]):not([type=checkbox]):not([type=radio]) {
   -webkit-appearance: none;
   border: 0;

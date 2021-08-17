@@ -61,9 +61,9 @@ window.lib = Object.assign(window.lib || {}, {
   // generate a safestring from a string that could contain executable code
   SafeString(str) {
 
-    function _escape(s) {
+    function _escape(s = "") {
       let r = /[&<>"'\/]/g;
-      return '' + s.replace(r, m => {
+      return '' + new String(s).replace(r, m => {
         return {
           "&": "&amp;",
           "<": "&lt;",
