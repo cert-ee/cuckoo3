@@ -58,8 +58,8 @@
                     <table class="table is-monospace">
                       {% for header in req.request.headers %}
                         <tr>
-                          <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
-                          <td class="no-padding-y">{{ header.value }}</td>
+                          <td class="no-padding-y is-auto-width is-vtop has-half-opacity"><strong>{{ header.key }}:</strong></td>
+                          <td class="no-padding-y is-break">{{ header.value }}</td>
                         </tr>
                       {% endfor %}
                     </table>
@@ -86,7 +86,7 @@
                 </tr>
                 <tr>
                   <td class="has-text-right"><strong>Length</strong></td>
-                  <td>{{ req.response.length }}</td>
+                  <td class="is-break">{{ req.response.length }}</td>
                 </tr>
                 <tr>
                   <td class="has-text-right is-vtop"><strong>Headers</strong></td>
@@ -95,8 +95,8 @@
                       <tbody>
                         {% for header in req.response.headers %}
                           <tr>
-                            <td class="no-padding-y is-auto-width"><strong>{{ header.key }}</strong></td>
-                            <td class="no-padding-y">{{ header.value }}</td>
+                            <td class="no-padding-y is-auto-width is-vtop has-half-opacity"><strong>{{ header.key }}:</strong></td>
+                            <td class="no-padding-y is-break">{{ header.value }}</td>
                           </tr>
                         {% endfor %}
                       </tbody>
