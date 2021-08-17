@@ -10,7 +10,7 @@
 
     const html = parseDOM(`
       <div class="box has-background-red no-margin-top" id="error">
-        <p class="no-margin-top"><strong>${msg}</strong></p>
+        <p class="no-margin-top"><strong>${lib.SafeString(msg)}</strong></p>
         <button class="button is-red has-text-small">Dismiss</button>
       </div>
     `);
@@ -98,8 +98,8 @@
           <div class="columns is-divided is-gapless">
             <div class="column has-padding-x has-padding-bottom">
               <div class="columns is-divided">
-                <p class="column"><strong>${data.platform}</strong></p>
-                <p class="column">${data.version}</p>
+                <p class="column"><strong>${lib.SafeString(data.platform)}</strong></p>
+                <p class="column">${lib.SafeString(data.version)}</p>
               </div>
               <div class="field is-inline">
                 <label class="label"><i class="fas fa-tags"></i></label>

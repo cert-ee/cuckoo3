@@ -49,7 +49,7 @@
     results.innerHTML = `
       <tr class="has-background-red" id="search-error">
         <td colspan="4">
-          <p class="has-text-center">${data.error}</p>
+          <p class="has-text-center has-text-red">${lib.SafeString(data.error)}</p>
         </td>
       </tr>
     `;
@@ -62,7 +62,7 @@
     results.innerHTML = `
       <tr>
         <td colspan="4">
-          <p class="has-half-opacity has-text-center">${rowText}</p>
+          <p class="has-half-opacity has-text-center">${lib.SafeString(rowText)}</p>
         </td>
       </tr>
     `;
@@ -122,11 +122,11 @@
     if(matches && matches.length) {
       results.innerHTML = matches.map(match => `
         <tr>
-          <td><a target="_blank" href="/analysis/${match.analysis_id}">${match.analysis_id}</a></td>
-          <td><a target="_blank" href="/analysis/${match.analysis_id}/task/${match.task_id}">${match.task_id}</a></td>
+          <td><a target="_blank" href="/analysis/${match.analysis_id}">${lib.SafeString(match.analysis_id)}</a></td>
+          <td><a target="_blank" href="/analysis/${match.analysis_id}/task/${match.task_id}">${lib.SafeString(match.task_id)}</a></td>
           ${match.matches.map(m => `
-            <td>${m.field}</td>
-            <td>${m.matches.join('<br />')}</td>
+            <td>${lib.SafeString(m.field)}</td>
+            <td>${m.matches.map(_match => lib.SafeString(_match)).join('<br />')}</td>
           `).join('')}
         </tr>
       `).join('');

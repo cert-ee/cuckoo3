@@ -54,7 +54,7 @@ window.lib = Object.assign(window.lib || {}, {
     return parseDOM(`
       <div class="banner is-${type}">
         <div class="banner-icon"><i class="${icon}"></i></div>
-        <p class="column no-margin-y">${content}</p>
+        <p class="column no-margin-y">${lib.SafeString(content)}</p>
       </div>
     `);
   },
@@ -380,7 +380,7 @@ function handleTooltip(elem) {
 
   elem.addEventListener('mouseenter', ev => {
     ev.stopPropagation();
-    tip = parseDOM(`<span class="tooltip is-bottom">${text}</span>`);
+    tip = parseDOM(`<span class="tooltip is-bottom">${lib.SafeString(text)}</span>`);
     elem.appendChild(tip);
     setTimeout(() => {
       tip.classList.add('in');

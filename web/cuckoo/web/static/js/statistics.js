@@ -52,10 +52,9 @@
         <div class="box has-background-white no-padding no-radius no-margin-y">
           <div class="box-title no-radius columns is-between is-vcenter is-gapless no-margin-top">
             <div class="column">
-              ${ name ? `<h4 class="no-margin-y">${name}</h4>` : '' }
-              ${ description ? `<p class="no-margin-y">${description}</p>` : '' }
+              ${ name ? `<h4 class="no-margin-y">${lib.SafeString(name)}</h4>` : '' }
+              ${ description ? `<p class="no-margin-y">${lib.SafeString(description)}</p>` : '' }
             </div>
-            <!-- <div class="columns"><span class="tag has-background-white">{chart controls}</span></div> -->
           </div>
           <div class="has-padding-y box-content">
             <canvas style="height: 16rem"></canvas>
@@ -69,7 +68,7 @@
    * returns error element for view
    */
   function viewError(data="") {
-    return parseDOM(`<p class="is-error">${data}</p>`);
+    return parseDOM(`<p class="is-error">${lib.SafeString(data)}</p>`);
   }
 
   /*
