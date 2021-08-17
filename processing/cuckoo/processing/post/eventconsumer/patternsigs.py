@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import os
 
@@ -89,7 +88,7 @@ class PatternFinder(EventConsumer):
         if not self.scanner:
             return
 
-        event.pattern_scan(self.scanner)
+        event.pattern_scan(self.scanner, self.taskctx)
 
     def finalize(self):
         if not self.scanner:

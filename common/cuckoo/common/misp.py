@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import pymisp
 import requests.exceptions
@@ -99,7 +98,7 @@ class NewMispEvent:
 
     def add_signature(self, name, description):
         sigobj = pymisp.MISPObject("sb-signature")
-        sigobj.add_attribute("software", "Cuckoo Sandbox 3").to_ids = False
+        sigobj.add_attribute("software", "Cuckoo 3").to_ids = False
         sigobj.add_attribute("signature", name).to_ids = False
         sigobj.add_attribute("text", description).to_ids = False
         self.event_obj.add_object(sigobj)
@@ -123,7 +122,7 @@ class NewMispEvent:
             "comment", f"Task {task_id}"
         ).disable_correlation = True
         refobj.add_attribute(
-            "type", "Cuckoo Sandbox task identifier"
+            "type", "Cuckoo task identifier"
         ).disable_correlation = True
         if webinterface_baseurl:
             # TODO URI is hardcoded. See if we can import this from a constant

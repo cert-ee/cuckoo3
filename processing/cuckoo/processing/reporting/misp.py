@@ -1,6 +1,5 @@
-# Copyright (C) 2020 - 2021 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common.config import cfg
 from cuckoo.common.misp import MispClient, MispError, NewMispEvent
@@ -133,7 +132,7 @@ class MISP(Reporter):
             return
 
         event = NewMispEvent(
-            info=f"Cuckoo Sandbox task {self.ctx.task.id}",
+            info=f"Cuckoo 3 task {self.ctx.task.id}",
             distribution=self.event_settings["distribution"],
             analysis=self.event_settings["analysis"],
             sharing_group=self.event_settings["sharing_group"],

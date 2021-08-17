@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import re
 import hyperscan
@@ -69,7 +68,14 @@ class LoadedIndicatorPattern:
 class TriggerSafelist:
 
     def __init__(self):
+        self._images = set()
         self._eventkind_regex = {}
+
+    def add_image(self, image_path):
+        # Store lower case version of image path. It will be compared
+        # To a normalized version of an image path, which will also be
+        # lower case.
+        self._images.add(image_path.lower())
 
     def add_regex(self, regex, eventkind, subtype=None):
         if subtype:
@@ -89,31 +95,61 @@ class TriggerSafelist:
 
         self._eventkind_regex.setdefault(key, []).append(regex)
 
-    def should_ignore(self, matchctx):
-        if not self._eventkind_regex:
-            return False
-
-        matched_val = matchctx.matched_str
+    def _matches_regexes(self, value, kind, subtypes=[]):
         # TODO think of a more clean way to do this. Most values are
         # strings, used regexes are loaded as bytes.
-        if isinstance(matched_val, str):
+        if isinstance(value, str):
             # Ignore decoding errors for now.
-            matched_val = matched_val.encode(errors="ignore")
+            value = value.encode(errors="ignore")
 
-        for regex in self._eventkind_regex.get(matchctx.kind, []):
-            if regex.match(matched_val):
+        for regex in self._eventkind_regex.get(kind, []):
+            if regex.match(value):
                 return True
 
-        subtype = matchctx.subtype
-        if not subtype:
+        if not subtypes:
             return False
 
-        kind_subtype = f"{matchctx.kind} {subtype}"
-        for regex in self._eventkind_regex.get(kind_subtype, []):
-            if regex.match(matched_val):
-                return True
+        for subtype in subtypes:
+            kind_subtype = f"{kind} {subtype}"
+            for regex in self._eventkind_regex.get(kind_subtype, []):
+                if regex.match(value):
+                    return True
 
         return False
+
+    def should_ignore(self, matchctx):
+        if not self._eventkind_regex and not self._images:
+            return False
+
+        if self._images and matchctx.processing_ctx and matchctx.event:
+            process = matchctx.processing_ctx.process_tracker.lookup_process(
+                matchctx.event.procid
+            )
+
+            if process.normalized_image not in self._images:
+                return False
+
+            # If the process image is safelisted, but it has been injected,
+            # ignore the safelist entry for this image.
+            if process.injected:
+                return False
+
+            if not self._eventkind_regex:
+                return True
+
+        for value_subtypes in matchctx.extra_safelistdata:
+            if len(value_subtypes) < 2:
+                value, subtypes = value_subtypes[0], None
+            else:
+                value, subtypes = value_subtypes
+
+            if self._matches_regexes(value, matchctx.kind, subtypes):
+                return True
+
+        return self._matches_regexes(
+            matchctx.matched_str, matchctx.kind, [matchctx.subtype]
+        )
+
 
 def _check_trigger(pattern_dict):
     if not isinstance(pattern_dict, dict):
@@ -344,6 +380,19 @@ class LoadedSignatures:
 
     def _create_safelist(self, safelist_dict):
         safelist = TriggerSafelist()
+        images = safelist_dict.pop("images", [])
+        if images:
+            if not isinstance(images, (list, str)):
+                raise ValueError(
+                    "Safelist images must be a list of string image paths"
+                )
+
+            if not isinstance(images, list):
+                images = [images]
+
+            for path in images:
+                safelist.add_image(path)
+
         for eventkind, subtype, regexes in self._read_trigger(safelist_dict):
             for regex in regexes:
                 safelist.add_regex(regex, eventkind, subtype=subtype)
@@ -375,7 +424,7 @@ class LoadedSignatures:
                     # Set the safelist for this trigger and continue without
                     # adding any pattern IDs.
                     safelist = self._create_safelist(patterns)
-                    continue
+                    break
                 else:
                     p = self._get_pattern(
                         entry, event_kind, subtype=subtype
@@ -568,16 +617,27 @@ class MatchContext:
     """Holds the matched string, original string, and event object that
     caused a pattern to be matched."""
 
-    def __init__(self, matched_str, orig_str, event, kind, subtype=None):
+    def __init__(self, matched_str, orig_str, event, kind, processing_ctx,
+                 subtype=None, extra_safelistdata=[]):
         self.matched_str = matched_str
         self.orig_str = orig_str
         self.event = event
+        self.processing_ctx = processing_ctx
 
         # Record kind as an event kan have kinds with a different name than
         # the event kind. Such as the process event with the 'commandline'
         # kind
         self.kind = kind
         self.subtype = subtype
+
+        if not extra_safelistdata and not isinstance(extra_safelistdata, list):
+            extra_safelistdata = []
+
+        if not isinstance(extra_safelistdata, list):
+            self.extra_safelistdata = [extra_safelistdata]
+        else:
+            self.extra_safelistdata = extra_safelistdata
+
 
 class PatternMatches:
     """A tracker that contains all matches for a specific pattern id."""
@@ -922,14 +982,15 @@ class PatternScanner:
         # Regex matched, now verify if the pattern expects this event to be of
         # a of a certain subtype. E.g: Only file delete or must it match all
         # file events.
-        if loaded_pattern.subtype and loaded_pattern.subtype != ctx[4]:
+        if loaded_pattern.subtype and loaded_pattern.subtype != ctx[5]:
             return
 
         # Pass the original string and full event obj to match tracker.
         self.matchtracker.add_match(
             pattern_id, MatchContext(
                 matched_str=ctx[0], orig_str=ctx[1], event=ctx[2],
-                kind=ctx[3], subtype=ctx[4]
+                kind=ctx[3], processing_ctx=ctx[4], subtype=ctx[5],
+                extra_safelistdata=ctx[6]
             )
         )
 
@@ -943,7 +1004,8 @@ class PatternScanner:
         """Clear out the current SigMatchTracker"""
         self.matchtracker = None
 
-    def scan(self, scan_str, orig_str, event, event_kind, event_subtype=None):
+    def scan(self, scan_str, orig_str, event, event_kind, processing_ctx=None,
+             event_subtype=None, extra_safelistdata=None):
         """Scan the given 'scan_str' on the 'event_kind' database.
         A subtype of an event can be given to ignore a pattern match that does
         not match the subtype. E.G 'file write', instead of 'file'.
@@ -962,5 +1024,6 @@ class PatternScanner:
 
         scandb.scan(
             scan_str, self._on_match,
-            context=(scan_str, orig_str, event, event_kind, event_subtype)
+            context=(scan_str, orig_str, event, event_kind, processing_ctx,
+                     event_subtype, extra_safelistdata)
         )

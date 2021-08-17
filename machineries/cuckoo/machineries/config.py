@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common import config
 
@@ -17,6 +16,7 @@ typeloaders = {
                 "mac_address": config.String(allow_empty=True),
                 "snapshot": config.String(allow_empty=True),
                 "interface": config.String(allow_empty=True),
+                "architecture": config.String(default_val="amd64"),
                 "tags": config.List(
                     config.String, ["exampletag1", "exampletag2"],
                     allow_empty=True

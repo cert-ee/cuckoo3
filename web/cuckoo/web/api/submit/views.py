@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from rest_framework.parsers import MultiPartParser
 from rest_framework import serializers
@@ -32,11 +31,7 @@ class SubmitFile(APIView):
         final_settings = {}
         try:
             s_maker = submit.settings_maker.new_settings()
-            s_maker.set_manual(req_settings.get("manual"))
-            s_maker.set_timeout(req_settings.get("timeout"))
-            s_maker.set_priority(req_settings.get("priority"))
-            s_maker.set_extraction_path(req_settings.get("extrpath", []))
-            s_maker.set_platforms_list(req_settings.get("platforms", []))
+            s_maker.from_dict(req_settings)
 
             final_settings = s_maker.make_settings()
             analysis_id = submit.file(
@@ -53,7 +48,7 @@ class SubmitFile(APIView):
                 {
                     "error": str(e),
                     "analysis_id": analysis_id
-                }, status=500
+                }, status=503
             )
 
         return Response({
@@ -75,10 +70,7 @@ class SubmitURL(APIView):
         final_settings = {}
         try:
             s_maker = submit.settings_maker.new_settings()
-            s_maker.set_manual(req_settings.get("manual"))
-            s_maker.set_timeout(req_settings.get("timeout"))
-            s_maker.set_priority(req_settings.get("priority"))
-            s_maker.set_platforms_list(req_settings.get("platforms", []))
+            s_maker.from_dict(req_settings)
 
             final_settings = s_maker.make_settings()
             analysis_id = submit.url(url, final_settings)
@@ -92,7 +84,7 @@ class SubmitURL(APIView):
                 {
                     "error": str(e),
                     "analysis_id": analysis_id
-                }, status=500
+                }, status=503
             )
 
         return Response({

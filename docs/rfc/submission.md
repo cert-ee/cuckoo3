@@ -42,9 +42,6 @@ Available settings in the future:
     * A boolean determining if the machine memory should be dumped at the end of a task.
 - options (dictionary)
     * A dictionary containing additional settings.
-- machines (list of strings)
-    * A list of machine names that must be used.
-
 
 ```python
 "timeout": int,

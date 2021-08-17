@@ -1,8 +1,23 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common import config
+
+from .signatures.signature import Levels
+
+class ScoringLevel(config.String):
+
+    def constraints(self, value):
+        super().constraints(value)
+
+        try:
+            Levels.to_score(value)
+        except KeyError:
+            raise config.ConstraintViolationError(
+                f"Invalid score level {value}. "
+                f"Possible levels: {list(Levels.LEVEL_SCORE.keys())}"
+            )
+
 
 exclude_autoload = []
 typeloaders = {
@@ -85,7 +100,7 @@ typeloaders = {
                 "galaxy_mitre_attack": config.Boolean(default_val=True),
                 "publish": config.Boolean(default_val=False),
                 "tags": config.List(
-                    config.String, default_val=["Cuckoo Sandbox"],
+                    config.String, default_val=["Cuckoo 3"],
                     allow_empty=True
                 ),
                 "attributes": {
@@ -135,7 +150,7 @@ typeloaders = {
                 allow_empty=True, min_value=0, max_value=100
             ),
             "event_description": config.String(
-                default_val="Cuckoo Sandbox behavioral analysis",
+                default_val="Cuckoo 3 behavioral analysis",
                 allow_empty=True
             )
         }
@@ -152,5 +167,32 @@ typeloaders = {
         "timeout": config.Int(default_val=300),
         "max_result_window": config.Int(default_val=10000),
         "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
+    },
+    "suricata.yaml": {
+        "enabled": config.Boolean(default_val=False),
+        "unix_sock_path": config.UnixSocketPath(
+            default_val="/var/run/suricata/suricata-command.socket",
+            must_exist=True, readable=True, writable=True
+        ),
+        "process_timeout": config.Int(default_val=60),
+        "evelog_filename": config.String(default_val="eve.json"),
+        "classification_config": config.FilePath(
+            default_val="/etc/suricata/classification.config",
+            must_exist=True, readable=True
+        ),
+        "classtype_scores": config.Dict(
+            element_class=ScoringLevel, default_val={
+                "command-and-control": "known bad",
+                "exploit-kit": "known bad",
+                "domain-c2": "malicious",
+                "trojan-activity": "malicious",
+                "targeted-activity": "likely malicious",
+                "shellcode-detect": "likely malicious",
+                "coin-mining": "likely malicious",
+                "external-ip-check": "suspicious",
+                "non-standard-protocol": "informational"
+            }
+        ),
+        "ignore_sigids": config.List(config.Int, allow_empty=True)
     }
 }

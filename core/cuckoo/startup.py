@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 import logging
 import os
 import threading
@@ -90,7 +89,8 @@ def make_scheduler(cuckooctx, task_queue):
     shutdown.register_shutdown(sched.stop, order=2)
 
 def add_machine(machinery_name, name, label, ip, platform, os_version="",
-                mac_address=None, interface=None, snapshot=None, tags=[]):
+                mac_address=None, interface=None, snapshot=None,
+                architecture=None, tags=[]):
     import cuckoo.machineries
     import shutil
     import tempfile
@@ -128,6 +128,7 @@ def add_machine(machinery_name, name, label, ip, platform, os_version="",
             "mac_address": mac_address,
             "snapshot": snapshot,
             "interface": interface,
+            "architecture": architecture,
             "tags": tags
         }
     }

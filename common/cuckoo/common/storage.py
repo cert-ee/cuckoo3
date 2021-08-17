@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import hashlib
 import json
@@ -396,6 +395,13 @@ class TaskPaths:
         return TaskPaths._path(task_id, "logs", *args)
 
     @staticmethod
+    def screenshot(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "screenshots", filename)
+
+        return TaskPaths._path(task_id, "screenshots")
+
+    @staticmethod
     def payloadlog(task_id):
         return TaskPaths._path(task_id, "payload.log")
 
@@ -424,8 +430,19 @@ class TaskPaths:
         return TaskPaths._path(task_id, "dump.pcap")
 
     @staticmethod
+    def tlsmaster(task_id):
+        return TaskPaths._path(task_id, "tlsmaster.txt")
+
+    @staticmethod
     def report(task_id):
         return TaskPaths._path(task_id, "report.json")
+
+    @staticmethod
+    def suricata(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "suricata", filename)
+
+        return TaskPaths._path(task_id, "suricata")
 
     @staticmethod
     def zipped_results(task_id):

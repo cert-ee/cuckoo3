@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - https://cuckoosandbox.org/.
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import setuptools
 import sys
@@ -15,8 +14,8 @@ if sys.version[0] == "2":
 setuptools.setup(
     name="Cuckoo-machineries",
     version="0.1.0",
-    author="Stichting Cuckoo Foundation",
-    author_email="cuckoo@cuckoofoundation.org",
+    author="",
+    author_email="",
     packages=setuptools.find_namespace_packages(include=["cuckoo.*"]),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -33,7 +32,7 @@ setuptools.setup(
     python_requires=">=3.6",
     url="https://cuckoosandbox.org/",
     license="GPLv3",
-    description="Cuckoo Sandbox machinery modules and helpers",
+    description="Cuckoo machinery modules and helpers",
     zip_safe=False,
     include_package_data=True,
     install_requires=[

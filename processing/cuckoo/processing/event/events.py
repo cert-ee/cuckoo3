@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import base64
 
@@ -22,7 +21,7 @@ class NormalizedEvent:
     def to_dict(self):
         return {k: getattr(self, k) for k in self.dictdump}
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         pass
 
 class FileActions:
@@ -89,19 +88,22 @@ class File(NormalizedEvent):
         self.effect = _FILE_ACTION_EFFECT.get(action, "file_read")
         self.description = FILE_ACTION_DESC.get(action, "")
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         if self.action == FileActions.RENAME:
             pattern_scanner.scan(
                 self.dstpath_normalized, self.dstpath, self, self.kind,
+                processing_ctx=processing_ctx,
                 event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} dst"
             )
             pattern_scanner.scan(
                 self.dstpath_normalized, self.srcpath, self, self.kind,
+                processing_ctx=processing_ctx,
                 event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} src"
             )
         else:
             pattern_scanner.scan(
                 self.srcpath_normalized, self.srcpath, self, self.kind,
+                processing_ctx=processing_ctx,
                 event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
             )
 
@@ -151,12 +153,13 @@ class Process(NormalizedEvent):
         self.description = PROCESS_STATUS_DESC.get(status, "")
         self.effect = PROCESS_ACTION_EFFECT.get(status, "")
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         if self.status != ProcessStatuses.CREATED:
             return
 
         pattern_scanner.scan(
-            self.commandline_normalized, self.commandline, self, "commandline"
+            self.commandline_normalized, self.commandline, self, "commandline",
+            processing_ctx=processing_ctx
         )
 
 
@@ -272,14 +275,14 @@ class Registry(NormalizedEvent):
         self.value = value
         self.valuetype = valuetype
 
-
         self.effect = REGISTRY_ACTION_EFFECT.get(action, "key_read")
         self.description = REGISTRY_ACTION_DESC.get(action, "")
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
             self.path_normalized, self.path, self, self.kind,
-            event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action)
+            event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action),
+            processing_ctx=processing_ctx
         )
 
         if self.action == RegistryActions.SET_VALUE:
@@ -299,7 +302,9 @@ class Registry(NormalizedEvent):
             pattern_scanner.scan(
                 value if value is not None else self.value,
                 humanval if humanval is not None else self.value,
-                self, self.kind, event_subtype="value"
+                self, self.kind, event_subtype="value",
+                extra_safelistdata=[(self.path_normalized, ("write",))],
+                processing_ctx=processing_ctx
             )
 
 
@@ -321,7 +326,7 @@ INJECTION_ACTION_DESC = {
 
 class ProcessInjection(NormalizedEvent):
 
-    __slots__ = ("action", "pid", "procid", "dstpid", "dstprocid",)
+    __slots__ = ("action", "pid", "procid", "dstpid", "dstprocid")
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.PROCESS_INJECTION
 
@@ -338,6 +343,10 @@ class ProcessInjection(NormalizedEvent):
 
 class NetworkFlow(NormalizedEvent):
 
+    __slots__ = (
+        "pid", "procid", "proto_number", "srcip", "srcport", "dstip", "dstport"
+    )
+    dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.NETFLOW
 
     def __init__(self, ts, pid, procid, proto_number, srcip, srcport, dstip,
@@ -346,14 +355,13 @@ class NetworkFlow(NormalizedEvent):
         self.pid = pid
         self.procid = procid
         self.proto_number = proto_number
-        self.scrip = srcip
+        self.srcip = srcip
         self.srcport = srcport
         self.dstip = dstip
         self.dstport = dstport
 
         self.description = ""
         self.effect = "network_flow"
-
 
 class MutantActions:
     CREATE = "create"
@@ -392,10 +400,11 @@ class Mutant(NormalizedEvent):
         self.description = MUTANT_ACTION_DESC.get(action, "")
         self.effect = _MUTANT_ACTION_EFFECT.get(action, "")
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
             self.path, self.path, self, "mutant",
-            event_subtype=_MUTANT_ACTION_SIMPLIFIED.get(self.action)
+            event_subtype=_MUTANT_ACTION_SIMPLIFIED.get(self.action),
+            processing_ctx=processing_ctx
         )
 
 
@@ -460,7 +469,8 @@ class SuspiciousEvent(NormalizedEvent):
         self.description = SUSPICIOUS_EVENT_DESCRIPTION.get(eventname, "")
         self.effect = ""
 
-    def pattern_scan(self, pattern_scanner):
+    def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
-            self.name.lower(), self.name, self, "suspicious_event"
+            self.name.lower(), self.name, self, "suspicious_event",
+            processing_ctx=processing_ctx
         )

@@ -1,0 +1,37 @@
+# Enable Suricata pcap processing. Suricata must have unix-command enabled in
+# its configuration file. Log giles created by Suricata will be owned by the
+# user running Suricata. The Cuckoo user has to be able to read and delete
+# these files.
+enabled: {{ enabled }}
+
+# The Suricata unix socket that Cuckoo can use to send pcap processing
+# commands. Pleas ensure the Cuckoo user can read and write to this unix socket.
+unix_sock_path: {{ unix_sock_path }}
+
+# The maximum time in seconds processing should wait for Suricata
+# to finish processing the submitted pcap file.
+process_timeout: {{ process_timeout }}
+
+# The file name of the eve log.
+evelog_filename: {{ evelog_filename }}
+
+# Classification.config file path.
+classification_config: {{ classification_config }}
+
+# A mapping of signature class types from the suricata classification.config
+# to a Cuckoo scoring level. The task will at least be marked as the mapped
+# scoring level if a signature of the class type is triggered.
+# Triggered signatures of class types not mapped here are ignored.
+# Available scoring levels: informational, suspicious, likely malicious,
+# malicious, and known bad.
+classtype_scores:
+{% for classtype, scorelevel in classtype_scores.items() %}
+  {{ classtype }}: {{ scorelevel }}
+{% endfor %}
+
+# A list on Suricata signature IDs (sid) that should always be ignored.
+# This can be used to ignore faulty/noisy signatures.
+ignore_sigids:
+{% for sigid in ignore_sigids %}
+- {{ sigid }}
+{% endfor %}

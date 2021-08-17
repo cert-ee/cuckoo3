@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import os
 import click
@@ -148,15 +147,17 @@ def machine():
 @click.option("--os-version", type=str, help="The version of the platform installed on the machine")
 @click.option("--snapshot", type=str, help="A snapshot to use when restoring, other than the default snapshot.")
 @click.option("--interface", type=str, help="The network interface that should be used to create network dumps.")
+@click.option("--architecture", type=str, default="amd64", show_default=True, help="The OS architecture. Used to select correct stager and monitor builds.")
 @click.option("--tags", default="", type=str, help="A comma separated list of tags that identify what dependencies/software is installed on the machine.")
 def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
-                interface, tags):
+                interface, architecture, tags):
     """Add a machine to a machinery configuration file."""
     from .startup import add_machine, StartupError
     try:
         add_machine(
             machinery, name=name, label=label, ip=ip, platform=platform,
             os_version=os_version, snapshot=snapshot, interface=interface,
+            architecture=architecture,
             tags=list(filter(None, [t.strip() for t in tags.split(",")]))
         )
         print_info(f"Added machine {name} to machinery {machinery}")
@@ -192,18 +193,52 @@ def _submit_urls(settings, *targets):
         except submit.SubmissionError as e:
             yield None, url, e
 
+def _parse_settings(**kwargs):
+    kv_options = ("option", "route_option")
+    for kw, vals in kwargs.items():
+        for val in vals:
+
+            plat_index = None
+            value = None
+            split = val.split(",", 1)
+            if len(split) == 2:
+                if split[0].isdigit():
+                    plat_index = int(split[0]) - 1
+                    value = split[1]
+                else:
+                    value = val
+            elif len(split) == 1:
+                value = split[0]
+
+            if kw in kv_options:
+                try:
+                    option, val = value.split("=", 1)
+                    value = {option:val}
+                except ValueError:
+                    yield None, None, None, \
+                          f"Invalid option value for {kw}. {val!r}"
+
+            yield plat_index, kw, value, None
+
 
 @main.command("submit")
 @click.argument("target", nargs=-1)
-@click.option("-u", "--url", is_flag=True, help="Submit URL(s) instead of files")
+@click.option("-u", "--url", is_flag=True, help="Submit URL(s) instead of files.")
 @click.option(
     "--platform", multiple=True,
     help="The platform and optionally the OS version the analysis task must "
          "run on. Specified as platform,osversion or just platform."
 )
-@click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds")
-@click.option("--priority", type=int, default=1, help="The priority of this analysis")
-def submission(target, url, platform, timeout, priority):
+@click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds.")
+@click.option("--priority", type=int, default=1, help="The priority of this analysis.")
+@click.option("--orig-filename", is_flag=True, help="Ignore auto detected file extension and use the original file extension.")
+@click.option("--browser",  multiple=True, help="The browser to use for a URL analysis.")
+@click.option("--command", multiple=True, help="The command/args that should be used to start the target. Enclose in quotes. "
+                                "Use %PAYLOAD% where the target should be in the command.")
+@click.option("--route-type", multiple=True, help="The route type to use.")
+@click.option("--route-option", multiple=True, help="Options for given routes")
+def submission(target, url, platform, timeout, priority, orig_filename, browser,
+               command, route_type, route_option):
     """Create a new file analysis"""
     from cuckoo.common import submit
     from cuckoo.common.storage import Paths
@@ -217,19 +252,39 @@ def submission(target, url, platform, timeout, priority):
         s_helper = submit.settings_maker.new_settings()
         s_helper.set_timeout(timeout)
         s_helper.set_priority(priority)
+        s_helper.set_orig_filename(orig_filename)
         s_helper.set_manual(False)
 
         for p_v in platform:
-            # Split platform,version into usable values
-            platform_version = p_v.split(",", 1)
+            # Split platform,version,tags into usable values
+            platform_version = p_v.split(",", 2)
 
-            if len(platform_version) == 2:
+            if len(platform_version) == 1:
+                s_helper.add_platform(platform=platform_version[0])
+
+            elif len(platform_version) == 2:
                 s_helper.add_platform(
                     platform=platform_version[0],
                     os_version=platform_version[1]
                 )
-            else:
-                s_helper.add_platform(platform=platform_version[0])
+            elif len(platform_version) == 3:
+                s_helper.add_platform(
+                    platform=platform_version[0],
+                    os_version=platform_version[1],
+                    tags=platform_version[2].split(",")
+                )
+
+        for platform_index, setting_key, value, error in _parse_settings(
+            browser=browser, command=command, route_type=route_type,
+            route_option=route_option
+        ):
+            if error:
+                raise submit.SubmissionError(error)
+
+            s_helper.set_setting(
+                setting_key, value, platform_index=platform_index
+            )
+
 
         settings = s_helper.make_settings()
     except submit.SubmissionError as e:

@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import cuckoocwd
@@ -26,19 +25,20 @@ if __name__ == "__main__":
     init_global_logging(logging.DEBUG, filepath="/tmp/cuckoo.log", use_logqueue=False)
     load_configurations()
     PostProcessingRunner.init_once()
+    PatternFinder.init_once()
     # patternsigs.PatternFinder.init_once()
     # injection.ProcessInjection.init_once()
-    network.Pcapreader.init_once()
+    #network.Pcapreader.init_once()
     # misp.MispInfoGather.init_once()
-    mispreporting.MISP.init_once()
+    #mispreporting.MISP.init_once()
     #PatternFinder.init_once()
 
-    analysis_id = "20210120-APEYVI"
-    task_id = "20210120-APEYVI_1"
+    analysis_id = "20210607-8YDUC8"
+    task_id = "20210607-8YDUC8_1"
     taskctx = TaskContext(analysis_id, task_id)
 
-    runner = PostProcessingRunner(taskctx, event_consumer_classes=[], reporting_classes=[disk.JSONDump, mispreporting.MISP], processing_classes=[network.Pcapreader])
+    runner = PostProcessingRunner(taskctx, event_consumer_classes=[PatternFinder], reporting_classes=[disk.JSONDump], processing_classes=[])
     runner.start()
 
     pprint.pprint(taskctx.signature_tracker.signatures_to_dict())
-    pprint.pprint(taskctx.result.get("misp"))
+

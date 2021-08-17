@@ -1,10 +1,10 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import os
 import json
 import platform
+import stat
 
 from copy import deepcopy
 
@@ -162,10 +162,13 @@ class FilePath(String):
                          required=required, allow_empty=allow_empty,
                          sensitive=sensitive)
 
+    def _exists_check(self, path):
+        return os.path.isfile(path)
+
     def constraints(self, value):
         super().constraints(value)
 
-        if self.must_exist and not os.path.isfile(value):
+        if self.must_exist and not self._exists_check(value):
             raise ConstraintViolationError(
                 f"Filepath {value} does not exist or is not a file."
             )
@@ -175,6 +178,14 @@ class FilePath(String):
 
         if self.writable and not os.access(value, os.W_OK):
             raise ConstraintViolationError(f"Filepath {value} is not writable")
+
+class UnixSocketPath(FilePath):
+
+    def _exists_check(self, path):
+        if os.path.exists(path):
+            return stat.S_ISSOCK(os.stat(path).st_mode)
+
+        return False
 
 class Boolean(TypeLoader):
 
@@ -208,7 +219,7 @@ class List(TypeLoader):
 
     IS_CONTAINER = True
 
-    def __init__(self, element_class, value=None, default_val=None,
+    def __init__(self, element_class, value=None, default_val=[],
                  required=True, allow_empty=False):
         self.element_class = element_class
 

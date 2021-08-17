@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import datetime
 import json
@@ -281,6 +280,40 @@ class StrictContainer:
             super().__setattr__(key, value)
 
 
+class Platform(StrictContainer):
+
+    FIELDS = {
+        "platform": str,
+        "os_version": str,
+        "tags": list,
+        "settings": dict
+    }
+    ALLOW_EMPTY = ("tags", "os_version", "settings")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._loaded["settings"] = {
+            "browser": "",
+            "route": {},
+            "command": []
+        }
+
+    def set_route(self, **kwargs):
+        self.settings.setdefault("route", {}).update(kwargs)
+
+    def set_command(self, command):
+        if not isinstance(command, list):
+            raise TypeError("Command must be list or args")
+
+        self.settings["command"] = command
+
+    def set_browser(self, browser):
+        if not isinstance(browser, str):
+            raise TypeError("Browser must be a string")
+
+        self.settings["browser"] = browser
+
+
 class Settings(StrictContainer):
 
     FIELDS = {
@@ -292,9 +325,21 @@ class Settings(StrictContainer):
         "platforms": list,
         "machines": list,
         "extrpath": list,
-        "manual": bool
+        "manual": bool,
+        "route": dict,
+        "command": list,
+        "browser": str,
+        "password": str,
+        "orig_filename": bool
     }
-    ALLOW_EMPTY = ("extrpath",)
+    ALLOW_EMPTY = ("extrpath", "route", "command", "browser", "password")
+
+    def to_dict(self):
+        d = super().to_dict()
+        d["platforms"] = [
+            p if isinstance(p, dict) else p.to_dict() for p in self.platforms
+        ]
+        return d
 
 class Errors(StrictContainer):
 
@@ -347,9 +392,15 @@ class Task(StrictContainer):
         "os_version": str,
         "machine_tags": list,
         "machine": str,
+        "command": list,
+        "route": dict,
+        "browser": str,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("machine", "machine_tags", "os_version", "errors", "score")
+    ALLOW_EMPTY = (
+        "machine", "machine_tags", "os_version", "errors", "score",
+        "route", "browser", "command"
+    )
 
 class TargetFile(StrictContainer):
 
@@ -405,9 +456,10 @@ class Pre(StrictContainer):
         "signatures": list,
         "target": (TargetFile, TargetURL),
         "category": str,
+        "command": list,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("errors", "signatures")
+    ALLOW_EMPTY = ("errors", "signatures", "command")
 
 class Post(StrictContainer):
 

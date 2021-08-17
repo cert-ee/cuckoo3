@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from pathlib import PureWindowsPath
 
@@ -10,6 +9,17 @@ def normalize_wincommandline(commandline, image_path):
 
     return f"{PureWindowsPath(image_path).name} " \
            f"{commandline_args(commandline)}"
+
+def normalize_winimage(image_path):
+    if not image_path:
+        return ""
+
+    path = image_path.lower()
+    if len(path) >= 7 and path[5] == ":" and path[6] == "\\" \
+            and path.startswith("\\??\\"):
+        return path[4:]
+
+    return path
 
 def commandline_args(commandline):
     if not commandline:
@@ -47,10 +57,12 @@ class Process:
         self.procid = procid
         self.parent_procid = parent_procid
         self.image = image
+        self.normalized_image = normalize_winimage(image)
         self.commandline = commandline
         self.start_ts = start_ts
         self.state = state
         self.tracked = tracked
+        self.injected = False
 
         self.end_ts = None
 
@@ -65,6 +77,9 @@ class Process:
     def mark_tracked(self):
         self.tracked = True
 
+    def mark_injected(self):
+        self.injected = True
+
     def to_dict(self):
         return {
             "pid": self.pid,
@@ -75,6 +90,7 @@ class Process:
             "name": self.process_name,
             "commandline": self.commandline,
             "tracked": self.tracked,
+            "injected": self.injected,
             "state": self.state,
             "start_ts": self.start_ts,
             "end_ts": self.end_ts
@@ -133,7 +149,12 @@ class ProcessTracker:
         return process.procid, process.parent_procid
 
     def lookup_process(self, procid):
-        return self._procid_proc.get(procid)
+        if procid not in self._procid_proc:
+            raise KeyError(
+                f"No process with procid {procid}"
+            )
+
+        return self._procid_proc[procid]
 
     def lookup_procid(self, pid):
         return self._pid_procid.get(pid)
@@ -145,7 +166,7 @@ class ProcessTracker:
 
         return self.lookup_process(procid)
 
-    def set_tracked(self, pid):
+    def set_tracked(self, pid, injected=False):
         proc_id = self.lookup_procid(pid)
         if not proc_id:
             raise KeyError(
@@ -155,6 +176,8 @@ class ProcessTracker:
 
         process = self.lookup_process(proc_id)
         process.mark_tracked()
+        if injected:
+            process.mark_injected()
 
     def process_dictlist(self, tracked_only=True):
         plist = []

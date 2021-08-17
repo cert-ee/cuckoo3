@@ -1,6 +1,5 @@
-# Copyright (C) 2020 - 2021 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import os
 import stat
@@ -76,11 +75,11 @@ def _read_taskjson(zipped_analysis, task_id, passwordbytes=None):
 
 _ILLEGAL_CHARS = ("..", ":", "\x00")
 
-def _has_illegal_chars(zipinfo):
+def zinfo_has_illegal_chars(zipinfo):
     name = zipinfo.filename
     return any(c in name for c in _ILLEGAL_CHARS) or name.startswith("/")
 
-def _should_ignore(zipinfo):
+def should_ignore_zinfo(zipinfo):
     info = zipinfo.external_attr >> 16
     # Ignore everything that is not a regular file or directory.
     # We don't zip them, so we also don't unzip them.
@@ -105,12 +104,12 @@ def _get_unzippables(zipped_data, passwordbytes=None, ignore_filesnames=[]):
 
     for file in zip_file.filelist:
 
-        if _has_illegal_chars(file):
+        if zinfo_has_illegal_chars(file):
             raise AnalysisImportError(
                 f"Illegal characters in path of file: {file.filename}"
             )
 
-        if _should_ignore(file):
+        if should_ignore_zinfo(file):
             continue
 
         if file.filename in ignore_filesnames:
@@ -173,7 +172,7 @@ class ZippedData:
         except KeyError:
             return None
 
-        if not _should_ignore(info):
+        if not should_ignore_zinfo(info):
             return info
 
         return None
@@ -274,7 +273,7 @@ class ZippedNodeWork(ZippedAnalysis):
                 f"Missing {self.TASK_ID_FILE} in node work zip"
             )
 
-        if _should_ignore(nodework_info):
+        if should_ignore_zinfo(nodework_info):
             raise AnalysisImportError(
                 f"{self.TASK_ID_FILE} is not a regular file"
             )

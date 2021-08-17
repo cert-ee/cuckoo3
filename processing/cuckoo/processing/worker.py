@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common.dns import ResolveTracker
 from cuckoo.common.strictcontainer import Task, Analysis, Identification
@@ -95,10 +94,36 @@ class AnalysisContext(ProcessingContext):
             AnalysisPaths.processingerr_json(self.analysis.id)
         )
 
+class TLSSessionTracker:
+
+    def __init__(self):
+        self._sessions = {}
+
+    @property
+    def sessions(self):
+        return self._sessions
+
+    def add_session(self, client_random, server_random, master_secret):
+        if len(client_random) != 32 or len(server_random) != 32:
+            raise ValueError("Length of client and server random must be 32")
+
+        if len(master_secret) != 48:
+            raise ValueError("Length of master secret must be 48")
+
+        for v in (client_random, server_random, master_secret):
+            if not isinstance(v, bytes):
+                raise TypeError(
+                    "Client and server random and master secrets must be bytes"
+                )
+
+        self._sessions[(client_random, server_random)] = master_secret
+
+
 class NetworkContext:
 
     def __init__(self):
         self.dns = ResolveTracker()
+        self.tls = TLSSessionTracker()
 
 class TaskContext(ProcessingContext):
 

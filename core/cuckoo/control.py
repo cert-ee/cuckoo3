@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import os
 import queue
@@ -147,6 +146,9 @@ def handle_pre_done(worktracker):
     # Set the final target in analysis.json
     analysis.target = pre.target
 
+    if not analysis.settings.command and pre.command:
+        analysis.settings.command = pre.command
+
     # Update analysis score, tags, and detected families
     worktracker.analysis.update_from_report(pre)
 
@@ -190,15 +192,11 @@ def handle_manual_done(worktracker, settings_dict):
     s_helper = settings_maker.new_settings(
         machinelists=worktracker.ctx.nodes.machine_lists
     )
-    # We overwrite all settings, but want to retain the 'manual' setting
-    # to be able to recognize it was used after this step.
-    s_helper.set_manual(True)
-
     try:
-        s_helper.set_priority(settings_dict.get("priority"))
-        s_helper.set_timeout(settings_dict.get("timeout"))
-        s_helper.set_platforms_list(settings_dict.get("platforms", []))
-        s_helper.set_extraction_path(settings_dict.get("extrpath"))
+        s_helper.from_dict(settings_dict)
+        # We overwrite all settings, but want to retain the 'manual' setting
+        # to be able to recognize it was used after this step.
+        s_helper.set_manual(True)
         settings = s_helper.make_settings()
     except SubmissionError as e:
         worktracker.log.error(

@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from ..abtracts import Reporter
 
@@ -25,7 +24,9 @@ class JSONDump(Reporter):
         )
 
     def report_pre_analysis(self):
-        include_result = ["virustotal", "static", "misp", "intelmq"]
+        include_result = [
+            "virustotal", "static", "misp", "intelmq", "command"
+        ]
         static = {
             "analysis_id": self.ctx.analysis.id,
             "score": self.ctx.signature_tracker.score,
@@ -44,7 +45,10 @@ class JSONDump(Reporter):
         Pre(**static).to_file(AnalysisPaths.prejson(self.ctx.analysis.id))
 
     def report_post_analysis(self):
-        include_result = ["misp", "network", "cfgextr", "intelmq"]
+        include_result = [
+            "misp", "network", "cfgextr", "intelmq", "screenshot",
+            "suricata"
+        ]
 
         post_report = {
             "task_id": self.ctx.task.id,
@@ -61,3 +65,16 @@ class JSONDump(Reporter):
                 post_report[resultkey] = self.ctx.result.get(resultkey)
 
         Post(**post_report).to_file(TaskPaths.report(self.ctx.task.id))
+
+
+class TLSMasterSecrets(Reporter):
+
+    def report_post_analysis(self):
+        if not self.ctx.network.tls.sessions:
+            return
+
+        # Write format:
+        # CLIENT_RANDOM <hex client random bytes> <hex secret bytes>
+        with open(TaskPaths.tlsmaster(self.ctx.task.id), "w") as fp:
+            for randoms, secret in self.ctx.network.tls.sessions.items():
+                fp.write(f"CLIENT_RANDOM {randoms[0].hex()} {secret.hex()}\n")

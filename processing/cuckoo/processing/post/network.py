@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import logging
 import os
@@ -45,14 +44,16 @@ class Pcapreader(Processor):
 
         self.ip_sl.clear_temp()
 
+        tls_secrets = self.ctx.network.tls.sessions
         self.tcp_handlers = {
             25: protohandlers.smtp_handler,
             80: protohandlers.http_handler,
+            443: lambda: protohandlers.https_handler(tls_secrets),
             465: protohandlers.smtp_handler,
             587: protohandlers.smtp_handler,
             8000: protohandlers.http_handler,
             8080: protohandlers.http_handler,
-            "generic": guess.tcp_guessprotocol
+            "generic": lambda: guess.tcp_guessprotocol(tls_secrets)
         }
 
         self.udp_handlers = {
@@ -114,7 +115,10 @@ class Pcapreader(Processor):
         }
 
     def _add_http_entry(self, ts, src, dst, protocol, sent, recv, tracker):
-        data = {}
+        data = {
+            "request": {},
+            "response": {}
+        }
         for httpdata in (sent, recv):
             if not httpdata:
                 continue
@@ -128,7 +132,7 @@ class Pcapreader(Processor):
                     protocol, httpdata
                 )
 
-        if not data:
+        if not data.get("request") and not data.get("response"):
             return
 
         srcip, srcport = src
@@ -414,21 +418,23 @@ class NetworkPatternSignatures(Processor):
             if url:
                 self.scanner.scan(
                     scan_str=url, orig_str=url, event=None,
-                    event_kind="http_url"
+                    event_kind="http_url", processing_ctx=self.ctx
                 )
 
             for header in request.get("headers", []):
                 combined = f"{header['key']}: {header['value']}"
                 self.scanner.scan(
                     scan_str=combined, orig_str=combined, event=None,
-                    event_kind="http_header", event_subtype="request"
+                    event_kind="http_header", event_subtype="request",
+                    processing_ctx=self.ctx
                 )
 
             for header in response.get("headers", []):
                 combined = f"{header['key']}: {header['value']}"
                 self.scanner.scan(
                     scan_str=combined, orig_str=combined, event=None,
-                    event_kind="http_header", event_subtype="response"
+                    event_kind="http_header", event_subtype="response",
+                    processing_ctx=self.ctx
                 )
 
     def _scan_smtp(self):
@@ -441,33 +447,33 @@ class NetworkPatternSignatures(Processor):
             if hostname:
                 self.scanner.scan(
                     scan_str=hostname, orig_str=hostname, event=None,
-                    event_kind="smtp_hostname"
+                    event_kind="smtp_hostname", processing_ctx=self.ctx
                 )
 
             for mailfrom in request.get("mail_from", []):
                 self.scanner.scan(
                     scan_str=mailfrom, orig_str=mailfrom, event=None,
-                    event_kind="smtp_mailfrom"
+                    event_kind="smtp_mailfrom", processing_ctx=self.ctx
                 )
 
             for mailto in request.get("mail_to", []):
                 self.scanner.scan(
                     scan_str=mailto, orig_str=mailto, event=None,
-                    event_kind="smtp_rcptto"
+                    event_kind="smtp_rcptto", processing_ctx=self.ctx
                 )
 
             for name, value in request.get("headers", {}).items():
                 combined = f"{name}: {value}"
                 self.scanner.scan(
                     scan_str=combined, orig_str=combined, event=None,
-                    event_kind="smtp_header"
+                    event_kind="smtp_header", processing_ctx=self.ctx
                 )
 
             message = request.get("message")
             if message:
                 self.scanner.scan(
                     scan_str=message, orig_str=message, event=None,
-                    event_kind="smtp_message"
+                    event_kind="smtp_message", processing_ctx=self.ctx
                 )
 
     def _scan_dns(self):
@@ -476,13 +482,15 @@ class NetworkPatternSignatures(Processor):
         for q in dns.get("query", []):
             self.scanner.scan(
                 scan_str=q["name"], orig_str=q["name"], event=None,
-                event_kind="dns_q", event_subtype=q["type"].lower()
+                event_kind="dns_q", event_subtype=q["type"].lower(),
+                processing_ctx=self.ctx
             )
 
         for r in dns.get("response", []):
             self.scanner.scan(
                 scan_str=r["data"], orig_str=r["data"], event=None,
-                event_kind="dns_r", event_subtype=r["type"].lower()
+                event_kind="dns_r", event_subtype=r["type"].lower(),
+                processing_ctx=self.ctx
             )
 
     def _scan_host(self):
@@ -490,7 +498,7 @@ class NetworkPatternSignatures(Processor):
         for host in network.get("host", []):
             self.scanner.scan(
                 scan_str=host, orig_str=host, event=None,
-                event_kind="ip"
+                event_kind="ip", processing_ctx=self.ctx
             )
 
     def start(self):

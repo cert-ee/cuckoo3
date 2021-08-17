@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from copy import deepcopy
 import json
@@ -211,20 +210,33 @@ def merge_target_settings(analysis, target):
     if analysis.settings.machines:
         return
 
-    autotag = cfg("cuckoo", "platform", "autotag")
-    if analysis.settings.platforms:
-        if not autotag:
-            return
+    browser_tag = ""
+    if analysis.settings.browser:
+        browser_tag = f"browser_{analysis.settings.browser}"
 
-        if not target.machine_tags:
-            return
+    autotag = cfg("cuckoo", "platform", "autotag")
+
+    # Merge target settings with submission specific platform settings
+    if analysis.settings.platforms:
 
         for platform in analysis.settings.platforms:
-            platform["tags"].extend(target.machine_tags)
+
+            # Add a browser tag for the analysis settings browser if no
+            # platform browser was chosen.
+            if not platform.get("browser") and browser_tag:
+                platform["tags"].append(browser_tag)
+
+            # Only add identified dependency tags if auto tag is enabled.
+            if autotag and target.machine_tags:
+                platform["tags"].extend(target.machine_tags)
+
+            # Ensure tags list is unique.
             platform["tags"] = list(set(platform["tags"]))
 
         analysis.update_settings(platforms=analysis.settings.platforms)
 
+    # Choose one or more platforms based on identified platform(s). This is
+    # done when no platforms are supplied on submission.
     elif target.platforms:
         # Only use the platforms specified in the config if more than one
         # platform was identified during the identification phase.
@@ -239,15 +251,21 @@ def merge_target_settings(analysis, target):
                     continue
 
             platform_copy = deepcopy(platform)
+            platform_copy["tags"] = []
+            # Add a browser tag for the analysis settings browser if no
+            # platform browser was chosen.
+            if browser_tag:
+                platform_copy["tags"].append(browser_tag)
+
             if autotag and target.machine_tags:
-                platform_copy["tags"] = target.machine_tags
-            else:
-                platform_copy["tags"] = []
+                platform_copy["tags"].extend(target.machine_tags)
 
             settings_platforms.append(platform_copy)
 
         analysis.update_settings(platforms=settings_platforms)
 
+    # Use the default platform from the settings. This is done when no
+    # platform is supplied on submission and no platform is identified.
     else:
         platform = cfg("cuckoo", "platform", "default_platform", "platform")
         os_version = cfg(
@@ -260,7 +278,7 @@ def merge_target_settings(analysis, target):
         default = {
             "platform": platform,
             "os_version": os_version or "",
-            "tags": []
+            "tags": [] if not browser_tag else []
         }
         analysis.update_settings(platforms=[default])
 

@@ -1,10 +1,7 @@
-Cuckoo Sandbox is copyrighted by the Cuckoo Foundation and is licensed under
-the following GNU General Public License version 3.
-
-                    GNU GENERAL PUBLIC LICENSE
+                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
- Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 
@@ -622,39 +619,3 @@ Program, unless a warranty or assumption of liability accompanies a
 copy of the Program in return for a fee.
 
                      END OF TERMS AND CONDITIONS
-
-The file UserDB.txt is copyrighted by BoB / Team PEiD distributed under the following
-MIT license.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this
-software and associated documentation files (the "Software"), to deal in the Software
-without restriction, including without limitation the rights to use, copy, modify,
-merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be included in all copies
-or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
-The file jquery.js is copyrighted by John Resig and dual licensed under the MIT or GPL
-Version 2 licenses (see: http://jquery.org/license).
-
-The files lightbox.js and lightbox.css are copyrighted by Lokesh Dhakar and licensed under
-the Creative Commons Attribution 2.5 License
-(see: http://creativecommons.org/licenses/by/2.5/).
-
-The files bootstrap-fileupload.js, jasny-bootstrap.js, jasny-bootstrap.min.js,
-jasny-bootstrap.css, jasny-bootstrap.min.css, jasny-bootstrap-responsive.css,
-jasny-bootstrap-responsive.min.css are copyrighted by Jasny BV and licensed under the Apache
-License, Version 2.0.
-
-The files bootstrap.min.js, bootstrap.min.css, bootstrap-responsive.min.css,
-glyphicons-halflings.png, glyphicons-halflings-white.png are copyrighted by Twitter, Inc.
-and licensed under the Apache License, Version 2.0.

@@ -9,7 +9,7 @@
     "sass-prod": "sass sass:../static/css --style=compressed --no-source-map",
     "sass-watch": "sass sass:../static/css --style=expanded --watch"
   },
-  "author": "Cuckoo Sandbox Foundation",
+  "author": "",
   "license": "ISC",
   "devDependencies": {
     "sass": "1.26.8"

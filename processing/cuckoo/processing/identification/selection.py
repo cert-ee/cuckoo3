@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import json
 import logging
@@ -70,8 +69,12 @@ class Identify(Processor):
         # folder.
         original_filename = self.ctx.analysis.submitted.filename
 
+        settings_pass = self.ctx.analysis.settings.password
         try:
-            f = sflock.unpack(submitted_file, filename=original_filename)
+            f = sflock.unpack(
+                submitted_file, filename=original_filename,
+                password=settings_pass
+            )
         except Exception as e:
             self.ctx.log.exception(
                 "Unexpected Sflock unpacking failure", error=e

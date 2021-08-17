@@ -1,9 +1,9 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import errno
 import json
+import os.path
 import socket
 import time
 from datetime import datetime
@@ -15,6 +15,7 @@ from zipfile import ZipFile, ZipInfo
 import requests
 
 from .storage import Paths, AnalysisPaths, TaskPaths
+from .importing import zinfo_has_illegal_chars, should_ignore_zinfo
 
 class AgentError(Exception):
     pass
@@ -206,6 +207,9 @@ class Agent:
         agent_path = self.agent_path()
         self._post("/remove", data={"path": agent_path})
 
+    def delete_file(self, path):
+        self._post("/remove", data={"path": path})
+
     def kill_agent(self):
         """Stop the agent process on the guest"""
         self._get("/kill")
@@ -280,6 +284,16 @@ class Payload:
 
         self._zip.writestr(ZipInfo(archive_path), strdata)
 
+    def add_dir(self, dirpath, archive_path=""):
+        for curpath, dirs, files in os.walk(dirpath, followlinks=False):
+            for file in files:
+                filepath = Path(curpath, file)
+                relpath = os.path.relpath(filepath, dirpath)
+                if archive_path:
+                    relpath = Path(archive_path, relpath)
+
+                self.add_file(filepath, archive_path=relpath)
+
     def cleanup(self):
         """Delete the created payload file and closes all open fds."""
         if self._zip:
@@ -294,14 +308,28 @@ class Payload:
         if self._tmpdir.exists():
             self._tmpdir.rmdir()
 
+def get_default_version(path):
+    if not path.is_file():
+        raise StagerError(f"Default version file does not exist: {path}")
+
+    version = path.read_text().strip()
+    if not version:
+        raise StagerError(f"Default version file is empty: {path}")
+
+    return version
+
 class StagerHelper:
 
     name = ""
     platforms = []
-    archs = []
 
     STAGER_BINARY = ""
     MONITOR_BINARY = ""
+
+    MONITOR_NAME = ""
+
+    DEFAULT_MONITOR = "default_monitor"
+    DEFAULT_STAGER = "default_stager"
 
     def __init__(self, agent, task, analysis, resultserver, logger):
         self.agent = agent
@@ -314,42 +342,50 @@ class StagerHelper:
         # Should be set after calling prepare with a ready Payload instance.
         self.payload = None
 
-    @staticmethod
-    def get_latest_version(path):
-        if not path.is_file():
-            raise StagerError(f"Latest version file does not exist: {path}")
-
-        version = path.read_text().strip()
-        if not version:
-            raise StagerError(f"Latest version file is empty: {path}")
-
-        return version
-
     @classmethod
-    def find_stager_binary(cls, platform, archirecture, version=""):
-        base = Paths.monitor(platform, archirecture)
-        # Find 'latest' version hash from latest_stager file.
+    def find_stager_dir(cls, platform, archirecture, version=""):
+        base = Paths.monitor(platform, archirecture, cls.MONITOR_NAME)
+        # Find 'default' version string from default_stager file.
         if not version:
-            version = cls.get_latest_version(base.joinpath("latest_stager"))
+            version = get_default_version(base.joinpath(cls.DEFAULT_STAGER))
 
-        stager_path = base.joinpath("stager", version, cls.STAGER_BINARY)
-        if not stager_path.is_file():
+        stager_path = base.joinpath("stager", version)
+        if not stager_path.is_dir():
             raise StagerError(f"Stager {stager_path} does not exist.")
+
+        stager_binary = stager_path.joinpath(cls.STAGER_BINARY)
+        if not stager_binary.is_file():
+            raise StagerError(f"Stager binary {stager_binary} does not exist.")
 
         return stager_path
 
     @classmethod
-    def find_monitor_binary(cls, platform, archirecture, version=""):
-        base = Paths.monitor(platform, archirecture)
-        # Find 'latest' version hash from latest_monitor file.
+    def find_monitor_dir(cls, platform, archirecture, version=""):
+        base = Paths.monitor(platform, archirecture, cls.MONITOR_NAME)
+        # Find 'default' version string from default_monitor file.
         if not version:
-            version = cls.get_latest_version(base.joinpath("latest_monitor"))
+            version = get_default_version(base.joinpath(cls.DEFAULT_MONITOR))
 
-        monitor_path = base.joinpath("monitor", version, cls.MONITOR_BINARY)
-        if not monitor_path.is_file():
+        monitor_path = base.joinpath("monitor", version)
+        if not monitor_path.is_dir():
             raise StagerError(f"Monitor {monitor_path} does not exist.")
 
+        monitor_binary = monitor_path.joinpath(cls.MONITOR_BINARY)
+        if not monitor_binary.is_file():
+            raise StagerError(
+                f"Monitor binary {monitor_binary} does not exist."
+            )
+
         return monitor_path
+
+    def get_command_args(self):
+        if self.task.command:
+            return self.task.command
+
+        if self.analysis.settings.command:
+            return self.analysis.settings.command
+
+        return []
 
     def dump_payload_log(self, logstr):
         with open(TaskPaths.payloadlog(self.task.id), "w") as fp:
@@ -370,17 +406,18 @@ class TmStage(StagerHelper):
 
     name = "tmstage"
     platforms = ["windows"]
-    archs = ["amd64"]
+
+    MONITOR_NAME = "threemon"
 
     STAGER_BINARY = "tmstage.exe"
     MONITOR_BINARY = "threemon.sys"
 
-    @staticmethod
-    def _build_settings(debug, resultserver, options, target, is_archive):
+    def _build_settings(self, debug, resultserver, options, target,
+                        is_archive):
         return json.dumps({
             "debug": debug,
             "host": f"{resultserver.listen_ip}:{resultserver.listen_port}",
-            "launch": [],
+            "launch": self.get_command_args(),
             "clock": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "options": options,
             "target": target,
@@ -400,24 +437,33 @@ class TmStage(StagerHelper):
             target = self.analysis.target.target
 
         options = self.analysis.settings.options
+
+        browser = self.task.browser or self.analysis.settings.browser
+        if browser:
+            options["browser"] = browser
+
         settings = self._build_settings(
-            debug=True, resultserver=self.resultserver,
+            debug=False, resultserver=self.resultserver,
             options=options, target=target, is_archive=is_archive
         )
 
-        stager_filepath = self.find_stager_binary(
+        stager_filepath = self.find_stager_dir(
             platform="windows", archirecture="amd64",
             version=options.get("stager.version")
         )
-        monitor_filepath = self.find_monitor_binary(
+        monitor_filepath = self.find_monitor_dir(
             platform="windows", archirecture="amd64",
             version=options.get("monitor.version")
         )
 
         with Payload() as pay:
             pay.add_str(settings, "settings.json")
-            pay.add_file(stager_filepath, self.STAGER_BINARY)
-            pay.add_file(monitor_filepath, self.MONITOR_BINARY)
+
+            # Monitor path contains threemon and other tls monitor dll
+            pay.add_dir(monitor_filepath)
+            # Stager path contains stager binary and other things such as
+            # auxiliary modules.
+            pay.add_dir(stager_filepath)
 
             if self.analysis.category == "file":
                 if is_archive:
@@ -454,12 +500,12 @@ class TmStage(StagerHelper):
         except AgentError as e:
             raise StagerError(f"Failed to extract payload: {e}")
 
-        command = PureWindowsPath(tmpdir, self.STAGER_BINARY)
+        stager_path = PureWindowsPath(tmpdir, self.STAGER_BINARY)
         try:
             # A timeout is important when delivering the payload in case the
             # agent stops responding.
             stdout, stderr = self.agent.execute(
-                command, cwd=tmpdir, timeout=60 # TODO use task timeout?
+                stager_path, cwd=tmpdir, timeout=60 # TODO use task timeout?
             )
         except AgentError as e:
             raise StagerError(f"Failed to execute stager: {e}")
@@ -474,6 +520,12 @@ class TmStage(StagerHelper):
                             f"Payload execution failed: {line}. {stderr}"
                         )
 
+        # Delete the stager executable.
+        try:
+            self.agent.delete_file(stager_path)
+        except AgentError as e:
+            self.log.warning("Failed to delete stager executable", error=e)
+
         # Kill the agent. We no longer are using the analyzer, making it
         # useless to leave it running. It only increases the chance of it
         # being used as a means of anti-analysis.
@@ -485,44 +537,54 @@ class TmStage(StagerHelper):
             self.log.warning("Failed to kill agent.", error=e)
 
 _stagers = {
-    "windows": TmStage
+    "threemon": TmStage
 }
 
-def find_stager(platform, arch="amd64"):
-    stager = _stagers.get(platform)
-    if not stager:
-        return None
+DEFAULT_MONITOR_FILE = "default"
 
-    # TODO actually use arch in machine configurations.
-    if arch not in stager.archs:
-        return None
+def find_stager(platform, arch="amd64"):
+    arch = arch.lower()
+    monitor_path = Paths.monitor(platform, arch)
+    if not monitor_path.is_dir():
+        raise StagerError(
+            f"No monitor exists for platform '{platform}' with "
+            f"architecture: '{arch}'"
+        )
+
+    monitor_name = get_default_version(
+        monitor_path.joinpath(DEFAULT_MONITOR_FILE)
+    ).lower()
+
+    if not monitor_path.joinpath(monitor_name).is_dir():
+        raise StagerError(
+            f"No monitor path for default monitor {monitor_name} exists."
+        )
+
+    stager = _stagers.get(monitor_name)
+    if not stager:
+        raise StagerError(
+            f"No stager helper is mapped for monitor name {stager}"
+        )
 
     return stager
 
 def unpack_monitor_components(zip_path, unpackto):
-    # TODO replace with proper monitor/stager etc unpack and updating code
-    # TEMP
     if not Path(unpackto).is_dir():
         raise NotADirectoryError(f"Not a valid dir to unpack to: {unpackto}")
 
     monitorpath = Path(unpackto)
-
-    archs = ["amd64"]
-    unpackdirs = ["monitor/windows"]
-    unpackdirs.extend(
-        [str(Path("monitor/windows").joinpath(arch)) for arch in archs]
-    )
     with ZipFile(zip_path, "r") as zfile:
-        files = zfile.namelist()
+        files = zfile.infolist()
         for entry in files:
-            if ".." in entry:
+
+            if zinfo_has_illegal_chars(entry) or should_ignore_zinfo(entry):
                 raise ValueError(
-                    f"Path traversal archive in archive: {zip_path}. "
-                    f"Do not unpack."
+                    "Archive entry contains illegal characters or is of a "
+                    f"forbidden type (symlinks). Do not unpack. Entry: {entry}"
                 )
 
-            if not entry.startswith(tuple(unpackdirs)):
-                continue
-
-            print(f"Unpacking {entry} -> {monitorpath.joinpath(entry)}")
+            print(
+                f"Unpacking {entry.filename} "
+                f"-> {monitorpath.joinpath(entry.filename)}"
+            )
             zfile.extract(entry, monitorpath)

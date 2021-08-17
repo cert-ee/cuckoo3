@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 import asyncio
 import errno
@@ -8,12 +7,15 @@ import logging
 import os
 import socket
 import threading
+import time
 
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
 from cuckoo.common.startup import init_global_logging
-from cuckoo.common.storage import cuckoocwd, TaskPaths, Paths, split_task_id
+from cuckoo.common.storage import (
+    cuckoocwd, TaskPaths, Paths, split_task_id, delete_file
+)
 from cuckoo.common.utils import bytes_to_human, fds_to_hardlimit
 
 log = CuckooGlobalLogger(__name__)
@@ -31,6 +33,9 @@ class MaxBytesWritten(CancelResult):
     pass
 
 class IllegalFilePath(CancelResult):
+    pass
+
+class HeaderMisMatch(CancelResult):
     pass
 
 class ResultServersNotStartedError(Exception):
@@ -129,11 +134,23 @@ def sanitize_dumppath(path):
 
     return RESULT_UPLOADABLE[dir_part], dir_part, name
 
-async def copy_to_fd(reader, fd, max_size=None, readsize=16384):
+async def copy_to_fd(reader, fd, max_size=None, readsize=16384, header=None):
     if max_size:
         fd = WriteLimiter(fd, max_size)
 
     try:
+        if header:
+            try:
+                buf = await reader.readexactly(len(header))
+            except EOFError:
+                raise HeaderMisMatch("EOF before header could be compared")
+
+            if buf != header:
+                raise HeaderMisMatch(
+                    "Stream header does not match expected header"
+                )
+
+            fd.write(buf)
         while True:
             buf = await reader.read(readsize)
             if buf == b"":
@@ -191,7 +208,9 @@ class FileUpload(ProtocolHandler):
 
     async def handle(self):
         dir_fname = await self.reader.readline()
-        path_helper, dirpart, fname = sanitize_dumppath(dir_fname.decode())
+        path_helper, dirpart, fname = sanitize_dumppath(
+            dir_fname.decode(errors="ignore")
+        )
 
         newfile = repr(f"{dirpart}/{fname}")
         self.task.log.debug("New file upload starting.", newfile=newfile)
@@ -222,15 +241,73 @@ class FileUpload(ProtocolHandler):
                 size=bytes_to_human(self.fd.tell())
             )
 
+class ScreenshotUpload(ProtocolHandler):
+
+    # All screenshots must be jpegs. We check this when accepting a new
+    # screenshot upload. This can be circumvented, it is purely meant as a
+    # simple check.
+    JPEG_HEADER = b"\xff\xd8"
+
+    def init(self):
+        # Screenshots must always be jpg (can be lossy compressed) and should
+        # never be larger than ~4 mb. Medium/low detail is more than enough.
+        self.max_upload_size = 1024 * 1024 * 4
+
+    async def handle(self):
+        # The timestamp is an approximation of when the screenshot was taken
+        # during the task run. It will be off by the amount of time it takes
+        # to start the vm, run the screenshot aux module, etc.
+        fname = f"{self.task.ts}.jpg"
+        self.task.log.debug("New screenshot upload", newfile=fname)
+        upload_path = TaskPaths.screenshot(self.task.task_id, fname)
+        try:
+            self.fd = open(upload_path, "xb")
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                raise CancelResult(
+                    f"Task {self.task.task_id} screenshot upload {fname}"
+                    f"file overwrite attempt stopped."
+                )
+
+            raise CancelResult(f"Unhandled error: {e}")
+
+        try:
+            await copy_to_fd(
+                self.reader, self.fd, self.max_upload_size, readsize=2048,
+                header=self.JPEG_HEADER
+            )
+        except HeaderMisMatch as e:
+            delete_file(upload_path)
+            raise CancelResult(
+                f"Task {self.task.task_id} screenshot upload {fname} "
+                f"cancelled. Header mismatch: {e}"
+            )
+        except (MaxBytesWritten, HeaderMisMatch) as e:
+            raise CancelResult(
+                f"Task {self.task.task_id} screenshot upload {fname} "
+                f"cancelled. {e}"
+            )
+        finally:
+            self.task.log.debug(
+                "Screenshot upload ended.", newfile=fname,
+                size=bytes_to_human(self.fd.tell())
+            )
+
 class _MappedTask:
 
     def __init__(self, task_id, ip, asyncio_rs):
         self.task_id = task_id
         self.ip = ip
+        self._start = time.monotonic()
         self.asyncio_rs = asyncio_rs
 
         self.log = TaskLogger(__name__, task_id)
         self.asynctasks = set()
+
+    @property
+    def ts(self):
+        """Get the timestamp in milliseconds since the task was mapped"""
+        return int((time.monotonic() - self._start) * 1000)
 
     async def cancel_running_tasks(self):
         for task in list(self.asynctasks):
@@ -261,7 +338,8 @@ class _MappedTask:
 class _AsyncResultServer:
 
     protocols = {
-        "FILE": FileUpload
+        "FILE": FileUpload,
+        "SCREENSHOT": ScreenshotUpload
     }
 
     def __init__(self):
@@ -471,7 +549,6 @@ class ResultServer(UnixSocketServer):
         # to start this in a new process. _AsyncResultServer uses an RLock,
         # which cannot be pickled. This causes Process creation to fail.
         self._rs = _AsyncResultServer()
-
 
     def _start_all(self):
         try:

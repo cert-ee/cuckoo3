@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
@@ -41,6 +40,11 @@ class Submit(View):
         try:
             s_maker = submit.settings_maker.new_settings()
             s_maker.set_manual(True)
+
+            password = request.POST.get("password")
+            if password:
+                s_maker.set_password(password)
+
             settings = s_maker.make_settings()
             if uploaded:
                 analysis_id = submit.file(

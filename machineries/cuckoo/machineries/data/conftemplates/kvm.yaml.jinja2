@@ -19,6 +19,9 @@ machines:
     # A string that specifies the version of the operating system installed.
     # Example: "10" for Windows 10, "7" for Windows 7, "18.04" for Ubuntu 18.04.
     os_version: "{{ machine.os_version }}"
+    # The operating system architecture. Amd64, ARM, etc. This is used to
+    # select the correct stager and monitor component for the machine.
+    architecture: {{ machine.architecture }}
     # (Optional) The MAC address of the network interface of the machine that is used to connect to
     # to the resultserver and the internet.
     mac_address: {{ machine.mac_address }}

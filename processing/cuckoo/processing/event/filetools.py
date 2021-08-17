@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 
 from string import ascii_lowercase
@@ -39,6 +38,4 @@ def normalize_winpath(path):
                 programdir[:slashat - 1] == "progra~":
             return f"{path[:3]}program files{path[3 + slashat:]}"
 
-
     return path
-

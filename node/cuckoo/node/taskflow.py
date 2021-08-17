@@ -1,6 +1,5 @@
-# Copyright (C) 2020 Cuckoo Foundation.
-# This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
-# See the file 'docs/LICENSE' for copying permission.
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 
 from cuckoo.common.clients import ActionFailedError
 from cuckoo.common.guest import find_stager, StagerError, PayloadExecFailed
@@ -27,11 +26,12 @@ class StandardTask(TaskFlow):
             raise TaskFlowError(f"Failed to stop machine: {e}")
 
     def machine_online(self):
-        stager_cls = find_stager(self.machine.platform)
-        if not stager_cls:
-            raise TaskFlowError(
-                f"No stager found for that supports {self.machine.platform}"
+        try:
+            stager_cls = find_stager(
+                self.machine.platform, arch=self.machine.architecture
             )
+        except StagerError as e:
+            raise TaskFlowError(f"No stager found: {e}")
 
         self.log.debug("Using stager.", stager=stager_cls.name)
         stager = stager_cls(
