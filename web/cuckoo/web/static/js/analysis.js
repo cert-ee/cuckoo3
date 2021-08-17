@@ -131,16 +131,16 @@ const processes = (function() {
             </span>
             <span class="is-monospace has-margin-right" title="Process identifier">
               <span class="is-uppercase has-half-opacity">process</span>
-              <strong>${process.procid}</strong>
+              <strong>${lib.SafeString(process.procid)}</strong>
               &mdash;
             </span>
-            ${process.name}
+            ${lib.SafeString(process.name)}
           </p>
           <p title="Executed command">
             <span class="icon has-half-opacity">
               <i class="fas fa-terminal"></i>
             </span>
-            <code class="code">${process.commandline}</code>
+            <code class="code">${lib.SafeString(process.commandline)}</code>
           </p>
           <div class="has-margin-y">
             <span class="icon has-half-opacity">
@@ -149,7 +149,7 @@ const processes = (function() {
             <div class="duration" title="Process duration">
               <div class="duration--inner" style="width: ${meta.duration.length}%; left: ${meta.duration.offset}%;"></div>
             </div>
-            <span title="Process state">${process.state}</span>
+            <span title="Process state">${lib.SafeString(process.state)}</span>
           </div>
         </div>
         ${(process.children.length > 0) ? `

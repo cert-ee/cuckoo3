@@ -58,6 +58,35 @@ window.lib = Object.assign(window.lib || {}, {
         <p class="column no-margin-y">${content}</p>
       </div>
     `);
+  },
+  // generate a safestring from a string that could contain executable code
+  SafeString(str) {
+
+    function _escape(s) {
+      let r = /[&<>"'\/]/g;
+      return '' + s.replace(r, m => {
+        return {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#x27;",
+          "/": "&#x2F;"
+        }[m];
+      });
+    }
+
+    class _SS {
+      constructor(s) {
+        this.s = s;
+      }
+      toString() {
+        return this.s;
+      }
+    }
+
+    return new _SS(_escape(str)).toString();
+
   }
 });
 
