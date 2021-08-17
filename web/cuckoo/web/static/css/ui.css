@@ -1849,6 +1849,47 @@ ul.process-tree .duration--inner {
   color: #fe6100;
 }
 
+.screenshot-viewer .screenshot-image,
+.screenshot-viewer .screenshot-description {
+  margin: 0;
+}
+.screenshot-viewer .screenshot-image {
+  background-color: #000000;
+  min-height: 30rem;
+}
+.screenshot-viewer .screenshot-timeline {
+  position: relative;
+  display: flex;
+  background-color: #1a1a1a;
+  padding: 1rem;
+}
+.screenshot-viewer .screenshot-timeline > div {
+  background-color: #FFFFFF;
+  opacity: 0.2;
+  height: 1rem;
+  margin: 0 0.5rem;
+  border-radius: 2.5rem;
+}
+.screenshot-viewer .screenshot-timeline > div.active {
+  opacity: 1;
+  background-color: #2E94F1;
+}
+.screenshot-viewer .screenshot-description {
+  background-color: #333333;
+  padding: 1rem;
+  color: #FFFFFF;
+  border-bottom-right-radius: 0.2rem;
+  border-bottom-left-radius: 0.2rem;
+}
+.screenshot-viewer .screenshot-description .icon-instruction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.screenshot-viewer .screenshot-description .icon-instruction i {
+  margin: 0 0.25rem;
+}
+
 .footer {
   display: flex;
   flex-direction: column;

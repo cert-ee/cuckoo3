@@ -1,0 +1,18 @@
+{% call ui_box(title="Screenshots", has_padding=False) %}
+  <div class="screenshot-viewer">
+    <figure class="screenshot-image"></figure>
+    <nav class="screenshot-timeline">
+      {% for screenshot in report.screenshot %}
+        <div {% if loop.index == 1 %}class="active"{% endif %} style="flex-basis: {{screenshot.percentage}}%"></div>
+      {% endfor %}
+    </nav>
+    <p class="screenshot-description">
+      <span class="icon-instruction">
+        <i class="fas fa-long-arrow-alt-left"></i>
+        <i class="fas fa-mouse"></i>
+        <i class="fas fa-long-arrow-alt-right"></i>
+      </span>
+      <span class="has-half-opacity">Move mouse to view screenshots</span>
+    </p>
+  </div>
+{% endcall %}

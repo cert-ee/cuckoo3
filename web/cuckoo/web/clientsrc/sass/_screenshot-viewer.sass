@@ -1,0 +1,43 @@
+.screenshot-viewer
+
+  .screenshot-image,
+  .screenshot-description
+    margin: 0
+
+  .screenshot-image
+    background-color: $black
+    min-height: 30rem
+
+  .screenshot-timeline
+    position: relative
+    display: flex
+    background-color: mix($white, $black, 10%)
+    padding: 1rem
+    // margin-left: -.12rem
+    // margin-right: -.12rem
+
+    & > div
+      background-color: $white
+      opacity: .2
+      height: 1rem
+      margin: 0 .5rem
+      border-radius: 2.5rem
+
+      &.active
+        opacity: 1
+        background-color: $blue
+
+  .screenshot-description
+    background-color: mix($white, $black, 20%)
+    padding: 1rem
+    color: $white
+    border-bottom-right-radius: $radius
+    border-bottom-left-radius: $radius
+
+    .icon-instruction
+      display: inline-flex
+      align-items: center
+      justify-content: center
+
+      i
+        margin: 0 .25rem
