@@ -388,3 +388,53 @@ const processes = (function() {
   window.addEventListener("resize", renderChart);
 
 }());
+
+// screenshot module
+(function screenshots() {
+
+  const elem      = document.querySelector('#screenshot');
+  const hitboxes  = elem.querySelector('.screenshot-hitboxes');
+  const image     = elem.querySelector('.screenshot-image');
+  const timeline  = elem.querySelector('.screenshot-timeline');
+
+  const hitzones  = [
+    ...hitboxes.querySelectorAll('.hitbox'),
+    ...timeline.querySelectorAll('.time-part')
+  ];
+
+  function updateNav(target) {
+    let cur = timeline.querySelector('.time-part.active');
+    if(cur) cur.classList.remove('active');
+    timeline.querySelector('[href="'+target+'"]').classList.add('active');
+  }
+
+  function loadImage(e, n) {
+
+    e.preventDefault();
+
+    const target = e.target.getAttribute('href');
+
+    const img = new Image();
+    img.src = e.target.getAttribute('href');
+    img.addEventListener('load', ev => {
+
+      // remove existing image
+      if(image.querySelector('img'))
+        image.querySelector('img').remove();
+
+      // append newly loaded image
+      image.appendChild(img);
+      updateNav(target);
+    });
+
+  }
+
+  hitzones.forEach((zone, n) => {
+    zone.addEventListener('mouseenter', event => loadImage(event, n));
+    zone.addEventListener('click', event => loadImage(event, n));
+  });
+
+  if(hitzones.length)
+    hitzones[0].click();
+
+}());

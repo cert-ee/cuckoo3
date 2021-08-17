@@ -1,9 +1,15 @@
 {% call ui_box(title="Screenshots", has_padding=False) %}
-  <div class="screenshot-viewer">
-    <figure class="screenshot-image"></figure>
+  <div class="screenshot-viewer" id="screenshot">
+    <figure class="screenshot-image">
+      <div class="screenshot-hitboxes">
+        {% for screenshot in report.screenshot %}
+          <a  class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
+        {% endfor %}
+      </div>
+    </figure>
     <nav class="screenshot-timeline">
       {% for screenshot in report.screenshot %}
-        <div {% if loop.index == 1 %}class="active"{% endif %} style="flex-basis: {{screenshot.percentage}}%"></div>
+        <a class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
       {% endfor %}
     </nav>
     <p class="screenshot-description">
