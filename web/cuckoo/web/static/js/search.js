@@ -122,8 +122,8 @@
     if(matches && matches.length) {
       results.innerHTML = matches.map(match => `
         <tr>
-          <td><a target="_blank" href="/analysis/${match.analysis_id}">${lib.SafeString(match.analysis_id)}</a></td>
-          <td><a target="_blank" href="/analysis/${match.analysis_id}/task/${match.task_id}">${lib.SafeString(match.task_id)}</a></td>
+          <td><a target="_blank" href="/analysis/${lib.SafeString(match.analysis_id)}">${lib.SafeString(match.analysis_id)}</a></td>
+          <td><a target="_blank" href="/analysis/${lib.SafeString(match.analysis_id)}/task/${match.task_id}">${lib.SafeString(match.task_id)}</a></td>
           ${match.matches.map(m => `
             <td>${lib.SafeString(m.field)}</td>
             <td>${m.matches.map(_match => lib.SafeString(_match)).join('<br />')}</td>
@@ -169,7 +169,7 @@
     if(count == 0) navigational.forEach(s => disableElement(s.parentNode));
 
     // update text values to reflect the current search state
-    pages.textContent = `Rows ${offset} - ${offset + count}`;
+    pages.textContent = `Rows ${lib.SafeString(offset)} - ${lib.SafeString(offset + count)}`;
     selectedLimit.textContent = props.limit;
     currentPage.textContent = offset / limit;
     possiblePages.textContent = max;

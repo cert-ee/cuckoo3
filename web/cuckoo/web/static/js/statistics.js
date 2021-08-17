@@ -24,7 +24,7 @@
       let values = result.map(res => parseInt(res, 16) || 0).splice(1, 3);
       if(typeof alpha == "number")
         values.push(alpha);
-      return `rgba(${values.join(',')})`;
+      return 'rgba('+values.join(',')+');';
     }
   }
 
@@ -113,20 +113,6 @@
     // (!) if datasets > 0, make sure it behaves as a stacked line chart
     const { datasets, labels } = data;
     const isMultiple = (datasets.length > 1);
-
-    // DEBUG
-    // let extr = ['spyware','trojan','ransomware']
-    // let lines = 3;
-    // while(lines > 0) {
-    //   let ds = {...data.datasets[0]};
-    //   let dp = [];
-    //   data.datasets[0].data.forEach(() => dp.push(Math.floor(Math.random() * 100)));
-    //   let lb = extr[lines];
-    //   ds.label = lb;
-    //   ds.data = dp;
-    //   data.datasets.push(ds);
-    //   lines--;
-    // }
 
     data.datasets = datasets.map((set, i) => {
       set.pointBackgroundColor = rgbfy(colorScheme[i % colorScheme.length + 1]);

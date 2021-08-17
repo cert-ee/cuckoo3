@@ -53,7 +53,7 @@ window.lib = Object.assign(window.lib || {}, {
     }
     return parseDOM(`
       <div class="banner is-${type}">
-        <div class="banner-icon"><i class="${icon}"></i></div>
+        <div class="banner-icon"><i class="${lib.SafeString(icon)}"></i></div>
         <p class="column no-margin-y">${lib.SafeString(content)}</p>
       </div>
     `);

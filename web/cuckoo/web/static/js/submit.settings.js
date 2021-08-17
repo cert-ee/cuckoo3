@@ -94,7 +94,7 @@
       }, data);
 
       const machine = parseDOM(`
-        <div class="box has-border has-background-light no-padding" data-machine data-platform="${data.platform}" data-version="${data.version}">
+        <div class="box has-border has-background-light no-padding" data-machine data-platform="${lib.SafeString(data.platform)}" data-version="${lib.SafeString(data.version)}">
           <div class="columns is-divided is-gapless">
             <div class="column has-padding-x has-padding-bottom">
               <div class="columns is-divided">
