@@ -169,6 +169,9 @@ class TaskResult(Result):
     def _get_pcap_fp(self):
         raise NotImplementedError
 
+    def _get_screenshot_fp(self, name):
+        raise NotImplementedError
+
     def load_requested(self, missing_report_default=None):
         if Results.ANALYSIS in self._include:
             self._load_analysis()
@@ -203,6 +206,9 @@ class TaskResult(Result):
     @property
     def pcap(self):
         return self._get_pcap_fp()
+
+    def screenshot(self, name):
+        return self._get_screenshot_fp(name)
 
     def to_dict(self):
         d = {}
@@ -265,6 +271,13 @@ class LocalTaskResult(TaskResult):
             raise ResultDoesNotExistError("No PCAP found for task")
 
         return open(pcap_path, "rb")
+
+    def _get_screenshot_fp(self, name):
+        screenshot_path = TaskPaths.screenshot(self.task_id, name)
+        if not screenshot_path.is_file():
+            raise ResultDoesNotExistError("No such screenshot found for task")
+
+        return open(screenshot_path, "rb")
 
 class RemoteTask(TaskResult):
 
@@ -342,6 +355,16 @@ class RemoteTask(TaskResult):
             raise ResultDoesNotExistError("No PCAP found for task")
         except ClientError as e:
             raise ResultError(f"Failed to retrieve PCAP: {e}")
+
+    def _get_screenshot_fp(self, name):
+        try:
+            return self._api.task_screenshot(
+                self.analysis_id, self.task_id, name
+            )
+        except APIDoesNotExistError:
+            raise ResultDoesNotExistError("No such screenshot found for task")
+        except ClientError as e:
+            raise ResultError(f"Failed to retrieve screenshot: {e}")
 
 class RemoteAnalysis(AnalysisResult):
 

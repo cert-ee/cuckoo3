@@ -18,3 +18,14 @@ class Pcap(View):
         return FileResponse(
             pcap_fp, as_attachment=True, filename=f"{task_id}.pcap"
         )
+
+class Screenshot(View):
+
+    def get(self, request, analysis_id, task_id, screenshot):
+        try:
+            task = retriever.get_task(analysis_id, task_id)
+            screenshot_fp = task.screenshot(screenshot)
+        except ResultDoesNotExistError as e:
+            return HttpResponseNotFound(str(e))
+
+        return FileResponse(screenshot_fp)
