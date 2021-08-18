@@ -1897,11 +1897,17 @@ ul.process-tree .duration--inner {
   background-color: #2E94F1;
 }
 .screenshot-viewer .screenshot-description {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #FFFFFF;
   background-color: #333333;
   padding: 1rem;
-  color: #FFFFFF;
   border-bottom-right-radius: 0.2rem;
   border-bottom-left-radius: 0.2rem;
+}
+.screenshot-viewer .screenshot-description p {
+  margin: 0;
 }
 .screenshot-viewer .screenshot-description .icon-instruction {
   display: inline-flex;

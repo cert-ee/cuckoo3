@@ -3,22 +3,28 @@
     <figure class="screenshot-image">
       <div class="screenshot-hitboxes">
         {% for screenshot in report.screenshot %}
-          <a  class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
+          <a target="_blank" class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
         {% endfor %}
       </div>
     </figure>
     <nav class="screenshot-timeline">
       {% for screenshot in report.screenshot %}
-        <a class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
+        <a target="_blank" class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
       {% endfor %}
     </nav>
-    <p class="screenshot-description">
-      <span class="icon-instruction">
-        <i class="fas fa-long-arrow-alt-left"></i>
-        <i class="fas fa-mouse"></i>
-        <i class="fas fa-long-arrow-alt-right"></i>
-      </span>
-      <span class="has-half-opacity">Move mouse to view screenshots</span>
-    </p>
+    <div class="screenshot-description">
+      <p>
+        <span class="icon-instruction">
+          <i class="fas fa-long-arrow-alt-left"></i>
+          <i class="fas fa-mouse"></i>
+          <i class="fas fa-long-arrow-alt-right"></i>
+        </span>
+        <span class="has-half-opacity">Move mouse to view screenshots</span>
+      </p>
+      <div>
+        <span class="screenshot-loader has-text-red" hidden><i class="fas fa-circle-notch fa-spin"></i></span>
+        <span class="screenshot-filename"></span>
+      </div>
+    </div>
   </div>
 {% endcall %}

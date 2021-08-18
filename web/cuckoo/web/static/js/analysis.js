@@ -396,6 +396,8 @@ const processes = (function() {
   const hitboxes  = elem.querySelector('.screenshot-hitboxes');
   const image     = elem.querySelector('.screenshot-image');
   const timeline  = elem.querySelector('.screenshot-timeline');
+  const filename  = elem.querySelector('.screenshot-filename');
+  const loader    = elem.querySelector('.screenshot-loader');
 
   const hitzones  = [
     ...hitboxes.querySelectorAll('.hitbox'),
@@ -406,6 +408,7 @@ const processes = (function() {
     let cur = timeline.querySelector('.time-part.active');
     if(cur) cur.classList.remove('active');
     timeline.querySelector('[href="'+target+'"]').classList.add('active');
+    filename.textContent = target.split('/')[target.split('/').length-1];
   }
 
   function loadImage(e, n) {
@@ -413,6 +416,8 @@ const processes = (function() {
     e.preventDefault();
 
     const target = e.target.getAttribute('href');
+    updateNav(target);
+    loader.removeAttribute('hidden');
 
     const img = new Image();
     img.src = e.target.getAttribute('href');
@@ -424,17 +429,17 @@ const processes = (function() {
 
       // append newly loaded image
       image.appendChild(img);
-      updateNav(target);
+
+      loader.setAttribute('hidden', true);
     });
 
   }
 
   hitzones.forEach((zone, n) => {
     zone.addEventListener('mouseenter', event => loadImage(event, n));
-    zone.addEventListener('click', event => loadImage(event, n));
   });
 
   if(hitzones.length)
-    hitzones[0].click();
+    hitzones[0].dispatchEvent(new MouseEvent('mouseenter'));
 
 }());

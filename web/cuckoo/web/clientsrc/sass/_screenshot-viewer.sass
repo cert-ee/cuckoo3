@@ -47,11 +47,17 @@
         background-color: $blue
 
   .screenshot-description
+    display: flex
+    justify-content: space-between
+    align-items: center
+    color: $white
     background-color: mix($white, $black, 20%)
     padding: 1rem
-    color: $white
     border-bottom-right-radius: $radius
     border-bottom-left-radius: $radius
+
+    p
+      margin: 0
 
     .icon-instruction
       display: inline-flex
