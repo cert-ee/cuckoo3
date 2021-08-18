@@ -77,17 +77,21 @@
             </div>
           {% endif %}
         </div>
-        {# Options / profile box #}
+        {# Options form #}
         <div class="column">
           <div class="box has-shadow no-padding-x">
-            <nav class="tabbar" role="tablist">
-              <a role="tab" href="#options" class="tabbar-link is-active">Options</a>
-              {# <a role="tab" href="#profile" class="tabbar-link">Profile</a> #}
-            </nav>
-            <div class="box no-padding">
-              <div role="region" id="options">{% include "submit/partial/options.html.jinja2" %}</div>
-              {# <div role="region" id="profile">{% include "submit/partial/profile.html.jinja2" %}</div> #}
-            </div>
+            <form class="form">
+              <nav class="tabbar" role="tablist">
+                <a role="tab" href="#options" class="tabbar-link is-active">Options</a>
+                <a role="tab" href="#machines" class="tabbar-link">Machinery</a>
+                <a role="tab" href="#advanced" class="tabbar-link">Advanced</a>
+              </nav>
+              <div class="box no-padding">
+                <div role="region" id="options">{% include "submit/partial/options.html.jinja2" %}</div>
+                <div role="region" id="machines" hidden>{% include "submit/partial/machinery.html.jinja2" %}</div>
+                <div role="region" id="advanced" hidden>{% include "submit/partial/advanced-options.html.jinja2" %}</div>
+              </div>
+            </form>
           </div>
           <div class="box has-shadow" id="conclude-analysis">
             <!-- inject any messages here -->
