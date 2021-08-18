@@ -398,6 +398,7 @@ const processes = (function() {
   const timeline  = elem.querySelector('.screenshot-timeline');
   const filename  = elem.querySelector('.screenshot-filename');
   const loader    = elem.querySelector('.screenshot-loader');
+  let loading     = false;
 
   const hitzones  = [
     ...hitboxes.querySelectorAll('.hitbox'),
@@ -414,6 +415,7 @@ const processes = (function() {
   function loadImage(e, n) {
 
     e.preventDefault();
+    if(loading) return; // make sure to only do this when we're not already loading an image.
 
     const target = e.target.getAttribute('href');
     updateNav(target);
@@ -421,16 +423,15 @@ const processes = (function() {
 
     const img = new Image();
     img.src = e.target.getAttribute('href');
+    loading = true;
     img.addEventListener('load', ev => {
-
-      // remove existing image
+      // remove current image
       if(image.querySelector('img'))
         image.querySelector('img').remove();
-
       // append newly loaded image
       image.appendChild(img);
-
       loader.setAttribute('hidden', true);
+      loading = false;
     });
 
   }

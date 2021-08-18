@@ -3,13 +3,13 @@
     <figure class="screenshot-image">
       <div class="screenshot-hitboxes">
         {% for screenshot in report.screenshot %}
-          <a target="_blank" class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
+          <a title="Open {{ screenshot.name }} in new window" target="_blank" class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
         {% endfor %}
       </div>
     </figure>
     <nav class="screenshot-timeline">
       {% for screenshot in report.screenshot %}
-        <a target="_blank" class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
+        <a title="Open {{ screenshot.name }} in new window" target="_blank" class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
       {% endfor %}
     </nav>
     <div class="screenshot-description">

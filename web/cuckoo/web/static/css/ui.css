@@ -1896,6 +1896,9 @@ ul.process-tree .duration--inner {
   opacity: 1;
   background-color: #2E94F1;
 }
+.screenshot-viewer .screenshot-timeline > .time-part.active:hover {
+  background-color: #277ecd;
+}
 .screenshot-viewer .screenshot-description {
   display: flex;
   justify-content: space-between;
