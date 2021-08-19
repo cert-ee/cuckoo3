@@ -168,6 +168,18 @@
     });
   }
 
+  // toggles extra fields for certain selected options
+  function routingHandler() {
+    const route   = document.querySelector('select[name="route"]');
+    const country = document.querySelector('#select-vpn-country');
+    route.addEventListener('change', ev => {
+      if(ev.target.value == 'vpn')
+        country.removeAttribute('hidden');
+      else
+        country.setAttribute('hidden', true);
+    });
+  }
+
   // sends a PUT request to the settings api to conclude and finalize the
   // submission and proceed to analysis
   function finishSubmission() {
@@ -191,7 +203,7 @@
         /** @TODO platforms expose a subset for a few default parameters. They override what the global
         settings already define when encountered. */
         let s = {};
-        
+
         return {
           platform: machine.dataset.platform,
           os_version: machine.dataset.version,
@@ -202,6 +214,8 @@
     };
 
     /** @TODO whenever route type is set to vpn, make sure to also add a country parameter (toggled input based on wheter vpn is chosen as type) */
+    if(options.route.type.toLowerCase() == 'vpn')
+      options.route.country = document.querySelector('select[name="country"]');
 
     if(category == 'file') {
       const selectedFile = document.querySelector('input[name="selected-file"]:checked');
@@ -210,8 +224,8 @@
       options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
     }
 
-    console.log(options);
-    debugger;
+    // console.log(options);
+    // debugger;
 
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
@@ -237,6 +251,7 @@
     fileTreeHandler();
     platformHandler();
     customTimeoutHandler();
+    routingHandler();
     finish.addEventListener('click', ev => {
       finishSubmission();
     });
