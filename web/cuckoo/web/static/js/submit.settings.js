@@ -180,15 +180,28 @@
     const options = {
       timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
       priority: parseInt(document.querySelector('select[name="priority"]').value),
+      command: document.querySelector('input[name="command"]').value,
+      orig_filename: document.querySelector('input[name="orig-filename"]').checked,
+      route: {
+        type: document.querySelector('select[name="route"]').value
+      },
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
         let t = machine.querySelector('input[data-tags]');
+
+        /** @TODO platforms expose a subset for a few default parameters. They override what the global
+        settings already define when encountered. */
+        let s = {};
+        
         return {
           platform: machine.dataset.platform,
           os_version: machine.dataset.version,
-          tags: t.value.length ? t.value.split(',') : []
+          tags: t.value.length ? t.value.split(',') : [],
+          settings: s
         }
       })
     };
+
+    /** @TODO whenever route type is set to vpn, make sure to also add a country parameter (toggled input based on wheter vpn is chosen as type) */
 
     if(category == 'file') {
       const selectedFile = document.querySelector('input[name="selected-file"]:checked');
@@ -196,6 +209,9 @@
         return handleError('No file has been selected. Select a file and try again.');
       options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
     }
+
+    console.log(options);
+    debugger;
 
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
