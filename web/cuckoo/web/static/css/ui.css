@@ -2096,10 +2096,6 @@ ul.process-tree .duration--inner {
   height: 3rem;
 }
 
-hr.separator {
-  border: 0.062rem solid rgba(15, 72, 90, 0.2);
-}
-
 .no-padding, .banner {
   padding: 0 !important;
 }

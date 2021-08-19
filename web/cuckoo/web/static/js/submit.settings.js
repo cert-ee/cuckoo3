@@ -224,9 +224,6 @@
       options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
     }
 
-    // console.log(options);
-    // debugger;
-
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
       body: JSON.stringify(options),
