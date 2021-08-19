@@ -188,3 +188,17 @@ class ProcessTracker:
             plist.append(p.to_dict())
 
         return plist
+
+    def to_dict(self, tracked_only=True, max_processes=100):
+        proclist = self.process_dictlist(tracked_only=tracked_only)
+        truncated = False
+        process_count = len(proclist)
+        if process_count > max_processes:
+            proclist = proclist[0:max_processes]
+            truncated = True
+
+        return {
+            "truncated": truncated,
+            "count": process_count,
+            "process_list": proclist
+        }

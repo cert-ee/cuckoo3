@@ -5,7 +5,7 @@ from cuckoo.common.config import cfg
 from cuckoo.common import virustotal
 
 from ..abtracts import Processor
-from ..signatures.signature import Scores
+from ..signatures.signature import Scores, IOC
 
 class Virustotal(Processor):
 
@@ -72,9 +72,11 @@ class Virustotal(Processor):
             score = Scores.SUSPICIOUS
 
         if score:
-            avs = [{"antivirus": avname}
-                   for avname, avinfo in info["avs"].items()
-                   if avinfo["category"] == "malicious"]
+            iocs = [
+                IOC(antivirus=avname)
+                for avname, avinfo in info["avs"].items()
+                if avinfo["category"] == "malicious"
+            ]
 
             self.ctx.signature_tracker.add_signature(
                 name="virustotal",
@@ -83,7 +85,7 @@ class Virustotal(Processor):
                                   "malicious",
                 description=f"{malicious_count} Virustotal antivirus engines "
                             f"detect this target as malicious",
-                iocs=avs
+                iocs=iocs
             )
 
         return info

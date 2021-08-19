@@ -10,7 +10,7 @@ from cuckoo.common.storage import TaskPaths
 
 from ..abtracts import Processor
 from ..errors import DisablePluginError, PluginError
-from ..signatures.signature import Levels
+from ..signatures.signature import Levels, IOC
 
 class SuricataPcap(Processor):
 
@@ -204,15 +204,13 @@ class SuricataPcap(Processor):
 
         score = Levels.to_score(score_level)
         event = self._make_filtered_event(event)
-        iocs = [{
-            "signature_id": event["signature_id"],
-            "signature": event["signature"],
-            "category": event["category"],
-            "app_proto": event["app_proto"],
-            "src": f"{event['srcip']}:{event['srcport']}",
-            "dst": f"{event['dstip']}:{event['dstport']}"
-        }]
 
+        iocs = [IOC(
+            signature_id=event["signature_id"], signature=event["signature"],
+            category=event["category"], app_proto=event["app_proto"],
+            src=f"{event['srcip']}:{event['srcport']}",
+            dst=f"{event['dstip']}:{event['dstport']}"
+        )]
         self.ctx.signature_tracker.add_signature(
             score=score,
             name="suricata_alert",

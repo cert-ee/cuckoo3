@@ -3,6 +3,8 @@
 
 import yara
 
+from cuckoo.processing.signatures.signature import IOC
+
 class YaraSignatureError(Exception):
     pass
 
@@ -52,8 +54,7 @@ class MatchedRule:
             short_description=self.match.meta["short_description"],
             description=self.match.meta.get("description"),
             ttps=ttps, tags=tags, family=self.match.meta.get("family"),
-            iocs=[{"matched on": scanned_datatype,
-                   "yara rule": self.match.rule}]
+            iocs=[IOC(matched_on=scanned_datatype, yara_rule=self.match.rule)]
         )
 
 
