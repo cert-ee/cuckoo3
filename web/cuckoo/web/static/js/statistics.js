@@ -24,7 +24,7 @@
       let values = result.map(res => parseInt(res, 16) || 0).splice(1, 3);
       if(typeof alpha == "number")
         values.push(alpha);
-      return 'rgba('+values.join(',')+');';
+      return `rgba(${values.join(',')})`;
     }
   }
 
