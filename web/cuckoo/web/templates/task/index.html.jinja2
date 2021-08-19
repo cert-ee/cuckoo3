@@ -35,7 +35,7 @@
       // in the settings js file.
       window.Application = Object.assign(window.Application || {}, {
         duration: {{ analysis.settings.timeout }} * 1000,
-        processes: {{ report.processes|tojson }}
+        processes: {{ report.processes.process_list|tojson }}
       });
     }());
   </script>

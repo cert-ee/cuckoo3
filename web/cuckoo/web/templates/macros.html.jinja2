@@ -325,21 +325,26 @@
     </thead>
     <tbody>
       {% for signature in signatures|sort(attribute='score',reverse=True) %}
-        {% set hasIOCs = signature.iocs and signature.iocs|length > 0 %}
+        {% set hasIOCs = signature.iocs.iocs and signature.iocs.iocs|length > 0 %}
+        {% if signature.iocs.truncated %}
+          <tr>
+            <td colspan="3">IoC table truncated because it exceeds the maximum amount of IoCs. Actual amount: {{ signatures.iocs.count }}</td>
+          </tr>
+        {% endif %}
         <tr data-row="{{ loop.index }}">
           <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
           <td>{{ signature.short_description }}</td>
           <td>{{ signature.description }}</td>
           <td class="no-text-wrap">
             {% if hasIOCs %}
-              <a class="is-link has-text-small toggle-ioc" href="#">{{ signature.iocs|length }} IOC's.</a>
+              <a class="is-link has-text-small toggle-ioc" href="#">{{ signature.iocs.iocs|length }} IOC's.</a>
             {% endif %}
           </td>
         </tr>
         <tr hidden data-row-of="{{ loop.index }}">
           <td colspan="4" class="no-padding has-border-y">
             {% if hasIOCs %}
-              {{ render_table(data = signature.iocs, cols = signature.iocs[0].keys()) }}
+              {{ render_table(data = signature.iocs.iocs, cols = signature.iocs.iocs[0].keys()) }}
             {% endif %}
           </td>
         </tr>
