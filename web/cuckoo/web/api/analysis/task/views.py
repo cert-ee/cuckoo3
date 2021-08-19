@@ -92,3 +92,14 @@ class Pcap(APIView):
         return FileResponse(
             pcap_fp, as_attachment=True, filename=f"{task_id}.pcap"
         )
+
+class Screenshot(APIView):
+
+    def get(self, request, analysis_id, task_id, screenshot):
+        try:
+            task = retriever.get_task(analysis_id, task_id)
+            screenshot_fp = task.screenshot(screenshot)
+        except ResultDoesNotExistError:
+            return Response(status=404)
+
+        return FileResponse(screenshot_fp)

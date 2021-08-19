@@ -525,7 +525,7 @@ def cfg(file, *args, subpkg="", load_missing=False):
             raise ConfigurationError(
                 f"Configuration file {file} "
                 f"{f'in package folder {subpkg}' if subpkg else ''} "
-                f"does not have configuration key {k}."
+                f"does not have configuration key '{k}'."
             )
 
     if isinstance(val, TypeLoader):

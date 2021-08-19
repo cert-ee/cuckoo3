@@ -4,7 +4,7 @@
 from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.event.events import Kinds, SuspiciousEvents
 from cuckoo.processing.event.processtools import is_windowserr_svc
-from cuckoo.processing.signatures.signature import Scores
+from cuckoo.processing.signatures.signature import Scores, IOC
 
 class SuspiciousEventScoring(EventConsumer):
 
@@ -172,5 +172,5 @@ class SuspiciousEventScoring(EventConsumer):
         self.taskctx.signature_tracker.add_signature(
             name=signame, short_description=short_desc,
             description=event.description, ttps=ttps, tags=tags,
-            score=score, iocs=iocs
+            score=score, iocs=[IOC(**ioc) for ioc in iocs]
         )

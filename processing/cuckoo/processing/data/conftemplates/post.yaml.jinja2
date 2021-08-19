@@ -1,0 +1,17 @@
+signatures:
+  # The maximum amount of IoCs that should be stored in reports during
+  # processing. It is advised to not set the too high. Some samples can trigger
+  # thousands IoCs, which will dramatically increase report size and loading
+  # times.
+  max_iocs: {{ signatures.max_iocs }}
+
+  # The maximum amount of bytes each IoC is allowed to be in reports. Larger
+  # values are still matched, just not stored in reports.
+  # The matched value will be left empty if it exceeds this.
+  max_ioc_bytes: {{ signatures.max_ioc_bytes }}
+
+processes:
+  # The maximum amount of processes that should be stored in reports.
+  # Some samples create thousands of processes. This can result in huge reports
+  # and high loading times.
+  max_processes: {{ processes.max_processes }}

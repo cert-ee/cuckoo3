@@ -47,15 +47,17 @@ class Signature:
         self.ttps = ttps
         self.tags = tags
         self.family = family
-        self.iocs = iocs
+        self.iocs = set()
 
         if family:
             self.score = Scores.KNOWN_BAD
         else:
             self.score = score
 
+        self.add_iocs(iocs)
+
     def add_iocs(self, iocs=[]):
-        self.iocs.extend(iocs)
+        self.iocs.update(iocs)
 
     @classmethod
     def from_dict(cls, sigdict):
@@ -77,7 +79,13 @@ class Signature:
             else:
                 self.score = score
 
-    def to_dict(self):
+    def to_dict(self, max_iocs=100, max_ioc_size=20*1024):
+        truncated = False
+        iocs = list(self.iocs)[0:max_iocs]
+        ioc_count = len(iocs)
+        if len(iocs) < ioc_count:
+            truncated = True
+
         return {
             "name": self.name,
             "short_description": self.short_description,
@@ -85,9 +93,48 @@ class Signature:
             "ttps": self.ttps,
             "tags": self.tags,
             "family": self.family,
-            "iocs": self.iocs,
+            "iocs": {
+                "truncated": truncated,
+                "count": ioc_count,
+                "iocs": [ioc.to_dict(max_size=max_ioc_size) for ioc in iocs]
+            },
             "score": self.score
         }
+
+
+class IOC:
+
+    def __init__(self, **kwargs):
+        self.ioc = kwargs
+
+    def to_dict(self, max_size=20*1024):
+        ioc = {}
+        truncated = False
+        for k, v in self.ioc.items():
+            if isinstance(v, (str, bytes)) and len(v) > max_size:
+                msg = " ..value truncated"
+
+                if isinstance(v, bytes):
+                    msg = msg.encode()
+
+                truncated = True
+                v = v[0:max_size] + msg
+            ioc[k] = v
+
+        return {
+            "truncated": truncated,
+            "ioc": ioc
+        }
+
+    def __hash__(self):
+        return hash((
+            tuple(sorted(hash(k) for k in self.ioc.keys())),
+            tuple(sorted(
+                hash(v) for v in self.ioc.values()
+                if not isinstance(v, (dict, list))
+            )),
+        ))
+
 
 class SignatureTracker:
 
@@ -110,8 +157,11 @@ class SignatureTracker:
     def signatures(self):
         return [sig for sig in self._triggered_signatures.values()]
 
-    def signatures_to_dict(self):
-        return [sig.to_dict() for sig in self._triggered_signatures.values()]
+    def signatures_to_dict(self, max_iocs=100, max_ioc_size=20*1024):
+        return [
+            sig.to_dict(max_iocs=max_iocs, max_ioc_size=max_ioc_size)
+            for sig in self._triggered_signatures.values()
+        ]
 
     def _add_new_signature(self, score, name, short_description,
                            description="", iocs=[], ttps=[], tags=[],

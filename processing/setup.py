@@ -46,6 +46,7 @@ setuptools.setup(
         "hyperscan>=0.1.5, <0.2",
         "yara-python>=4.0.2, <4.1",
         "roach>=0.3, <0.4",
+        "suricatactl==0.0.1.dev3",
         "dpkt"
     ],
 )

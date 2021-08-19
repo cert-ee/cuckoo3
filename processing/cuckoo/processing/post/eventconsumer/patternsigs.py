@@ -9,6 +9,7 @@ from cuckoo.common.storage import Paths
 from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.errors import PluginError
 from cuckoo.processing.event.events import Kinds
+from cuckoo.processing.signatures.signature import IOC
 from cuckoo.processing.signatures.pattern import (
     PatternScanner, PatternSignatureError
 )
@@ -103,27 +104,12 @@ class PatternFinder(EventConsumer):
                     matchctx.event.procid
                 )
 
-                duplicate = False
-                # Find if the same value performed by the same process has
-                # already been added to prevent a huge list of duplicate IOCs.
-                for ioc in iocs:
-                    if ioc["value"] != matchctx.orig_str:
-                        continue
-
-                    if ioc["process_id"] != matchctx.event.procid:
-                        continue
-
-                    duplicate = True
-
-                if duplicate:
-                    continue
-
-                iocs.append({
-                    "description": matchctx.event.description,
-                    "value": matchctx.orig_str,
-                    "process": "" if process is None else process.process_name,
-                    "process_id": matchctx.event.procid
-                })
+                iocs.append(IOC(
+                    description=matchctx.event.description,
+                    value=matchctx.orig_str,
+                    process="" if process is None else process.process_name,
+                    process_id=matchctx.event.procid
+                ))
 
             self.taskctx.signature_tracker.add_signature(
                 name=match.name, short_description=match.short_description,

@@ -194,5 +194,14 @@ typeloaders = {
             }
         ),
         "ignore_sigids": config.List(config.Int, allow_empty=True)
+    },
+    "post.yaml": {
+        "signatures": {
+            "max_iocs": config.Int(default_val=100, min_value=1),
+            "max_ioc_bytes": config.Int(default_val=1024 * 20, min_value=150)
+        },
+        "processes": {
+            "max_processes": config.Int(default_val=100, min_value=1)
+        }
     }
 }

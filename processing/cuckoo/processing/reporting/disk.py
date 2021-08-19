@@ -3,6 +3,7 @@
 
 from ..abtracts import Reporter
 
+from cuckoo.common.config import cfg
 from cuckoo.common.strictcontainer import Identification, Pre, Post
 from cuckoo.common.storage import AnalysisPaths, TaskPaths
 
@@ -10,6 +11,16 @@ class JSONDump(Reporter):
 
     ORDER = 1
 
+    def init(self):
+        self.max_processes = cfg(
+            "post.yaml", "processes", "max_processes", subpkg="processing"
+        )
+        self.max_iocs = cfg(
+            "post.yaml", "signatures", "max_iocs", subpkg="processing"
+        )
+        self.max_ioc_size = cfg(
+            "post.yaml", "signatures", "max_ioc_bytes", subpkg="processing"
+        )
     def report_identification(self):
         selected = self.ctx.result.get("selected", {})
         info = {
@@ -53,11 +64,15 @@ class JSONDump(Reporter):
         post_report = {
             "task_id": self.ctx.task.id,
             "score": self.ctx.signature_tracker.score,
-            "signatures": self.ctx.signature_tracker.signatures_to_dict(),
+            "signatures": self.ctx.signature_tracker.signatures_to_dict(
+                max_iocs=self.max_iocs, max_ioc_size=self.max_ioc_size
+            ),
             "ttps": self.ctx.ttp_tracker.to_dict(),
             "tags": self.ctx.tag_tracker.tags,
             "families": self.ctx.family_tracker.families,
-            "processes": self.ctx.process_tracker.process_dictlist()
+            "processes": self.ctx.process_tracker.to_dict(
+                max_processes=self.max_processes
+            )
         }
 
         for resultkey in include_result:

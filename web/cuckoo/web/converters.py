@@ -20,3 +20,13 @@ class TaskId:
 
     def to_url(self, value):
         return str(value)
+
+class ScreenshotName:
+
+    regex = "[0-9]{0,14}\.(jpg|png)"
+
+    def to_python(self, value):
+        return str(value)
+
+    def to_url(self, value):
+        return str(value)

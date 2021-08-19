@@ -16,6 +16,7 @@ from cuckoo.processing.errors import PluginError, DisablePluginError
 from cuckoo.processing.signatures.pattern import (
     PatternScanner, PatternSignatureError
 )
+from cuckoo.processing.signatures.signature import IOC
 
 from ..abtracts import Processor
 
@@ -511,24 +512,12 @@ class NetworkPatternSignatures(Processor):
         self._scan_host()
 
         for match in self.match_tracker.get_matches():
-
-            iocs = []
-            for matchctx in match.get_iocs():
-                duplicate = False
-                for ioc in iocs:
-                    if ioc["value"] == matchctx.orig_str:
-                        duplicate = True
-                        break
-
-                if duplicate:
-                    continue
-
-                iocs.append({"value": matchctx.orig_str})
-
             self.ctx.signature_tracker.add_signature(
                 name=match.name, short_description=match.short_description,
-                description=match.description, score=match.score, iocs=iocs,
-                family=match.family, tags=match.tags, ttps=match.ttps
+                description=match.description, score=match.score,
+                family=match.family, tags=match.tags, ttps=match.ttps,
+                iocs=[IOC(value=matchctx.orig_str) for matchctx in
+                      match.get_iocs()]
             )
 
     def cleanup(self):

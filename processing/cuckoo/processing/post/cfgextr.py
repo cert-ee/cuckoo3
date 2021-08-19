@@ -11,7 +11,7 @@ from ..cfgextr.cfgextr import (
     ConfigMemdump, ConfigExtractionError, ExtractedConfigTracker,
     ExtractedConfig, ConfigExtractor, UnexpectedDataError
 )
-from ..signatures.signature import Scores
+from ..signatures.signature import Scores, IOC
 
 class ProcMemCfgExtract(Processor):
 
@@ -83,7 +83,7 @@ class ProcMemCfgExtract(Processor):
                     short_description=f"Extracted malware configuration of "
                                       f"known family: {config.family}",
                     family=config.family,
-                    iocs=[{"dump": dump} for dump in config.sources]
+                    iocs=[IOC(**{"dump": dump}) for dump in config.sources]
                 )
 
         configs = [
