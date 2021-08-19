@@ -3,9 +3,12 @@
   <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
 </h4>
 <div class="box has-background-light has-margin-x">
-  <div class="columns is-divided has-padding-x">
+
+  <div class="columns is-divided">
+
     <div class="column">
       <div class="field">
+        {# Timeout #}
         <label class="label">Timeout</label>
         <div class="control is-checkable">
           <input type="radio" value="30" id="to-30" name="timeout" />
@@ -25,10 +28,18 @@
             <input type="number" placeholder="Custom (in seconds)" class="input" id="to-custom-value" />
           </label>
         </div>
+        <p class="has-text-small has-half-opacity no-margin-bottom">
+          <span class="icon">
+            <i class="fas fa-info-circle"></i>
+          </span>
+          Time in seconds before VM can shut down
+        </p>
       </div>
     </div>
+
     <div class="column">
       <div class="field">
+        {# priority #}
         <label class="label" for="priority">Priority</label>
         <div class="control is-select">
           <select name="priority" class="input" id="priority">
@@ -37,7 +48,55 @@
             <option value="3">High</option>
           </select>
         </div>
+        <p class="has-text-small has-half-opacity">
+          <span class="icon">
+            <i class="fas fa-info-circle"></i>
+          </span>
+          Prioritizes task in queue if necessary.
+        </p>
       </div>
+
+      <div class="field">
+        {# routing #}
+        <label class="label has-margin-top" for="routing">Network routing</label>
+        <div class="control is-select">
+          <select class="input" name="route" id="route">
+            <option value="none">None</option>
+            <option value="internet">Internet</option>
+            <option value="vpn">VPN</option>
+          </select>
+        </div>
+        <p class="has-text-small has-half-opacity">
+          <span class="icon">
+            <i class="fas fa-info-circle"></i>
+          </span>
+          Configure protocol for internet usage.
+        </p>
+      </div>
+
+      {% if analysis.category == 'url' %}
+        <div class="field">
+          {# browser #}
+          <label class="label">Browser</label>
+          <div class="control is-select">
+            <select class="input">
+              <option value="default">Default</option>
+              <option value="ie">Internet Explorer</option>
+              <option value="firefox">Firefox</option>
+              <option value="chrome">Chrome</option>
+            </select>
+          </div>
+          <p class="has-text-small has-half-opacity">
+            <span class="icon">
+              <i class="fas fa-info-circle"></i>
+            </span>
+            Choose browser to open the submitted URL in.
+          </p>
+        </div>
+      {% endif %}
+
     </div>
+
   </div>
+
 </div>
