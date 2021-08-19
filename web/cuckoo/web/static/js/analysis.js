@@ -393,6 +393,9 @@ const processes = (function() {
 (function screenshots() {
 
   const elem      = document.querySelector('#screenshot');
+  if(!elem)
+    return;
+    
   const hitboxes  = elem.querySelector('.screenshot-hitboxes');
   const image     = elem.querySelector('.screenshot-image');
   const timeline  = elem.querySelector('.screenshot-timeline');
