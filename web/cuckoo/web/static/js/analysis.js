@@ -393,57 +393,43 @@ const processes = (function() {
 (function screenshots() {
 
   const elem      = document.querySelector('#screenshot');
-  if(!elem)
+  const data      = Application.screenshot;
+  const baseURL   = Application.screenshotURL;
+
+  if(!elem || !data.length)
     return;
-    
-  const hitboxes  = elem.querySelector('.screenshot-hitboxes');
+
   const image     = elem.querySelector('.screenshot-image');
-  const timeline  = elem.querySelector('.screenshot-timeline');
-  const filename  = elem.querySelector('.screenshot-filename');
-  const loader    = elem.querySelector('.screenshot-loader');
-  let loading     = false;
+  const slider    = elem.querySelector('input[type="range"]');
+  const scdetails = elem.querySelector('.screenshot-details');
+  let loaded;
 
-  const hitzones  = [
-    ...hitboxes.querySelectorAll('.hitbox'),
-    ...timeline.querySelectorAll('.time-part')
-  ];
-
-  function updateNav(target) {
-    let cur = timeline.querySelector('.time-part.active');
-    if(cur) cur.classList.remove('active');
-    timeline.querySelector('[href="'+target+'"]').classList.add('active');
-    filename.textContent = target.split('/')[target.split('/').length-1];
-  }
-
-  function loadImage(e, n) {
-
-    e.preventDefault();
-    if(loading) return; // make sure to only do this when we're not already loading an image.
-
-    const target = e.target.getAttribute('href');
-    updateNav(target);
-    loader.removeAttribute('hidden');
-
-    const img = new Image();
-    img.src = e.target.getAttribute('href');
-    loading = true;
-    img.addEventListener('load', ev => {
-      // remove current image
+  function loadImage(sc, index) {
+    let img = new Image();
+    img.src = baseURL(sc.name);
+    img.onload = function() {
       if(image.querySelector('img'))
         image.querySelector('img').remove();
-      // append newly loaded image
       image.appendChild(img);
-      loader.setAttribute('hidden', true);
-      loading = false;
-    });
+      loaded = sc;
 
+      scdetails.querySelector('[data-screenshot-index]').textContent = index+1 + '/' + data.length;
+      scdetails.querySelector('[data-screenshot-name]').textContent = sc.name;
+    }
   }
 
-  hitzones.forEach((zone, n) => {
-    zone.addEventListener('mouseenter', event => loadImage(event, n));
+  slider.addEventListener('change', ev => {
+    let index = parseInt(ev.target.value)-1;
+    let target = data[index];
+    loadImage(target, index);
   });
 
-  if(hitzones.length)
-    hitzones[0].dispatchEvent(new MouseEvent('mouseenter'));
+  slider.dispatchEvent(new Event('change'));
+
+  [image, scdetails.querySelector('[data-screenshot-name]')].forEach(e => {
+    e.addEventListener('click', ev => {
+      window.open(baseURL(loaded.name), "_blank");
+    });
+  });
 
 }());

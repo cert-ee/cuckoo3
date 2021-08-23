@@ -1,29 +1,26 @@
 {% call ui_box(title="Screenshots", has_padding=False) %}
   <div class="screenshot-viewer" id="screenshot">
-    <figure class="screenshot-image">
-      <div class="screenshot-hitboxes">
-        {% for screenshot in report.screenshot %}
-          <a title="Open {{ screenshot.name }} in new window" target="_blank" class="hitbox" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
-        {% endfor %}
-      </div>
-    </figure>
-    <nav class="screenshot-timeline">
-      {% for screenshot in report.screenshot %}
-        <a title="Open {{ screenshot.name }} in new window" target="_blank" class="time-part" href="/api/analyses/{{ analysis.id }}/task/{{ report.task_id }}/screenshot/{{ screenshot.name }}" style="flex-basis: {{screenshot.percentage}}%"></a>
-      {% endfor %}
-    </nav>
+    <figure class="screenshot-image"></figure>
     <div class="screenshot-description">
       <p>
         <span class="icon-instruction">
           <i class="fas fa-long-arrow-alt-left"></i>
-          <i class="fas fa-mouse"></i>
+          <span class="has-half-opacity">Drag slider to view screenshots</span>
           <i class="fas fa-long-arrow-alt-right"></i>
         </span>
-        <span class="has-half-opacity">Move mouse to view screenshots</span>
       </p>
       <div>
-        <span class="screenshot-loader has-text-red" hidden><i class="fas fa-circle-notch fa-spin"></i></span>
-        <span class="screenshot-filename"></span>
+        <input type="range" min="1" max="{{ report.screenshot|length }}" step="1" value="1" />
+        <div class="screenshot-details has-margin-top">
+          <span>
+            <i class="fas fa-images"></i>
+            <span data-screenshot-index></span>
+          </span>
+          <span>
+            <i class="fas fa-file-image"></i>
+            <span data-screenshot-name></span>
+          </span>
+        </div>
       </div>
     </div>
   </div>
