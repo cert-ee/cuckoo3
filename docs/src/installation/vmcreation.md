@@ -112,6 +112,8 @@ removed when using the machinery module. Each entry consists of the following:
     - The platform is required so that Cuckoo knows what machine to chose for a specific sample. Example value: windows
 - The platform/operating system version (`os_version`)
     - This is the version of the platform supplied earlier. __This should only contain a version__. Not the full OS name. So "10", not "windows 10". Cuckoo uses this together with the platform to differentiate between machines of the same OS.
+- The operating system architecture: amd64, arm, etc (`architecture`)
+    - This is used to select the correct (build of) stager and monitor component for the machine
 
 **Optional fields per entry:**
 

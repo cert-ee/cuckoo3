@@ -26,8 +26,13 @@ Data type: **form**
         - `priority` (Integer) - The priority tasks for this analysis should get. A higher number means a higher priority.
         - `platforms` (list of dictionaries). 
 
-            Each dictionary must at least contain the keys: `platform` (string), `os_version` (string). Each entry can
-            optionally contains `tags` (list of strings). - A task will be created for each platform in the platforms list.
+            Each dictionary must at least contain the keys: `platform` (string), `os_version` (string).
+            
+            Each entry can optionally contain:
+            
+            - `tags` (list of strings). - A task will be created for each platform in the platforms list.
+            - `settings` (Dictionary). This dictionary supports setting a specific `browser` or `command` per selected platform.
+
 
         - `extrpath` (list of strings). A list of paths to extract that leads to the file that should be selected.
         
@@ -36,6 +41,16 @@ Data type: **form**
             Example: We have an archive containing a dir1, which contains a zipfile nested.zip that contains dir2 with file.exe. The extrpath would be:
             
              `["dir1/nested.zip", "dir2/file.exe"]`
+         
+        - `orig_filename` (Boolean) - Ignore the filetype identified by the identification stage.
+        - `browser` (String) - The browser to use for a submitted URL.
+
+            Can only be used if one or more analysis machines have a `browser_<name>` tag. Example: setting browser to chrome will result in a 
+            search for a machine with the `browser_chrome` tag.
+        - `command` (list of strings) - The launch command to use when starting the submitted target.
+
+            The `%PAYLOAD%` placeholder can be used where the filename should be on start. It is automatically replaced.
+            Example to run a specific function from a submitted dll. `["rundll32.exe", "%PAYLOAD%,funcname"]`
 
 ##### Example
 

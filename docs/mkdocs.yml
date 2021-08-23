@@ -32,3 +32,4 @@ nav:
   - Web API:
     - Setup: usage/webapi/setup.md
     - Endpoints: usage/webapi/endpoints.md
+  - Commands: usage/commands.md 
