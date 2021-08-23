@@ -93,6 +93,7 @@
         version: null
       }, data);
 
+      // @TODO make network routing, browser and command also configurable per machine
       const machine = parseDOM(`
         <div class="box has-border has-background-light no-padding" data-machine data-platform="${lib.SafeString(data.platform)}" data-version="${lib.SafeString(data.version)}">
           <div class="columns is-divided is-gapless">
@@ -171,6 +172,8 @@
   // toggles extra fields for certain selected options
   function routingHandler() {
     const route   = document.querySelector('select[name="route"]');
+    if(!route) return;
+
     const country = document.querySelector('#select-vpn-country');
     route.addEventListener('change', ev => {
       if(ev.target.value == 'vpn')
@@ -194,9 +197,9 @@
       priority: parseInt(document.querySelector('select[name="priority"]').value),
       command: document.querySelector('input[name="command"]').value,
       orig_filename: document.querySelector('input[name="orig-filename"]').checked,
-      route: {
-        type: document.querySelector('select[name="route"]').value
-      },
+      // route: {
+      //   type: document.querySelector('select[name="route"]').value
+      // },
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
         let t = machine.querySelector('input[data-tags]');
 
@@ -214,7 +217,7 @@
     };
 
     /** @TODO whenever route type is set to vpn, make sure to also add a country parameter (toggled input based on wheter vpn is chosen as type) */
-    if(options.route.type.toLowerCase() == 'vpn')
+    if(options.route && options.route.type.toLowerCase() == 'vpn')
       options.route.country = document.querySelector('select[name="country"]');
 
     if(category == 'file') {

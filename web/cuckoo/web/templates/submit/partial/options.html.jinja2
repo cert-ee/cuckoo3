@@ -56,38 +56,39 @@
         </p>
       </div>
 
-      <div class="field">
-        {# routing #}
-        <label class="label has-margin-top" for="routing">Network routing</label>
-        <div class="control is-select">
-          <select class="input" name="route" id="route">
-            <option value="" selected>Default</option>
-            <option value="drop">Drop</option>
-            <option value="internet">Internet</option>
-            <option value="vpn">VPN</option>
-          </select>
-        </div>
-        <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" hidden>
-          <label class="label">Country</label>
+      {# network routing:
+        <div class="field">
+          <label class="label has-margin-top" for="routing">Network routing</label>
           <div class="control is-select">
-            <select class="input" name="country" id="country">
-              <option>First available</option>
-              <optgroup label="Available countries">
-                <option value="fr">France</option>
-                <option value="de">Germany</option>
-                <option value="nl">Netherlands</option>
-                <option value="ee">Estonia</option>
-              </optgroup>
+            <select class="input" name="route" id="route">
+              <option value="" selected>Default</option>
+              <option value="drop">Drop</option>
+              <option value="internet">Internet</option>
+              <option value="vpn">VPN</option>
             </select>
           </div>
+          <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" hidden>
+            <label class="label">Country</label>
+            <div class="control is-select">
+              <select class="input" name="country" id="country">
+                <option>First available</option>
+                <optgroup label="Available countries">
+                  <option value="fr">France</option>
+                  <option value="de">Germany</option>
+                  <option value="nl">Netherlands</option>
+                  <option value="ee">Estonia</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <p class="has-text-small has-half-opacity">
+            <span class="icon">
+              <i class="fas fa-info-circle"></i>
+            </span>
+            Configure protocol for internet usage
+          </p>
         </div>
-        <p class="has-text-small has-half-opacity">
-          <span class="icon">
-            <i class="fas fa-info-circle"></i>
-          </span>
-          Configure protocol for internet usage
-        </p>
-      </div>
+      #}
 
       {% if analysis.category == 'url' %}
         <div class="field">
