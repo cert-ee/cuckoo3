@@ -839,7 +839,7 @@ a.button, .control.is-file a.file-trigger {
 .table tr.is-odd-row, .table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]) {
   background-color: #FFFFFF;
 }
-.table tr.is-even-row, .table.has-even-rows > tbody > tr:nth-child(even):not([class^=separator]) {
+.table tr.is-even-row, .table.has-striped-rows > tbody > tr:nth-child(even):not([class^=separator]) {
   background-color: #E8F0F1;
 }
 .table tr.is-shown {
@@ -1860,46 +1860,27 @@ ul.process-tree .duration--inner {
 .screenshot-viewer .screenshot-image img {
   width: 100%;
 }
-.screenshot-viewer .screenshot-hitboxes {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 5;
-  display: flex;
-  padding: 0 1rem;
-}
-.screenshot-viewer .screenshot-hitboxes > .hitbox {
-  display: block;
-  height: 100%;
-  margin: 0 0.5rem;
-}
-.screenshot-viewer .screenshot-hitboxes > .hitbox:hover {
+.screenshot-viewer .screenshot-image:hover {
   cursor: pointer;
 }
-.screenshot-viewer .screenshot-timeline {
-  position: relative;
+.screenshot-viewer .screenshot-details {
   display: flex;
-  background-color: #1a1a1a;
-  padding: 1rem;
+  justify-content: space-around;
+  align-items: center;
 }
-.screenshot-viewer .screenshot-timeline > .time-part {
-  display: block;
-  background-color: #FFFFFF;
-  opacity: 0.2;
-  height: 1rem;
-  margin: 0 0.5rem;
-  border-radius: 2.5rem;
+.screenshot-viewer .screenshot-details > * {
+  flex-shrink: 0;
 }
-.screenshot-viewer .screenshot-timeline > .time-part.active {
-  opacity: 1;
-  background-color: #2E94F1;
+.screenshot-viewer .screenshot-details > * > * {
+  display: inline-block;
 }
-.screenshot-viewer .screenshot-timeline > .time-part.active:hover {
-  background-color: #277ecd;
+.screenshot-viewer .screenshot-details [data-screenshot-name]:hover {
+  cursor: pointer;
+  color: #2E94F1;
 }
 .screenshot-viewer .screenshot-description {
   display: flex;
-  justify-content: space-between;
+  justify-content: stretch;
   align-items: center;
   color: #FFFFFF;
   background-color: #333333;
@@ -1907,8 +1888,16 @@ ul.process-tree .duration--inner {
   border-bottom-right-radius: 0.2rem;
   border-bottom-left-radius: 0.2rem;
 }
-.screenshot-viewer .screenshot-description p {
-  margin: 0;
+.screenshot-viewer .screenshot-description > p {
+  margin: 0 1rem 0 0;
+  flex-shrink: 0;
+}
+.screenshot-viewer .screenshot-description > div {
+  flex-basis: 100%;
+}
+.screenshot-viewer .screenshot-description > div input[type=range] {
+  display: block;
+  width: 100%;
 }
 .screenshot-viewer .screenshot-description .icon-instruction {
   display: inline-flex;
