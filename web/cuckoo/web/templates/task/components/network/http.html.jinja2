@@ -26,18 +26,20 @@
           {{ req.dstip }}:{{ req.dstport }}
         </div>
         <div class="column">
-          <h4>URL</h4>
+          <h4 class="no-margin-top">URL</h4>
           <div class="columns is-vcenter no-margin-x no-padding-x">
             <div class="column is-auto no-margin-left"><span class="tag is-white has-text-weight-bold" data-tooltip title="Method">{{ req.request.method }}</span></div>
             <div class="column is-fill has-line-break"><p class="no-margin">{{ trim_string(str=req.request.url, max_chars=200, copy=True) }}</p></div>
-            <div class="column is-auto no-margin-right"><span class="tag is-white has-text-weight-bold" data-tooltip title="Status">{{ req.response.status }}</span></div>
+            {% if req.response and req.response.status %}
+              <div class="column no-margin-right"><span class="tag is-white has-text-weight-bold" data-tooltip title="Status">{{ req.response.status }}</span></div>
+            {% endif %}
           </div>
         </div>
       </div>
       <div class="columns is-divided">
         <div class="column">
           <h4 class="has-half-opacity">Request</h4>
-          {% if req.response %}
+          {% if req.request %}
             <table class="table">
               <tbody>
                 <tr>
