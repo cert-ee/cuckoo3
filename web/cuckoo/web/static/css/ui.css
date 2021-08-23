@@ -829,18 +829,6 @@ a.button, .control.is-file a.file-trigger {
   box-shadow: inset 0 1px 0 #CCCCCC;
   background-color: #f2f2f2;
 }
-.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]) {
-  background-color: #FFFFFF;
-}
-.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]):hover {
-  background-color: #fffcf2;
-}
-.table.has-striped-rows > tbody > tr:nth-child(even):not([class^=separator]) {
-  background-color: #E8F0F1;
-}
-.table.has-striped-rows > tbody > tr:nth-child(even):not([class^=separator]):hover {
-  background-color: #e9eee5;
-}
 .table.has-striped-rows > tbody > tr.has-background-red {
   background-color: #FF0000;
   color: #FFFFFF;
@@ -848,16 +836,26 @@ a.button, .control.is-file a.file-trigger {
 .table.has-striped-rows > tbody > tr.has-background-red:hover {
   background-color: #e60000;
 }
-.table.has-striped-rows > tbody > tr.is-shown {
+.table tr.is-odd-row, .table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]) {
+  background-color: #FFFFFF;
+}
+.table tr.is-even-row, .table.has-even-rows > tbody > tr:nth-child(even):not([class^=separator]) {
+  background-color: #E8F0F1;
+}
+.table tr.is-shown {
   background-color: #2E94F1 !important;
   color: #FFFFFF;
 }
-.table.has-striped-rows > tbody > tr.is-shown a, .table.has-striped-rows > tbody > tr.is-shown .is-link {
+.table tr.is-shown a, .table tr.is-shown .is-link {
   color: inherit;
 }
-.table.has-striped-rows > tbody > tr.is-shown td {
+.table tr.is-shown td {
   background-color: transparent;
   font-weight: 700;
+}
+.table tr.is-odd-row:hover,
+.table tr.is-even-row:hover {
+  background-color: #e9eee5;
 }
 .table tr.separator {
   background-color: #FFFFFF;

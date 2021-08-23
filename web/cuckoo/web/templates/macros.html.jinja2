@@ -316,7 +316,7 @@
 {% macro ui_signatures(signatures=[]) %}
 
   {# @TODO; indicate truncated iocs and results, customly without the render_table macro for brevity #}
-  <table class="table has-striped-rows">
+  <table class="table">
     <thead>
       <tr>
         <th>&nbsp;</th>
@@ -327,7 +327,7 @@
     <tbody>
       {% for signature in signatures|sort(attribute='score',reverse=True) %}
         {% set hasIOCs = signature.iocs.iocs and signature.iocs.iocs|length > 0 %}
-        <tr data-row="{{ loop.index }}">
+        <tr data-row="{{ loop.index }}" class="{% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
           <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
           <td>{{ signature.short_description }}</td>
           <td>{{ signature.description }}</td>
@@ -340,7 +340,7 @@
         <tr hidden data-row-of="{{ loop.index }}">
           <td colspan="4" class="no-padding has-border-y">
             {% if hasIOCs %}
-              <table class="table has-striped-rows has-sticky-header">
+              <table class="table has-sticky-header">
                 <thead>
                   {% for key, value in signature.iocs.iocs[0].ioc | dictsort %}
                     <th>{{ key }}</th>
@@ -359,16 +359,16 @@
                   {% endif %}
                   {% for row in signature.iocs.iocs %}
                     {% if row.truncated %}
-                      <tr class="separator has-half-opacity has-text-red">
+                      <tr class="has-text-red {% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
                         <td colspan="{{ signature.iocs.iocs[0].ioc.keys()|length }}">
                           <span class="icon no-margin-right">
                             <i class="fas fa-exclamation"></i>
                           </span>
-                          Not the full IoC. Values truncated
+                          <strong>Not the full IoC. Values truncated</strong>
                         </td>
                       </tr>
                     {% endif %}
-                    <tr>
+                    <tr class="{% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
                       {% for key, value in row.ioc|dictsort %}
                         <td class="{% if value|string()|length > 100 %}has-text-wrapped{% endif %} is-vtop">
                           {{value}}

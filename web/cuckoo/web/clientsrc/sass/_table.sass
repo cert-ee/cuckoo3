@@ -127,28 +127,43 @@
   &.has-striped-rows
     & > tbody
       & > tr
-        &:nth-child(odd):not([class^="separator"])
-          background-color: $row-odd
-          &:hover
-            background-color: mix($row-odd, $yellow, 95%)
-        &:nth-child(even):not([class^="separator"])
-          background-color: $row-even
-          &:hover
-            background-color: mix($row-even, $yellow, 95%)
+        // &:nth-child(odd):not([class^="separator"])
+        //   background-color: $row-odd
+        //   &:hover
+        //     background-color: mix($row-odd, $yellow, 95%)
+        // &:nth-child(even):not([class^="separator"])
+        //   background-color: $row-even
+        //   &:hover
+        //     background-color: mix($row-even, $yellow, 95%)
         &.has-background-red
           background-color: $red
           color: $white
           &:hover
             background-color: shade($red, .1)
 
-        &.is-shown
-          background-color: $blue !important
-          color: $white
-          a, .is-link
-            color: inherit
-          td
-            background-color: transparent
-            font-weight: 700
+  // in some cases, the default odd/even rules won't work, for example when there
+  // are multiple 'skippable' rows. These supporting classes can be used to 'force'
+  // an odd even style by applying the styles manually
+  tr.is-odd-row,
+  &.has-striped-rows > tbody > tr:nth-child(odd):not([class^="separator"])
+    background-color: $row-odd
+
+  tr.is-even-row,
+  &.has-even-rows > tbody > tr:nth-child(even):not([class^="separator"])
+    background-color: $row-even
+
+  tr.is-shown
+    background-color: $blue !important
+    color: $white
+    a, .is-link
+      color: inherit
+    td
+      background-color: transparent
+      font-weight: 700
+
+  tr.is-odd-row:hover,
+  tr.is-even-row:hover
+    background-color: mix($row-even, $yellow, 95%)
 
   tr.separator
     background-color: $white
