@@ -340,10 +340,10 @@
         <tr hidden data-row-of="{{ loop.index }}">
           <td colspan="4" class="no-padding has-border-y">
             {% if hasIOCs %}
-              <table class="table has-striped-rows">
+              <table class="table has-striped-rows has-sticky-header">
                 <thead>
-                  {% for col in signature.iocs.iocs[0].ioc.keys() %}
-                    <th>{{ col }}</th>
+                  {% for key, value in signature.iocs.iocs[0].ioc | dictsort %}
+                    <th>{{ key }}</th>
                   {% endfor %}
                 </thead>
                 <tbody>
@@ -369,9 +369,9 @@
                       </tr>
                     {% endif %}
                     <tr>
-                      {% for key, value in row.ioc.items() %}
-                        <td class="{% if value|string()|length > 40 %}has-text-wrapped{% endif %} is-vtop">
-                          {{ value }}
+                      {% for key, value in row.ioc|dictsort %}
+                        <td class="{% if value|string()|length > 100 %}has-text-wrapped{% endif %} is-vtop">
+                          {{value}}
                         </td>
                       {% endfor %}
                     </tr>
