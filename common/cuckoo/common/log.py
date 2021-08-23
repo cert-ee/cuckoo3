@@ -10,6 +10,7 @@ from queue import Queue
 from threading import Lock
 
 from .storage import TaskPaths, AnalysisPaths
+from .utils import force_valid_encoding
 
 # Replace WARNING with WARN to keep log line shorter,
 # aligned, and readable
@@ -97,16 +98,16 @@ class ColorText:
 
 
 def print_info(msg):
-    print(ColorText.green(msg))
+    print(ColorText.green(force_valid_encoding(msg)))
 
 def print_warning(msg):
-    print(ColorText.yellow(msg))
+    print(ColorText.yellow(force_valid_encoding(msg)))
 
 def print_error(msg):
-    print(ColorText.red(msg))
+    print(ColorText.red(force_valid_encoding(msg)))
 
 def exit_error(msg):
-    sys.exit(ColorText.red(msg))
+    sys.exit(ColorText.red(force_valid_encoding(msg)))
 
 
 _level = logging.INFO
