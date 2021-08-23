@@ -499,7 +499,7 @@ p {
 .columns.is-divided > .column.is-auto, .is-divided.tag-list > .column.is-auto, .columns.is-divided > .is-auto.tabbar-link, .is-divided.tag-list > .is-auto.tabbar-link, .is-divided.tabbar > .column.is-auto, .tabbar > .is-divided.container > .column.is-auto, .tabbar > .container > .is-divided.container > .column.is-auto, .is-divided.tabbar > .is-auto.tabbar-link, .tabbar > .is-divided.container > .is-auto.tabbar-link, .tabbar > .container > .is-divided.container > .is-auto.tabbar-link, .banner .columns.is-divided > .banner-icon, .banner .is-divided.tag-list > .banner-icon, .banner .is-divided.tabbar > .banner-icon, .banner .tabbar > .is-divided.container > .banner-icon, .banner .tabbar > .container > .is-divided.container > .banner-icon, .banner > .column.is-auto, .banner > .is-auto.tabbar-link, .banner > .banner-icon, .field.is-inline > .is-divided.control > .column.is-auto, .field.is-inline > .is-divided.control > .is-auto.tabbar-link, .banner .field.is-inline > .is-divided.control > .banner-icon, .field.is-inline > .control.banner > .column.is-auto, .field.is-inline > .control.banner > .is-auto.tabbar-link, .field.is-inline > .control.banner > .banner-icon, .field.is-inline > .column.is-auto, .field.is-inline > .is-auto.tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .is-auto.control, .field.is-inline > .label, .field.is-inline > .field-end {
   white-space: nowrap;
 }
-.columns.is-vcenter, .tag-list, .is-vcenter.tabbar, .tabbar > .is-vcenter.container, .tabbar > .container.tag-list, .tabbar > .container > .is-vcenter.container, .tabbar > .container > .container.tag-list, .is-vcenter.banner, .field.is-inline > .control, .field.is-inline {
+.columns.is-vcenter, .tag-list, .is-vcenter.tabbar, .tabbar > .is-vcenter.container, .tabbar > .container.tag-list, .tabbar > .container > .is-vcenter.container, .tabbar > .container > .container.tag-list, .banner, .field.is-inline > .control, .field.is-inline {
   align-items: center;
 }
 .columns.is-vtop, .is-vtop.tag-list, .is-vtop.tabbar, .tabbar > .is-vtop.container, .tabbar > .container > .is-vtop.container, .is-vtop.banner, .field.is-inline > .is-vtop.control, .is-vtop.field.is-inline {
@@ -508,7 +508,7 @@ p {
 .columns.is-vbottom, .is-vbottom.tag-list, .is-vbottom.tabbar, .tabbar > .is-vbottom.container, .tabbar > .container > .is-vbottom.container, .is-vbottom.banner, .field.is-inline > .is-vbottom.control, .is-vbottom.field.is-inline {
   align-items: flex-end;
 }
-.columns.is-vstretch, .is-vstretch.tag-list, .is-vstretch.tabbar, .tabbar > .is-vstretch.container, .tabbar > .container > .is-vstretch.container, .banner, .field.is-inline > .is-vstretch.control, .field.is-inline > .control.banner, .is-vstretch.field.is-inline, .field.is-inline.banner {
+.columns.is-vstretch, .is-vstretch.tag-list, .is-vstretch.tabbar, .tabbar > .is-vstretch.container, .tabbar > .container > .is-vstretch.container, .is-vstretch.banner, .field.is-inline > .is-vstretch.control, .is-vstretch.field.is-inline {
   align-items: stretch;
 }
 .columns.is-gapless > .column, .is-gapless.tag-list > .column, .columns.is-gapless > .tabbar-link, .is-gapless.tag-list > .tabbar-link, .is-gapless.tabbar > .column, .tabbar > .is-gapless.container > .column, .tabbar > .container > .is-gapless.container > .column, .is-gapless.tabbar > .tabbar-link, .tabbar > .is-gapless.container > .tabbar-link, .tabbar > .container > .is-gapless.container > .tabbar-link, .banner .columns.is-gapless > .banner-icon, .banner .is-gapless.tag-list > .banner-icon, .banner .is-gapless.tabbar > .banner-icon, .banner .tabbar > .is-gapless.container > .banner-icon, .banner .tabbar > .container > .is-gapless.container > .banner-icon, .is-gapless.banner > .column, .is-gapless.banner > .tabbar-link, .is-gapless.banner > .banner-icon, .field.is-inline > .is-gapless.control > .column, .field.is-inline > .is-gapless.control > .tabbar-link, .banner .field.is-inline > .is-gapless.control > .banner-icon, .field.is-inline > .column, .field.is-inline > .tabbar-link, .banner .field.is-inline > .banner-icon, .field.is-inline > .control, .field.is-inline > .label, .field.is-inline > .field-end {
@@ -829,16 +829,16 @@ a.button, .control.is-file a.file-trigger {
   box-shadow: inset 0 1px 0 #CCCCCC;
   background-color: #f2f2f2;
 }
-.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator-]) {
+.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]) {
   background-color: #FFFFFF;
 }
-.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator-]):hover {
+.table.has-striped-rows > tbody > tr:nth-child(odd):not([class^=separator]):hover {
   background-color: #fffcf2;
 }
-.table.has-striped-rows > tbody > tr:nth-child(even) {
+.table.has-striped-rows > tbody > tr:nth-child(even):not([class^=separator]) {
   background-color: #E8F0F1;
 }
-.table.has-striped-rows > tbody > tr:nth-child(even):hover {
+.table.has-striped-rows > tbody > tr:nth-child(even):not([class^=separator]):hover {
   background-color: #e9eee5;
 }
 .table.has-striped-rows > tbody > tr.has-background-red {

@@ -127,11 +127,11 @@
   &.has-striped-rows
     & > tbody
       & > tr
-        &:nth-child(odd):not([class^="separator-"])
+        &:nth-child(odd):not([class^="separator"])
           background-color: $row-odd
           &:hover
             background-color: mix($row-odd, $yellow, 95%)
-        &:nth-child(even)
+        &:nth-child(even):not([class^="separator"])
           background-color: $row-even
           &:hover
             background-color: mix($row-even, $yellow, 95%)
