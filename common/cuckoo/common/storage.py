@@ -395,6 +395,13 @@ class TaskPaths:
         return TaskPaths._path(task_id, "logs", *args)
 
     @staticmethod
+    def dropped_file(task_id, filename=None):
+        if filename:
+            return TaskPaths._path(task_id, "dropped", filename)
+
+        return TaskPaths._path(task_id, "dropped")
+
+    @staticmethod
     def screenshot(task_id, filename=None):
         if filename:
             return TaskPaths._path(task_id, "screenshots", filename)

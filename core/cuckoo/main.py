@@ -239,7 +239,7 @@ def _parse_settings(**kwargs):
 @click.option("--route-option", multiple=True, help="Options for given routes")
 def submission(target, url, platform, timeout, priority, orig_filename, browser,
                command, route_type, route_option):
-    """Create a new file analysis"""
+    """Create a new file/url analysis"""
     from cuckoo.common import submit
     from cuckoo.common.storage import Paths
 

@@ -1,6 +1,8 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from sys import getfilesystemencoding
+
 def parse_bool(value):
     """Attempt to parse a boolean value."""
     if value in ("true", "True", "yes", "1", "on"):
@@ -44,3 +46,12 @@ def fds_to_hardlimit():
         )
 
     return startlimit < currlimit, currlimit
+
+def force_valid_encoding(string):
+    """Force file system encoding type by first encoding in as bytes
+    with the replace handler, which will replace invalid chars. Then decode
+    it back a string."""
+    if isinstance(string, str):
+        return string.encode(getfilesystemencoding(), "replace").decode()
+    elif isinstance(string, bytes):
+        return string.decode(getfilesystemencoding(), "replace")

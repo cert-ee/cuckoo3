@@ -17,6 +17,7 @@ from .clients import StateControllerClient, ActionFailedError
 from .machines import read_machines_dump, MachinesList, find_in_lists
 from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
 from .strictcontainer import Analysis, SubmittedFile, SubmittedURL, Platform
+from .utils import force_valid_encoding
 
 class SubmissionError(Exception):
     pass
@@ -512,11 +513,15 @@ settings_maker = SettingsMaker()
 def url(url, settings):
     analysis_id, folder_path = make_analysis_folder()
     _write_analysis(
-        analysis_id, settings, SubmittedURL(category="url", url=url)
+        analysis_id, settings,
+        SubmittedURL(category="url", url=force_valid_encoding(url))
     )
     return analysis_id
 
 def file(filepath, settings, file_name=""):
+    if file_name:
+        file_name = force_valid_encoding(file_name)
+
     try:
         file_helper = File(filepath)
     except FileNotFoundError as e:
