@@ -82,7 +82,7 @@ class Signature:
     def to_dict(self, max_iocs=100, max_ioc_size=20*1024):
         truncated = False
         iocs = list(self.iocs)[0:max_iocs]
-        ioc_count = len(iocs)
+        ioc_count = len(self.iocs)
         if len(iocs) < ioc_count:
             truncated = True
 
