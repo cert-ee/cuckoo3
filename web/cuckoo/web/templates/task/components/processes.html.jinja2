@@ -1,9 +1,9 @@
 {# make sure to hide this when the proctree is unsupported. #}
 {% call ui_box(title="Processes", has_padding=False) %}
   {% if report.processes.truncated %}
-    <div class="banner is-yellow">
-      <span class="banner-icon">&times;</span>
-      <p>Process tree truncated because it exceeds the maximum amount of processes. Actual amount: {{ report.processes.count }}</p>
+    <div class="banner is-yellow has-margin-x">
+      <span class="banner-icon"><i class="fas fa-info-circle"></i></span>
+      <p class="no-margin-y has-margin-x">Process tree truncated because it exceeds the maximum amount of processes. Actual amount: {{ report.processes.count }}</p>
     </div>
   {% endif %}
   <div class="has-text-small has-overflow-x" style="max-width: 100%;" id="tab-process-tree"><!-- report.task.js:105 --></div>

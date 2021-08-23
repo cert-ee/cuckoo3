@@ -151,7 +151,6 @@
   {% d = some_dict_variable %}
 
   {{ render_dict(d) }}
-
 #}
 {% macro render_dict(dict, depth=0) %}
   <ul class="json-expander is-monospace has-text-bold">
@@ -237,18 +236,18 @@
     {% if display_title == True and title %}
       <h3 class="box-title">{{ title }}
         {% if collapsible %}
-        <a href="#"
-          onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);"
-          class="pull-right {% if collapsible %} {% if not collapsed %}visibility-visible{% else %}visibility-hidden{% endif %}{% endif %}">
-          <i class="fas chevron"></i>
-        </a>
+          <a href="#"
+            onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);"
+            class="pull-right {% if collapsible %} {% if not collapsed %}visibility-visible{% else %}visibility-hidden{% endif %}{% endif %}">
+            <i class="fas chevron"></i>
+          </a>
         {% endif %}
       </h3>
     {% endif %}
     {% if description|length > 0 %}<p class="has-padding no-margin">{{ description }}</p>{% endif %}
     <div id="{{ boxid }}"
       class="{% if has_padding == True %}has-padding{% endif %}"
-      {% if collapsible and collapsed %}hidden{% endif%}>
+      {% if collapsible and collapsed %}hidden{% endif %}>
       {{ caller() }}
     </div>
   </div>
@@ -315,6 +314,8 @@
 
 #}
 {% macro ui_signatures(signatures=[]) %}
+
+  {# @TODO; indicate truncated iocs and results, customly without the render_table macro for brevity #}
   <table class="table has-striped-rows">
     <thead>
       <tr>
@@ -326,11 +327,6 @@
     <tbody>
       {% for signature in signatures|sort(attribute='score',reverse=True) %}
         {% set hasIOCs = signature.iocs.iocs and signature.iocs.iocs|length > 0 %}
-        {% if signature.iocs.truncated %}
-          <tr>
-            <td colspan="3">IoC table truncated because it exceeds the maximum amount of IoCs. Actual amount: {{ signatures.iocs.count }}</td>
-          </tr>
-        {% endif %}
         <tr data-row="{{ loop.index }}">
           <td><span class="tag {{ color_class(signature.score) }}">{{ signature.score }}</span></td>
           <td>{{ signature.short_description }}</td>
@@ -344,13 +340,51 @@
         <tr hidden data-row-of="{{ loop.index }}">
           <td colspan="4" class="no-padding has-border-y">
             {% if hasIOCs %}
-              {{ render_table(data = signature.iocs.iocs, cols = signature.iocs.iocs[0].keys()) }}
+              <table class="table has-striped-rows">
+                <thead>
+                  {% for col in signature.iocs.iocs[0].ioc.keys() %}
+                    <th>{{ col }}</th>
+                  {% endfor %}
+                </thead>
+                <tbody>
+                  {% if signature.iocs.truncated %}
+                    <tr>
+                      <td colspan="{{ signature.iocs.iocs[0].ioc.keys()|length }}">
+                        <div class="banner is-yellow has-margin-x">
+                          <span class="banner-icon"><i class="fas fa-info-circle"></i></span>
+                          <p class="no-margin-y has-margin-x">IoC table truncated because it exceeds the maximum amount of IoCs. Actual amount: {{ signature.iocs.count }}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% for row in signature.iocs.iocs %}
+                    {% if row.truncated %}
+                      <tr class="separator has-half-opacity has-text-red">
+                        <td colspan="{{ signature.iocs.iocs[0].ioc.keys()|length }}">
+                          <span class="icon no-margin-right">
+                            <i class="fas fa-exclamation"></i>
+                          </span>
+                          Not the full IoC. Values truncated
+                        </td>
+                      </tr>
+                    {% endif %}
+                    <tr>
+                      {% for key, value in row.ioc.items() %}
+                        <td class="{% if value|string()|length > 40 %}has-text-wrapped{% endif %} is-vtop">
+                          {{ value }}
+                        </td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             {% endif %}
           </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+
 {% endmacro %}
 
 {#
