@@ -343,7 +343,7 @@
               <table class="table has-sticky-header">
                 <thead>
                   {% for key, value in signature.iocs.iocs[0].ioc | dictsort %}
-                    <th>{{ key }}</th>
+                    <th class="has-border">{{ key }}</th>
                   {% endfor %}
                 </thead>
                 <tbody>
@@ -359,8 +359,8 @@
                   {% endif %}
                   {% for row in signature.iocs.iocs %}
                     {% if row.truncated %}
-                      <tr class="has-text-red {% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
-                        <td colspan="{{ signature.iocs.iocs[0].ioc.keys()|length }}">
+                      <tr class="has-text-red has-text-small {% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
+                        <td colspan="{{ signature.iocs.iocs[0].ioc.keys()|length }} no-padding-y">
                           <span class="icon no-margin-right">
                             <i class="fas fa-exclamation"></i>
                           </span>
@@ -370,7 +370,7 @@
                     {% endif %}
                     <tr class="{% if loop.index % 2 %}is-even-row{% else %}is-odd-row{% endif %}">
                       {% for key, value in row.ioc|dictsort %}
-                        <td class="{% if value|string()|length > 100 %}has-text-wrapped{% endif %} is-vtop">
+                        <td class="{% if value|string()|length > 100 %}has-text-wrapped{% endif %} is-vtop has-border">
                           {{value}}
                         </td>
                       {% endfor %}
