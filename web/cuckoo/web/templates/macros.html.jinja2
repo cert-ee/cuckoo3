@@ -226,7 +226,7 @@
     {% endcall %}
 
 #}
-{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, collapsible=True, collapsed=False, hidden=False) %}
+{% macro ui_box(title="page", prefix="box", id=False, description="", display_title=True, has_padding=True, can_overflow=False, collapsible=True, collapsed=False, hidden=False) %}
   {% if id %}
     {% set boxid = id %}
   {% else %}
@@ -246,7 +246,7 @@
     {% endif %}
     {% if description|length > 0 %}<p class="has-padding no-margin">{{ description }}</p>{% endif %}
     <div id="{{ boxid }}"
-      class="{% if has_padding == True %}has-padding{% endif %}"
+      class="{% if has_padding == True %}has-padding{% endif %} {% if can_overflow == True %}has-overflow-x{% endif %}"
       {% if collapsible and collapsed %}hidden{% endif %}>
       {{ caller() }}
     </div>

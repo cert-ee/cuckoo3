@@ -23,10 +23,10 @@
   <a class="tabbar-link" href="#tab-component-b">B</a>
 
 #}
-{% set report_components = ['network','misp','cfgextr','intelmq'] %}
-{% set report_component_labels = ['Network','MISP', 'Configuration Extraction', 'IntelMQ'] %}
+{% set report_components = ['network','misp','cfgextr','intelmq','suricata'] %}
+{% set report_component_labels = ['Network','MISP', 'Configuration Extraction', 'IntelMQ','Suricata'] %}
 
-{% from 'macros.html.jinja2' import render_dict, ui_box, ui_signatures, ui_strings, error_box, render_table, color_class, color_text %}
+{% from 'macros.html.jinja2' import render_dict, ui_box, ui_signatures, ui_strings, error_box, render_table, color_class, color_text, trim_string %}
 
 {% block page_script %}
   <script>

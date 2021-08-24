@@ -1,0 +1,39 @@
+{% call ui_box(title="Suricata", has_padding=False, id="signatures", can_overflow=True) %}
+  <table class="table has-striped-rows is-compressed">
+    <thead>
+      <tr>
+        <th>Signature</th>
+        <th>Category</th>
+        <th>Source</th>
+        <th>Destination</th>
+        <th>Protocol</th>
+        <th class="no-text-wrap">App protocol</th>
+        <th class="no-text-wrap">Malware families</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sur in report.suricata %}
+        <tr>
+          <td data-tooltip title="Revision: {{ sur.rev }}">
+            <p class="no-margin-y">{{ sur.signature }}</p>
+            <p class="has-text-weight-heavy no-margin-y"><small>ID: {{ sur.signature_id }}</small></p>
+          </td>
+          <td>{{ sur.category }}</td>
+          <td>
+            {% if sur.srcip %}
+              {{ sur.srcip }}{% if sur.srcport %}:{{ sur.srcport }}{% endif %}
+            {% endif %}
+          </td>
+          <td>
+            {% if sur.dstip %}
+              {{ sur.dstip }}{% if sur.dstport %}:{{ sur.dstport }}{% endif %}
+            {% endif %}
+          </td>
+          <td>{{ sur.proto }}</td>
+          <td>{{ sur.app_proto }}</td>
+          <td>{{ sur.malware_families|join(', ') }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}
