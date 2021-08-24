@@ -252,6 +252,9 @@ p {
 .is-link.has-no-underline {
   text-decoration: none !important;
 }
+.is-link:hover {
+  cursor: pointer;
+}
 
 .view {
   min-height: 100%;
@@ -1404,6 +1407,10 @@ ul.process-tree .duration--inner {
 .icon.is-big > * {
   font-size: 1.5em;
   vertical-align: middle;
+}
+
+.visibility-visible .icon.is-caret {
+  transform: rotate(90deg);
 }
 
 .box, .banner {
