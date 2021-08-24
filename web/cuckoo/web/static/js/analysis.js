@@ -392,6 +392,9 @@ const processes = (function() {
 // screenshot module
 (function screenshots() {
 
+  if(!window.Application)
+    return;
+
   const elem      = document.querySelector('#screenshot');
   const data      = Application.screenshot;
   const baseURL   = Application.screenshotURL;
