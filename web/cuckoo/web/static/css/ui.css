@@ -899,6 +899,13 @@ a.button, .control.is-file a.file-trigger {
   position: sticky;
   bottom: 0;
 }
+.table.is-compressed {
+  font-size: 0.9em;
+}
+.table.is-compressed th,
+.table.is-compressed td {
+  padding: 0.5rem;
+}
 
 .details {
   display: block;
@@ -2250,9 +2257,11 @@ button[disabled] {
 }
 .has-overflow-x {
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .has-overflow-y {
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .no-overflow {

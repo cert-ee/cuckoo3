@@ -127,14 +127,6 @@
   &.has-striped-rows
     & > tbody
       & > tr
-        // &:nth-child(odd):not([class^="separator"])
-        //   background-color: $row-odd
-        //   &:hover
-        //     background-color: mix($row-odd, $yellow, 95%)
-        // &:nth-child(even):not([class^="separator"])
-        //   background-color: $row-even
-        //   &:hover
-        //     background-color: mix($row-even, $yellow, 95%)
         &.has-background-red
           background-color: $red
           color: $white
@@ -208,3 +200,9 @@
     tfoot td
       position: sticky
       bottom: 0
+
+  &.is-compressed
+    font-size: .9em
+    th,
+    td
+      padding: .5rem
