@@ -14,9 +14,9 @@
     <tbody>
       {% for sur in report.suricata %}
         <tr>
-          <td data-tooltip title="Revision: {{ sur.rev }}">
-            <p class="no-margin-y">{{ sur.signature }}</p>
-            <p class="has-text-weight-heavy no-margin-y"><small>ID: {{ sur.signature_id }}</small></p>
+          <td>
+            <p data-tooltip title="Revision: {{ sur.rev }}" class="no-margin-y">{{ sur.signature }}</p>
+            <p data-tooltip title="Revision: {{ sur.rev }}" class="has-text-weight-heavy no-margin-y"><small>ID: {{ sur.signature_id }}</small></p>
           </td>
           <td>{{ sur.category }}</td>
           <td>
