@@ -94,15 +94,15 @@
       }, data);
 
       // @TODO make network routing, browser and command also configurable per machine
+      // network: data-route-type, data-route-country-field, data-route-country
       const machine = parseDOM(`
-        <div class="box has-border has-background-light no-padding" data-machine data-platform="${lib.SafeString(data.platform)}" data-version="${lib.SafeString(data.version)}">
+        <div class="box has-border has-background-white no-padding" data-machine data-platform="${lib.SafeString(data.platform)}" data-version="${lib.SafeString(data.version)}">
           <div class="columns is-divided is-gapless">
-            <div class="column has-padding-x has-padding-bottom">
-              <div class="columns is-divided">
-                <p class="column"><strong>${lib.SafeString(data.platform)}</strong></p>
-                <p class="column">${lib.SafeString(data.version)}</p>
-              </div>
-              <div class="field is-inline">
+            <div class="column has-padding-x">
+              <p>
+                <strong>${lib.SafeString(data.platform)}</strong> ${lib.SafeString(data.version)}
+              </p>
+              <div class="field is-inline has-padding-x no-margin-top">
                 <label class="label"><i class="fas fa-tags"></i></label>
                 <div class="control is-tags tag-list">
                   <div class="tag control has-addon no-padding-right">
@@ -115,6 +115,74 @@
                   <input type="hidden" data-tags />
                 </div>
               </div>
+
+              <div class="field" data-network-routing>
+                <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('[data-toggle-network]'), null, event);">
+                  <span class="icon is-caret">
+                    <i class="fas fa-caret-right"></i>
+                  </span>
+                  Network routing
+                </label>
+                <div data-toggle-network hidden>
+                  <div class="control is-select">
+                    <select class="input" data-route-type>
+                      <option value="" selected>Default</option>
+                      <option value="drop">Drop</option>
+                      <option value="internet">Internet</option>
+                      <option value="vpn">VPN</option>
+                    </select>
+                  </div>
+                  <div class="field is-inline no-padding-y no-padding-right no-margin-top" data-route-country-field hidden>
+                    <label class="label">Country</label>
+                    <div class="control is-select">
+                      <select class="input" data-route-country>
+                        <option>First available</option>
+                        <optgroup label="Available countries">
+                          <option value="fr">France</option>
+                          <option value="de">Germany</option>
+                          <option value="nl">Netherlands</option>
+                          <option value="ee">Estonia</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
+                  <span class="icon is-caret">
+                    <i class="fas fa-caret-right"></i>
+                  </span> Browser
+                </label>
+                <div class="control is-select" hidden>
+                  <select class="input" data-browser>
+                    <option value="default">Default</option>
+                    <option value="ie">Internet Explorer</option>
+                    <option value="firefox">Firefox</option>
+                    <option value="chrome">Chrome</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
+                  <span class="icon is-caret">
+                    <i class="fas fa-caret-right"></i>
+                  </span> Launch commands
+                </label>
+                <div class="control" hidden>
+                  <input class="input" type="text" id="command" data-command />
+                </div>
+              </div>
+
+              <p class="has-text-small has-half-opacity">
+                <span class="icon">
+                  <i class="fas fa-info-circle"></i>
+                </span>
+                If set, these options override the default options as set in the options/advanced section for this machine setup.
+              </p>
+
             </div>
             <button type="button" class="column is-auto button has-hover-red no-radius-left" data-delete-machine>
               <i class="fas fa-times"></i>
@@ -130,6 +198,7 @@
         machinery.appendChild(machine);
 
       handleTagInput(machine.querySelector('.tag-list'));
+      routingHandler(machine.querySelector('[data-network-routing]'));
 
       // blink the created item
       blink(machine);
@@ -170,11 +239,11 @@
   }
 
   // toggles extra fields for certain selected options
-  function routingHandler() {
-    const route   = document.querySelector('select[name="route"]');
+  function routingHandler(el = document) {
+    const route   = el.querySelector('select[data-route-type]');
     if(!route) return;
 
-    const country = document.querySelector('#select-vpn-country');
+    const country = el.querySelector('[data-route-country-field]');
     route.addEventListener('change', ev => {
       if(ev.target.value == 'vpn')
         country.removeAttribute('hidden');
@@ -197,9 +266,9 @@
       priority: parseInt(document.querySelector('select[name="priority"]').value),
       command: document.querySelector('input[name="command"]').value,
       orig_filename: document.querySelector('input[name="orig-filename"]').checked,
-      // route: {
-      //   type: document.querySelector('select[name="route"]').value
-      // },
+      route: {
+        type: document.querySelector('select[name="route"]').value
+      },
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
         let t = machine.querySelector('input[data-tags]');
 
@@ -216,7 +285,6 @@
       })
     };
 
-    /** @TODO whenever route type is set to vpn, make sure to also add a country parameter (toggled input based on wheter vpn is chosen as type) */
     if(options.route && options.route.type.toLowerCase() == 'vpn')
       options.route.country = document.querySelector('select[name="country"]');
 
