@@ -47,6 +47,7 @@
   // in the version dropdown
   function platformHandler() {
 
+    const { category }  = window.Application;
     const platforms     = document.querySelector('select[name="platform"]');
     const versions      = document.querySelector('select[name="version"]');
     const addPlatform   = document.querySelector('#add-platform');
@@ -116,7 +117,7 @@
                 </div>
               </div>
 
-              <div class="field" data-network-routing>
+              <div class="field" data-routing>
                 <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('[data-toggle-network]'), null, event);">
                   <span class="icon is-caret">
                     <i class="fas fa-caret-right"></i>
@@ -126,7 +127,8 @@
                 <div data-toggle-network hidden>
                   <div class="control is-select">
                     <select class="input" data-route-type>
-                      <option value="" selected>Default</option>
+                      <option value="" selected>Initial</option>
+                      <option value="">Default</option>
                       <option value="drop">Drop</option>
                       <option value="internet">Internet</option>
                       <option value="vpn">VPN</option>
@@ -149,21 +151,24 @@
                 </div>
               </div>
 
-              <div class="field">
-                <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
-                  <span class="icon is-caret">
-                    <i class="fas fa-caret-right"></i>
-                  </span> Browser
-                </label>
-                <div class="control is-select" hidden>
-                  <select class="input" data-browser>
-                    <option value="default">Default</option>
-                    <option value="ie">Internet Explorer</option>
-                    <option value="firefox">Firefox</option>
-                    <option value="chrome">Chrome</option>
-                  </select>
+              ${category == 'url' ? `
+                <div class="field">
+                  <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
+                    <span class="icon is-caret">
+                      <i class="fas fa-caret-right"></i>
+                    </span> Browser
+                  </label>
+                  <div class="control is-select" hidden>
+                    <select class="input" data-browser>
+                      <option value="">Initial</option>
+                      <option value="default">Default</option>
+                      <option value="ie">Internet Explorer</option>
+                      <option value="firefox">Firefox</option>
+                      <option value="chrome">Chrome</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              ` : ''}
 
               <div class="field">
                 <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
@@ -198,7 +203,7 @@
         machinery.appendChild(machine);
 
       handleTagInput(machine.querySelector('.tag-list'));
-      routingHandler(machine.querySelector('[data-network-routing]'));
+      routingHandler(machine.querySelector('[data-routing]'));
 
       // blink the created item
       blink(machine);
@@ -272,10 +277,34 @@
       platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
         let t = machine.querySelector('input[data-tags]');
 
-        /** @TODO platforms expose a subset for a few default parameters. They override what the global
-        settings already define when encountered. */
+        // specific machine option overrides
         let s = {};
 
+        let machineNetwork = machine.querySelector('[data-route-type]').value;
+        let machineNetworkCountry = machine.querySelector('[data-route-country]').value;
+        let machineCommand = machine.querySelector('[data-command]').value;
+        let machineBrowser;
+
+        // append route type and country if set
+        if(machineNetwork.length) {
+          s.route = {
+            type: machineNetwork
+          };
+          if(machineNetwork.toLowerCase() == 'vpn')
+            s.route.country = machineNetworkCountry;
+        }
+
+        // append other options if set
+        if(machineCommand.length)
+          s.command = machineCommand;
+
+        if(category === 'url') {
+          machineBrowser = machine.querySelector('[data-browser]').value;
+          if(machineBrowser.length)
+            s.browser = machineBrowser;
+        }
+
+        // return bundle of machine config for json serialization
         return {
           platform: machine.dataset.platform,
           os_version: machine.dataset.version,
@@ -285,6 +314,7 @@
       })
     };
 
+    // set VPN country if route is set to VPN
     if(options.route && options.route.type.toLowerCase() == 'vpn')
       options.route.country = document.querySelector('select[name="country"]');
 
@@ -294,6 +324,9 @@
         return handleError('No file has been selected. Select a file and try again.');
       options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
     }
+
+    console.log(options);
+    debugger;
 
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
