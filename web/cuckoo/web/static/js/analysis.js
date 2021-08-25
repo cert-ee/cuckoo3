@@ -418,7 +418,9 @@ const processes = (function() {
 
       scdetails.querySelector('[data-screenshot-index]').textContent = index+1 + '/' + data.length;
       scdetails.querySelector('[data-screenshot-name]').textContent = sc.name;
+      scdetails.querySelector('[data-screenshot-name]').title = 'Click to open screenshot in new window';
     }
+    img.addEventListener('click', ev => slider.focus());
   }
 
   slider.addEventListener('change', ev => {
@@ -429,10 +431,8 @@ const processes = (function() {
 
   slider.dispatchEvent(new Event('change'));
 
-  [image, scdetails.querySelector('[data-screenshot-name]')].forEach(e => {
-    e.addEventListener('click', ev => {
-      window.open(baseURL(loaded.name), "_blank");
-    });
+  scdetails.querySelector('[data-screenshot-name]').addEventListener('click', ev => {
+    window.open(baseURL(loaded.name), "_blank");
   });
 
 }());
