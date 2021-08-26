@@ -15,23 +15,12 @@
       // a redirect to the settings page has to occur.
       function manualStatus(id) {
         return new Promise((resolve, reject) => {
-
           fetch(`/api/analyses/${id}/manualstatus`, {
             headers: {
               'X-CSRF-Token': window.csrf_token
             }
-          }).then(response => response.json())
-            .then(data => {
-              const { error, state_desc, ready } = data;
-              if(error != undefined) {
-                return reject({state_desc, error});
-              } else if (ready === false) {
-                return reject({state_desc});
-              } else {
-                return resolve({state_desc, ready});
-              }
-            })
-            .catch(reject);
+          }).then(response => response)
+            .then(resolve).catch(reject);
         });
       }
 
@@ -41,39 +30,28 @@
       // - if an error occured, it displays the message in read
       // - it logs its current state_desc as it progresses
       function poll() {
-        manualStatus("{{ analysis_id }}").then(res => {
-            const { state_desc, ready }     = res;
-            stateMessage.textContent = state_desc;
-            if(ready) {
-              window.location = '/submit/settings/{{ analysis_id }}';
-            } else {
-              setTimeout(poll, 1000);
+        manualStatus("{{ analysis_id }}").then(response => {
+            switch(response.status) {
+              case 200: // ready for settings
+                window.location = response.headers.get('location');
+              break;
+              case 202: // not ready yet
+                setTimeout(poll, 1000);
+              break;
+              case 404: // doesn't exist - display message
+                stateMessage.classList.add('has-text-red');
+                stateMessage.textContent = 'Analysis not found';
+                stateDescription.textContent = '';
+                stateIcon.classList.remove('fa-spinner');
+                stateIcon.classList.remove('fa-spin');
+                stateIcon.classList.add('fa-ban');
+                stateIcon.classList.add('is-red');
+              break;
             }
-          }).catch(res => {
-            const { state_desc, error } = res;
-            stateMessage.classList.toggle('has-text-red', error != undefined);
-            if(error) {
-              // do not start a new poll as we received a fatal error.
-              // stateMessage.textContent = state_desc;
-              // stateDescription.textContent = error;
-              // stateIcon.classList.remove('fa-spinner');
-              // stateIcon.classList.remove('fa-spin');
-              // stateIcon.classList.add('fa-ban');
-              // stateIcon.classList.add('is-red');
-
-              // @TODO redirect to analysis page with the id, the error is rendered
-              // on that page.
-              window.location = '/analysis/{{analysis_id}}';
-            } else {
-              // display the current state description and time a new poll.
-              stateMessage.textContent = state_desc;
-              setTimeout(poll, 1000);
-            }
-          });
+          }).catch(args => console.error(args));
       }
 
-      // @TODO poll or poll(), idk
-      setTimeout(poll(), 5000);
+      poll();
     });
   </script>
 {% endblock %}
