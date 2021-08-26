@@ -3,7 +3,8 @@
 
 from cuckoo.common import submit, analyses
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotFound, HttpResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 
@@ -66,40 +67,33 @@ class ReadyForManual(View):
     def get(self, request, analysis_id):
         state = analyses.get_state(analysis_id)
         if not state:
-            return JsonResponse(
-                {"error": "Analysis does not exist"}, status=404
-            )
+            return HttpResponseNotFound()
 
-        human_state = analyses.States.to_human(state)
-        if state == analyses.States.WAITING_MANUAL:
-            return JsonResponse(
-                {"ready": True, "state_desc": human_state}
-            )
-
-        elif state == analyses.States.FATAL_ERROR:
-            try:
-                errs = analyses.get_fatal_errors(analysis_id)
-            except analyses.AnalysisError as e:
-                return JsonResponse(
-                    {
-                        "error": "Analysis has state 'fatal error'. "
-                                 f"Could not retrieve errors. {e}",
-                        "ready": False,
-                        "state_desc": human_state
-                    }
+        if state == analyses.States.PENDING_IDENTIFICATION:
+            # HTTP accepted. Client must wait and ask again until
+            # identification has finished.
+            return HttpResponse(status=202)
+        else:
+            resp = HttpResponse()
+            # We are using a 200 response with location header, because the
+            # UI is using a js fetch to retrieve this API. We want to redirect
+            # the page to the location and not to cause the fetch to retrieve
+            # the location.
+            if state == analyses.States.WAITING_MANUAL:
+                # Client can now be redirected to settings page. Tell UI to
+                # redirect to it.
+                resp["location"] = reverse(
+                    "Submit/settings", args=[analysis_id]
                 )
+                return resp
+            if state in (analyses.States.NO_SELECTED,
+                           analyses.States.PENDING_PRE):
+                # Analysis page cannot (yet) be viewed. Tell UI to redirect
+                # to the overview page
+                resp["location"] = reverse("Analyses/index")
+                return resp
 
-            if errs:
-                error = errs[0]
-            else:
-                error = ""
-            return JsonResponse({
-                "error": f"Fatal error during analysis. {error}",
-                "ready": False,
-                "state_desc": human_state
-            })
-
-        return JsonResponse({
-            "ready": False,
-            "state_desc": human_state
-        })
+            # Any other state should have a viewable analysis page.
+            # Tell UI to redirect to it.
+            resp["location"] = reverse("Analysis/index", args=[analysis_id])
+            return resp
