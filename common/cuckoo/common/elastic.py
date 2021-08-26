@@ -737,7 +737,7 @@ class _SearchQueryRunner:
 
     def _execute_query(self, query, limit=5, offset=0):
         query = query[offset:offset + limit]
-        query = query.sort("ts")
+        query = query.sort("-ts")
         log.debug("Generated query.", query=query.to_dict())
         try:
             response = query.execute()
