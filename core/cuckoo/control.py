@@ -1,6 +1,7 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from datetime import datetime
 import os
 import queue
 import threading
@@ -166,7 +167,8 @@ def handle_pre_done(worktracker):
             "Failed to create tasks for analysis", error=e
         )
         worktracker.errtracker.fatal_error(
-            f"Failed to create tasks for analysis. {e}"
+            f"Failed to create tasks for analysis. {e}. "
+            f"Reasons: {', '.join(e.reasons)}"
         )
         for err in e.reasons:
             worktracker.errtracker.add_error(err)
@@ -237,6 +239,7 @@ def handle_post_done(worktracker):
     # Update the score and state of this task in the analysis json.
     worktracker.analysis.update_task(
         worktracker.task.id, score=post.score, state=worktracker.task.state,
+        stopped_on=datetime.utcnow()
     )
 
     # Update analysis score, tags, and detected families
@@ -289,7 +292,8 @@ def set_failed(worktracker, worktype):
         task.merge_processing_errors(worktracker.task)
         worktracker.task.state = task.States.FATAL_ERROR
         worktracker.analysis.update_task(
-            worktracker.task.id, state=worktracker.task.state
+            worktracker.task.id, state=worktracker.task.state,
+            stopped_on=datetime.utcnow()
         )
         task.write_changes(worktracker.task)
         update_final_analysis_state(worktracker)
@@ -316,7 +320,8 @@ def set_task_failed(worktracker):
     task.merge_run_errors(worktracker.task)
     worktracker.task.state = task.States.FATAL_ERROR
     worktracker.analysis.update_task(
-        worktracker.task.id, state=worktracker.task.state
+        worktracker.task.id, state=worktracker.task.state,
+        stopped_on=datetime.utcnow()
     )
     analyses.write_changes(worktracker.analysis)
     task.write_changes(worktracker.task)
@@ -328,7 +333,8 @@ def set_task_running(worktracker, machine):
     worktracker.task.state = task.States.RUNNING
     worktracker.analysis.update_task(
         worktracker.task.id, state=worktracker.task.state,
-        platform=machine.platform, os_version=machine.os_version
+        platform=machine.platform, os_version=machine.os_version,
+        started_on=datetime.utcnow()
     )
     task.write_changes(worktracker.task)
     analyses.write_changes(worktracker.analysis)

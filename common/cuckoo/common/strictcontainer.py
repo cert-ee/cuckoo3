@@ -292,11 +292,9 @@ class Platform(StrictContainer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._loaded["settings"] = {
-            "browser": "",
-            "route": {},
-            "command": []
-        }
+        self._loaded["settings"].setdefault("browser", "")
+        self._loaded["settings"].setdefault("command", [])
+        self._loaded["settings"].setdefault("route", {})
 
     def set_route(self, **kwargs):
         self.settings.setdefault("route", {}).update(kwargs)
@@ -495,7 +493,7 @@ class Analysis(StrictContainer):
     )
 
     def update_task(self, task_id, score=None, state="", platform="",
-                    os_version=""):
+                    os_version="", started_on=None, stopped_on=None):
         for task in self.tasks:
             if task["id"] == task_id:
 
@@ -509,6 +507,12 @@ class Analysis(StrictContainer):
                     if not task["os_version"]:
                         task["platform"] = platform
                         task["os_version"] = os_version
+
+                if started_on:
+                    task["started_on"] = started_on
+
+                if stopped_on:
+                    task["stopped_on"] = stopped_on
 
                 self.set_updated(["tasks"])
                 break
