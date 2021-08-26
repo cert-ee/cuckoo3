@@ -427,6 +427,18 @@ def db_find_location(analysis_id):
     finally:
         ses.close()
 
+def count_submission(start=None, end=None):
+    ses = db.dbms.session()
+    try:
+        q = ses.query(db.Analysis)
+        if start and end:
+            q = q.filter(
+                db.Analysis.created_on>=start, db.Analysis.created_on<=end
+            )
+        return q.count()
+    finally:
+        ses.close()
+
 def set_score(analysis, score):
     if score > analysis.score:
         analysis.score = score

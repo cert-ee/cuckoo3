@@ -5,6 +5,8 @@ import calendar
 import datetime
 from threading import Lock
 
+from .analyses import count_submission
+from .task import count_created as count_created_tasks
 from .elastic import (
     analysis_unique_values_field, ElasticSearchError, analysis_count_field_val
 )
@@ -350,6 +352,25 @@ class BehaviorCategoryLine(LineChart):
     NAME = "Detected behavior over time"
     DESCRIPTION = "Detected behavior over time of the last %RANGE%"
 
+class SubmissionsCountLine(LineChart):
+
+    KEY = "submissions_line"
+    NAME = "Submissions over time"
+    DESCRIPTION = "The created analyses and their tasks over time of " \
+                  "the last %RANGE%"
+
+    def _retrieve_data(self, chart_data):
+
+        for countfunc, data_label in (
+            (count_submission, "Analyses"), (count_created_tasks, "Tasks")
+        ):
+            data = []
+            for start, end, _ in self.range.point_ranges:
+                data.append(countfunc(start=start, end=end))
+
+            chart_data.add_dataset(data=data, label=data_label)
+        chart_data.labels = self.range.date_labels
+
 
 class _ChartDataCacher:
 
@@ -386,6 +407,7 @@ class ChartDataMaker:
         FamilyCounts.KEY: FamilyCounts,
         BehaviorCategoryCounts.KEY: BehaviorCategoryCounts,
         TargetFileExt.KEY: TargetFileExt,
+        SubmissionsCountLine.KEY: SubmissionsCountLine
     }
 
     def __init__(self):

@@ -259,6 +259,18 @@ def update_db_row(task_id, **kwargs):
     finally:
         ses.close()
 
+def count_created(start=None, end=None):
+    ses = db.dbms.session()
+    try:
+        q = ses.query(db.Task)
+        if start and end:
+            q = q.filter(
+                db.Task.created_on>=start, db.Task.created_on<=end
+            )
+        return q.count()
+    finally:
+        ses.close()
+
 def write_changes(task):
     if not task.was_updated:
         return
