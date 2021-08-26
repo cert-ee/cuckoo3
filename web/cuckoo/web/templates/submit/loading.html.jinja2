@@ -28,7 +28,7 @@
               } else if (ready === false) {
                 return reject({state_desc});
               } else {
-                return resolve({state_desc});
+                return resolve({state_desc, ready});
               }
             })
             .catch(reject);
@@ -42,9 +42,13 @@
       // - it logs its current state_desc as it progresses
       function poll() {
         manualStatus("{{ analysis_id }}").then(res => {
-            const { state_desc }     = res;
+            const { state_desc, ready }     = res;
             stateMessage.textContent = state_desc;
-            window.location = '/submit/settings/{{ analysis_id }}';
+            if(ready) {
+              window.location = '/submit/settings/{{ analysis_id }}';
+            } else {
+              setTimeout(poll, 1000);
+            }
           }).catch(res => {
             const { state_desc, error } = res;
             stateMessage.classList.toggle('has-text-red', error != undefined);
