@@ -127,7 +127,7 @@
                 <div data-toggle-network hidden>
                   <div class="control is-select">
                     <select class="input" data-route-type>
-                      <option value="" selected>Initial</option>
+                      <option value="" selected>Global value</option>
                       <option value="">Default</option>
                       <option value="drop">Drop</option>
                       <option value="internet">Internet</option>
@@ -160,7 +160,7 @@
                   </label>
                   <div class="control is-select" hidden>
                     <select class="input" data-browser>
-                      <option value="">Initial</option>
+                      <option value="">Global Value</option>
                       <option value="default">Default</option>
                       <option value="ie">Internet Explorer</option>
                       <option value="firefox">Firefox</option>
@@ -174,7 +174,7 @@
                 <label class="label is-link has-no-underline" onclick="toggleVisibility(this.parentNode.querySelector('.control'), null, event)">
                   <span class="icon is-caret">
                     <i class="fas fa-caret-right"></i>
-                  </span> Launch commands
+                  </span> Commands
                 </label>
                 <div class="control" hidden>
                   <input class="input" type="text" id="command" data-command />
@@ -325,9 +325,6 @@
       options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
     }
 
-    console.log(options);
-    debugger;
-
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
       body: JSON.stringify(options),
@@ -338,6 +335,7 @@
     }).then(response => response.json())
       .then(response => {
         const { error } = response;
+
         if(error) {
           handleError(error);
         } else {

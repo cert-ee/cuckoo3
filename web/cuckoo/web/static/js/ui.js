@@ -248,6 +248,11 @@ function toggleVisibility(element, force=null, event) {
   if(event instanceof Event)
     event.preventDefault();
 
+  if(element instanceof NodeList) {
+    element.forEach(el => toggleVisibility(el, force, event));
+    return;
+  }
+
   if(typeof element == 'string')
     element = document.querySelector(element);
   if(!element) return;

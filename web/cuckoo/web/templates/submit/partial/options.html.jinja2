@@ -33,32 +33,6 @@
           Time in seconds before VM can shut down
         </p>
       </div>
-      <div class="field">
-        <div class="control is-checkable">
-          <input type="checkbox" id="orig-filename" name="orig-filename" />
-          <label for="orig-filename">Use original filename</label>
-          <p class="has-text-small has-half-opacity no-margin-bottom">
-            <span class="icon">
-              <i class="fas fa-info-circle"></i>
-            </span>
-            Ignore detected file type by the identification stage
-          </p>
-        </div>
-      </div>
-      <div class="field">
-        <div class="control">
-          <label for="command" class="label">Launch commands:</label>
-          <div class="control">
-            <input class="input" type="text" name="command" id="command" />
-          </div>
-          <p class="has-text-small has-half-opacity no-margin-bottom">
-            <span class="icon">
-              <i class="fas fa-info-circle"></i>
-            </span>
-            Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
-          </p>
-        </div>
-      </div>
     </div>
     <div class="column">
       <div class="field">
@@ -131,4 +105,38 @@
       {% endif %}
     </div>
   </div>
+</div>
+
+<div class="box has-background-light has-margin-x">
+
+  <a class="button is-beveled has-margin-x" onclick="toggleVisibility(this.parentNode.querySelectorAll('.field'));">Toggle extra options</a>
+
+  <div class="field has-margin-x" hidden>
+    <div class="control is-checkable">
+      <input type="checkbox" id="orig-filename" name="orig-filename" />
+      <label for="orig-filename">Use original filename</label>
+      <p class="has-text-small has-half-opacity no-margin-bottom">
+        <span class="icon">
+          <i class="fas fa-info-circle"></i>
+        </span>
+        Ignore detected file type by the identification stage
+      </p>
+    </div>
+  </div>
+
+  <div class="field has-margin-x" hidden>
+    <div class="control">
+      <label for="command" class="label">Launch commands:</label>
+      <div class="control">
+        <input class="input" type="text" name="command" id="command" />
+      </div>
+      <p class="has-text-small has-half-opacity no-margin-bottom">
+        <span class="icon">
+          <i class="fas fa-info-circle"></i>
+        </span>
+        Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
+      </p>
+    </div>
+  </div>
+
 </div>
