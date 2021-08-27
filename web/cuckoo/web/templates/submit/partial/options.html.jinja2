@@ -3,9 +3,7 @@
   <a class="is-link pull-right" href="#" title="Go to documentation"><i class="fas fa-book"></i></a>
 </h4>
 <div class="box has-background-light has-margin-x">
-
   <div class="columns is-divided">
-
     <div class="column">
       <div class="field">
         {# Timeout #}
@@ -35,8 +33,33 @@
           Time in seconds before VM can shut down
         </p>
       </div>
+      <div class="field">
+        <div class="control is-checkable">
+          <input type="checkbox" id="orig-filename" name="orig-filename" />
+          <label for="orig-filename">Use original filename</label>
+          <p class="has-text-small has-half-opacity no-margin-bottom">
+            <span class="icon">
+              <i class="fas fa-info-circle"></i>
+            </span>
+            Ignore detected file type by the identification stage
+          </p>
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <label for="command" class="label">Launch commands:</label>
+          <div class="control">
+            <input class="input" type="text" name="command" id="command" />
+          </div>
+          <p class="has-text-small has-half-opacity no-margin-bottom">
+            <span class="icon">
+              <i class="fas fa-info-circle"></i>
+            </span>
+            Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
+          </p>
+        </div>
+      </div>
     </div>
-
     <div class="column">
       <div class="field">
         {# priority #}
@@ -55,7 +78,6 @@
           Prioritizes task in queue if necessary
         </p>
       </div>
-
       <div class="field">
         <label class="label has-margin-top" for="routing">Network routing</label>
         <div class="control is-select">
@@ -87,7 +109,6 @@
           Configure protocol for internet usage
         </p>
       </div>
-
       {% if analysis.category == 'url' %}
         <div class="field">
           {# browser #}
@@ -108,9 +129,6 @@
           </p>
         </div>
       {% endif %}
-
     </div>
-
   </div>
-
 </div>
