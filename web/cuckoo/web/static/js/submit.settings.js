@@ -152,12 +152,13 @@
   function platformHandler() {
 
     const { category }  = window.Application;
+    const tab           = document.querySelector('.tabbar-link[href="#machines"]');
     const platforms     = document.querySelector('select[name="platform"]');
     const versions      = document.querySelector('select[name="version"]');
     const addPlatform   = document.querySelector('#add-platform');
     const machinery     = document.querySelector('#machinery');
     const totalMachines = document.querySelector('#total-machines');
-    let banner;
+    let banner, dot;
 
     // display available versions for selected platform
     platforms.addEventListener('change', ev => {
@@ -183,10 +184,16 @@
         if(banner)
           banner.remove();
         finish.removeAttribute('disabled');
+        if(tab.querySelector('.dot')) tab.querySelector('.dot').remove();
       } else {
-        banner = lib.banner('No machines selected.', 'info');
+        banner = lib.banner('Add at least one machine to start analysis', 'danger');
         machinery.appendChild(banner);
         finish.setAttribute('disabled', true);
+
+        let dot = document.createElement('span');
+        dot.classList.add('dot');
+        dot.classList.add('is-red');
+        tab.appendChild(dot);
       }
     }
 
