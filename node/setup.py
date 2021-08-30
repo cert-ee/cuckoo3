@@ -47,7 +47,7 @@ setuptools.setup(
     install_requires=[
         "Cuckoo-common==0.1.0",
         "Cuckoo-machineries==0.1.0",
-        "aiohttp>=3.6.2, <3.7",
+        "aiohttp>=3.7.4, <3.8",
         "aiohttp-sse>=2.0.0, <2.1"
     ],
 )
