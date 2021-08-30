@@ -149,17 +149,17 @@ class ElasticSearch(Reporter):
         return [(list(requests), "http_request"), (list(urls), "url")]
 
     def _make_smtp(self, network):
-        smtp = []
+        all_smtp = []
         for smtp in network.get("smtp", []):
             request = smtp.get("request")
             if not request:
                 continue
 
-            smtp.append(
+            all_smtp.append(
                 f"{request.get('hostname', '')} {request.get('mail_body', '')}"
             )
 
-        return [(smtp, "smtp")]
+        return [(all_smtp, "smtp")]
 
     def _store_network_events(self):
         network = self.ctx.result.get("network", {})
