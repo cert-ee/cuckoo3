@@ -2,6 +2,110 @@
 
   const conclude = document.querySelector('#conclude-analysis');
   const finish = conclude.querySelector('#start-analysis');
+  const { analysis_id, category } = window.Application;
+
+  /**
+   * @class
+   * @description 'UI Retrieving Model' implementation to keep a global track of
+   * all the various settings. The values in this model are resolved each time when
+   * called to be up-to-date whenever it is requested.
+   *
+   * usage:
+   *
+   * let value = Model.[property] // returns current value for field 'property'
+   * let obj = Model.serialize() // outputs JSON format populated with all current values
+   * let str = Model.stringify() // outputs stringified format of Model.serialize method output
+   */
+  const Model = window.Model = (function() {
+
+    // shorthand querySelector for readability
+    const getElement = (q,p=document) => p.querySelector(q);
+
+    return new class SubmitOptions {
+
+      // getters for the various DOM fields
+      get fileid() { return category == "file" ? getElement('input[name="selected-file"]:checked').value : null;  }
+      get timeout() { return parseInt(getElement('input[name="timeout"]').value); }
+      get priority() { return parseInt(getElement('select[name="priority"]').value); }
+      get command() { return getElement('input[name="command"]').value; }
+      get orig_filename() { return getElement('input[name="orig-filename"]').checked }
+      get browser() { return category == "url" ? getElement('select[name="browser"]').value : null; }
+      get route() {
+        let type = getElement('select[name="route"]').value;
+        let ret = { type };
+        if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
+        return ret;
+      }
+      get platforms() {
+        return [...document.querySelectorAll('[data-machine]')].map(machine => {
+          let t = getElement('input[data-tags]', machine);
+
+          // specific machine option overrides
+          let s = {};
+
+          let machineNetwork = getElement('[data-route-type]', machine).value;
+          let machineNetworkCountry = getElement('[data-route-country]', machine).value;
+          let machineCommand = getElement('[data-command]', machine).value;
+          let machineBrowser;
+
+          // append route type and country if set
+          if(machineNetwork.length) {
+            s.route = {
+              type: machineNetwork
+            };
+            if(machineNetwork.toLowerCase() == 'vpn')
+              s.route.country = machineNetworkCountry;
+          }
+
+          // append other options if set
+          if(machineCommand.length)
+            s.command = machineCommand;
+
+          if(category === 'url') {
+            machineBrowser = getElement('[data-browser]', machine).value;
+            if(machineBrowser.length)
+              s.browser = machineBrowser;
+          }
+
+          // return bundle of machine config for json serialization
+          return {
+            platform: machine.dataset.platform,
+            os_version: machine.dataset.version,
+            tags: t.value.length ? t.value.split(',') : [],
+            settings: s
+          }
+        });
+      }
+
+      // returns object populated with field values
+      serialize() {
+        let ret = {
+          timeout: this.timeout,
+          priority: this.priority,
+          command: this.command,
+          orig_filename: this.orig_filename,
+          route: this.route,
+          platforms: this.platforms
+        }
+        switch(category) {
+          case "file":
+            ret.fileid = this.fileid;
+          break;
+          case "url":
+            ret.browser = this.browser;
+          break;
+        }
+        return ret;
+      }
+
+      // returns a stringified output of SubmitOptions.serialize method
+      stringify() {
+        return JSON.stringify(this.serialize());
+      }
+
+    }();
+
+  }());
 
   // prints error in the conclusive block
   function handleError(msg) {
@@ -261,73 +365,12 @@
   // submission and proceed to analysis
   function finishSubmission() {
 
-    const { analysis_id, category } = window.Application;
-
     if(!analysis_id)
       return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
 
-    const options = {
-      timeout: parseInt(document.querySelector('input[name="timeout"]:checked').value),
-      priority: parseInt(document.querySelector('select[name="priority"]').value),
-      command: document.querySelector('input[name="command"]').value,
-      orig_filename: document.querySelector('input[name="orig-filename"]').checked,
-      route: {
-        type: document.querySelector('select[name="route"]').value
-      },
-      platforms: [...document.querySelectorAll('[data-machine]')].map(machine => {
-        let t = machine.querySelector('input[data-tags]');
-
-        // specific machine option overrides
-        let s = {};
-
-        let machineNetwork = machine.querySelector('[data-route-type]').value;
-        let machineNetworkCountry = machine.querySelector('[data-route-country]').value;
-        let machineCommand = machine.querySelector('[data-command]').value;
-        let machineBrowser;
-
-        // append route type and country if set
-        if(machineNetwork.length) {
-          s.route = {
-            type: machineNetwork
-          };
-          if(machineNetwork.toLowerCase() == 'vpn')
-            s.route.country = machineNetworkCountry;
-        }
-
-        // append other options if set
-        if(machineCommand.length)
-          s.command = machineCommand;
-
-        if(category === 'url') {
-          machineBrowser = machine.querySelector('[data-browser]').value;
-          if(machineBrowser.length)
-            s.browser = machineBrowser;
-        }
-
-        // return bundle of machine config for json serialization
-        return {
-          platform: machine.dataset.platform,
-          os_version: machine.dataset.version,
-          tags: t.value.length ? t.value.split(',') : [],
-          settings: s
-        }
-      })
-    };
-
-    // set VPN country if route is set to VPN
-    if(options.route && options.route.type.toLowerCase() == 'vpn')
-      options.route.country = document.querySelector('select[name="country"]');
-
-    if(category == 'file') {
-      const selectedFile = document.querySelector('input[name="selected-file"]:checked');
-      if(!selectedFile)
-        return handleError('No file has been selected. Select a file and try again.');
-      options.fileid = document.querySelector('input[name="selected-file"]:checked').value;
-    }
-
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
-      body: JSON.stringify(options),
+      body: Model.stringify(),
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': window.csrf_token
