@@ -34,6 +34,8 @@
           background-color: $light
         &:active
           background-color: $light
+        +dark-mode
+          border-color: $border-dark
 
       &.is-parent
         & > input[type="checkbox"].list-collapse
@@ -48,9 +50,13 @@
           border-style: solid
           border-width: 6px 0 6px 10.4px
           border-color: transparent transparent transparent $border
+          +dark-mode
+            border-color: transparent transparent transparent $border-dark
         & > input[type="checkbox"].list-collapse:checked + label:before
           border-width: 10.4px 6px 0 6px
           border-color: $border transparent transparent transparent
+          +dark-mode
+            border-color: $border-dark transparent transparent transparent
 
   // horizontal list modifier
   &.is-horizontal
@@ -91,7 +97,7 @@
     a
       display: block
       text-decoration: none
-      color: $black
+      color: inherit
 
       & + ul
         margin-top: $gap
@@ -99,6 +105,9 @@
       &.is-active
         font-weight: 700
         color: $dark
+
+        +dark-mode
+          color: tint($dark, .6)
 
   // list variant for displaying information like a tree diagram
   // - experiment for a process tree figure

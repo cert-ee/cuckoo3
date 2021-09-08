@@ -70,14 +70,24 @@
 
 .has-border
   border: .0625rem solid $border
+  +dark-mode
+    border-color: $border-dark
   &-top
     border-top: .0625rem solid $border
+    +dark-mode
+      border-color: $border-dark
   &-bottom
     border-bottom: .0625rem solid $border
+    +dark-mode
+      border-color: $border-dark
   &-left
     border-left: .0625rem solid $border
+    +dark-mode
+      border-color: $border-dark
   &-right
     border-right: .0625rem solid $border
+    +dark-mode
+      border-color: $border-dark
   &-x
     @extend .has-border-left
     @extend .has-border-right

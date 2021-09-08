@@ -6,14 +6,21 @@
   border-bottom: .15rem solid $border
   background-color: $white
 
+  +dark-mode
+    background-color: shade($dark, .5)
+    border-color: shade($dark, .3)
+
   &.has-background-transparent
     background-color: transparent
 
     .is-active
-      // background-color: shade($light, .1)
       background-color: $white
       color: $dark
       font-weight: bold
+
+      +dark-mode
+        background-color: $dark
+        color: $white
 
   &-link
     @extend .column
@@ -22,6 +29,9 @@
     color: $black
     text-decoration: none
     text-align: center
+
+    +dark-mode
+      color: $text-color-dark
 
     &:hover
       background-color: rgba($black, .02)
@@ -37,6 +47,9 @@
         background-color: $blue
         bottom: -.15rem
         left: 0
+
+      +dark-mode
+        color: $white
 
   &-button
     align-self: center

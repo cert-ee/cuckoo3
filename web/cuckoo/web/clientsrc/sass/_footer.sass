@@ -6,6 +6,9 @@
   font-size: .9em
   color: $black
 
+  +dark-mode
+    color: $text-color-dark
+
   &,
   &-push
     height: $footer-height
@@ -24,6 +27,10 @@
     border-top: 1px solid rgba($black, .15)
     height: $gap * 4
     padding: $gap
+
+    +dark-mode
+      background-color: shade($dark, .6)
+      border-color: $border-dark
 
   ul
     list-style: none

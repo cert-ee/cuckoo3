@@ -1,5 +1,9 @@
 // Copyright (C) 2019-2021 Estonian Information System Authority.
 // See the file 'LICENSE' for copying permission.
+body
+  color: $black
+  +dark-mode
+    color: $text-color-dark
 
 // normalize margins for typographic elements
 h1,
@@ -134,6 +138,8 @@ p
 
 .has-half-opacity
   opacity: 0.5
+  +dark-mode
+    opacity: 0.66
 
 // use this selector only if parent elements override the default
 // link styles.

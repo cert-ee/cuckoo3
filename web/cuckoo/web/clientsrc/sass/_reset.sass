@@ -22,7 +22,10 @@ body
   -moz-font-feature-settings: "kern"
   -moz-font-feature-settings: "kern=1"
   font-kerning: normal
-  background-color: $light
+  background-color: $background-light
+
+  +dark-mode
+    background-color: $background-dark
 
 pre, code, tt
   font-family: $font-stack-monospace

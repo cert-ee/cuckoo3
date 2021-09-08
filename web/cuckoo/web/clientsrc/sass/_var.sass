@@ -15,6 +15,14 @@ $light: rgba($black, .05)
 $light-matte: #f2f2f2
 $row-odd: #FFFFFF
 $row-even: #E8F0F1
+$text-color: $black
+
+$text-color-dark: #AAAAAA
+$border-dark: $black
+$background-light: $light
+$background-dark: #151515
+$row-even-dark: #061d24
+$row-odd-dark: #05161b
 
 // code syntax block layout
 $code-light: $light
@@ -51,3 +59,8 @@ $font-stack-monospace: Consolas, Monaco, "Andale Mono WT", "Andale Mono", "Lucid
   box-sizing: border-box
   &:focus
     outline: none
+
+// declare dark mode edits
+=dark-mode
+  @media (prefers-color-scheme: dark)
+    @content
