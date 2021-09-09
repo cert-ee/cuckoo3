@@ -86,6 +86,17 @@ window.lib = Object.assign(window.lib || {}, {
 
     return new _SS(_escape(str)).toString();
 
+  },
+  // method to retrieve a client cookie by its name
+  getCookie(cName) {
+    const name = cName + "=";
+    const cDecoded = decodeURIComponent(document.cookie);
+    const cArr = cDecoded .split('; ');
+    let res;
+    cArr.forEach(val => {
+      if (val.indexOf(name) === 0) res = val.substring(name.length);
+    })
+    return res;
   }
 });
 
@@ -688,6 +699,46 @@ function handleInlineSearch(searchBar) {
 }
 
 /**
+ * initializes dark mode toggle
+ */
+function handleUserColorScheme(toggle) {
+
+  const range = toggle.querySelector('input[type="range"]');
+
+  function changeTheme(mode) {
+    switch(mode) {
+      case 0:
+        document.querySelector('html').classList.remove('is-theme-auto');
+        document.querySelector('html').classList.remove('is-theme-dark');
+      break;
+      case 1:
+        document.querySelector('html').classList.remove('is-theme-auto');
+        document.querySelector('html').classList.add('is-theme-dark');
+      break;
+      case 2:
+        document.querySelector('html').classList.add('is-theme-auto');
+        document.querySelector('html').classList.remove('is-theme-dark');
+      break;
+    }
+    document.cookie = 'colorscheme='+mode;
+  }
+
+  range.addEventListener('change', e => {
+    changeTheme(parseInt(e.target.value));
+  });
+
+  let c = lib.getCookie('colorscheme');
+  if(c) {
+    c = parseInt(c);
+    range.value = c;
+    range.dispatchEvent(new Event('change'));
+  } else {
+    range.dispatchEvent(new Event('change'));
+  }
+
+}
+
+/**
  * multi-applier for handlers on DOMNodeList selectors
  * @param {string} sel - querySelector string
  * @param {function} fn - iterator function (Array.forEach callback)
@@ -720,5 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyHandler('[data-tooltip]', handleTooltip);
   applyHandler('[data-click-to-copy]', handleClickToCopy);
   applyHandler('.input[type="search"][data-enhance]', handleInlineSearch);
+  applyHandler('.dark-mode-toggle', handleUserColorScheme)
   // applyHandler('.tabbar[data-enhance]', handlePageTabs);
 });

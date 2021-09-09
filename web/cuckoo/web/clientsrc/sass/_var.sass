@@ -62,5 +62,9 @@ $font-stack-monospace: Consolas, Monaco, "Andale Mono WT", "Andale Mono", "Lucid
 
 // declare dark mode edits
 =dark-mode
-  @media (prefers-color-scheme: dark)
+  .is-theme-dark &
     @content
+
+  .is-theme-auto &
+    @media (prefers-color-scheme: dark)
+      @content

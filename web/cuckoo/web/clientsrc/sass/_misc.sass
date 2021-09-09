@@ -122,3 +122,58 @@
   &.is-big
     width: 12rem
     height: 3rem
+
+.dark-mode-toggle
+
+  position: relative
+  margin-top: .1rem
+
+  input[type="range"],
+  .toggle-overlay
+    height: 1.5rem
+    width: 6rem
+    border-radius: .75rem
+
+  .toggle-overlay
+    position: absolute
+    top: 0
+    left: 0
+    display: flex
+    justify-content: space-evenly
+    align-items: center
+    z-index: 1
+    background-color: shade($dark, .3)
+
+    .icon
+      flex-basis: 100%
+      font-size: .8em
+      margin-top: .25rem
+      text-align: center
+
+      &:nth-child(1)
+        padding-left: .2rem
+      &:nth-child(2)
+        padding-left: .2rem
+      &:nth-child(3)
+        padding-left: .1rem
+
+  input[type="range"]
+    position: relative
+    z-index: 2
+    -webkit-appearance: none
+    background: transparent
+    border: 0
+    height: 1.5rem
+    width: 6rem
+    border-radius: .75rem
+    &::-webkit-slider-thumb
+      -webkit-appearance: none
+      width: 2rem
+      height: 2rem
+      margin-top: -.1rem
+      background: transparent
+      border: .2rem solid $border
+      border-radius: 1rem
+    &::-webkit-slider-thumb:hover
+      border-color: $white
+      cursor: pointer
