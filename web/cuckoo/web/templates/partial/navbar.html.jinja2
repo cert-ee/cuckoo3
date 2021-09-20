@@ -30,7 +30,7 @@
       <a class="navbar-link {% if page == 'search' %}is-active{% endif %}" href="{{ url('Search/index') }}">Search</a>
     {% endif %}
     <div class="dark-mode-toggle">
-      <input type="range" step="1" value="0" min="0" max="2" />
+      <input type="range" step="1" value="{{ request.COOKIES.colorscheme|default(2) }}" min="0" max="2" />
       <div class="toggle-overlay">
         <span class="icon">
           <i class="fas fa-sun"></i>

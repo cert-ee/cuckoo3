@@ -720,7 +720,8 @@ function handleUserColorScheme(toggle) {
         document.querySelector('html').classList.remove('is-theme-dark');
       break;
     }
-    document.cookie = 'colorscheme='+mode;
+    let exp = new Date().getTime() + (7*24*60*60*1000); // 1 week
+    document.cookie = 'colorscheme='+range.value+'; path=/';
   }
 
   range.addEventListener('change', e => {
@@ -728,10 +729,11 @@ function handleUserColorScheme(toggle) {
   });
 
   let c = lib.getCookie('colorscheme');
+
   if(c) {
     c = parseInt(c);
     range.value = c;
-    range.dispatchEvent(new Event('change'));
+    changeTheme(c);
   } else {
     range.dispatchEvent(new Event('change'));
   }

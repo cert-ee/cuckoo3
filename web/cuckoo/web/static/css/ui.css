@@ -2424,7 +2424,7 @@ ul.process-tree .duration--inner {
 .dark-mode-toggle .toggle-overlay .icon {
   flex-basis: 100%;
   font-size: 0.8em;
-  margin-top: 0.25rem;
+  margin-top: 0.1rem;
   text-align: center;
 }
 .dark-mode-toggle .toggle-overlay .icon:nth-child(1) {
@@ -2434,7 +2434,7 @@ ul.process-tree .duration--inner {
   padding-left: 0.2rem;
 }
 .dark-mode-toggle .toggle-overlay .icon:nth-child(3) {
-  padding-left: 0.1rem;
+  padding-left: 0.2rem;
 }
 .dark-mode-toggle input[type=range] {
   position: relative;
@@ -2453,9 +2453,18 @@ ul.process-tree .duration--inner {
   margin-top: -0.1rem;
   background: transparent;
   border: 0.2rem solid #CCCCCC;
-  border-radius: 1rem;
+  border-radius: 50%;
 }
-.dark-mode-toggle input[type=range]::-webkit-slider-thumb:hover {
+.dark-mode-toggle input[type=range]::-moz-range-thumb {
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0rem;
+  background: transparent;
+  border: 0.2rem solid #CCCCCC;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.dark-mode-toggle input[type=range]::-webkit-slider-thumb:hover, .dark-mode-toggle input[type=range]::-moz-range-thumb:hover {
   border-color: #FFFFFF;
   cursor: pointer;
 }

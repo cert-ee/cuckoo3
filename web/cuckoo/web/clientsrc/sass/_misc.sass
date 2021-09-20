@@ -147,7 +147,7 @@
     .icon
       flex-basis: 100%
       font-size: .8em
-      margin-top: .25rem
+      margin-top: .1rem
       text-align: center
 
       &:nth-child(1)
@@ -155,7 +155,7 @@
       &:nth-child(2)
         padding-left: .2rem
       &:nth-child(3)
-        padding-left: .1rem
+        padding-left: .2rem
 
   input[type="range"]
     position: relative
@@ -173,7 +173,16 @@
       margin-top: -.1rem
       background: transparent
       border: .2rem solid $border
-      border-radius: 1rem
-    &::-webkit-slider-thumb:hover
+      border-radius: 50%
+    &::-moz-range-thumb
+      width: 2rem
+      height: 2rem
+      margin-top: 0rem
+      background: transparent
+      border: .2rem solid $border
+      border-radius: 50%
+      box-sizing: border-box
+    &::-webkit-slider-thumb:hover,
+    &::-moz-range-thumb:hover
       border-color: $white
       cursor: pointer
