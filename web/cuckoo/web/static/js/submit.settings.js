@@ -25,7 +25,10 @@
 
       // getters for the various DOM fields
       get fileid() { return category == "file" ? getElement('input[name="selected-file"]:checked').value : null;  }
-      get timeout() { return parseInt(getElement('input[name="timeout"]').value); }
+      get timeout() {
+        const checkedOption = getElement('input[name="timeout"]:checked');
+        return parseInt(checkedOption.value);
+      }
       get priority() { return parseInt(getElement('select[name="priority"]').value); }
       get command() { return getElement('input[name="command"]').value; }
       get orig_filename() { return getElement('input[name="orig-filename"]').checked }
