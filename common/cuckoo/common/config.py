@@ -483,9 +483,10 @@ def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
         elif isinstance(obj, NestedDictionary):
             return obj.yaml_value
 
-        return obj
+        return str(obj)
 
     # HACKY: A bit hacky.. But works well enough for now.
+    print(config_dictionary)
     return json.loads(
         json.dumps(config_dictionary, default=_typeloader_to_yamlval)
     )
