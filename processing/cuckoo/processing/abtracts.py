@@ -52,11 +52,17 @@ class Reporter:
     def __init__(self, processingctx):
         self.ctx = processingctx
 
-        self.handlers = {
-            "identification": self.report_identification,
-            "pre": self.report_pre_analysis,
-            "post": self.report_post_analysis
-        }
+        self.handlers = {}
+
+        # Build a mapping of stage:handlermethod. Only add the method for
+        # the stage if the method of our current instance is implemented.
+        for stage, method in (("identification", self.report_identification),
+                              ("pre", self.report_pre_analysis),
+                              ("post", self.report_post_analysis)):
+            if method.__func__ is not getattr(
+                    Reporter, method.__func__.__name__
+            ):
+                self.handlers[stage] = method
 
     @classmethod
     def enabled(cls):
