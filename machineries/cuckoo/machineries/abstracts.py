@@ -40,12 +40,13 @@ class Machinery:
                     f"which already is used for another machine"
                 )
 
+            interface = values["interface"] or self.cfg.get("interface")
             machine = machines.Machine(
                 name=name, label=label, ip=ip,
                 platform=values["platform"], os_version=values["os_version"],
                 tags=values["tags"], snapshot=values["snapshot"],
                 architecture=values["architecture"],
-                interface=values["interface"],
+                interface=interface, agent_port=values["agent_port"],
                 mac_address=values["mac_address"], machinery=self
             )
             self.machines.append(machine)

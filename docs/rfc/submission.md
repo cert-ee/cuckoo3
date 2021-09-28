@@ -45,12 +45,8 @@ Available settings in the future:
 
 ```python
 "timeout": int,
-"enforce_timeout": bool,
-"dump_memory": bool,
 "priority": int,
-"options": dict,
 "platforms": list,
-"machines": list,
 "manual": bool
 
 ```

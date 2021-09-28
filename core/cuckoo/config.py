@@ -43,6 +43,19 @@ typeloaders = {
                 default_val="/usr/sbin/tcpdump", must_exist=True
             )
         },
+        "network_routing": {
+            "enabled": config.Boolean(default_val=False),
+            "rooter_socket": config.UnixSocketPath(
+                must_exist=True, readable=True, writable=True
+            ),
+            "default": {
+                "type": config.String(allow_empty=True),
+                "options": config.Dict(
+                    element_class=config.String, default_val={},
+                    allow_empty=True
+                )
+            }
+        },
         "platform": {
             "default_platform": {
                 "platform": config.String(default_val="windows"),
@@ -68,7 +81,7 @@ typeloaders = {
     },
     "distributed.yaml": {
         "remote_nodes": config.NestedDictionary("example1", {
-            "api_url": config.HTTPUrl(default_val="http://127.0.1:8090"),
+            "api_url": config.HTTPUrl(default_val="http://127.0.0.1:8090"),
             "api_key": config.String(sensitive=True, default_val="examplekey"),
         }),
         "node_settings": {

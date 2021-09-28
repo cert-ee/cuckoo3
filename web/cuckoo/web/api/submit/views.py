@@ -92,7 +92,12 @@ class SubmitURL(APIView):
             "settings": final_settings.to_dict()
         })
 
-class PlatformList(APIView):
+class AvailablePlatforms(APIView):
 
     def get(self, request):
         return Response(submit.settings_maker.available_platforms())
+
+class AvailableRoutes(APIView):
+
+    def get(self, request):
+        return Response(submit.settings_maker.available_routes())

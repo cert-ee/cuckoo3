@@ -25,6 +25,25 @@ tcpdump:
   enabled: {{ tcpdump.enabled }}
   path: {{ tcpdump.path }}
 
+# Automatic per-task network routing. Before a task runs, the rooter
+# is asked to apply a submitted or default network route. Cuckoo rooter
+# must be running and its unix socket path must be configured here.
+network_routing:
+  enabled: {{ network_routing.enabled }}
+  # Cuckoo rooter socket path. Must be writable and readable for the user
+  # that runs Cuckoo.
+  rooter_socket: {{ network_routing.rooter_socket }}
+  # The default route to use if no route settings were submitted.
+  default:
+    # The route type. Available routes: internet, drop, vpn.
+    # Leaving the type empty will cause no route to be applied.
+    type: {{ network_routing.default.type }}
+    # Route types such as vpn take options, such a a country.
+    options:
+    {% for optname, optval in network_routing.default.options.items() %}
+      {{ optname }}: {{ optval }}
+    {% endfor %}
+
 platform:
   # The default platform to use when no platforms are supplied on submission and no required platform is
   # identified during the identification stage.

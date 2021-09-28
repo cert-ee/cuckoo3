@@ -16,6 +16,10 @@ typeloaders = {
                 "mac_address": config.String(allow_empty=True),
                 "snapshot": config.String(allow_empty=True),
                 "interface": config.String(allow_empty=True),
+                "agent_port": config.Int(
+                    default_val=8000, required=False, min_value=1,
+                    max_value=2**16-1
+                ),
                 "architecture": config.String(default_val="amd64"),
                 "tags": config.List(
                     config.String, ["exampletag1", "exampletag2"],

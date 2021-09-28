@@ -12,7 +12,7 @@ from django.db import connections, DEFAULT_DB_ALIAS
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error
 from cuckoo.common.startup import (
-    init_global_logging, load_configurations, init_database, StartupError
+    init_global_logging, load_configuration, init_database, StartupError
 )
 from cuckoo.common.storage import cuckoocwd, Paths
 from cuckoo.common.submit import settings_maker
@@ -67,11 +67,12 @@ def init_api(cuckoo_cwd, loglevel, logfile=""):
     load_app()
     try:
         init_global_logging(loglevel, logfile)
-        machines_dump = Paths.machinestates()
-        if machines_dump.is_file():
-            settings_maker.set_machinesdump_path(machines_dump)
+        nodeinfos_dump = Paths.nodeinfos_dump()
+        if nodeinfos_dump.is_file():
+            settings_maker.set_nodesinfosdump_path(nodeinfos_dump)
 
-        load_configurations()
+        load_configuration("web.yaml", subpkg="web")
+        load_configuration("cuckoo.yaml", check_constraints=False)
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()

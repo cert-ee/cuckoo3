@@ -4,17 +4,16 @@
 import asyncio
 from threading import Lock
 
-
-from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.clients import (
     ClientError, NodeEventReader, ResultRetrieverClient
 )
+from cuckoo.common.importing import NodeWorkZipper, AnalysisImportError
+from cuckoo.common.log import CuckooGlobalLogger
+from cuckoo.common.node import NodeInfo
 from cuckoo.common.storage import TaskPaths, UnixSocketPaths
-
 from cuckoo.node.node import (
     NodeError, InfoStreamReceiver, NodeTaskStates, NodeMsgTypes
 )
-from cuckoo.common.importing import NodeWorkZipper, AnalysisImportError
 
 class NodeActionError(Exception):
     pass
@@ -193,6 +192,14 @@ class NodeClient:
         raise NotImplementedError
 
     @property
+    def info(self):
+        raise NotImplementedError
+
+    @property
+    def routes(self):
+        raise NotImplementedError
+
+    @property
     def machines(self):
         raise NotImplementedError
 
@@ -211,7 +218,7 @@ class RemoteNodeClient(NodeClient):
         self.assigned_tasks = AssignedTasks()
         self.events = None
 
-        self._machines = None
+        self._info = None
         self._events_open = False
         self._fatal_error = False
 
@@ -221,14 +228,28 @@ class RemoteNodeClient(NodeClient):
 
     @property
     def ready(self):
-        return self._machines and self._events_open and not self._fatal_error
+        return self._info and self._events_open and not self._fatal_error
 
     @property
     def machines(self):
-        if not self._machines:
+        if not self._info:
             raise NodeActionError("Machines list not loaded")
 
-        return self._machines
+        return self._info.machines_list
+
+    @property
+    def routes(self):
+        if not self._info:
+            raise NodeActionError("Available routes not loaded")
+
+        return self._info.routes
+
+    @property
+    def info(self):
+        if not self._info:
+            raise NodeActionError("Node information not loaded")
+
+        return self._info
 
     async def _handle_taskstate(self, task_id, state):
         log.debug("Received new task state", task_id=task_id, state=state)
@@ -336,13 +357,23 @@ class RemoteNodeClient(NodeClient):
         )
 
     def init(self):
-        self.load_machine_list()
+        self._info = NodeInfo(
+            name=self.name, version="",
+            machines_list=self._retrieve_machine_list(),
+            routes=self._retrieve_available_routes()
+        )
 
-    def load_machine_list(self):
+    def _retrieve_machine_list(self):
         try:
-            self._machines = self.client.machine_list()
+            return self.client.machine_list()
         except ClientError as e:
             raise NodeActionError(f"Failed retrieving machine list: {e}")
+
+    def _retrieve_available_routes(self):
+        try:
+            return self.client.available_routes()
+        except ClientError as e:
+            raise NodeActionError(f"Failed retrieving available routes: {e}")
 
     async def _start_task(self, startable_task):
         log.debug(
@@ -500,8 +531,11 @@ class LocalNodeClient(NodeClient):
     def __init__(self, cuckooctx, localnode):
         self.ctx = cuckooctx
         self.node = localnode
-        self._machines = localnode.ctx.machinery_manager.machines.copy()
-
+        self._info = NodeInfo(
+            name=self.name, version="",
+            machines_list=localnode.ctx.machinery_manager.machines.copy(),
+            routes=localnode.ctx.routes
+        )
         self.assigned_tasks = AssignedTasks()
         self._lock = Lock()
         self.ctx.nodes.ready_cb(self)
@@ -516,7 +550,15 @@ class LocalNodeClient(NodeClient):
 
     @property
     def machines(self):
-        return self._machines
+        return self._info.machines_list
+
+    @property
+    def routes(self):
+        return self._info.routes
+
+    @property
+    def info(self):
+        return self._info
 
     def add_task(self, startable_task):
         self.assigned_tasks.track_assigned(startable_task)

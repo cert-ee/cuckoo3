@@ -41,6 +41,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "cuckoonode = cuckoo.node.main:main",
+            "cuckoorooter = cuckoo.node.scripts.rooter:main"
         ],
     },
     include_package_data=True,

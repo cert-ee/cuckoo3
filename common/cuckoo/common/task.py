@@ -1,14 +1,13 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
-import os
 import copy
+import os
 
-from .storage import TaskPaths, make_task_id
-from .strictcontainer import Task, Errors
-from .log import CuckooGlobalLogger
-from .machines import find_in_lists
 from . import db
+from .log import CuckooGlobalLogger
+from .storage import TaskPaths, make_task_id
+from .strictcontainer import Task, Errors, Platform
 
 log = CuckooGlobalLogger(__name__)
 
@@ -63,7 +62,6 @@ class States:
                 f"No human readable version for state {state!r} exists"
             )
 
-
 def _make_task_dirs(task_id):
     task_path = TaskPaths.path(task_id)
     try:
@@ -80,31 +78,22 @@ def _make_task_dirs(task_id):
                     TaskPaths.dropped_file(task_id)):
         os.mkdir(dirpath)
 
+def _create_task(nodes_tracker, analysis, task_number, platform_obj):
+    route = platform_obj.settings.route or analysis.settings.route
+    has_platform, has_route, _ = nodes_tracker.nodeinfos.find_support(
+        platform_obj, route
+    )
 
-def _create_task(nodes_tracker, analysis, task_number, platform="",
-                 machine_tags=set(), os_version="", machine_name=None,
-                 platform_settings={}):
-
-    if machine_name:
-        if not find_in_lists(nodes_tracker.machine_lists, name=machine_name):
-            raise MissingResourceError(
-                f"Machine {machine_name} does not exist"
-            )
-
-    if platform:
-        if machine_tags and not isinstance(machine_tags, set):
-            machine_tags = set(machine_tags)
-
-        machine = find_in_lists(
-            nodes_tracker.machine_lists, platform=platform,
-            os_version=os_version, tags=machine_tags
+    if not has_platform:
+        raise MissingResourceError(
+            f"No node has machine with: {platform_obj}"
         )
-        if not machine:
-            raise MissingResourceError(
-                f"No machine with platform: '{platform}'. "
-                f"Os version: '{os_version}'. "
-                f"Tags: '{', '.join(machine_tags)}'."
-            )
+
+    if has_platform and route and not has_route:
+        raise MissingResourceError(
+            f"No nodes have the combination of platform: "
+            f"{platform_obj} and route {route}"
+        )
 
     task_id = make_task_id(analysis.id, task_number)
     log.debug("Creating task.", task_id=task_id)
@@ -116,25 +105,22 @@ def _create_task(nodes_tracker, analysis, task_number, platform="",
         "id": task_id,
         "state": States.PENDING,
         "analysis_id": analysis.id,
-        "platform": platform,
-        "os_version": os_version,
-        "machine_tags": list(machine_tags),
-        "machine": machine_name or ""
+        "platform": platform_obj.platform,
+        "os_version": platform_obj.os_version,
+        "machine_tags": list(platform_obj.tags),
+        "command": platform_obj.settings.command or \
+                   analysis.settings.command,
+        "browser": platform_obj.settings.browser or \
+                   analysis.settings.browser,
+        "route": route
     }
-
-    if platform_settings:
-        task_values.update({
-            "command": platform_settings.get("command"),
-            "route": platform_settings.get("route"),
-            "browser": platform_settings.get("browser")
-        })
 
     task = Task(**task_values)
     task.to_file(TaskPaths.taskjson(task_id))
     analysis.tasks.append({
         "id": task_id,
-        "platform": platform,
-        "os_version": os_version,
+        "platform": platform_obj.platform,
+        "os_version": platform_obj.os_version,
         "state": States.PENDING,
         "score": 0
     })
@@ -145,30 +131,15 @@ def create_all(analysis, nodes_tracker):
     tasks = []
     tasknum = 1
     resource_errors = []
-
-    if analysis.settings.machines:
-        for machine_name in analysis.settings.machines:
-            try:
-                tasks.append(_create_task(
-                    nodes_tracker, analysis, task_number=tasknum,
-                    machine_name=machine_name
-                ))
-                tasknum += 1
-            except MissingResourceError as e:
-                resource_errors.append(str(e))
-    else:
-        for platform in analysis.settings.platforms:
-            try:
-                tasks.append(_create_task(
-                    nodes_tracker, analysis, task_number=tasknum,
-                    platform=platform["platform"],
-                    os_version=platform["os_version"],
-                    machine_tags=platform["tags"],
-                    platform_settings=platform.get("settings")
-                ))
-                tasknum += 1
-            except MissingResourceError as e:
-                resource_errors.append(str(e))
+    for platform in analysis.settings.platforms:
+        try:
+            tasks.append(_create_task(
+                nodes_tracker, analysis, task_number=tasknum,
+                platform_obj=platform
+            ))
+            tasknum += 1
+        except MissingResourceError as e:
+            resource_errors.append(str(e))
 
     if not tasks:
         raise NoTasksCreatedError(
@@ -228,13 +199,6 @@ def merge_processing_errors(task):
 
     os.remove(errpath)
 
-def db_find_state(state):
-    ses = db.dbms.session()
-    try:
-        return ses.query(db.Task).filter_by(state=state)
-    finally:
-        ses.close()
-
 def exists(task_id):
     return os.path.isfile(TaskPaths.taskjson(task_id))
 
@@ -242,7 +206,7 @@ def has_unfinished_tasks(analysis_id):
     ses = db.dbms.session()
     try:
         count = ses.query(db.Task).filter(
-            db.Task.analysis_id==analysis_id,
+            db.Task.analysis_id == analysis_id,
             db.Task.state.in_(
                 [States.PENDING, States.RUNNING, States.PENDING_POST]
             )
@@ -265,7 +229,7 @@ def count_created(start=None, end=None):
         q = ses.query(db.Task)
         if start and end:
             q = q.filter(
-                db.Task.created_on>=start, db.Task.created_on<=end
+                db.Task.created_on >= start, db.Task.created_on <= end
             )
         return q.count()
     finally:

@@ -53,6 +53,34 @@ def start_taskrunner(nodectx):
         waited += 0.5
         time.sleep(0.5)
 
+
+def get_rooter_routes(nodectx):
+    from pathlib import Path
+    from cuckoo.common.route import Routes
+    from cuckoo.common.clients import RooterClient, ActionFailedError
+
+    if not config.cfg("cuckoo.yaml", "network_routing", "enabled"):
+        nodectx.routes = Routes(available=[])
+        return
+
+    sock_path = Path(
+        config.cfg("cuckoo.yaml", "network_routing", "rooter_socket")
+    )
+    if not sock_path.exists():
+        raise StartupError(
+            f"Network routing is enabled, but rooter socket path does not"
+            f" exist: {sock_path}"
+        )
+
+    try:
+        nodectx.rooter_sock = str(sock_path)
+        nodectx.routes = RooterClient.get_routes(sock_path, timeout=60)
+    except ActionFailedError as e:
+        raise StartupError(
+            f"Failure while asking rooter for available routes. Error: {e}"
+        )
+
+
 def start_nodestatecontrol(nodectx, threaded=False):
     from cuckoo.node.control import NodeTaskController
     sockpath = UnixSocketPaths.node_state_controller()
@@ -173,13 +201,16 @@ class NodeCtx:
         self.loglevel = None
         self.machinery_manager = None
         self.state_controller = None
+        self.routes = None
         self.zip_results = False
+        self.rooter_sock = None
 
 def start_local(stream_receiver, loglevel):
     ctx = NodeCtx()
     ctx.loglevel = loglevel
     # Results should not be zipped if it is a local node.
     ctx.zip_results = False
+    get_rooter_routes(ctx)
     start_resultserver(ctx)
     start_machinerymanager(ctx)
     start_taskrunner(ctx)
@@ -212,6 +243,7 @@ def start_remote(loglevel, api_host="localhost", api_port=8090):
     ctx.loglevel = loglevel
     # Results should be zipped after a task finished
     ctx.zip_results = True
+    get_rooter_routes(ctx)
     start_resultserver(ctx)
     start_machinerymanager(ctx)
     start_taskrunner(ctx)

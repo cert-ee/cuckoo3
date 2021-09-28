@@ -151,6 +151,9 @@ class API:
             serialize_machinelists(self.ctx.machinery_manager.machines)
         )
 
+    async def get_routes(self, request):
+        return web.json_response(self.ctx.routes.to_dict())
+
     async def get_eventstream(self, request):
         try:
             last_id = int(request.headers.get("Last-Event-Id"))
@@ -313,6 +316,7 @@ def make_api_runner(nodectx):
     app.add_routes([
         web.get("/ping", api.ping),
         web.get("/machines", api.get_machines),
+        web.get("/routes", api.get_routes),
         web.get("/events", api.get_eventstream),
         web.post("/uploadwork", api.upload_work),
         web.post(f"/task/{{task_id:{TASK_ID_REGEX}}}/start", api.start_task),

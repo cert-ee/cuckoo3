@@ -1,6 +1,6 @@
 Cuckoo 3
 
-Currently Cuckoo 3 only runs on Linux.
+Cuckoo 3 only runs on Linux.
 
 Perform the following steps to be able to run Cuckoo 3.
 1. ./install.sh

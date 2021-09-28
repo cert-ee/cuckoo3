@@ -1,15 +1,15 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from threading import RLock
 
 import sqlalchemy
-
+from sqlalchemy.orm import reconstructor
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from threading import RLock
-
 from cuckoo.common.db import DBMS
+from cuckoo.common.strictcontainer import Route
 
 Base = declarative_base()
 TmpBase = declarative_base()
@@ -34,16 +34,46 @@ class QueuedTask(Base):
     platform = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     os_version = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     _machine_tags = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
+    _route = sqlalchemy.Column(sqlalchemy.TEXT, nullable=True)
     dephash = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     scheduled = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.dephash = self._calc_dephash()
+        self._route_str = ""
+        self._route_obj = None
 
     def __repr__(self):
         return f"<Task(id={self.id}," \
                f" platform={self.platform}, os_version={self.os_version}>"
+
+    @reconstructor
+    def _init_on_load(self):
+        # Sqlalchemy does not call __init__ when creating objects from db
+        # data. It does call 'reconstructors'.
+        self._route_str = ""
+        self._route_obj = None
+
+    @hybrid_property
+    def route(self):
+        if not self._route:
+            return None
+
+        if not self._route_obj:
+            self._route_obj = Route.from_string(self._route)
+
+        return self._route_obj
+
+    @route.setter
+    def route(self, value):
+        if not value:
+            return
+
+        if not isinstance(value, Route):
+            raise TypeError("Route must be Route instance")
+
+        self._route_str = str(value)
+        self._route = value.to_json_string()
 
     @hybrid_property
     def machine_tags(self):
@@ -68,10 +98,11 @@ class QueuedTask(Base):
         # same order.
         value.sort()
         self._machine_tags = ",".join(value)
-        self.dephash = self._calc_dephash()
 
-    def _calc_dephash(self):
-        return hash(f"{self.platform, self.os_version, self._machine_tags}")
+    def update_dephash(self):
+        self.dephash = hash((
+            self.platform, self.os_version, self._machine_tags, self._route_str
+        ))
 
 class _Counts:
 
@@ -181,7 +212,7 @@ class TaskQueue:
                 self._counts.unscheduled = tq.count_unscheduled()
 
     def queue_task(self, task_id, kind, created_on, analysis_id, priority,
-                   platform, os_version, machine_tags):
+                   platform, os_version, machine_tags, route):
 
         with self._lock:
             ses = self._dbms.session()
@@ -192,6 +223,8 @@ class TaskQueue:
                     platform=platform, os_version=os_version
                 )
                 qt.machine_tags = machine_tags
+                qt.route = route
+                qt.update_dephash()
                 ses.add(qt)
                 ses.commit()
                 self._counts.unscheduled += 1
@@ -210,6 +243,8 @@ class TaskQueue:
                 os_version=task_dict["os_version"]
             )
             qt.machine_tags = task_dict["machine_tags"]
+            qt.route = task_dict["route"]
+            qt.update_dephash()
             tasks.append(qt)
 
         with self._lock:

@@ -8,7 +8,7 @@ import queue
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.storage import TaskPaths, Paths
-from cuckoo.common.machines import MachineListDumper
+from cuckoo.common.node import NodeInfos
 
 from .nodeclient import NodeActionError
 
@@ -23,7 +23,7 @@ class NodesTracker:
     def __init__(self, cuckooctx):
         self.ctx = cuckooctx
         self._nodes = []
-        self.machinelist_dumper = MachineListDumper(min_dump_wait=300)
+        self.nodeinfos = NodeInfos(min_dump_wait=300)
 
     @property
     def machine_lists(self):
@@ -51,15 +51,20 @@ class NodesTracker:
         self._nodes.append(node)
 
     def notready_cb(self, node):
-        self.machinelist_dumper.remove_machinelist(node.machines)
+        self.nodeinfos.remove_nodeinfo(node.info)
         self.ctx.scheduler.inform_change()
 
     def ready_cb(self, node):
-        self.machinelist_dumper.add_machinelist(node.machines)
+        self.nodeinfos.add_nodeinfo(node.info)
         self.ctx.scheduler.inform_change()
 
     def find_available(self, queued_task):
+        """Find a node that has the machine and route the queued task
+        needs."""
         for node in self._get_ready_nodes():
+            if not node.info.has_route(queued_task.route):
+                continue
+
             machine = node.machines.acquire_available(
                 queued_task.id, platform=queued_task.platform,
                 os_version=queued_task.os_version,
@@ -105,6 +110,7 @@ class StartableTask:
             return
 
         self.node.machines.release(self.machine)
+        self.ctx.scheduler.unqueue_task(self.task.id)
         self.ctx.scheduler.inform_change()
         self._released = True
 
@@ -176,12 +182,18 @@ class Scheduler:
         self._assigned_machines = {}
         self._change_event = threading.Event()
         self._startables_queue = queue.Queue()
+        self._completed_lock = threading.Lock()
+        self._completed = set()
+
+    def unqueue_task(self, task_id):
+        with self._completed_lock:
+            self._completed.add(task_id)
 
     def queue_task(self, task_id, kind, created_on, analysis_id, priority,
-                   platform, os_version, machine_tags):
+                   platform, os_version, machine_tags, route):
         self.taskqueue.queue_task(
             task_id, kind, created_on, analysis_id, priority, platform,
-            os_version, machine_tags
+            os_version, machine_tags, route
         )
         self._change_event.set()
 
@@ -197,6 +209,18 @@ class Scheduler:
             raise SchedulerError("No task starters")
 
         self._startables_queue.put(startable_task)
+
+    def _unqueue_tasks(self):
+        with self._completed_lock:
+            completed = self._completed.copy()
+
+        # Remove all task ids marked as completed from the queue and
+        # update the completed task ids set afterwards. We do this because
+        # it can change while we are deleting. We do not want to keep it
+        # locked because this can stop node clients from working.
+        self.taskqueue.remove(*completed)
+        with self._completed_lock:
+            self._completed = self._completed - completed
 
     def assign_work(self):
         with self.taskqueue.get_workfinder() as wf:
@@ -241,13 +265,19 @@ class Scheduler:
             if not self.do_run:
                 break
 
-            # Check if a machine lists dump should be made. Dump is used
-            # by other components to see the available platforms etc for
-            # all nodes.
-            if self.ctx.nodes.machinelist_dumper.should_dump():
-                self.ctx.nodes.machinelist_dumper.make_dump(
-                    Paths.machinestates()
+            # Check if a node infos dump should be made. Dump is used
+            # by other components to see the available platforms, routes etc
+            # for all nodes.
+            if self.ctx.nodes.nodeinfos.should_dump():
+                self.ctx.nodes.nodeinfos.make_dump(
+                    Paths.nodeinfos_dump()
                 )
+
+            # Remove tasks from the task queue db. These tasks have been
+            # marked completed/unqueued by node clients closing the
+            # StartableTask
+            if self._completed:
+                self._unqueue_tasks()
 
             # Only continue to search for machines if the task queue is not
             # empty.

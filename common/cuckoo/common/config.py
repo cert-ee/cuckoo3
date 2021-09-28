@@ -153,10 +153,11 @@ class FilePath(String):
 
     def __init__(self, value=None, default_val=None, required=True,
                  allow_empty=False, sensitive=False, must_exist=False,
-                 readable=False, writable=False):
+                 readable=False, writable=False, executable=False):
         self.must_exist = must_exist
         self.readable = readable
         self.writable = writable
+        self.executable = executable
 
         super().__init__(value=value, default_val=default_val,
                          required=required, allow_empty=allow_empty,
@@ -179,6 +180,11 @@ class FilePath(String):
         if self.writable and not os.access(value, os.W_OK):
             raise ConstraintViolationError(f"Filepath {value} is not writable")
 
+        if self.executable and not os.access(value, os.X_OK):
+            raise ConstraintViolationError(
+                f"Filepath {value} is not executable"
+            )
+
 class UnixSocketPath(FilePath):
 
     def _exists_check(self, path):
@@ -186,6 +192,23 @@ class UnixSocketPath(FilePath):
             return stat.S_ISSOCK(os.stat(path).st_mode)
 
         return False
+
+class NetworkInterface(String):
+
+    def constraints(self, value):
+        from psutil import net_if_stats
+        super().constraints(value)
+
+        nic = net_if_stats().get(value)
+        if not nic:
+            raise ConstraintViolationError(
+                f"Network interface '{value}' does not exist."
+            )
+
+        if not nic.isup:
+            raise ConstraintViolationError(
+                f"Network interface '{value}' is not up."
+            )
 
 class Boolean(TypeLoader):
 
@@ -554,7 +577,8 @@ def _dump_to_cache(loaded_values, filename, subpkg):
     else:
         _cache[filename] = values_dict
 
-def load_config(filepath, subpkg="", cache_config=True):
+def load_config(filepath, subpkg="", cache_config=True,
+                check_constraints=True):
     if not os.path.isfile(filepath):
         raise MissingConfigurationFileError(
             f"Configuration file {filepath} not found."
@@ -596,7 +620,7 @@ def load_config(filepath, subpkg="", cache_config=True):
     loadercopy = deepcopy(loader)
 
     try:
-        load_values(conf, loadercopy, check_constraints=True)
+        load_values(conf, loadercopy, check_constraints=check_constraints)
     except ConfigurationError as e:
         raise ConfigurationError(
             f"Error in config file: {filepath}. {e}"
@@ -655,7 +679,7 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
                     f"Key '{key}' cannot be empty. {e}",
                 )
 
-            load_values(confval, nested_loaders)
+            load_values(confval, nested_loaders, check_constraints)
             loader.value = nested_loaders
             continue
 

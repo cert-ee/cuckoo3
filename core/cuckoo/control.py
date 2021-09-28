@@ -192,7 +192,7 @@ def handle_pre_done(worktracker):
 
 def handle_manual_done(worktracker, settings_dict):
     s_helper = settings_maker.new_settings(
-        machinelists=worktracker.ctx.nodes.machine_lists
+        nodeinfos=worktracker.ctx.nodes.nodeinfos
     )
     try:
         s_helper.from_dict(settings_dict)

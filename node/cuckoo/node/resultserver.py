@@ -11,6 +11,7 @@ import time
 
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
+from cuckoo.common.node import ExistingResultServer
 from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import (
@@ -41,36 +42,6 @@ class HeaderMisMatch(CancelResult):
 class ResultServersNotStartedError(Exception):
     pass
 
-class ExistingResultServer:
-
-    def __init__(self, socket_path, listen_ip, listen_port):
-        self.socket_path = socket_path
-        self.listen_ip = listen_ip
-        self.listen_port = listen_port
-
-    def to_dict(self):
-        return {
-            "socket_path": str(self.socket_path),
-            "listen_ip": self.listen_ip,
-            "listen_port": self.listen_port
-        }
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(
-            socket_path=d["socket_path"],
-            listen_ip=d["listen_ip"], listen_port=d["listen_port"]
-        )
-
-    def __str__(self):
-        return f"{self.listen_ip}:{self.listen_port}"
-
-    def __eq__(self, other):
-        return (self.listen_ip, self.listen_port) \
-               != (other.listen_ip, other.port)
-
-    def __hash__(self):
-        return hash(self.listen_ip + str(self.listen_port))
 
 class _ResultServerTracker:
     """Simple wrapper around a set to keep track of existing resultservers and
@@ -236,6 +207,11 @@ class FileUpload(ProtocolHandler):
                 f"Task {self.task.task_id} file upload {dirpart}/{fname!r}"
                 f" cancelled. {e}"
             )
+        except ConnectionError as e:
+            raise CancelResult(
+                f"Error during connection of file upload {dirpart}/{fname!r} "
+                f"of task {self.task.task_id}. {e}"
+            )
         finally:
             self.task.log.debug(
                 "File upload ended.", newfile=newfile,
@@ -287,6 +263,11 @@ class ScreenshotUpload(ProtocolHandler):
             raise CancelResult(
                 f"Task {self.task.task_id} screenshot upload {fname} "
                 f"cancelled. {e}"
+            )
+        except ConnectionError as e:
+            raise CancelResult(
+                f"Error during connection of screenshot upload {fname} "
+                f"of task {self.task.task_id}. {e}"
             )
         finally:
             self.task.log.debug(

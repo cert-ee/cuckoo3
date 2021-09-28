@@ -29,7 +29,7 @@ class Machine:
                  state="UNKNOWN",  locked=False, locked_by="", reserved=False,
                  reserved_by="", disabled=False, disabled_reason="",
                  machinery_name="", errors=[], architecture="",
-                 interface=""):
+                 interface="", agent_port=8000):
 
         # Configuration information
         self.name = name
@@ -42,6 +42,7 @@ class Machine:
         self.mac_address = mac_address
         self.architecture = architecture
         self.interface = interface
+        self.agent_port = agent_port
 
         self.machinery = machinery
         if machinery:
@@ -133,6 +134,7 @@ class Machine:
             "snapshot": self.snapshot,
             "architecture": self.architecture,
             "interface": self.interface,
+            "agent_port": self.agent_port,
             "mac_address": self.mac_address,
             "machinery_name": self.machinery_name,
             "state": self.state,
@@ -170,6 +172,7 @@ class Machine:
             reserved_by=d["reserved_by"], disabled=d["disabled"],
             disabled_reason=d["disabled_reason"], errors=d["errors"],
             machinery_name=d["machinery_name"],
+            agent_port=d.get("agent_port", 8000)
         )
 
 
@@ -385,6 +388,9 @@ class MachinesList:
         with self._machines_lock:
             machine.disable(reason)
             self.set_state(machine, States.ERROR)
+
+    def to_dictlist(self):
+        return [machine.to_dict() for machine in self._machines]
 
 class MachineListDumper:
     """Simple helper to to keep track of when a dump of all added machine

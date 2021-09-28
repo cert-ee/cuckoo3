@@ -13,9 +13,10 @@ from aiohttp_sse_client import client as sse_client
 
 from .ipc import (
     request_unix_socket, message_unix_socket, ResponseTimeoutError, IPCError,
-    a_request_unix_socket
+    a_request_unix_socket, UnixSockClient, timeout_read_response
 )
 from .machines import read_machines_dump_dict, MachineListError
+from .route import Routes
 
 class ClientError(Exception):
     pass
@@ -157,7 +158,7 @@ class TaskRunnerClient:
 
     @staticmethod
     def start_task(sockpath, kind, task_id, analysis_id, machine,
-                    resultserver):
+                    resultserver, rooter_sock_path=None):
         try:
             resp = request_unix_socket(sockpath, {
             "action": "starttask", "args": {
@@ -165,7 +166,8 @@ class TaskRunnerClient:
                     "task_id": task_id,
                     "analysis_id": analysis_id,
                     "machine": machine.to_dict(),
-                    "resultserver": resultserver.to_dict()
+                    "resultserver": resultserver.to_dict(),
+                    "rooter_sock_path": rooter_sock_path
                 }
             }, timeout=60)
         except IPCError as e:
@@ -481,6 +483,21 @@ class NodeAPIClient:
         except MachineListError as e:
             raise ClientError(f"Failed to read machine list: {e}")
 
+    def available_routes(self):
+        api = urljoin(self.api_url, "routes")
+        try:
+            res = requests.get(api, timeout=5, headers=self.get_headers())
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"Retrieving available routes failed. {e}")
+
+        if res.status_code != 200:
+            _raise_for_status(_response_ctx(res), api, 200)
+
+        try:
+            return Routes.from_dict(res.json())
+        except MachineListError as e:
+            raise ClientError(f"Failed to available routes dict: {e}")
+
     def download_result(self, task_id, file_path, chunk_size=256*1024):
         if os.path.exists(file_path):
             raise ClientError(f"Path already exists: {file_path}")
@@ -627,3 +644,96 @@ class ResultRetrieverClient:
             raise ActionFailedError(
                 f"Error during result retrieval: {response.get('error')}"
             )
+
+
+class RooterRouteRequest:
+
+    def __init__(self, sock_path, route, machine, resultserver,
+                 request_timeout=120):
+        self.sock_path = sock_path
+        self.route = route
+        self.machine = machine
+        self.timeout = request_timeout
+        self.resultserver = resultserver
+
+        self._client = None
+
+    def _request_route(self, route_msg):
+        self._client = UnixSockClient(self.sock_path, blockingreads=False)
+        try:
+            self._client.connect(timeout=10)
+            self._client.send_json_message(route_msg)
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send request to rooter at path: "
+                f"{self.sock_path}. Error: {e}"
+            )
+
+        try:
+            response = timeout_read_response(self._client, self.timeout)
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to read response from rooter at path: "
+                f"{self.sock_path}. Error: {e}"
+            )
+
+        success = response.get("success")
+        if success is None:
+            raise ServerResponseError(
+                f"Response {repr(response)} does not contain "
+                f"mandatory key 'success'"
+            )
+
+        if not success:
+            raise ActionFailedError(
+                f"Route request failed. Error: {response.get('error')}"
+            )
+
+    def apply_route(self):
+        self._request_route({
+            "subject": "enableroute",
+            "args": {
+                "machine": self.machine.to_dict(),
+                "route": self.route.to_dict(),
+                "resultserver": self.resultserver.to_dict()
+            }
+        })
+
+    def disable_route(self):
+        if not self._client:
+            return
+
+        try:
+            self._client.send_json_message({"subject": "disableroute"})
+        except IPCError:
+            pass
+
+        self._client.cleanup()
+
+
+class RooterClient:
+
+    @staticmethod
+    def get_routes(sock_path, timeout=120):
+        try:
+            return Routes.from_dict(request_unix_socket(
+                sock_path, {"subject": "getroutes"}, timeout=timeout
+            ))
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to retrieve available routes from rooter at "
+                f"path: {sock_path}. Error: {e}"
+            )
+
+    @staticmethod
+    def request_route(sock_path, route, machine, resultserver, timeout=120):
+        request = RooterRouteRequest(
+            sock_path, route, machine, resultserver, request_timeout=timeout
+        )
+        try:
+            request.apply_route()
+        except ActionFailedError:
+            request.disable_route()
+            raise
+
+        return request

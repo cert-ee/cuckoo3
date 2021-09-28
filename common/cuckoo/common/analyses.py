@@ -11,7 +11,7 @@ from .log import CuckooGlobalLogger
 from .storage import (
     AnalysisPaths, delete_dirtree, delete_dir, split_analysis_id, todays_daydir
 )
-from .strictcontainer import Settings as _Settings, Analysis, Errors
+from .strictcontainer import Settings as _Settings, Analysis, Errors, Platform
 from .utils import parse_bool
 
 log = CuckooGlobalLogger(__name__)
@@ -71,11 +71,6 @@ class Settings(_Settings):
         errors = []
         if self.priority < 1:
             errors.append("Priority must be 1 at least")
-        if self.machines and self.platforms:
-            errors.append(
-                "It is not possible to specify platforms and specific "
-                "machines at the same time"
-            )
 
         if errors:
             raise AnalysisError(
@@ -207,9 +202,6 @@ def track_imported(analysis):
         ses.close()
 
 def merge_target_settings(analysis, target):
-    if analysis.settings.machines:
-        return
-
     browser_tag = ""
     if analysis.settings.browser:
         browser_tag = f"browser_{analysis.settings.browser}"
@@ -260,7 +252,7 @@ def merge_target_settings(analysis, target):
             if autotag and target.machine_tags:
                 platform_copy["tags"].extend(target.machine_tags)
 
-            settings_platforms.append(platform_copy)
+            settings_platforms.append(Platform(**platform_copy))
 
         analysis.update_settings(platforms=settings_platforms)
 
@@ -275,12 +267,13 @@ def merge_target_settings(analysis, target):
             "No platform given or identified. Using default_platform.",
             analysis_id=analysis.id, platform=platform, os_version=os_version
         )
-        default = {
-            "platform": platform,
-            "os_version": os_version or "",
-            "tags": [] if not browser_tag else []
-        }
-        analysis.update_settings(platforms=[default])
+
+        analysis.update_settings(
+            platforms=[
+                Platform(platform=platform, os_version=os_version or "",
+                         tags=[] if not browser_tag else [])
+            ]
+        )
 
 def merge_errors(analysis, error_container):
     if analysis.errors:
@@ -407,13 +400,6 @@ def get_fatal_errors(analysis_id):
         fatalerrs.append(entry["error"])
 
     return fatalerrs
-
-def db_find_state(state):
-    ses = db.dbms.session()
-    try:
-        return ses.query(db.Analysis).filter_by(state=state).all()
-    finally:
-        ses.close()
 
 def db_find_location(analysis_id):
     ses = db.dbms.session()

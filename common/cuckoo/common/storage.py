@@ -513,6 +513,13 @@ class Paths:
         )
 
     @staticmethod
+    def nodeinfos_dump():
+        return cuckoocwd.root.joinpath(
+            RootDirs.OPERATIONAL, OperationalDirs.GENERATED,
+            "nodeinfos.json"
+        )
+
+    @staticmethod
     def analyses(*args):
         return cuckoocwd.root.joinpath(
             RootDirs.STORAGE, cuckoocwd.analyses, *args
@@ -532,8 +539,12 @@ class Paths:
         return cuckoocwd.root.joinpath("monitor", *args)
 
     @staticmethod
+    def logpath(*args):
+        return cuckoocwd.root.joinpath(RootDirs.LOG, *args)
+
+    @staticmethod
     def log(filename):
-        return cuckoocwd.root.joinpath(RootDirs.LOG, filename)
+        return Paths.logpath(filename)
 
     @staticmethod
     def elastic_templates():
@@ -558,6 +569,10 @@ class Paths:
             return yara_path
 
         return yara_path.joinpath(filename)
+
+    @staticmethod
+    def rooter_files(*args):
+        return cuckoocwd.root.joinpath("rooter", *args)
 
     @staticmethod
     def safelist(filename):

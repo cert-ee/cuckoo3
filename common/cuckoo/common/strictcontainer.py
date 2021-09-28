@@ -30,14 +30,23 @@ def serialize_disk_json(obj):
     if isinstance(obj, set):
         return list(obj)
 
-    log.warning("Unhandled object type in JSON disk serialization", object=obj)
+    if isinstance(obj, StrictContainer):
+        return obj.to_dict()
+
+    log.warning(
+        "Unhandled object type in JSON disk serialization", object=repr(obj),
+        type=type(obj)
+    )
     return str(obj)
 
 def serialize_api_json(obj):
     if isinstance(obj, datetime.datetime):
         return obj.isoformat()
 
-    log.warning("Unhandled object type in api JSON serialization", object=obj)
+    log.warning(
+        "Unhandled object type in api JSON serialization", object=repr(obj),
+        type=type(obj)
+    )
     return str(obj)
 
 class StrictContainer:
@@ -245,6 +254,9 @@ class StrictContainer:
 
         self.clear_updated()
 
+    def to_json_string(self):
+        return json.dumps(self.to_dict())
+
     def to_file_safe(self, path):
         safe_json_dump(
             path, self.to_dict(), overwrite=True, default=serialize_disk_json
@@ -280,24 +292,56 @@ class StrictContainer:
             super().__setattr__(key, value)
 
 
+class Route(StrictContainer):
+    FIELDS = {
+        "type": str,
+        "options": dict
+    }
+
+    ALLOW_EMPTY = ("options",)
+    STRING_VALUES = ("country",)
+
+    def set_options(self, **kwargs):
+        for key, value in kwargs.items():
+            if key in self.STRING_VALUES and not isinstance(value, str):
+                raise ValueError(f"Key '{key}' value must be a string")
+
+        self._loaded["options"].update(kwargs)
+
+    def __str__(self):
+        if not self.options:
+            return f"type={self.type}"
+
+        options = " ".join(f"{k}:{v}, "
+                           for k, v in sorted(self.options.items()))
+        return f"type={self.type} options={options}"
+
+class PlatformSettings(StrictContainer):
+
+    FIELDS = {
+        "browser": str,
+        "command": list,
+        "route": Route
+    }
+    ALLOW_EMPTY = ("browser", "command", "route")
+
 class Platform(StrictContainer):
 
     FIELDS = {
         "platform": str,
         "os_version": str,
         "tags": list,
-        "settings": dict
+        "settings": PlatformSettings
     }
     ALLOW_EMPTY = ("tags", "os_version", "settings")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._loaded["settings"].setdefault("browser", "")
-        self._loaded["settings"].setdefault("command", [])
-        self._loaded["settings"].setdefault("route", {})
+        if not self._loaded["settings"]:
+            self._loaded["settings"] = PlatformSettings()
 
-    def set_route(self, **kwargs):
-        self.settings.setdefault("route", {}).update(kwargs)
+    def set_route(self, route):
+        self._loaded["settings"]["route"] = route
 
     def set_command(self, command):
         if not isinstance(command, list):
@@ -311,6 +355,16 @@ class Platform(StrictContainer):
 
         self.settings["browser"] = browser
 
+    def __str__(self):
+        s = f"Platform: {self.platform}"
+        if self.os_version:
+            s += f", OS version: {self.os_version}"
+
+        if self.tags:
+            s += f",  Tags: {', '.join(self.tags)}"
+
+        return s
+
 
 class Settings(StrictContainer):
 
@@ -321,10 +375,9 @@ class Settings(StrictContainer):
         "priority": int,
         "options": dict,
         "platforms": list,
-        "machines": list,
         "extrpath": list,
         "manual": bool,
-        "route": dict,
+        "route": Route,
         "command": list,
         "browser": str,
         "password": str,
@@ -332,10 +385,27 @@ class Settings(StrictContainer):
     }
     ALLOW_EMPTY = ("extrpath", "route", "command", "browser", "password")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        platforms = self._loaded["platforms"]
+
+        # The platforms list should always be either a list of dicts
+        # or a list of Platform objects. Assume the entire list will be of the
+        # same type as the first one.
+        if not platforms or not isinstance(platforms[0], dict):
+            return
+
+        # Create a list of Platform objects if the platforms list is a
+        # list of dictionaries.
+        self._loaded["platforms"] = [
+            Platform(**plat_dict) for plat_dict in self._loaded["platforms"]
+        ]
+
     def to_dict(self):
         d = super().to_dict()
         d["platforms"] = [
-            p if isinstance(p, dict) else p.to_dict() for p in self.platforms
+            p.to_dict() if isinstance(StrictContainer, dict) else p
+            for p in self.platforms
         ]
         return d
 
@@ -391,7 +461,7 @@ class Task(StrictContainer):
         "machine_tags": list,
         "machine": str,
         "command": list,
-        "route": dict,
+        "route": Route,
         "browser": str,
         "errors": Errors
     }

@@ -9,7 +9,7 @@ from django.core.management import execute_from_command_line
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error
 from cuckoo.common.startup import (
-    init_global_logging, load_configurations, init_database,
+    init_global_logging, load_configuration, init_database,
     init_elasticsearch, StartupError
 )
 from cuckoo.common.storage import cuckoocwd, Paths
@@ -74,11 +74,12 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
     try:
         init_global_logging(loglevel, logfile)
 
-        machine_dump = Paths.machinestates()
-        if machine_dump.is_file():
-            settings_maker.set_machinesdump_path(machine_dump)
+        nodesinfos_path = Paths.nodeinfos_dump()
+        if nodesinfos_path.is_file():
+            settings_maker.set_nodesinfosdump_path(nodesinfos_path)
 
-        load_configurations()
+        load_configuration("web.yaml", subpkg="web")
+        load_configuration("cuckoo.yaml", check_constraints=False)
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()

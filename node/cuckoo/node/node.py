@@ -37,7 +37,8 @@ class NodeTaskStates:
 
 class _TaskWork:
 
-    def __init__(self, task, machine):
+    def __init__(self, nodectx, task, machine):
+        self.ctx = nodectx
         self.task = task
         self.machine = machine
         self.ended = False
@@ -85,7 +86,8 @@ class _TaskWork:
                 UnixSocketPaths.task_runner(),
                 kind=self.task.kind, task_id=self.task.id,
                 analysis_id=self.task.analysis_id,
-                machine=self.machine, resultserver=resultserver
+                machine=self.machine, resultserver=resultserver,
+                rooter_sock_path=self.ctx.rooter_sock
             )
             return True
         except ActionFailedError as e:
@@ -236,8 +238,8 @@ class Node:
 
     NUM_TASK_START_WORKER = 2
 
-    def __init__(self, cuckooctx, stream_receiver):
-        self.ctx = cuckooctx
+    def __init__(self, nodectx, stream_receiver):
+        self.ctx = nodectx
         self.infostream = NodeInfoStream(stream_receiver)
         self._queue = queue.Queue()
         self._task_tracker = _TasksTracker(self)
@@ -265,7 +267,7 @@ class Node:
                 f"Machine {machine_name} is not available"
             )
 
-        taskwork = _TaskWork(task, machine)
+        taskwork = _TaskWork(self.ctx, task, machine)
         self._task_tracker.track_ongoing_taskwork(taskwork)
         self._queue.put(taskwork)
 

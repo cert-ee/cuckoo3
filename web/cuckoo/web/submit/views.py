@@ -15,16 +15,39 @@ from cuckoo.common.result import (
 )
 
 def _make_web_platforms(available_platforms):
-    return [
-        {
-            "default": platform == cfg(
-                "cuckoo", "platform", "default_platform", "platform"
-            ),
-            "platform": platform,
-            "os_version": [os_version for os_version in os_versions]
-        } for platform, os_versions in available_platforms.items()
-    ]
 
+    default_platform = cfg(
+        "cuckoo", "platform", "default_platform", "platform"
+    )
+    default_version = cfg(
+        "cuckoo", "platform", "default_platform", "os_version"
+    )
+    platforms = []
+    for platform, os_versions in available_platforms.items():
+        entry = {
+            "default": False,
+            "platform": platform,
+            "os_version": list(os_versions)
+        }
+        platforms.append(entry)
+        if platform != default_platform:
+            continue
+
+        if not default_version:
+            entry["default"] = True
+        else:
+            # Search for a version matching the default. If we find it,
+            # ensure it is the first in the list of versions. This will cause
+            # it to be first in dropdown menus.
+            versions = entry["os_version"]
+            for version in os_versions:
+                if version == default_version:
+                    versions.insert(0, version)
+                    entry["default"] = True
+                    entry["os_version"] = list(set(versions))
+                    break
+
+    return platforms
 
 class Submit(View):
 
@@ -98,7 +121,8 @@ class Settings(View):
             "possible_settings": {
                 "platforms": _make_web_platforms(
                     submit.settings_maker.available_platforms()
-                )
+                ),
+                "routes": submit.settings_maker.available_routes()
             },
             "analysis": analysis,
             "analysis_id": analysis_id

@@ -147,17 +147,18 @@ def machine():
 @click.option("--os-version", type=str, help="The version of the platform installed on the machine")
 @click.option("--snapshot", type=str, help="A snapshot to use when restoring, other than the default snapshot.")
 @click.option("--interface", type=str, help="The network interface that should be used to create network dumps.")
+@click.option("--agent-port", type=int, default=8000, show_default=True, help="The TCP port of the agent running on the machine.")
 @click.option("--architecture", type=str, default="amd64", show_default=True, help="The OS architecture. Used to select correct stager and monitor builds.")
 @click.option("--tags", default="", type=str, help="A comma separated list of tags that identify what dependencies/software is installed on the machine.")
 def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
-                interface, architecture, tags):
+                interface, architecture, tags, agent_port):
     """Add a machine to a machinery configuration file."""
     from .startup import add_machine, StartupError
     try:
         add_machine(
             machinery, name=name, label=label, ip=ip, platform=platform,
             os_version=os_version, snapshot=snapshot, interface=interface,
-            architecture=architecture,
+            architecture=architecture, agent_port=agent_port,
             tags=list(filter(None, [t.strip() for t in tags.split(",")]))
         )
         print_info(f"Added machine {name} to machinery {machinery}")
@@ -244,7 +245,7 @@ def submission(target, url, platform, timeout, priority, orig_filename, browser,
     from cuckoo.common.storage import Paths
 
     try:
-        submit.settings_maker.set_machinesdump_path(Paths.machinestates())
+        submit.settings_maker.set_nodesinfosdump_path(Paths.nodeinfos_dump())
     except submit.SubmissionError as e:
         exit_error(f"Submission failed: {e}")
 
@@ -284,7 +285,6 @@ def submission(target, url, platform, timeout, priority, orig_filename, browser,
             s_helper.set_setting(
                 setting_key, value, platform_index=platform_index
             )
-
 
         settings = s_helper.make_settings()
     except submit.SubmissionError as e:

@@ -8,6 +8,7 @@ import json
 import select
 import time
 import stat
+import grp
 
 import asyncio
 
@@ -17,6 +18,9 @@ class IPCError(Exception):
     pass
 
 class NotConnectedError(IPCError):
+    pass
+
+class ConnectionTimeoutError(IPCError):
     pass
 
 class ResponseTimeoutError(IPCError):
@@ -102,6 +106,7 @@ _POLL_CLOSABLE = select.POLLHUP | select.POLLRDHUP | select.POLLERR | \
                  select.POLLNVAL
 _POLL_READ = _POLL_READREADY | _POLL_CLOSABLE
 
+
 class UnixSocketServer:
 
     def __init__(self, sock_path):
@@ -112,7 +117,7 @@ class UnixSocketServer:
         self._fd_socks = {}
         self._poll = None
 
-    def create_socket(self, backlog=0):
+    def create_socket(self, backlog=0, owner_group=None):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             # TODO either here or at usage, check if the path already exists
@@ -124,13 +129,35 @@ class UnixSocketServer:
                 f"Error: {e}"
             )
 
-        # For now, only allow the user running Cuckoo to read from, write
-        # to, and execute the created sockets
-        os.chmod(self.sock_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        self.sock = sock
+        if not owner_group:
+            # For now, only allow the user running Cuckoo to read from, write
+            # to, and execute the created sockets
+            os.chmod(
+                self.sock_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
+            )
+        else:
+            try:
+                group = grp.getgrnam(owner_group)
+            except KeyError:
+                raise IPCError(
+                    f"Cannot change group of socket {self.sock_path}."
+                    f" Group {owner_group} does not exist."
+                )
+            try:
+                os.chown(self.sock_path, 0, group.gr_gid)
+                os.chmod(
+                    self.sock_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                                    stat.S_IWGRP | stat.S_IRGRP
+                )
+            except OSError as e:
+                raise IPCError(
+                    f"Failed to change group to {owner_group} "
+                    f"of socket {self.sock_path}. {e}"
+                )
 
         sock.listen(backlog)
         self._poll = select.poll()
-        self.sock = sock
         self._fd_socks[sock.fileno()] = sock
         self._poll.register(sock, _POLL_READ)
 
@@ -157,6 +184,7 @@ class UnixSocketServer:
 
         self.socks_readers.pop(sock, None)
         self._fd_socks.pop(fd, None)
+        self.post_disconnect_cleanup(sock)
 
     def untrack_all(self):
         for sock in list(self.socks_readers):
@@ -180,10 +208,15 @@ class UnixSocketServer:
                 msg = reader.get_json_message()
             except (socket.error, ValueError, EOFError,
                     json.decoder.JSONDecodeError) as e:
-                log.warning(
-                    "Failed to read message. Disconnecting "
-                    "client.", error=e, sock=sock
-                )
+
+                # Do not log the error if the connection was (uncleanly)
+                # closed. This can happen if we close it after a bad message
+                # or the client only sends a command and disconnects.
+                if e.errno not in (errno.EBADF, errno.ECONNRESET):
+                    log.exception(
+                        "Failed to read message. Disconnecting "
+                        "client.", error=e, sock=sock
+                    )
                 # Untrack this socket. Clients must follow the
                 # communication rules.
                 self.untrack(sock)
@@ -261,6 +294,11 @@ class UnixSocketServer:
         """Called when a new JSON message for a tracked socket arrives."""
         pass
 
+    def post_disconnect_cleanup(self, sock):
+        """Called after a client disconnects and untrack is successfully called
+        """
+        pass
+
 
 class UnixSockClient:
 
@@ -276,15 +314,24 @@ class UnixSockClient:
         self.reader = None
         self.connect(maxtries)
 
-    def connect(self, maxtries=5):
+    def connect(self, maxtries=5, timeout=60):
         if self.sock:
             return
 
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         tries = 0
+        waited = 0
         while True:
             if not os.path.exists(self.sockpath):
+                if waited >= timeout:
+                    raise ConnectionTimeoutError(
+                        "Timeout reached while waiting for socket path "
+                        f"{self.sockpath} to be created. "
+                        f"Waited {waited} seconds."
+                    )
+
                 time.sleep(1)
+                waited += 1
                 continue
 
             tries += 1
@@ -337,10 +384,14 @@ class UnixSockClient:
         if not self.sock:
             return
 
+        # socket.SHUT_RDWR. We set the value ourself because when __del__
+        # is called, imports may no longer exist. We want to ensure the
+        # connection is always closed properly.
+        SHUT_RDWR = 2
         try:
-            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.shutdown(SHUT_RDWR)
             self.sock.close()
-        except socket.error:
+        except OSError:
             pass
 
     def __del__(self):
@@ -365,7 +416,7 @@ def message_unix_socket(sock_path, message_dict):
     sock.close()
 
 
-def _timeout_read_response(client, timeout):
+def timeout_read_response(client, timeout):
     waited = 0
     while True:
         resp = client.recv_json_message()
@@ -398,7 +449,7 @@ def request_unix_socket(sock_path, message_dict, timeout=0):
     client.send_json_message(message_dict)
     try:
         if timeout > 0:
-            return _timeout_read_response(client, timeout)
+            return timeout_read_response(client, timeout)
         else:
             return client.recv_json_message()
     finally:

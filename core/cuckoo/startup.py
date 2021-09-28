@@ -90,7 +90,7 @@ def make_scheduler(cuckooctx, task_queue):
 
 def add_machine(machinery_name, name, label, ip, platform, os_version="",
                 mac_address=None, interface=None, snapshot=None,
-                architecture=None, tags=[]):
+                architecture=None, agent_port=None, tags=[]):
     import cuckoo.machineries
     import shutil
     import tempfile
@@ -129,6 +129,7 @@ def add_machine(machinery_name, name, label, ip, platform, os_version="",
             "snapshot": snapshot,
             "interface": interface,
             "architecture": architecture,
+            "agent_port": agent_port,
             "tags": tags
         }
     }
@@ -197,7 +198,7 @@ def start_localnode(cuckooctx):
 
     from .nodeclient import LocalStreamReceiver, LocalNodeClient
     stream_receiver = LocalStreamReceiver()
-    nodectx = start_local(stream_receiver, cuckooctx.loglevel, )
+    nodectx = start_local(stream_receiver, cuckooctx.loglevel)
 
     client = LocalNodeClient(cuckooctx, nodectx.node)
     stream_receiver.set_client(client)

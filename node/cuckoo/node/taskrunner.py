@@ -6,7 +6,9 @@ import socket
 import time
 from threading import Thread
 
-from cuckoo.common.clients import ResultServerClient, ActionFailedError
+from cuckoo.common.clients import (
+    ResultServerClient, ActionFailedError, RooterClient, ClientError
+)
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.guest import Agent, WaitTimeout
 from cuckoo.common.ipc import (
@@ -14,6 +16,7 @@ from cuckoo.common.ipc import (
 )
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.machines import Machine
+from cuckoo.common.node import ExistingResultServer
 from cuckoo.common.shutdown import register_shutdown
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import (
@@ -21,9 +24,7 @@ from cuckoo.common.storage import (
 )
 from cuckoo.common.strictcontainer import Task, Analysis
 from cuckoo.common.taskflow import TaskFlowError
-
 from .taskflow import StandardTask
-from .resultserver import ExistingResultServer
 
 log = CuckooGlobalLogger(__name__)
 
@@ -31,7 +32,7 @@ class _FlowRunner(Thread):
     """Runs a given taskflow in a thread"""
 
     def __init__(self, taskflow_cls, task_id, analysis_id, machine,
-                 resultserver):
+                 resultserver, rooter_sock_path=None):
         super().__init__()
         self.taskflow_cls = taskflow_cls
         self.machine = machine
@@ -41,7 +42,7 @@ class _FlowRunner(Thread):
         self.analysis = Analysis.from_file(
             AnalysisPaths.analysisjson(analysis_id)
         )
-        self.agent = Agent(self.machine.ip)
+        self.agent = Agent(self.machine.ip, self.machine.agent_port)
         self.taskflow = taskflow_cls(
             self.machine, self.task, self.analysis,
             self.agent, resultserver, TaskLogger(__name__, task_id)
@@ -49,6 +50,12 @@ class _FlowRunner(Thread):
         self.do_run = True
 
         self.errtracker = ErrorTracker()
+
+        if rooter_sock_path and not isinstance(rooter_sock_path, str):
+            raise TypeError("Rooter socket path must be a string")
+
+        self.rooter_sock_path = rooter_sock_path
+        self.route_request = None
 
         self.setName(
             f"Flowrunner_{self.taskflow_cls.name}_Task_{self.task.id}"
@@ -132,6 +139,21 @@ class _FlowRunner(Thread):
                 f"Unhandled error during machine stop request: {e}",
             )
 
+    def _request_route(self):
+        if not self.rooter_sock_path or not self.task.route:
+            return
+
+        self.taskflow.log.debug(
+            "Requesting rooter to apply route", route=self.task.route
+        )
+        try:
+            self.route_request = RooterClient.request_route(
+                self.rooter_sock_path, self.task.route, self.machine,
+                self.resultserver
+            )
+        except ClientError as e:
+            raise TaskFlowError(f"Failure during rooter route request: {e}")
+
     def run(self):
         log.info(
             "Task starting.", task_id=self.task.id, machine=self.machine.name,
@@ -162,6 +184,13 @@ class _FlowRunner(Thread):
                 "Asking resultserver to unmap IP-task", ip=self.machine.ip
             )
             self.remove_from_resultserver()
+
+            if self.route_request:
+                self.taskflow.log.debug(
+                    "Asking rooter to disable requested route",
+                    route=self.route_request.route
+                )
+                self.route_request.disable_route()
 
             if self.errtracker.has_errors():
                 self.errtracker.to_file(TaskPaths.runerr_json(self.task.id))
@@ -202,7 +231,7 @@ class _FlowRunner(Thread):
         # control back to the task flow
         self.taskflow.log.debug(
             "Waiting until agent is online.",
-            agent_address=f"{self.machine.ip}:8000"
+            agent_address=f"{self.machine.ip}:{self.machine.agent_port}"
         )
         timeout = 120
         try:
@@ -214,6 +243,10 @@ class _FlowRunner(Thread):
 
         # Task flow can now prepare the machine
         self.taskflow.log.debug("Agent online")
+
+        # Request rooter to apply route if we received a rooter path and the
+        # current task has a route.
+        self._request_route()
 
         self.taskflow.machine_online()
         self.run_until_timeout()
@@ -244,7 +277,7 @@ class TaskRunner(UnixSocketServer):
         self.track(sock, ReaderWriter(sock))
 
     def start_new_taskflow(self, task_id, analysis_id, kind, resultserver,
-                           machine):
+                           machine, rooter_sock_path=None):
         taskflow_cls = _supported_flowkinds.get(kind)
         if not taskflow_cls:
             raise TaskFlowError(f"Flow kind {kind!r} not supported")
@@ -253,7 +286,7 @@ class TaskRunner(UnixSocketServer):
             m = Machine.from_dict(machine)
             rs = ExistingResultServer.from_dict(resultserver)
             flowrunner = _FlowRunner(
-                taskflow_cls, task_id, analysis_id, m, rs
+                taskflow_cls, task_id, analysis_id, m, rs, rooter_sock_path
             )
         except Exception as e:
             log.exception(

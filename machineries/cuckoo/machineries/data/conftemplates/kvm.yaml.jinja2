@@ -22,6 +22,8 @@ machines:
     # The operating system architecture. Amd64, ARM, etc. This is used to
     # select the correct stager and monitor component for the machine.
     architecture: {{ machine.architecture }}
+    # The TCP port of the agent running on the machine.
+    agent_port: {{ machine.agent_port }}
     # (Optional) The MAC address of the network interface of the machine that is used to connect to
     # to the resultserver and the internet.
     mac_address: {{ machine.mac_address }}

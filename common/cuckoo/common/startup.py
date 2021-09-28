@@ -162,6 +162,21 @@ def _load_machinery_configs():
                 f"Failed to load config file {confpath}. {e}"
             )
 
+def load_configuration(confname, subpkg=None, check_constraints=True):
+    config_path = Paths.config(file=confname, subpkg=subpkg)
+    if not config_path.is_file():
+        raise StartupError(f"Configuration file {config_path} is missing.")
+
+    log.debug("Loading config", confpath=config_path)
+    try:
+        config.load_config(
+            config_path, subpkg=subpkg, check_constraints=check_constraints
+        )
+    except config.ConfigurationError as e:
+        raise StartupError(
+            f"Failed to load config file {config_path}. {e}"
+        )
+
 def load_configurations():
     # Load cuckoo all configurations for Cuckoo and all installed Cuckoo
     # subpackages, except for subpackages listed in 'custom_load'.
@@ -181,19 +196,7 @@ def load_configurations():
             if confname in exclude:
                 continue
 
-            confpath = Paths.config(file=confname, subpkg=subpkg)
-            if not os.path.isfile(confpath):
-                raise config.MissingConfigurationFileError(
-                    f"Configuration file {confname} is missing."
-                )
-
-            log.debug("Loading config.", confpath=confpath)
-            try:
-                config.load_config(confpath, subpkg=subpkg)
-            except config.ConfigurationError as e:
-                raise StartupError(
-                    f"Failed to load config file {confpath}. {e}"
-                )
+            load_configuration(confname, subpkg=subpkg)
 
     for subpkg, custom_loader in custom_load.items():
         custom_loader()

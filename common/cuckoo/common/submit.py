@@ -3,10 +3,10 @@
 
 import json
 import os.path
+import shlex
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
-import shlex
 from threading import RLock
 
 from .analyses import (
@@ -14,10 +14,16 @@ from .analyses import (
     States as AnalysisStates
 )
 from .clients import StateControllerClient, ActionFailedError
-from .machines import read_machines_dump, MachinesList, find_in_lists
+from .log import CuckooGlobalLogger
+from .machines import find_in_lists
+from .node import NodeInfos, read_nodesinfos_dump
 from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
-from .strictcontainer import Analysis, SubmittedFile, SubmittedURL, Platform
+from .strictcontainer import (
+    Analysis, SubmittedFile, SubmittedURL, Platform, Route
+)
 from .utils import force_valid_encoding
+
+log = CuckooGlobalLogger(__name__)
 
 class SubmissionError(Exception):
     pass
@@ -79,9 +85,9 @@ def find_extrpath_fileid(analysis_id, fileid):
 class SettingsVerifier:
 
     @staticmethod
-    def verify_settings(settings, machine_lists):
+    def verify_settings(settings, nodeinfos):
         errs = []
-        SettingsVerifier.verify_platforms(settings, machine_lists, errs)
+        SettingsVerifier.verify_platforms(settings, nodeinfos, errs)
 
         if errs:
             raise SubmissionError(
@@ -90,32 +96,46 @@ class SettingsVerifier:
             )
 
     @staticmethod
-    def verify_platforms(settings, machine_lists, error_list):
-        for mlist in machine_lists:
-            if not mlist.loaded:
-                error_list.append(
-                    "Cannot verify any machine settings. No machines are "
-                    "loaded"
+    def verify_platforms(settings, nodeinfos, error_list):
+        if not nodeinfos.has_nodes():
+            error_list.append(
+                "Cannot verify any machine or route settings. No node "
+                "information is loaded"
+            )
+            return
+
+        if settings.route and not settings.platforms:
+            _, has_route, info = nodeinfos.find_support(None, settings.route)
+            if not has_route:
+                error_list.append(f"No node has route: {settings.route}")
+            else:
+                log.debug(
+                    "Supporting node for route found", node=info.name,
+                    route=settings.route
                 )
-                return
+            return
 
         for platform in settings.platforms:
-            os_name = platform.platform
-            os_version = platform.os_version
-            tags = platform.tags
-
-            machine = find_in_lists(
-                machine_lists, platform=os_name, os_version=os_version,
-                tags=set(tags)
+            route = platform.settings.get("route") or settings.route
+            has_platform, has_route, info = nodeinfos.find_support(
+                platform, route
             )
-            if not machine:
-                err = f"No machine with platform: {os_name}"
-                if os_version:
-                    err += f", os version: {os_version}"
-                if tags:
-                    err += f", tags: {', '.join(tags)}"
+            if info:
+                log.debug(
+                    "Supporting node for platform and route combination found",
+                    node=info.name, platform=platform, route=route
+                )
+                continue
 
-                error_list.append(err)
+            if not has_platform:
+                error_list.append(f"No node has machine with: {platform}")
+                continue
+
+            if has_platform and route and not has_route:
+                error_list.append(
+                    f"No nodes have the combination of platform: "
+                    f"{platform} and route {route}"
+                )
 
 
 def _make_browser_tag(browser):
@@ -123,9 +143,10 @@ def _make_browser_tag(browser):
 
 class SettingsHelper:
 
-    def __init__(self, default_settings, machine_lists):
+    def __init__(self, default_settings, nodeinfos):
         self._settings = deepcopy(default_settings)
-        self._machine_lists = machine_lists
+        self._machine_lists = nodeinfos
+        self._nodeinfos = nodeinfos
 
         self._key_handlers = {
             "timeout": self.set_timeout,
@@ -163,19 +184,21 @@ class SettingsHelper:
 
         self._settings["manual"] = manual
 
-    def _read_browser(self, browser):
-        if browser:
-            if not isinstance(browser, str):
-                raise SubmissionError("Setting 'browser' must be a string")
+    def _check_browser(self, browser):
+        if not isinstance(browser, str):
+            raise SubmissionError("Setting 'browser' must be a string")
 
-            tag = _make_browser_tag(browser)
+        # Turn browser name into correct 'browser tag' format. Search
+        # the available machines for this tag.
+        tag = _make_browser_tag(browser)
 
-            if not find_in_lists(self._machine_lists, tags=set([tag])):
-                raise SubmissionError(f"No machines available with tag: {tag}")
-
-            return tag
-
-        return None
+        if not find_in_lists(
+                self._nodeinfos.all_machine_lists, tags={[tag]}
+        ):
+            raise SubmissionError(
+                f"Browser {browser!r} not available. No machines with "
+                f"tag {tag!r} exist."
+            )
 
     def _check_route(self, route):
         if route and not isinstance(route, dict):
@@ -252,13 +275,17 @@ class SettingsHelper:
         # Verify platform settings.
         self._check_platform_settings(settings)
 
+        route = settings.get("route", {})
+        if route:
+            route = Route(**route)
+
         self._settings["platforms"].append(Platform(**{
             "platform": platform,
             "os_version": os_version,
             "tags": list(set(tags)),
             "settings": {
                 "browser": settings.get("browser", ""),
-                "route": settings.get("route", {}),
+                "route": route,
                 "command": self._read_command(settings.get("command", []))
             }
         }))
@@ -285,11 +312,15 @@ class SettingsHelper:
             return
 
         self._check_route(route)
+        try:
+            route = Route(**route)
+        except (TypeError, KeyError, ValueError) as e:
+            raise SubmissionError(f"Invalid route format: {e}")
 
         if platform_index is None:
             self._settings["route"] = route
         else:
-            self._get_platform(platform_index).set_route(**route)
+            self._get_platform(platform_index).set_route(route)
 
     def set_route_type(self, route_type, platform_index=None):
         if not isinstance(route_type, str):
@@ -305,9 +336,11 @@ class SettingsHelper:
             raise SubmissionError("Route option must be a dictionary")
 
         if platform_index is None:
-            self._settings["route"].update(option)
+            self._settings["route"].setdefault("options", {}).update(option)
         else:
-            self._get_platform(platform_index).set_route(**option)
+            self._get_platform(platform_index).settings.route.set_options(
+                **option
+            )
 
     def set_command(self, command, platform_index=None):
         command_args = self._read_command(command)
@@ -320,7 +353,7 @@ class SettingsHelper:
         if not browser:
             return
 
-        browser_tag = self._read_browser(browser)
+        self._check_browser(browser)
         if platform_index is None:
             self._settings["browser"] = browser
 
@@ -357,7 +390,7 @@ class SettingsHelper:
                     "Platform index must be a positive integer"
                 )
 
-                self._get_platform(platform_index).tags.append(tag)
+            self._get_platform(platform_index).tags.append(tag)
 
     def set_platforms_list(self, platforms):
         if not isinstance(platforms, list):
@@ -394,16 +427,30 @@ class SettingsHelper:
             if browser:
                 platform.tags.append(_make_browser_tag(browser))
 
+    @staticmethod
+    def _make_routes(settings):
+        """Make route objects from all dicts that were configured in parts
+        /multiple function calls. This can happen with command line submission
+        """
+        route = settings.get("route")
+        if route and isinstance(route, dict):
+            settings["route"] = Route(**route)
+
+        for platform in settings.get("platforms", []):
+            route = platform.get("settings", {}).get("route")
+            if route and isinstance(route, dict):
+                platform["settings"]["route"] = Route(**route)
+
     def make_settings(self):
         try:
             settings_copy = deepcopy(self._settings)
             self._add_browser_tags(settings_copy)
+            self._make_routes(settings_copy)
             s = Settings(**settings_copy)
-            SettingsVerifier.verify_settings(s, self._machine_lists)
+            SettingsVerifier.verify_settings(s, self._nodeinfos)
             return s
         except (ValueError, TypeError, AnalysisError) as e:
             raise SubmissionError(e)
-
 
 
 class SettingsMaker:
@@ -411,12 +458,11 @@ class SettingsMaker:
     RELOAD_MINS = 5
 
     def __init__(self):
-        self.machines = MachinesList()
+        self.nodeinfos = NodeInfos()
         self.default = {
             "timeout": 120,
             "priority": 1,
             "platforms": [],
-            "machines": [],
             "manual": False,
             "dump_memory": False,
             "options": {},
@@ -427,7 +473,7 @@ class SettingsMaker:
             "password": "",
             "browser": "",
         }
-        self._machine_dump_path = None
+        self._nodeinfos_dump_path = None
         self._dmp_load_lock = RLock()
 
         self._last_modify_time = None
@@ -435,7 +481,7 @@ class SettingsMaker:
 
     def _dump_modify_dt(self):
         return datetime.fromtimestamp(
-                self._machine_dump_path.stat().st_mtime
+                self._nodeinfos_dump_path.stat().st_mtime
             )
 
     def _should_reload_dump(self):
@@ -460,53 +506,60 @@ class SettingsMaker:
             if not self._should_reload_dump():
                 return
 
-            self.reload_machines_dump()
+            self.reload_nodeinfo_dump()
 
-    def set_machinesdump_path(self, dump_path):
+    def set_nodesinfosdump_path(self, dump_path):
         dump_path = Path(dump_path)
         if not dump_path.is_file():
             raise SubmissionError(
-                "Machine dump does not exist. No machines have ever been "
-                "loaded. Start Cuckoo to load these from the machine "
-                "configurations and automatically create machine dumps."
+                "Node info dump file does not exist. No node info has ever "
+                "been loaded. Start Cuckoo to load node information from "
+                "configuration file (or remote nodes). This will automatically"
+                " create a node info dump."
             )
 
-        self._machine_dump_path = dump_path
+        self._nodeinfos_dump_path = dump_path
 
-    def reload_machines_dump(self):
-        """Loads and sets a machines dump made by the scheduler. Must be
-        loaded before machine information can be verified and thus is required
-        before being able to create new submissions."""
-        if not self._machine_dump_path:
-            raise SubmissionError("No machine dump path has been configured")
-
-        if not self._machine_dump_path.is_file():
+    def reload_nodeinfo_dump(self):
+        """Loads and sets a node info dump made by the scheduler. Must be
+        loaded before machine and route information can be verified and thus
+         is require before being able to create new submissions."""
+        if not self._nodeinfos_dump_path:
             raise SubmissionError(
-                "Configured machines dump path does not exist. "
+                "No node info dump path has been configured"
+            )
+
+        if not self._nodeinfos_dump_path.is_file():
+            raise SubmissionError(
+                "Configured node infos dump path does not exist. "
             )
 
         with self._dmp_load_lock:
             self._last_modify_time = self._dump_modify_dt()
             self._last_reload = datetime.utcnow()
-            self.machines = read_machines_dump(self._machine_dump_path)
+            self.nodeinfos = read_nodesinfos_dump(self._nodeinfos_dump_path)
 
     def available_platforms(self):
         self._reload_if_needed()
-        return self.machines.get_platforms_versions()
+        return self.nodeinfos.get_platforms_versions()
 
-    def new_settings(self, machinelists=[]):
-        """The machine list must have been loaded before if no
-        machinelist(s) are provided"""
-        if machinelists:
-            return SettingsHelper(self.default, machinelists)
-        else:
-            self._reload_if_needed()
-            return SettingsHelper(self.default, [self.machines])
+    def available_routes(self):
+        self._reload_if_needed()
+        return self.nodeinfos.get_routes()
+
+    def new_settings(self, nodeinfos=None):
+        """The node infos dump must have been loaded before if no
+        nodeinfos is provided"""
+        if nodeinfos:
+            return SettingsHelper(self.default, nodeinfos)
+
+        self._reload_if_needed()
+        return SettingsHelper(self.default, self.nodeinfos)
 
 
 # Global settings maker that can be initialized once and used by any module
-# that imports it. Currently done like this to not have to load machine dumps
-# and default settings from multiple places/modules within one process.
+# that imports it. Currently done like this to not have to load node info
+# dumps and default settings from multiple places/modules within one process.
 settings_maker = SettingsMaker()
 
 

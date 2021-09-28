@@ -40,13 +40,14 @@ setuptools.setup(
         "jinja2",
         "requests",
         "python-dateutil",
-        "sflock",
+        "sflock>=0.4, <0.5",
         "sqlalchemy>=1.3.13, <1.4",
         "elasticsearch>=7.8.1, <8.0",
         "elasticsearch-dsl>=7.2.1, <7.3",
         "vt-py>=0.5.4, <0.6",
         "pymisp>=2.4.135.3, <2.5",
         "aiohttp>=3.7.4, <3.8",
-        "aiohttp-sse-client>=0.2.1, <0.3"
+        "aiohttp-sse-client>=0.2.1, <0.3",
+        "psutil>=5.8.0, <5.9"
     ]
 )

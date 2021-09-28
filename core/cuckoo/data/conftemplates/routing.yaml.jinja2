@@ -1,0 +1,36 @@
+internet:
+  enabled: {{ internet.enabled }}
+  interface: {{ internet.interface }}
+  routing_table: {{ internet.routing_table }}
+
+vpn:
+  preconfigured:
+    enabled: {{ vpn.preconfigured.enabled }}
+    vpns:
+    {% for vpnname, vpn in vpn.preconfigured.vpns.items() %}
+      {{ vpnname }}:
+        interface: {{ vpn.interface }}
+        routing_table: {{ vpn.routing_table }}
+        country: {{ vpn.country }}
+    {% endfor %}
+
+  vpnpool:
+    enabled: {{ vpn.vpnpool.enabled }}
+    routing_tables:
+      start_range: {{ vpn.vpnpool.routing_tables.start_range }}
+      end_range: {{ vpn.vpnpool.routing_tables.end_range }}
+    providers:
+    {% for name, provider in vpn.vpnpool.providers.items() %}
+      {{ name }}:
+        max_connections: {{ provider.max_connections }}
+        vpns:
+        {% for country, vpn in provider.vpns.items() %}
+          {{ country }}:
+            configurations:
+            {% for config in vpn.configurations %}
+            - type: {{ config.type }}
+              path: {{ config.path }}
+              up_script: {{ config.up_script }}
+            {% endfor %}
+        {% endfor %}
+    {% endfor %}

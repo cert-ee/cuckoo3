@@ -7,5 +7,6 @@ from . import views
 urlpatterns = [
     path("file", views.SubmitFile.as_view()),
     path("url", views.SubmitURL.as_view()),
-    path("platforms", views.PlatformList.as_view())
+    path("platforms", views.AvailablePlatforms.as_view()),
+    path("routes", views.AvailableRoutes.as_view())
 ]
