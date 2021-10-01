@@ -328,9 +328,10 @@ def set_task_failed(worktracker):
     update_final_analysis_state(worktracker)
     analyses.write_changes(worktracker.analysis)
 
-def set_task_running(worktracker, machine):
+def set_task_running(worktracker, machine, node):
     worktracker.log.info("Setting task to state running")
     worktracker.task.state = task.States.RUNNING
+    worktracker.task.node = node.name
     worktracker.analysis.update_task(
         worktracker.task.id, state=worktracker.task.state,
         platform=machine.platform, os_version=machine.os_version,
@@ -547,7 +548,8 @@ class StateController(UnixSocketServer):
             set_task_running, {
                 "task_id": kwargs["task_id"],
                 "analysis_id": kwargs["analysis_id"],
-                "machine": kwargs["machine"]
+                "machine": kwargs["machine"],
+                "node": kwargs["node"]
             }
         )
 

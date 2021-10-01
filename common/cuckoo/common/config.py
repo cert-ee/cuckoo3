@@ -359,6 +359,8 @@ class Dict(TypeLoader):
                 f"Expected type dict, got {type(value).__name__}"
             )
 
+        for v in value.values():
+            v.check_constraints(v.value)
 
 class DictList(TypeLoader):
 
@@ -486,7 +488,6 @@ def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
         return str(obj)
 
     # HACKY: A bit hacky.. But works well enough for now.
-    print(config_dictionary)
     return json.loads(
         json.dumps(config_dictionary, default=_typeloader_to_yamlval)
     )
@@ -651,7 +652,7 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
         if key not in conf_data_dict:
 
             # Stop reading the configuration if the missing key is
-            # marked as required
+            # marked as not required
             if isinstance(loader, (TypeLoader, NestedDictionary)):
                 if not loader.required:
                     continue

@@ -404,5 +404,4 @@ def start_cuckoo(loglevel):
         log.debug("Starting scheduler")
         cuckooctx.scheduler.start()
     except Exception as e:
-        log.exception("failed", error=e)
         raise StartupError(e)

@@ -7,7 +7,7 @@ import os
 from . import db
 from .log import CuckooGlobalLogger
 from .storage import TaskPaths, make_task_id
-from .strictcontainer import Task, Errors, Platform
+from .strictcontainer import Task, Errors
 
 log = CuckooGlobalLogger(__name__)
 
@@ -96,7 +96,10 @@ def _create_task(nodes_tracker, analysis, task_number, platform_obj):
         )
 
     task_id = make_task_id(analysis.id, task_number)
-    log.debug("Creating task.", task_id=task_id)
+    log.debug(
+        "Creating task.", task_id=task_id, platform=platform_obj.platform,
+        os_version=platform_obj.os_version
+    )
 
     _make_task_dirs(task_id)
     task_values = {

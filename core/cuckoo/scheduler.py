@@ -99,7 +99,7 @@ class StartableTask:
     def task_running(self):
         self.ctx.state_controller.task_running(
             task_id=self.task.id, analysis_id=self.task.analysis_id,
-            machine=self.machine
+            machine=self.machine, node=self.node
         )
 
     def assign_to_node(self):

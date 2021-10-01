@@ -463,11 +463,12 @@ class Task(StrictContainer):
         "command": list,
         "route": Route,
         "browser": str,
+        "node": str,
         "errors": Errors
     }
     ALLOW_EMPTY = (
         "machine", "machine_tags", "os_version", "errors", "score",
-        "route", "browser", "command"
+        "route", "browser", "command", "node"
     )
 
 class TargetFile(StrictContainer):
