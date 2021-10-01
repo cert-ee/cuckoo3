@@ -80,6 +80,7 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
 
         load_configuration("web.yaml", subpkg="web")
         load_configuration("cuckoo.yaml", check_constraints=False)
+        load_configuration("analysissettings.yaml")
         init_database()
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()
@@ -95,6 +96,9 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
 
         if stats:
             _init_statistics_web()
+
+        settings_maker.set_limits(cfg("analysissettings.yaml", "limits"))
+        settings_maker.set_defaults(cfg("analysissettings.yaml", "default"))
 
     except StartupError as e:
         exit_error(f"Failed to initialize Cuckoo web. {e}")

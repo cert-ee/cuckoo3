@@ -15,13 +15,21 @@ from cuckoo.common.result import (
 )
 
 def _make_web_platforms(available_platforms):
+    fallbacks = cfg(
+        "analysissettings.yaml", "platform", "fallback_platforms"
+    )
+    versions = cfg(
+        "analysissettings.yaml", "platform", "versions"
+    )
 
-    default_platform = cfg(
-        "cuckoo", "platform", "default_platform", "platform"
-    )
-    default_version = cfg(
-        "cuckoo", "platform", "default_platform", "os_version"
-    )
+    default_platform = ""
+    default_version = ""
+    if fallbacks:
+        default_platform = fallbacks[0]
+        platform_versions = versions.get(default_platform, [])
+        if platform_versions:
+            default_version = platform_versions[0]
+
     platforms = []
     for platform, os_versions in available_platforms.items():
         entry = {
@@ -124,6 +132,7 @@ class Settings(View):
                 ),
                 "routes": submit.settings_maker.available_routes()
             },
+            "default_settings": submit.settings_maker.default,
             "analysis": analysis,
             "analysis_id": analysis_id
         }

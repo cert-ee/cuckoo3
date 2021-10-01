@@ -48,20 +48,8 @@ typeloaders = {
             "rooter_socket": config.UnixSocketPath(
                 must_exist=True, readable=True, writable=True
             ),
-            "default": {
-                "type": config.String(allow_empty=True),
-                "options": config.Dict(
-                    element_class=config.String, default_val={},
-                    allow_empty=True
-                )
-            }
         },
         "platform": {
-            "default_platform": {
-                "platform": config.String(default_val="windows"),
-                "os_version": config.String(allow_empty=True)
-            },
-            "multi_platform": config.List(config.String, ["windows"]),
             "autotag": config.Boolean(default_val=False)
         },
         "state_control": {
@@ -86,6 +74,37 @@ typeloaders = {
         }),
         "node_settings": {
             "api_key": config.String(sensitive=True, default_val=token_hex(32))
+        }
+    },
+    "analysissettings.yaml": {
+        "default": {
+            "timeout": config.Int(default_val=120, min_value=1),
+            "priority": config.Int(default_val=1, min_value=1),
+            "route": {
+                "type": config.String(allow_empty=True),
+                "options": config.Dict(
+                    element_class=config.String, default_val={},
+                    allow_empty=True
+                )
+            }
+        },
+        "platform": {
+            "versions": config.Dict(
+                config.List(config.String), default_val={
+                    "windows": ["10"]
+                }
+            ),
+            "multi_platform": config.List(
+                config.String, default_val=["windows"]
+            ),
+            "fallback_platforms": config.List(
+                config.String, default_val=["windows"]
+            )
+        },
+        "limits": {
+            "max_timeout": config.Int(default_val=300, min_value=1),
+            "max_priority": config.Int(default_val=999, min_value=1),
+            "max_platforms": config.Int(default_val=3, min_value=1)
         }
     }
 }

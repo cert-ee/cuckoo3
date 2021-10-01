@@ -33,39 +33,16 @@ network_routing:
   # Cuckoo rooter socket path. Must be writable and readable for the user
   # that runs Cuckoo.
   rooter_socket: {{ network_routing.rooter_socket }}
-  # The default route to use if no route settings were submitted.
-  default:
-    # The route type. Available routes: internet, drop, vpn.
-    # Leaving the type empty will cause no route to be applied.
-    type: {{ network_routing.default.type }}
-    # Route types such as vpn take options, such a a country.
-    options:
-    {% for optname, optval in network_routing.default.options.items() %}
-      {{ optname }}: {{ optval }}
-    {% endfor %}
 
 platform:
-  # The default platform to use when no platforms are supplied on submission and no required platform is
-  # identified during the identification stage.
-  default_platform:
-    platform: {{ platform.default_platform.platform }}
-    os_version: {{ platform.default_platform.os_version }}
-
-  # Which of the supported platforms determined during the identification stage should be used if a target
-  # can run on multiple platforms. A task will be created for each of the specified platforms if it is present in the
-  # determined platforms.
-  multi_platform:
-  {% for platform in platform.multi_platform %}
-    - {{ platform }}
-  {% endfor %}
-
   # Use the machine tags determined during the identification phase for machine selection.
   # Enabling this means your analyis machines have been configured with the tags
   # listed in conf/processing/identification.yaml
   autotag: {{ platform.autotag }}
 
 state_control:
-  # Cancel an analysis if the file was not identified during the identification stage.
+  # Cancel an analysis if the submitted file was not identified during the
+  # identification stage.
   cancel_unidentified: {{ state_control.cancel_unidentified }}
 
 processing:
@@ -80,7 +57,11 @@ processing:
     # Post workers are responsible for the processing of data collected during each task.
     post: {{ processing.worker_amount.post }}
 
+# The Cuckoo 'long term storage' host that reported analyses should be moved to when
+# starting 'cuckoocleanup remotestorage'. This host must have an import controller
+# instance and the Cuckoo API running.
 remote_storage:
+  # The API url of a remote running Cuckoo API.
   api_url: {{ remote_storage.api_url }}
 
   # API key needs to have administrator privileges to export to

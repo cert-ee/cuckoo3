@@ -12,7 +12,7 @@ from .storage import (
     AnalysisPaths, delete_dirtree, delete_dir, split_analysis_id, todays_daydir
 )
 from .strictcontainer import Settings as _Settings, Analysis, Errors, Platform
-from .utils import parse_bool
+from .utils import parse_bool, browser_to_tag
 
 log = CuckooGlobalLogger(__name__)
 
@@ -204,26 +204,22 @@ def track_imported(analysis):
 def merge_target_settings(analysis, target):
     browser_tag = ""
     if analysis.settings.browser:
-        browser_tag = f"browser_{analysis.settings.browser}"
+        browser_tag = browser_to_tag(analysis.settings.browser)
 
     autotag = cfg("cuckoo", "platform", "autotag")
+    versions_dict = cfg("analysissettings", "platform", "versions")
 
     # Merge target settings with submission specific platform settings
     if analysis.settings.platforms:
 
         for platform in analysis.settings.platforms:
 
-            # Add a browser tag for the analysis settings browser if no
-            # platform browser was chosen.
-            if not platform.get("browser") and browser_tag:
-                platform["tags"].append(browser_tag)
-
             # Only add identified dependency tags if auto tag is enabled.
             if autotag and target.machine_tags:
-                platform["tags"].extend(target.machine_tags)
+                platform.tags.extend(target.machine_tags)
 
             # Ensure tags list is unique.
-            platform["tags"] = list(set(platform["tags"]))
+            platform.tags = list(set(platform.tags))
 
         analysis.update_settings(platforms=analysis.settings.platforms)
 
@@ -232,7 +228,7 @@ def merge_target_settings(analysis, target):
     elif target.platforms:
         # Only use the platforms specified in the config if more than one
         # platform was identified during the identification phase.
-        allowed_multi = cfg("cuckoo", "platform", "multi_platform")
+        allowed_multi = cfg("analysissettings", "platform", "multi_platform")
         all_identified = target.platforms
 
         settings_platforms = []
@@ -252,28 +248,49 @@ def merge_target_settings(analysis, target):
             if autotag and target.machine_tags:
                 platform_copy["tags"].extend(target.machine_tags)
 
-            settings_platforms.append(Platform(**platform_copy))
+            if platform["platform"] in versions_dict:
+                for version in versions_dict[platform["platform"]]:
+                    version_copy = deepcopy(platform_copy)
+                    version_copy["os_version"] = version
+                    settings_platforms.append(Platform(**version_copy))
+            else:
+                settings_platforms.append(Platform(**platform_copy))
 
         analysis.update_settings(platforms=settings_platforms)
 
     # Use the default platform from the settings. This is done when no
     # platform is supplied on submission and no platform is identified.
     else:
-        platform = cfg("cuckoo", "platform", "default_platform", "platform")
-        os_version = cfg(
-            "cuckoo", "platform", "default_platform", "os_version"
+        fallback_platforms = cfg(
+            "analysissettings", "platform", "fallback_platforms"
         )
-        log.debug(
-            "No platform given or identified. Using default_platform.",
-            analysis_id=analysis.id, platform=platform, os_version=os_version
-        )
+        settings_platforms = []
 
-        analysis.update_settings(
-            platforms=[
-                Platform(platform=platform, os_version=os_version or "",
-                         tags=[] if not browser_tag else [])
-            ]
-        )
+        for fallback_platform in fallback_platforms:
+
+            versions = versions_dict.get(fallback_platform)
+            if not versions:
+                settings_platforms.append(Platform(
+                    platform=fallback_platform,
+                    tag=[] if not browser_tag else [browser_tag]
+                ))
+            else:
+                for os_version in versions:
+                    settings_platforms.append(
+                        Platform(
+                            platform=fallback_platform, os_version=os_version,
+                            tag=[] if not browser_tag else [browser_tag]
+                        )
+                    )
+
+        for platform in settings_platforms:
+            log.debug(
+                "No platform given or identified. Using fallback_platform",
+                analysis_id=analysis.id, platform=platform.platform,
+                os_version=platform.os_version
+            )
+
+        analysis.update_settings(platforms=settings_platforms)
 
 def merge_errors(analysis, error_container):
     if analysis.errors:

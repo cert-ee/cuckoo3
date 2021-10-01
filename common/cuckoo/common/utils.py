@@ -55,3 +55,18 @@ def force_valid_encoding(string):
         return string.encode(getfilesystemencoding(), "replace").decode()
     elif isinstance(string, bytes):
         return string.decode(getfilesystemencoding(), "replace")
+
+    return str(string)
+
+def browser_to_tag(browser):
+    return f"browser_{browser.lower().replace(' ', '_')}"
+
+def tag_to_browser(tag):
+    if not tag.startswith("browser_"):
+        return None
+
+    parts = tag.split("browser_", 1)
+    if len(parts) > 2:
+        return None
+
+    return parts[1].replace("_", " ").strip()

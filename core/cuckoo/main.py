@@ -238,15 +238,27 @@ def _parse_settings(**kwargs):
                                 "Use %PAYLOAD% where the target should be in the command.")
 @click.option("--route-type", multiple=True, help="The route type to use.")
 @click.option("--route-option", multiple=True, help="Options for given routes")
-def submission(target, url, platform, timeout, priority, orig_filename, browser,
-               command, route_type, route_option):
+def submission(target, url, platform, timeout, priority, orig_filename,
+               browser, command, route_type, route_option):
     """Create a new file/url analysis"""
-    from cuckoo.common import submit
+    if not target:
+        exit_error("No target specified")
+
+    from cuckoo.common.config import cfg, ConfigurationError
     from cuckoo.common.storage import Paths
+    from cuckoo.common import submit
+    from cuckoo.common.startup import load_configuration, StartupError
 
     try:
+        load_configuration("analysissettings.yaml")
+        submit.settings_maker.set_limits(
+            cfg("analysissettings.yaml", "limits")
+        )
+        submit.settings_maker.set_defaults(
+            cfg("analysissettings.yaml", "default")
+        )
         submit.settings_maker.set_nodesinfosdump_path(Paths.nodeinfos_dump())
-    except submit.SubmissionError as e:
+    except (submit.SubmissionError, StartupError, ConfigurationError) as e:
         exit_error(f"Submission failed: {e}")
 
     try:

@@ -21,7 +21,7 @@ from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
 from .strictcontainer import (
     Analysis, SubmittedFile, SubmittedURL, Platform, Route
 )
-from .utils import force_valid_encoding
+from .utils import force_valid_encoding, browser_to_tag
 
 log = CuckooGlobalLogger(__name__)
 
@@ -85,14 +85,43 @@ def find_extrpath_fileid(analysis_id, fileid):
 class SettingsVerifier:
 
     @staticmethod
-    def verify_settings(settings, nodeinfos):
+    def verify_settings(settings, nodeinfos, limits):
         errs = []
-        SettingsVerifier.verify_platforms(settings, nodeinfos, errs)
+        SettingsVerifier.check_limits(settings, limits, errs)
+        if errs:
+            raise SubmissionError(
+                "One or more limits were exceeded: "
+                f"{'. '.join(errs)}"
+            )
 
+        SettingsVerifier.verify_platforms(settings, nodeinfos, errs)
         if errs:
             raise SubmissionError(
                 "One or more invalid settings were specified: "
                 f"{'. '.join(errs)}"
+            )
+
+    @staticmethod
+    def check_limits(settings, limits, error_list):
+        if limits.get("max_timeout") and \
+                settings.timeout > limits.get("max_timeout"):
+            error_list.append(
+                f"Timeout exceeds maximum timeout of "
+                f"{limits.get('max_timeout')}"
+            )
+
+        if limits.get("max_priority") and \
+                settings.priority > limits.get("max_priority"):
+            error_list.append(
+                f"Priority exceeds maximum priority of "
+                f"{limits.get('max_priority')}"
+            )
+
+        if limits.get("max_platforms") and \
+                len(settings.platforms) > limits.get("max_platforms"):
+            error_list.append(
+                f"Amount of platforms exceeds maximum of "
+                f"{limits.get('max_platforms')}"
             )
 
     @staticmethod
@@ -116,7 +145,7 @@ class SettingsVerifier:
             return
 
         for platform in settings.platforms:
-            route = platform.settings.get("route") or settings.route
+            route = platform.settings.route or settings.route
             has_platform, has_route, info = nodeinfos.find_support(
                 platform, route
             )
@@ -137,16 +166,13 @@ class SettingsVerifier:
                     f"{platform} and route {route}"
                 )
 
-
-def _make_browser_tag(browser):
-    return f"browser_{browser.lower()}"
-
 class SettingsHelper:
 
-    def __init__(self, default_settings, nodeinfos):
+    def __init__(self, default_settings, nodeinfos, limits):
         self._settings = deepcopy(default_settings)
         self._machine_lists = nodeinfos
         self._nodeinfos = nodeinfos
+        self.limits = limits or {}
 
         self._key_handlers = {
             "timeout": self.set_timeout,
@@ -190,10 +216,10 @@ class SettingsHelper:
 
         # Turn browser name into correct 'browser tag' format. Search
         # the available machines for this tag.
-        tag = _make_browser_tag(browser)
+        tag = browser_to_tag(browser)
 
         if not find_in_lists(
-                self._nodeinfos.all_machine_lists, tags={[tag]}
+                self._nodeinfos.all_machine_lists, tags=set([tag])
         ):
             raise SubmissionError(
                 f"Browser {browser!r} not available. No machines with "
@@ -425,7 +451,7 @@ class SettingsHelper:
         for platform in settings["platforms"]:
             browser = platform.settings["browser"] or settings["browser"]
             if browser:
-                platform.tags.append(_make_browser_tag(browser))
+                platform.tags.append(browser_to_tag(browser))
 
     @staticmethod
     def _make_routes(settings):
@@ -437,7 +463,7 @@ class SettingsHelper:
             settings["route"] = Route(**route)
 
         for platform in settings.get("platforms", []):
-            route = platform.get("settings", {}).get("route")
+            route = platform.settings.route
             if route and isinstance(route, dict):
                 platform["settings"]["route"] = Route(**route)
 
@@ -447,7 +473,7 @@ class SettingsHelper:
             self._add_browser_tags(settings_copy)
             self._make_routes(settings_copy)
             s = Settings(**settings_copy)
-            SettingsVerifier.verify_settings(s, self._nodeinfos)
+            SettingsVerifier.verify_settings(s, self._nodeinfos, self.limits)
             return s
         except (ValueError, TypeError, AnalysisError) as e:
             raise SubmissionError(e)
@@ -473,11 +499,25 @@ class SettingsMaker:
             "password": "",
             "browser": "",
         }
+        self.limits = {}
         self._nodeinfos_dump_path = None
         self._dmp_load_lock = RLock()
 
         self._last_modify_time = None
         self._last_reload = None
+
+    def set_limits(self, limits_dict):
+        self.limits.update(limits_dict)
+
+    def set_defaults(self, settings_dict):
+        route = settings_dict.get("route")
+        # An empty route type means no default route. Change it
+        # to an empty dict instead. This way it is easier to call set_defaults
+        # with yaml settings values directly.
+        if route and not route.get("type"):
+            settings_dict["route"] = {}
+
+        self.default.update(settings_dict)
 
     def _dump_modify_dt(self):
         return datetime.fromtimestamp(
@@ -547,14 +587,18 @@ class SettingsMaker:
         self._reload_if_needed()
         return self.nodeinfos.get_routes()
 
+    def available_browsers(self):
+        self._reload_if_needed()
+        return self.nodeinfos.get_browsers()
+
     def new_settings(self, nodeinfos=None):
         """The node infos dump must have been loaded before if no
         nodeinfos is provided"""
         if nodeinfos:
-            return SettingsHelper(self.default, nodeinfos)
+            return SettingsHelper(self.default, nodeinfos, self.limits)
 
         self._reload_if_needed()
-        return SettingsHelper(self.default, self.nodeinfos)
+        return SettingsHelper(self.default, self.nodeinfos, self.limits)
 
 
 # Global settings maker that can be initialized once and used by any module
