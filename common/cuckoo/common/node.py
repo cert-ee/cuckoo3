@@ -1,12 +1,13 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
-import json
 
-from cuckoo.common.storage import safe_json_dump
-from cuckoo.common.machines import read_machines_dump_dict
-from cuckoo.common.route import Routes
+import json
 from datetime import datetime, timedelta
 
+from cuckoo.common.machines import read_machines_dump_dict
+from cuckoo.common.route import Routes
+from cuckoo.common.storage import safe_json_dump
+from .utils import tag_to_browser
 
 class NodeInfo:
 
@@ -83,6 +84,17 @@ class NodeInfos:
 
     def has_nodes(self):
         return len(self.nodeinfos) > 0
+
+    def get_browsers(self):
+        browsers = set()
+        for info in self.nodeinfos:
+            for machine in info.machines_list.machines:
+                for tag in machine.tags:
+                    browser = tag_to_browser(tag)
+                    if browser:
+                        browsers.add(browser)
+
+        return list(browsers)
 
     def get_platforms_versions(self):
         platforms_versions = {}

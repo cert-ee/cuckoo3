@@ -101,3 +101,8 @@ class AvailableRoutes(APIView):
 
     def get(self, request):
         return Response(submit.settings_maker.available_routes())
+
+class AvailableBrowsers(APIView):
+
+    def get(self, request):
+        return Response(submit.settings_maker.available_browsers())

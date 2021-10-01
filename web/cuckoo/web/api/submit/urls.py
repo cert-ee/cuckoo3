@@ -8,5 +8,6 @@ urlpatterns = [
     path("file", views.SubmitFile.as_view()),
     path("url", views.SubmitURL.as_view()),
     path("platforms", views.AvailablePlatforms.as_view()),
-    path("routes", views.AvailableRoutes.as_view())
+    path("routes", views.AvailableRoutes.as_view()),
+    path("browsers", views.AvailableBrowsers.as_view())
 ]

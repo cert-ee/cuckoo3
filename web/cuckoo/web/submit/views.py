@@ -130,7 +130,8 @@ class Settings(View):
                 "platforms": _make_web_platforms(
                     submit.settings_maker.available_platforms()
                 ),
-                "routes": submit.settings_maker.available_routes()
+                "routes": submit.settings_maker.available_routes(),
+                "browsers": submit.settings_maker.available_browsers()
             },
             "default_settings": submit.settings_maker.default,
             "analysis": analysis,
