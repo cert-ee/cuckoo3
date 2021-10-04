@@ -404,7 +404,7 @@ class Settings(StrictContainer):
     def to_dict(self):
         d = super().to_dict()
         d["platforms"] = [
-            p.to_dict() if isinstance(StrictContainer, dict) else p
+            p.to_dict() if isinstance(p, StrictContainer) else p
             for p in self.platforms
         ]
         return d
