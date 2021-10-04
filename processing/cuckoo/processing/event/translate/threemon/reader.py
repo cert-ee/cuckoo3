@@ -396,6 +396,14 @@ class ThreemonReader(abtracts.LogFileTranslator):
                     error=e, handler=decoder_normalizer[1]
                 )
                 continue
+            except processtools.UnknownProcessError:
+                # Occurs when an event is translated and the PID inside the
+                # 'kind_instance' (not normalized yet) does not belong to
+                # any process event. We ignore this here (only for Threemon),
+                # because we known this will happen since it ignores the
+                # System (pid=4) process. We do not log this, since this will
+                # result in lots of logspam for result server network traffic.
+                continue
 
             if normalized:
                 yield normalized

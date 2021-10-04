@@ -3,7 +3,9 @@
 
 from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.event.events import Kinds, SuspiciousEvents
-from cuckoo.processing.event.processtools import is_windowserr_svc
+from cuckoo.processing.event.processtools import (
+    is_windowserr_svc, UnknownProcessError
+)
 from cuckoo.processing.signatures.signature import Scores, IOC
 
 class SuspiciousEventScoring(EventConsumer):
@@ -76,15 +78,16 @@ class SuspiciousEventScoring(EventConsumer):
 
         ioc = {}
         if len(event.args):
-            parent_proc = self.taskctx.process_tracker.process_by_pid(
-                event.args[0]
-            )
-
-            if parent_proc:
+            try:
+                parent_proc = self.taskctx.process_tracker.process_by_pid(
+                    event.args[0]
+                )
                 ioc = {
                     "fake_parent_process": parent_proc.process_name,
                     "fake_parent_process_id": parent_proc.procid
                 }
+            except UnknownProcessError:
+                pass
 
         return (
             "process_other_parent",
@@ -119,10 +122,11 @@ class SuspiciousEventScoring(EventConsumer):
     def _handle_writeprocmem(self, event, process):
         ioc = {}
         if len(event.args):
-            target_proc = self.taskctx.process_tracker.process_by_pid(
-                event.args[0]
-            )
-            if target_proc:
+            try:
+                target_proc = self.taskctx.process_tracker.process_by_pid(
+                    event.args[0]
+                )
+
                 if target_proc.procid == process.procid:
                     return None
 
@@ -130,6 +134,8 @@ class SuspiciousEventScoring(EventConsumer):
                     "target_process": target_proc.process_name,
                     "target_process_id": target_proc.procid
                 }
+            except UnknownProcessError:
+                pass
 
         return (
             "wrote_proc_memory", "Wrote to the memory of another process",

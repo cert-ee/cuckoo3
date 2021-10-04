@@ -3,6 +3,9 @@
 
 from pathlib import PureWindowsPath
 
+class UnknownProcessError(Exception):
+    pass
+
 def normalize_wincommandline(commandline, image_path):
     if not image_path:
         return ""
@@ -111,7 +114,6 @@ class ProcessTracker:
 
     def new_process(self, start_ts, pid, ppid, image, commandline,
                     tracked=True):
-
         parent = self._pid_runningproc.get(ppid)
 
         # Set the parent to None/unknown if its parent is not known to us as
@@ -150,14 +152,17 @@ class ProcessTracker:
 
     def lookup_process(self, procid):
         if procid not in self._procid_proc:
-            raise KeyError(
+            raise UnknownProcessError(
                 f"No process with procid {procid}"
             )
 
         return self._procid_proc[procid]
 
     def lookup_procid(self, pid):
-        return self._pid_procid.get(pid)
+        try:
+            return self._pid_procid[pid]
+        except KeyError:
+            raise UnknownProcessError(f"Unknown process with PID: {pid}")
 
     def process_by_pid(self, pid):
         procid = self.lookup_procid(pid)
@@ -169,7 +174,7 @@ class ProcessTracker:
     def set_tracked(self, pid, injected=False):
         proc_id = self.lookup_procid(pid)
         if not proc_id:
-            raise KeyError(
+            raise UnknownProcessError(
                 f"Cannot set process with pid {pid} to tracked. "
                 f"Pid is unknown."
             )
