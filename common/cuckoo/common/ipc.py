@@ -242,7 +242,9 @@ class UnixSocketServer:
                 continue
 
             for fd, bitmask in incoming:
-                sock = self._fd_socks[fd]
+                sock = self._fd_socks.get(fd)
+                if not sock:
+                    continue
 
                 if bitmask & _POLL_READREADY:
                     if sock is serv_sock:
