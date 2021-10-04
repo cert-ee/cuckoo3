@@ -41,7 +41,16 @@ typeloaders = {
                 "unarchive": ["unarchive"]
             }
         ),
-        "log_unidentified": config.Boolean(default_val=False)
+        "log_unidentified": config.Boolean(default_val=False),
+        "selection": {
+            "extension_priority": config.List(
+                config.String, allow_empty=True,
+                default_val=["exe", "msi", "docm", "dotm", "doc", "xlam",
+                             "xlsm", "xlsb", "xls", "ppsm", "pptm", "ppt",
+                             "ps1", "vbs", "bat", "hta", "jar", "iqy",
+                             "slk", "wsf", "lnk", "url", "pdf", "dll"]
+            )
+        }
     },
     "virustotal.yaml": {
         "enabled": config.Boolean(default_val=True),

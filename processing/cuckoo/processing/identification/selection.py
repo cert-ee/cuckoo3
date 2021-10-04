@@ -134,15 +134,6 @@ class SelectFile(Processor):
     KEY = "selected"
     CATEGORY = ["file"]
 
-    # PoC values. TODO replace with values from config etc later.
-    PRIO_DEFAULT = [".exe", ".msi", ".docm", ".docx", ".pdf"]
-    PRIO_CONTAINER = [".msi"] + PRIO_DEFAULT
-
-    CONTAINER_TYPE_PRIO = {
-        "archive": [".msi"] + PRIO_DEFAULT,
-        "application/pdf": [".pdf"] + PRIO_DEFAULT
-    }
-
     def init(self):
         self.file_counter = 0
         self.tag_deps = cfg("identification", "tags", subpkg="processing")
@@ -150,6 +141,12 @@ class SelectFile(Processor):
         self.log_unidentified = cfg(
             "identification", "log_unidentified", subpkg="processing"
         )
+
+        prio_exts = cfg(
+            "identification", "selection", "extension_priority",
+            subpkg="processing"
+        )
+        self.ext_priority = [x.strip(".") for x in prio_exts]
 
     def _get_tags_dep(self, dep):
         tags = []
@@ -168,43 +165,34 @@ class SelectFile(Processor):
         ret["id"] = file_id
         self.file_map[file_id] = ret["extrpath"]
 
-    def start(self):
-        submitted = self.ctx.result.get("identify", {}).get("submitted", {})
-        selection = self.ctx.result.get("identify", {}).get("selection", [])
-        unpackedfile = self.ctx.result.get("identify").get("unpacked")
+    def _determine_target(self, unpackedfile, selection):
+        # If the submitted file is marked as selected. Return it as the
+        # selected target. We want to prevent things such as PDFs/office docs
+        # with embedded files to incorrectly be started, causing a fail of the
+        # payload. This can happen if we select en embedded file.
+        if unpackedfile.selected:
+            return unpackedfile
 
-        target = None
-        type_priority = []
-
-        # Determine the type of container, as the order of prioritized files
-        # might be different for each type of container.
-        # E.g: mail, PDF, archive
-        if submitted.get("type") == "container":
-            prio_order = self.CONTAINER_TYPE_PRIO.get(
-                submitted.get["media_type"]
-            )
-            if prio_order:
-                type_priority = prio_order
-            else:
-                type_priority = self.PRIO_CONTAINER
-
-        if not type_priority:
-            type_priority = self.PRIO_DEFAULT
-
-        for ext in type_priority:
+        # Check if any of the selected files have an identified file extension
+        # that is part of the priority list. Do this in order of the
+        # extension priority list.
+        for ext in self.ext_priority:
             for f in selection:
-                if f.filename.endswith(ext):
-                    target = f
-                    break
-
-            if target:
-                break
+                if f.extension == ext:
+                    return f
 
         # If no file was selected of the prioritized file types. Select the
         # first file marked as selected by Sflock.
-        if not target and selection:
-            target = selection[0]
+        if selection:
+            return selection[0]
 
+        return None
+
+    def start(self):
+        selection = self.ctx.result.get("identify", {}).get("selection", [])
+        unpackedfile = self.ctx.result.get("identify").get("unpacked")
+
+        target = self._determine_target(unpackedfile, selection)
         # Deselect all files, except the chosen file.
         for f in selection:
             if f is not target:

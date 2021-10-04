@@ -12,3 +12,15 @@ tags:
 # Log the filenames of files that have not been identified during identification. This can help to find
 # interesting files that are not supported yet. This can be noisy.
 log_unidentified: {{ log_unidentified }}
+
+# Settings that influence which identified file is automatically selected for
+# analysis. This only applies if a file is not manually chosen.
+selection:
+  # What is the order of priority of the file type extensions. This applies
+  # in cases where multiple files can be selected (when archives are submitted, for example).
+  # Enter without a dot. In cases where the submitted file itself
+  # is selected/interesting, it will always have priority (OOXML, Jar files for example).
+  extension_priority:
+  {% for ext in selection.extension_priority %}
+  - {{ ext }}
+  {% endfor %}
