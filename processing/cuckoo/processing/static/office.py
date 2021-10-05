@@ -5,13 +5,22 @@ import logging
 import re
 import zipfile
 import zlib
+
 import oletools.olevba
 
 from cuckoo.common.log import set_logger_level
-
 from ..errors import StaticAnalysisError
 
-set_logger_level("olevba", logging.WARNING)
+def _nono_lets_not():
+    pass
+
+# The enable logging method is called when using the VBA parser. It
+# overrides existing logger levels. We want to use debug logging for Cuckoo
+# actions, but not for every other module. Monkey patch it so it does not
+# change the logging level of its own logger.
+oletools.olevba.enable_logging = _nono_lets_not
+
+set_logger_level("olevba", logging.ERROR)
 
 class OfficeStaticAnalysisError(StaticAnalysisError):
     pass
