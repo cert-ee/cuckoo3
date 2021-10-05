@@ -61,7 +61,7 @@ setuptools.setup(
         "Cuckoo-processing==0.1.0",
         "Cuckoo-machineries==0.1.0",
         "Cuckoo-web==0.1.0",
-        "sflock>=0.3.10, <0.4",
+        "sflock>=0.4.0, <0.5",
         "tabulate>=0.8, <0.9"
     ]
 )
