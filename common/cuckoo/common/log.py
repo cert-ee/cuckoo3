@@ -43,7 +43,7 @@ class ColorText:
         @return: colorized text.
         """
         # $TERM under Windows:
-        # cmd.exe -> "" (what would you expect..?)
+        # cmd.exe -> ""
         # cygwin -> "cygwin" (should support colors, but doesn't work somehow)
         # mintty -> "xterm" (supports colors)
         # Win10 WSL -> "xterm-256color"
@@ -96,7 +96,6 @@ class ColorText:
     def bold(text):
         return ColorText.color(text, 1)
 
-
 def print_info(msg):
     print(ColorText.green(force_valid_encoding(msg)))
 
@@ -122,7 +121,7 @@ def add_rootlogger_handler(handler):
 
 def set_logger_level(loggername, level):
     if _VERBOSE_ENABLED and level > logging.DEBUG:
-        return
+        level = logging.DEBUG
 
     logging.getLogger(loggername).setLevel(level)
 
