@@ -30,3 +30,13 @@ class ScreenshotName:
 
     def to_url(self, value):
         return str(value)
+
+class Sha256Hash:
+
+    regex = "[a-fA-F0-9]{64}"
+
+    def to_python(self, value):
+        return str(value)
+
+    def to_url(self, value):
+        return str(value)

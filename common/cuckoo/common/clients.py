@@ -367,6 +367,16 @@ class APIClient:
             f"/analysis/{analysis_id}", expected_status=200
         )
 
+    def submitted_file(self, analysis_id):
+        return self._do_streamdownload(
+            f"/analysis/{analysis_id}/submittedfile", expected_status=200
+        )
+
+    def binary(self, sha256):
+        return self._do_streamdownload(
+            f"/targets/file/{sha256}", expected_status=200
+        )
+
     def pre(self, analysis_id):
         return self._do_json_get(
             f"/analysis/{analysis_id}/pre", expected_status=200

@@ -20,6 +20,10 @@ urlpatterns = [
         views.CompositeAnalysis.as_view()
     ),
     path(
+        "<analysis_id:analysis_id>/submittedfile",
+        views.SubmittedFile.as_view()
+    ),
+    path(
         "<analysis_id:analysis_id>/task/",
         include("cuckoo.web.api.analysis.task.urls")
     )

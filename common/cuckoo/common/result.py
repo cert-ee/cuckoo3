@@ -1,8 +1,10 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from pathlib import Path
+
 from . import analyses
-from .storage import AnalysisPaths, TaskPaths
+from .storage import AnalysisPaths, TaskPaths, Paths, Binaries
 from .strictcontainer import (
     Analysis, Task, Identification, Pre, Post, StrictContainer
 )
@@ -92,10 +94,17 @@ class AnalysisResult(Result):
 
         return self._identification
 
+    @property
+    def submitted_file(self):
+        return self._get_submitted_file_fp()
+
     def _load_pre(self, missing_default=None):
         raise NotImplementedError
 
     def _load_identification(self, missing_default=None):
+        raise NotImplementedError
+
+    def _get_submitted_file_fp(self):
         raise NotImplementedError
 
     def to_dict(self):
@@ -142,6 +151,15 @@ class LocalAnalysisResult(AnalysisResult):
             raise InvalidResultDataError(
                 f"Invalid identification.json: {e}"
             )
+
+    def _get_submitted_file_fp(self):
+        path = AnalysisPaths.submitted_file(self.analysis_id, resolve=True)
+        if not path.is_file():
+            raise ResultDoesNotExistError(
+                f"No submitted file found for analysis {self.analysis_id}"
+            )
+
+        return open(path, "rb")
 
 
 class TaskResult(Result):
@@ -368,9 +386,10 @@ class RemoteTask(TaskResult):
 
 class RemoteAnalysis(AnalysisResult):
 
-    def __init__(self, analysis_id, data, include):
+    def __init__(self, analysis_id, api_client, data={}, include=[]):
         super().__init__(analysis_id, include)
         self._data = data
+        self._api = api_client
 
     def _load_analysis(self):
         d = self._data.get("analysis")
@@ -423,6 +442,16 @@ class RemoteAnalysis(AnalysisResult):
             raise InvalidResultDataError(
                 f"Invalid identification.json: {e}"
             )
+
+    def _get_submitted_file_fp(self):
+        try:
+            return self._api.submitted_file(self.analysis_id)
+        except APIDoesNotExistError:
+            raise ResultDoesNotExistError(
+                f"No submitted file found for analysis {self.analysis_id}"
+            )
+        except ClientError as e:
+            raise ResultError(f"Failed to retrieve submitted file: {e}")
 
 class ResultRetriever:
 
@@ -479,6 +508,11 @@ class ResultRetriever:
                 f"Analysis {analysis_id} does not exist."
             )
 
+        if not include:
+            return RemoteAnalysis(
+                analysis_id, self.api_client, {}, include
+            )
+
         try:
             data = self.api_client.analysis_composite(
                 analysis_id, retrieve=include
@@ -492,7 +526,7 @@ class ResultRetriever:
 
         return RemoteAnalysis(analysis_id, data, include)
 
-    def get_analysis(self, analysis_id, include):
+    def get_analysis(self, analysis_id, include=[]):
         if not isinstance(include, list):
             include = list(include)
 
@@ -506,6 +540,16 @@ class ResultRetriever:
 
         return LocalAnalysisResult(analysis_id, include)
 
+    def get_binary(self, sha256):
+        try:
+            path = Path(Binaries.path(Paths.binaries(), sha256)[0])
+        except ValueError:
+            raise ResultError("Invalid sha256 hash given")
+
+        if not path.is_file():
+            raise ResultDoesNotExistError("Binary not found")
+
+        return open(path, "rb")
 
 
 retriever = ResultRetriever()

@@ -1,12 +1,15 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
-from cuckoo.common import submit, analyses
-
-from django.http import JsonResponse, HttpResponseNotFound, HttpResponse
+from django.http import (
+    JsonResponse, HttpResponseNotFound, HttpResponse, FileResponse
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+
+from cuckoo.common import submit, analyses
+from cuckoo.common.result import retriever, ResultDoesNotExistError, Results
 
 from cuckoo.web.decorators import accepts_json
 
@@ -97,3 +100,20 @@ class ReadyForManual(View):
             # Tell UI to redirect to it.
             resp["location"] = reverse("Analysis/index", args=[analysis_id])
             return resp
+
+class SubmittedFileDownload(View):
+
+    def get(self, request, analysis_id):
+        try:
+            result = retriever.get_analysis(
+                analysis_id, include=[Results.ANALYSIS]
+            )
+            analysis = result.analysis
+            submittedfile_fp = result.submitted_file
+        except ResultDoesNotExistError as e:
+            return HttpResponseNotFound(str(e))
+
+        return FileResponse(
+            submittedfile_fp, as_attachment=True,
+            filename=analysis.submitted.sha256
+        )

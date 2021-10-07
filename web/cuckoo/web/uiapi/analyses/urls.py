@@ -19,6 +19,10 @@ urlpatterns = [
         views.ReadyForManual.as_view()
     ),
     path(
+        "<analysis_id:analysis_id>/submittedfile",
+        views.SubmittedFileDownload.as_view(), name="Analysis/submittedfile"
+    ),
+    path(
         "<analysis_id:analysis_id>/task/",
         include("cuckoo.web.uiapi.analyses.task.urls")
     )

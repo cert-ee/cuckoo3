@@ -1,6 +1,8 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from django.http import FileResponse
+
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -75,3 +77,20 @@ class CompositeAnalysis(APIView):
             return Response({"error": str(e)}, status=500)
 
         return Response(composite.to_dict())
+
+class SubmittedFile(APIView):
+
+    def get(self, request, analysis_id):
+        try:
+            result = retriever.get_analysis(
+                analysis_id, include=[Results.ANALYSIS]
+            )
+            analysis = result.analysis
+            submitted_fp = result.submitted_file
+        except ResultDoesNotExistError:
+            return Response(status=404)
+
+        return FileResponse(
+            submitted_fp, as_attachment=True,
+            filename=analysis.submitted.sha256
+        )
