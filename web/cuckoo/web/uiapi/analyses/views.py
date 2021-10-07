@@ -2,13 +2,15 @@
 # See the file 'LICENSE' for copying permission.
 
 from django.http import (
-    JsonResponse, HttpResponseNotFound, HttpResponse, FileResponse
+    JsonResponse, HttpResponseNotFound, HttpResponse, FileResponse,
+    HttpResponseForbidden
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 
 from cuckoo.common import submit, analyses
+from cuckoo.common.config import cfg
 from cuckoo.common.result import retriever, ResultDoesNotExistError, Results
 
 from cuckoo.web.decorators import accepts_json
@@ -104,6 +106,13 @@ class ReadyForManual(View):
 class SubmittedFileDownload(View):
 
     def get(self, request, analysis_id):
+        if not cfg(
+            "web.yaml", "web", "downloads", "submitted_file", subpkg="web"
+        ):
+            return HttpResponseForbidden(
+                "Submitted file downloading is disabled"
+            )
+
         try:
             result = retriever.get_analysis(
                 analysis_id, include=[Results.ANALYSIS]

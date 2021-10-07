@@ -67,6 +67,11 @@ typeloaders = {
                     }
                 ])
             }
+        },
+        "web": {
+            "downloads": {
+                "submitted_file": config.Boolean(default_val=True)
+            }
         }
     }
 }

@@ -13,6 +13,9 @@ _enabled_features = {
     ),
     "statistics": cfg(
         "web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web"
+    ),
+    "submittedfiledownload": cfg(
+        "web.yaml", "web", "downloads", "submitted_file", subpkg="web"
     )
 }
 
