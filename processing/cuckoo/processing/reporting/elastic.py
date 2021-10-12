@@ -122,7 +122,7 @@ class ElasticSearch(Reporter):
         for r in network.get("dns", {}).get("response", []):
             responses.add(
                 f"{r['type']} {r['data']} "
-                f"{','.join(r.get('fields', {}).values())}"
+                f"{','.join(str(v) for v in r.get('fields', {}).values())}"
             )
 
         for q in network.get("dns", {}).get("query", []):
