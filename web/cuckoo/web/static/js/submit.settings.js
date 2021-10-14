@@ -34,9 +34,12 @@
       get orig_filename() { return getElement('input[name="orig-filename"]').checked }
       get browser() { return category == "url" ? getElement('select[name="browser"]').value : null; }
       get route() {
+        let ret = {};
         let type = getElement('input[name="route"]:checked').value;
-        let ret = { type };
-        if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
+        if(type.length) {
+          let ret = { type };
+          if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
+        }
         return ret;
       }
       get platforms() {
@@ -187,10 +190,11 @@
     function countMachines() {
 
       let count;
-      if(autoMachine.checked)
+      if(autoMachine.checked) {
         count = 1;
-      else
+      } else {
         count = machinery.querySelectorAll('[data-machine]').length;
+      }
 
       totalMachines.textContent = count;
       blink(totalMachines);
@@ -201,16 +205,15 @@
         finish.removeAttribute('disabled');
         if(tab.querySelector('.dot')) tab.querySelector('.dot').remove();
       } else {
+        if(banner) banner.remove();
         banner = lib.banner('Add at least one machine to start analysis or tick the default box.', 'danger');
         machinery.appendChild(banner);
         finish.setAttribute('disabled', true);
 
-        if(!dot) {
-          dot = document.createElement('span');
-          dot.classList.add('dot');
-          dot.classList.add('is-red');
-          tab.appendChild(dot);
-        }
+        dot = document.createElement('span');
+        dot.classList.add('dot');
+        dot.classList.add('is-red');
+        tab.appendChild(dot);
       }
     }
 
@@ -361,8 +364,6 @@
         countMachines();
       });
 
-      countMachines();
-
     }
 
     addPlatform.addEventListener('click', () => {
@@ -375,16 +376,21 @@
     platforms.dispatchEvent(new Event('change'));
 
     // run count once to initialize the state
-    countMachines();
+    // countMachines();
 
     autoMachine.addEventListener('change', () => {
       let isChecked = autoMachine.checked;
       picker.querySelectorAll('input, select, button').forEach(inp => inp.toggleAttribute('disabled', isChecked));
       picker.classList.toggle('is-disabled', autoMachine.checked);
 
-      if(isChecked && banner) banner.remove();
-      if(isChecked && dot) dot.remove(); dot = null;
-      if(!isChecked) countMachines();
+      if(isChecked) {
+        if(banner) banner.remove();
+        if(dot) dot.remove(); dot = null;
+        finish.removeAttribute('disabled');
+      } else {
+        countMachines();
+      }
+      
     });
     autoMachine.dispatchEvent(new Event('change'));
 
