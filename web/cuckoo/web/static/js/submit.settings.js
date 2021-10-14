@@ -40,6 +40,10 @@
         return ret;
       }
       get platforms() {
+
+        if(getElement('input#machine-auto').checked)
+          return [];
+
         return [...document.querySelectorAll('[data-machine]')].map(machine => {
           let t = getElement('input[data-tags]', machine);
 
@@ -161,6 +165,8 @@
     const addPlatform   = document.querySelector('#add-platform');
     const machinery     = document.querySelector('#machinery');
     const totalMachines = document.querySelector('#total-machines');
+    const picker        = document.querySelector('#pick-machine');
+    const autoMachine   = document.querySelector('input#machine-auto')
     let banner, dot;
 
     // display available versions for selected platform
@@ -179,7 +185,13 @@
     });
 
     function countMachines() {
-      const count = machinery.querySelectorAll('[data-machine]').length;
+
+      let count;
+      if(autoMachine.checked)
+        count = 1;
+      else
+        count = machinery.querySelectorAll('[data-machine]').length;
+
       totalMachines.textContent = count;
       blink(totalMachines);
 
@@ -189,14 +201,16 @@
         finish.removeAttribute('disabled');
         if(tab.querySelector('.dot')) tab.querySelector('.dot').remove();
       } else {
-        banner = lib.banner('Add at least one machine to start analysis', 'danger');
+        banner = lib.banner('Add at least one machine to start analysis or tick the default box.', 'danger');
         machinery.appendChild(banner);
         finish.setAttribute('disabled', true);
 
-        let dot = document.createElement('span');
-        dot.classList.add('dot');
-        dot.classList.add('is-red');
-        tab.appendChild(dot);
+        if(!dot) {
+          dot = document.createElement('span');
+          dot.classList.add('dot');
+          dot.classList.add('is-red');
+          tab.appendChild(dot);
+        }
       }
     }
 
@@ -353,6 +367,17 @@
 
     // run count once to initialize the state
     countMachines();
+
+    autoMachine.addEventListener('change', () => {
+      let isChecked = autoMachine.checked;
+      picker.querySelectorAll('input, select, button').forEach(inp => inp.toggleAttribute('disabled', isChecked));
+      picker.classList.toggle('is-disabled', autoMachine.checked);
+
+      if(isChecked && banner) banner.remove();
+      if(isChecked && dot) dot.remove(); dot = null;
+      if(!isChecked) countMachines();
+    });
+    autoMachine.dispatchEvent(new Event('change'));
 
   }
 
