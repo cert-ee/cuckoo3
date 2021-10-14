@@ -256,7 +256,6 @@
                   Network routing
                 </label>
                 <div data-toggle-network hidden>
-
                   <div class="field columns is-gapless">
                     <div class="column is-full">
                       <div class="control is-checkable">
@@ -264,14 +263,24 @@
                         <label for="route-none">None</label>
                       </div>
                     </div>
-                    ${ routes.available.map(r => `
-                      <div class="column has-margin-right">
-                        <div class="control is-checkable">
-                          <input type="radio" value="${r}" id="route-${r}-${uniq}" name="route-${uniq}" data-route-type />
-                          <label for="route-${r}-${uniq}">${lib.SafeString(r)}</label>
-                        </div>
+                    <div class="column has-margin-right">
+                      <div class="control is-checkable">
+                        <input type="radio" value="drop" id="route-drop-${uniq}" name="route-${uniq}" data-route-type ${routes.available.indexOf('drop') == -1 ? 'disabled' : ''} />
+                        <label for="route-drop-${uniq}">Drop</label>
                       </div>
-                    `).join('') }
+                    </div>
+                    <div class="column has-margin-right">
+                      <div class="control is-checkable">
+                        <input type="radio" value="internet" id="route-internet-${uniq}" name="route-${uniq}" data-route-type ${routes.available.indexOf('internet') == -1 ? 'disabled' : ''} />
+                        <label for="route-internet-${uniq}">Internet</label>
+                      </div>
+                    </div>
+                    <div class="column has-margin-right">
+                      <div class="control is-checkable">
+                        <input type="radio" value="vpn" id="route-vpn-${uniq}" name="route-${uniq}" data-route-type ${routes.available.indexOf('vpn') == -1 ? 'disabled' : ''} />
+                        <label for="route-vpn-${uniq}">VPN</label>
+                      </div>
+                    </div>
                   </div>
                   <div class="field is-inline no-padding-y no-padding-right no-margin-top" data-route-country-field hidden>
                     <label class="label">Country</label>

@@ -62,14 +62,18 @@
               <label for="route-none">None</label>
             </div>
           </div>
-          {% for route in possible_settings.routes.available %}
-            <div class="column has-margin-right">
-              <div class="control is-checkable">
-                <input type="radio" value="{{ route }}" id="route-{{ route }}" name="route" />
-                <label for="route-{{ route }}">{{ route }}</label>
-              </div>
-            </div>
-          {% endfor %}
+          <div class="control is-checkable">
+            <input type="radio" value="drop" id="route-drop" name="route" {% if not 'drop' in possible_settings.routes.available %}disabled{% endif %} />
+            <label for="route-drop">Drop</label>
+          </div>
+          <div class="control is-checkable">
+            <input type="radio" value="internet" id="route-internet" name="route" {% if not 'internet' in possible_settings.routes.available %}disabled{% endif %} />
+            <label for="route-internet">Internet</label>
+          </div>
+          <div class="control is-checkable">
+            <input type="radio" value="vpn" id="route-vpn" name="route" {% if not 'vpn' in possible_settings.routes.available %}disabled{% endif %} />
+            <label for="route-vpn">VPN</label>
+          </div>
         </div>
 
         <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field hidden>
@@ -99,9 +103,9 @@
           <div class="control is-select">
             <select class="input" name="browser">
               <option value="default">Default</option>
-              <option value="ie">Internet Explorer</option>
-              <option value="firefox">Firefox</option>
-              <option value="chrome">Chrome</option>
+              {% for browser in possible_settings.browser %}
+                <option value="{{browser}}">{{ browser }}</option>
+              {% endfor %}
             </select>
           </div>
           <p class="has-text-small has-half-opacity">
