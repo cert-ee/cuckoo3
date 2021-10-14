@@ -34,7 +34,7 @@
       get orig_filename() { return getElement('input[name="orig-filename"]').checked }
       get browser() { return category == "url" ? getElement('select[name="browser"]').value : null; }
       get route() {
-        let type = getElement('select[name="route"]').value;
+        let type = getElement('input[name="route"]:checked').value;
         let ret = { type };
         if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
         return ret;
@@ -46,7 +46,7 @@
           // specific machine option overrides
           let s = {};
 
-          let machineNetwork = getElement('[data-route-type]', machine).value;
+          let machineNetwork = getElement('[data-route-type]:checked', machine).value;
           let machineNetworkCountry = getElement('[data-route-country]', machine).value;
           let machineCommand = getElement('[data-command]', machine).value;
           let machineBrowser;
@@ -203,6 +203,9 @@
     // handle machines being added to the list
     function addMachine(data={}) {
 
+      const { routes } = Application.possible_settings;
+      const uniq = Math.floor(Number.MAX_SAFE_INTEGER * Math.random()).toString(4);
+
       data = Object.assign({
         platform: null,
         version: null
@@ -239,14 +242,22 @@
                   Network routing
                 </label>
                 <div data-toggle-network hidden>
-                  <div class="control is-select">
-                    <select class="input" data-route-type>
-                      <option value="" selected>Global value</option>
-                      <option value="">Default</option>
-                      <option value="drop">Drop</option>
-                      <option value="internet">Internet</option>
-                      <option value="vpn">VPN</option>
-                    </select>
+
+                  <div class="field columns is-gapless">
+                    <div class="column is-full">
+                      <div class="control is-checkable">
+                        <input type="radio" value="" name="route-${uniq}" checked />
+                        <label for="route-none">None</label>
+                      </div>
+                    </div>
+                    ${ routes.available.map(r => `
+                      <div class="column has-margin-right">
+                        <div class="control is-checkable">
+                          <input type="radio" value="${r}" id="route-${r}-${uniq}" name="route-${uniq}" data-route-type />
+                          <label for="route-${r}-${uniq}">${lib.SafeString(r)}</label>
+                        </div>
+                      </div>
+                    `).join('') }
                   </div>
                   <div class="field is-inline no-padding-y no-padding-right no-margin-top" data-route-country-field hidden>
                     <label class="label">Country</label>
@@ -254,10 +265,9 @@
                       <select class="input" data-route-country>
                         <option>First available</option>
                         <optgroup label="Available countries">
-                          <option value="fr">France</option>
-                          <option value="de">Germany</option>
-                          <option value="nl">Netherlands</option>
-                          <option value="ee">Estonia</option>
+                          ${ routes.vpn.countries.map(c => {
+                            return `<option value="${c}">${lib.SafeString(c)}</option>`;
+                          }).join('') }
                         </optgroup>
                       </select>
                     </div>
@@ -359,16 +369,18 @@
 
   // toggles extra fields for certain selected options
   function routingHandler(el = document) {
-    const route   = el.querySelector('select[data-route-type]');
-    if(!route) return;
+    const routes = el.querySelectorAll('input[name^="route"]');
+    if(!routes) return;
 
     const country = el.querySelector('[data-route-country-field]');
-    route.addEventListener('change', ev => {
-      if(ev.target.value == 'vpn')
+    routes.forEach(r => r.addEventListener('change', () => {
+      if(r.checked && r.value == 'vpn') {
         country.removeAttribute('hidden');
-      else
+      } else {
         country.setAttribute('hidden', true);
-    });
+      }
+    }));
+
   }
 
   // sends a PUT request to the settings api to conclude and finalize the

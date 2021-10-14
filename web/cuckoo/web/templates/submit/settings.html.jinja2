@@ -13,7 +13,8 @@
       // in the settings js file.
       window.Application = Object.assign(window.Application || {}, {
         analysis_id: "{{ analysis_id }}",
-        category: "{{ analysis.category }}"
+        category: "{{ analysis.category }}",
+        possible_settings: JSON.parse('{{ possible_settings|tojson }}')
       });
     }());
   </script>
@@ -31,6 +32,7 @@
             {% call ui_box(title="Template data", collapsed=True) %}
               {% if unpacked %}
                 {{ render_dict(unpacked) }}
+                {{ render_dict(possible_settings) }}
               {% endif %}
             {% endcall %}
           {% endif %}

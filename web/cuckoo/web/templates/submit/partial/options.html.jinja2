@@ -54,24 +54,33 @@
       </div>
       <div class="field">
         <label class="label has-margin-top" for="routing">Network routing</label>
-        <div class="control is-select">
-          <select class="input" name="route" id="route" data-route-type>
-            <option value="" selected>Default</option>
-            <option value="drop">Drop</option>
-            <option value="internet">Internet</option>
-            <option value="vpn">VPN</option>
-          </select>
+
+        <div class="field columns is-gapless" data-route-type>
+          <div class="column is-full">
+            <div class="control is-checkable">
+              <input type="radio" value="" id="route-none" name="route" checked />
+              <label for="route-none">None</label>
+            </div>
+          </div>
+          {% for route in possible_settings.routes.available %}
+            <div class="column has-margin-right">
+              <div class="control is-checkable">
+                <input type="radio" value="{{ route }}" id="route-{{ route }}" name="route" />
+                <label for="route-{{ route }}">{{ route }}</label>
+              </div>
+            </div>
+          {% endfor %}
         </div>
+
         <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field hidden>
           <label class="label">Country</label>
           <div class="control is-select">
             <select class="input" name="country" id="country" data-route-country>
               <option>First available</option>
               <optgroup label="Available countries">
-                <option value="fr">France</option>
-                <option value="de">Germany</option>
-                <option value="nl">Netherlands</option>
-                <option value="ee">Estonia</option>
+                {% for country in possible_settings.routes.vpn.countries %}
+                  <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
               </optgroup>
             </select>
           </div>
