@@ -35,6 +35,7 @@
       </div>
     </div>
     <div class="column">
+
       <div class="field">
         {# priority #}
         <label class="label" for="priority">Priority</label>
@@ -52,36 +53,27 @@
           Prioritizes task in queue if necessary
         </p>
       </div>
-      <!-- <div class="field">
-        <div class="multi-toggle">
-          <div class="control is-checkable">
-            <input
-          </div>
-          <div class="control is-checkable"></div>
-          <div class="control is-checkable"></div>
-        </div>
-      </div> -->
+
       <div class="field">
+
         <label class="label has-margin-top" for="routing">Network routing</label>
 
-        <div class="field columns is-gapless" data-route-type>
-          <div class="column is-full">
-            <div class="control is-checkable">
-              <input type="radio" value="" id="route-none" name="route" checked />
-              <label for="route-none">None</label>
-            </div>
+        <div class="multi-toggle" data-route-type>
+          <div class="control">
+            <input type="radio" value="" id="route-none" name="route" checked />
+            <label class="label" for="route-none">None</label>
           </div>
-          <div class="control is-checkable">
+          <div class="control">
             <input type="radio" value="drop" id="route-drop" name="route" {% if not 'drop' in possible_settings.routes.available %}disabled{% endif %} />
-            <label for="route-drop">Drop</label>
+            <label class="label" for="route-drop">Drop</label>
           </div>
-          <div class="control is-checkable">
+          <div class="control">
             <input type="radio" value="internet" id="route-internet" name="route" {% if not 'internet' in possible_settings.routes.available %}disabled{% endif %} />
-            <label for="route-internet">Internet</label>
+            <label class="label" for="route-internet">Internet</label>
           </div>
-          <div class="control is-checkable">
+          <div class="control">
             <input type="radio" value="vpn" id="route-vpn" name="route" {% if not 'vpn' in possible_settings.routes.available %}disabled{% endif %} />
-            <label for="route-vpn">VPN</label>
+            <label class="label" for="route-vpn">VPN</label>
           </div>
         </div>
 
