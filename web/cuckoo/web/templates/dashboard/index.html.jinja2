@@ -3,6 +3,9 @@
 {% set title = "Dashboard" %}
 
 {% block page_script %}
+  <script>
+    window.statistics_enabled = {% if 'statistics' | feature_enabled %}true{% else %}false{% endif %};
+  </script>
   <script src="{{ static('js/chart.min.js') }}"></script>
   <script src="{{ static('js/luxon.min.js') }}"></script>
   <script src="{{ static('js/chartjs-adapter-luxon.min.js') }}"></script>

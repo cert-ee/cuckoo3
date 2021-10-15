@@ -1,5 +1,10 @@
 (async function() {
 
+  if(!window.statistics_enabled) {
+    console.warn('Statistics feature is disabled. Enable feature in configuration.');
+    return;
+  }
+
   const apiURL      = window.location.origin + "/api/statistics/charts";
   const container   = document.querySelector('#statistics');
   const colorScheme = [
