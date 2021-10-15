@@ -264,7 +264,7 @@
                     <div class="multi-toggle">
                       <div class="control">
                         <input type="radio" value="" name="route-${uniq}" id="route-none-${uniq}" checked data-route-type />
-                        <label class="label" for="route-none-${uniq}">None</label>
+                        <label class="label" for="route-none-${uniq}">No route</label>
                       </div>
                       <div class="control">
                         <input type="radio" value="drop" id="route-drop-${uniq}" name="route-${uniq}" data-route-type ${routes.available.indexOf('drop') == -1 ? 'disabled' : ''} />
@@ -280,7 +280,6 @@
                       </div>
                     </div>
                   </div>
-
                   <div class="field is-inline no-padding-y no-padding-right no-margin-top" data-route-country-field hidden>
                     <label class="label">Country</label>
                     <div class="control is-select">
@@ -294,6 +293,12 @@
                       </select>
                     </div>
                   </div>
+                  <p class="has-text-small has-half-opacity">
+                    <span class="icon">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                    Configure type of network routing
+                  </p>
                 </div>
               </div>
 
@@ -306,9 +311,15 @@
                   </label>
                   <div class="control is-select" hidden>
                     <select class="input" data-browser>
-                      <option value>Default</option>
+                      <option value>Platform default</option>
                       ${ browsers.map(b => `<option value="${b}">${b}</option>`).join('') }
                     </select>
+                    <p class="has-text-small has-half-opacity">
+                      <span class="icon">
+                        <i class="fas fa-info-circle"></i>
+                      </span>
+                      Choose browser to open the submitted URL in.
+                    </p>
                   </div>
                 </div>
               ` : ''}
@@ -321,6 +332,12 @@
                 </label>
                 <div class="control" hidden>
                   <input class="input" type="text" id="command" data-command />
+                  <p class="has-text-small has-half-opacity">
+                    <span class="icon">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                    Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
+                  </p>
                 </div>
               </div>
 

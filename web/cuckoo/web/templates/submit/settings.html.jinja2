@@ -32,8 +32,9 @@
             {% call ui_box(title="Template data", collapsed=True) %}
               {% if unpacked %}
                 {{ render_dict(unpacked) }}
-                {{ render_dict(possible_settings) }}
               {% endif %}
+              {{ render_dict(default_settings) }}
+              {{ render_dict(possible_settings) }}
             {% endcall %}
           {% endif %}
           {% if analysis.category == 'file' %}

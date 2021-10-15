@@ -7,30 +7,31 @@
     <div class="column">
       <div class="field">
         {# Timeout #}
+        {% set presetCustom = ((default_settings.timeout != 30) and (default_settings.timeout != 60) and (default_settings.timeout != 120)) %}
         <label class="label">Timeout</label>
         <div class="control is-checkable">
-          <input type="radio" value="30" id="to-30" name="timeout" />
+          <input type="radio" value="30" id="to-30" name="timeout" {% if default_settings.timeout == 30 %}checked{% endif %} />
           <label for="to-30">30 seconds</label>
         </div>
         <div class="control is-checkable">
-          <input type="radio" value="60" id="to-60" name="timeout" checked />
+          <input type="radio" value="60" id="to-60" name="timeout" {% if not default_settings.timeout or default_settings.timeout == 60 %}checked{% endif %} />
           <label for="to-60">1 minute</label>
         </div>
         <div class="control is-checkable">
-          <input type="radio" value="120" id="to-120" name="timeout" />
+          <input type="radio" value="120" id="to-120" name="timeout" {% if default_settings.timeout == 120 %}checked{% endif %} />
           <label for="to-120">2 minutes</label>
         </div>
         <div class="control is-checkable">
-          <input type="radio" value="" id="to-custom" name="timeout" />
+          <input type="radio" value="" id="to-custom" name="timeout" {% if presetCustom %}checked{% endif %} />
           <label class="label" for="to-custom">
-            <input type="number" placeholder="Custom (in seconds)" class="input" id="to-custom-value" />
+            <input type="number" placeholder="Custom (in seconds)" class="input" id="to-custom-value" {% if presetCustom %}value="{{ default_settings.timeout }}"{% endif %} />
           </label>
         </div>
         <p class="has-text-small has-half-opacity no-margin-bottom">
           <span class="icon">
             <i class="fas fa-info-circle"></i>
           </span>
-          Time in seconds before VM can shut down
+          Time is seconds each task should run
         </p>
       </div>
     </div>
@@ -40,17 +41,20 @@
         {# priority #}
         <label class="label" for="priority">Priority</label>
         <div class="control is-select">
-          <select name="priority" class="input" id="priority">
+          <select name="priority" class="input" id="priority" value="{{ default_settings.priority }}">
             <option value="1" selected>Low</option>
             <option value="2">Medium</option>
             <option value="3">High</option>
+            {% if default_settings.priority > 3 %}
+              <option value="{{ default_settings.priority }}">Default preset ({{ default_settings.priority }})</option>
+            {% endif %}
           </select>
         </div>
         <p class="has-text-small has-half-opacity">
           <span class="icon">
             <i class="fas fa-info-circle"></i>
           </span>
-          Prioritizes task in queue if necessary
+          Priority of the tasks in the queue
         </p>
       </div>
 
@@ -60,31 +64,31 @@
 
         <div class="multi-toggle" data-route-type>
           <div class="control">
-            <input type="radio" value="" id="route-none" name="route" checked />
-            <label class="label" for="route-none">None</label>
+            <input type="radio" value="" id="route-none" name="route" {% if default_settings.route.type == '' or not default_settings.route %}checked{% endif %} />
+            <label class="label" for="route-none">No route</label>
           </div>
           <div class="control">
-            <input type="radio" value="drop" id="route-drop" name="route" {% if not 'drop' in possible_settings.routes.available %}disabled{% endif %} />
+            <input type="radio" value="drop" id="route-drop" name="route" {% if default_settings.route and default_settings.route.type == 'drop' %}checked{% endif %} {% if not 'drop' in possible_settings.routes.available %}disabled{% endif %} />
             <label class="label" for="route-drop">Drop</label>
           </div>
           <div class="control">
-            <input type="radio" value="internet" id="route-internet" name="route" {% if not 'internet' in possible_settings.routes.available %}disabled{% endif %} />
+            <input type="radio" value="internet" id="route-internet" name="route" {% if default_settings.route and default_settings.route.type == 'internet' %}checked{% endif %} {% if not 'internet' in possible_settings.routes.available %}disabled{% endif %} />
             <label class="label" for="route-internet">Internet</label>
           </div>
           <div class="control">
-            <input type="radio" value="vpn" id="route-vpn" name="route" {% if not 'vpn' in possible_settings.routes.available %}disabled{% endif %} />
+            <input type="radio" value="vpn" id="route-vpn" name="route" {% if default_settings.route and default_settings.route.type == 'vpn' %}checked{% endif %} {% if not 'vpn' in possible_settings.routes.available %}disabled{% endif %} />
             <label class="label" for="route-vpn">VPN</label>
           </div>
         </div>
 
-        <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field hidden>
+        <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field {% if default_settings.route and default_settings.route.type != 'vpn' %}hidden{% endif %}>
           <label class="label">Country</label>
           <div class="control is-select">
             <select class="input" name="country" id="country" data-route-country>
               <option>First available</option>
               <optgroup label="Available countries">
                 {% for country in possible_settings.routes.vpn.countries %}
-                  <option value="{{ country }}">{{ country }}</option>
+                  <option value="{{ country }}" {% if default_settings.route is defined and country == default_settings.route.options.country %}selected{% endif %}>{{ country|capitalize }}</option>
                 {% endfor %}
               </optgroup>
             </select>
@@ -94,7 +98,7 @@
           <span class="icon">
             <i class="fas fa-info-circle"></i>
           </span>
-          Configure protocol for internet usage
+          Configure type of network routing
         </p>
       </div>
       {% if analysis.category == 'url' %}
@@ -103,9 +107,9 @@
           <label class="label">Browser</label>
           <div class="control is-select">
             <select class="input" name="browser">
-              <option value="default">Default</option>
+              <option value="">Platform default</option>
               {% for browser in possible_settings.browsers %}
-                <option value="{{ browser }}">{{ browser }}</option>
+                <option value="{{ browser }}" {% if default_settings.browser is defined and default_settings.browser == browser %}selected{% endif %}>{{ browser|capitalize }}</option>
               {% endfor %}
             </select>
           </div>
@@ -127,7 +131,7 @@
 
   <div class="field has-margin-x" hidden>
     <div class="control is-checkable">
-      <input type="checkbox" id="orig-filename" name="orig-filename" />
+      <input type="checkbox" id="orig-filename" name="orig-filename" {% if default_settings.orig_filename is defined and default_settings.orig_filename == True %}checked{% endif %} />
       <label for="orig-filename">Use original filename</label>
       <p class="has-text-small has-half-opacity no-margin-bottom">
         <span class="icon">
