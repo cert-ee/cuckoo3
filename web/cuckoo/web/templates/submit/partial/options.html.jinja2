@@ -88,7 +88,7 @@
               <option>First available</option>
               <optgroup label="Available countries">
                 {% for country in possible_settings.routes.vpn.countries %}
-                  <option value="{{ country }}" {% if default_settings.route is defined and country == default_settings.route.options.country %}selected{% endif %}>{{ country|capitalize }}</option>
+                  <option value="{{ country }}" {% if default_settings.route and country == default_settings.route.options.country %}selected{% endif %}>{{ country|capitalize }}</option>
                 {% endfor %}
               </optgroup>
             </select>
@@ -109,7 +109,7 @@
             <select class="input" name="browser">
               <option value="">Platform default</option>
               {% for browser in possible_settings.browsers %}
-                <option value="{{ browser }}" {% if default_settings.browser is defined and default_settings.browser == browser %}selected{% endif %}>{{ browser|capitalize }}</option>
+                <option value="{{ browser }}" {% if default_settings.browser and default_settings.browser == browser %}selected{% endif %}>{{ browser|capitalize }}</option>
               {% endfor %}
             </select>
           </div>
