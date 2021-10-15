@@ -360,6 +360,8 @@
         countMachines();
       });
 
+      countMachines();
+
     }
 
     addPlatform.addEventListener('click', () => {
