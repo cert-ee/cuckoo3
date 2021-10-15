@@ -8,9 +8,13 @@
       <tr>
         <td class="has-text-right"><strong>Route</strong></td>
         <td>
-          {{ task.route.type|default('-') }}
-          {% if task.route.type == 'vpn' and task.route.country %}
-            &rarr; <span class="tag">{{ task.route.country }}</span>
+          {% if task.route %}
+            {{ task.route.type }}
+            {% if  task.route.type == 'vpn' %}
+              {% for k, v in task.route.options.items() %}
+                <span class="tag">{{k|capitalize}}: {{ v|capitalize }}</span>
+              {% endfor %}
+            {% endif %}
           {% endif %}
         </td>
       </tr>

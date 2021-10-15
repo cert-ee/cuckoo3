@@ -43,7 +43,7 @@
         let type = getElement('input[name="route"]:checked').value;
         if(type.length) {
           ret.type = type;
-          if(type.toLowerCase() === 'vpn') {
+          if(type.toLowerCase() === 'vpn' && getElement('select[name="country"]').value.length) {
             ret.options = {};
             ret.options.country = getElement('select[name="country"]').value;
           };
@@ -71,7 +71,7 @@
             s.route = {
               type: machineNetwork
             };
-            if(machineNetwork.toLowerCase() == 'vpn') {
+            if(machineNetwork.toLowerCase() == 'vpn' && machineNetworkCountry.length) {
               s.route.options = {};
               s.route.options.country = machineNetworkCountry;
             }
@@ -294,7 +294,7 @@
                     <label class="label">Country</label>
                     <div class="control is-select">
                       <select class="input" data-route-country>
-                        <option>First available</option>
+                        <option value="">First available</option>
                         <optgroup label="Available countries">
                           ${ routes.vpn.countries.map(c => {
                             return `<option value="${c}">${lib.SafeString(c)}</option>`;
