@@ -377,6 +377,8 @@
       let isChecked = autoMachine.checked;
       picker.querySelectorAll('input, select, button').forEach(inp => inp.toggleAttribute('disabled', isChecked));
       picker.classList.toggle('is-disabled', autoMachine.checked);
+      document.querySelectorAll('[data-machine]').forEach(m => m.classList.toggle('is-disabled', autoMachine.checked));
+
 
       if(isChecked) {
         if(banner) banner.remove();
