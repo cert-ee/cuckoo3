@@ -470,7 +470,7 @@ class ResultRetriever:
 
         if not include:
             return RemoteTask(
-                analysis_id, task_id, self.api_client, {}, include
+                analysis_id, task_id, self.api_client, data={}, include=include
             )
 
         try:
@@ -484,7 +484,9 @@ class ResultRetriever:
         except APIError as e:
             raise ResultError(e)
 
-        return RemoteTask(analysis_id, task_id, self.api_client, data, include)
+        return RemoteTask(
+            analysis_id, task_id, self.api_client, data=data, include=include
+        )
 
     def get_task(self, analysis_id, task_id, include=[]):
         if not isinstance(include, list):
@@ -510,7 +512,7 @@ class ResultRetriever:
 
         if not include:
             return RemoteAnalysis(
-                analysis_id, self.api_client, {}, include
+                analysis_id, self.api_client, data={}, inculde=include
             )
 
         try:
@@ -524,7 +526,9 @@ class ResultRetriever:
         except APIError as e:
             raise ResultError(e)
 
-        return RemoteAnalysis(analysis_id, data, include)
+        return RemoteAnalysis(
+            analysis_id, self.api_client, data=data, include=include
+        )
 
     def get_analysis(self, analysis_id, include=[]):
         if not isinstance(include, list):
