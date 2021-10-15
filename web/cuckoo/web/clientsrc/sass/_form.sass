@@ -156,3 +156,39 @@
         background: $light
         border-color: $border
         border-radius: $radius
+
+// special standalone ui variation that groups radio's as if they're togglable
+// options in a button-like fashion
+.multi-toggle
+  display: flex
+
+  label
+    border-width: .0625rem 0 .0625rem .0625rem
+    border-style: solid
+    border-color: $border
+    background-color: $white
+    color: $blue
+    padding: $gap
+    font-weight: 600
+
+    &:hover
+      cursor: pointer
+
+  .control:first-child label
+    border-top-left-radius: $radius
+    border-bottom-left-radius: $radius
+  .control:last-child label
+    border-right-width: .0625rem
+    border-top-right-radius: $radius
+    border-bottom-right-radius: $radius
+
+  input
+    display: none
+    &:checked + label
+      background-color: $blue
+      color: $white
+    &[disabled] + label
+      color: $border
+      background-color: $white
+      &:hover
+        cursor: not-allowed

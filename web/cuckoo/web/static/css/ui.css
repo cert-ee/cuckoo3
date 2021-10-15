@@ -1254,6 +1254,45 @@ a.button, .control.is-file a.file-trigger {
   border-radius: 0.2rem;
 }
 
+.multi-toggle {
+  display: flex;
+}
+.multi-toggle label {
+  border-width: 0.0625rem 0 0.0625rem 0.0625rem;
+  border-style: solid;
+  border-color: #CCCCCC;
+  background-color: #FFFFFF;
+  color: #2E94F1;
+  padding: 0.75rem;
+  font-weight: 600;
+}
+.multi-toggle label:hover {
+  cursor: pointer;
+}
+.multi-toggle .control:first-child label {
+  border-top-left-radius: 0.2rem;
+  border-bottom-left-radius: 0.2rem;
+}
+.multi-toggle .control:last-child label {
+  border-right-width: 0.0625rem;
+  border-top-right-radius: 0.2rem;
+  border-bottom-right-radius: 0.2rem;
+}
+.multi-toggle input {
+  display: none;
+}
+.multi-toggle input:checked + label {
+  background-color: #2E94F1;
+  color: #FFFFFF;
+}
+.multi-toggle input[disabled] + label {
+  color: #CCCCCC;
+  background-color: #FFFFFF;
+}
+.multi-toggle input[disabled] + label:hover {
+  cursor: not-allowed;
+}
+
 .list.is-reset, .list.is-strings-list, .list.is-strings-list, .is-reset.list.is-strings-list, .list.is-strings-list, .list.is-strings-list, .is-reset.is-strings-list.list, .is-strings-list.list, .is-strings-list.list {
   list-style: none;
   padding: 0;
