@@ -43,7 +43,10 @@
         let type = getElement('input[name="route"]:checked').value;
         if(type.length) {
           ret.type = type;
-          if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
+          if(type.toLowerCase() === 'vpn') {
+            ret.options = {};
+            ret.options.country = getElement('select[name="country"]').value;
+          };
         }
         return ret;
       }
@@ -68,8 +71,10 @@
             s.route = {
               type: machineNetwork
             };
-            if(machineNetwork.toLowerCase() == 'vpn')
-              s.route.country = machineNetworkCountry;
+            if(machineNetwork.toLowerCase() == 'vpn') {
+              s.route.options = {};
+              s.route.options.country = machineNetworkCountry;
+            }
           }
 
           // append other options if set

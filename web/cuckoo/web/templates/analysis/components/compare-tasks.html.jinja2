@@ -1,7 +1,7 @@
 {% call ui_box(title="Compare") %}
   <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
   <form class="form" method="POST" id="compare-tasks">
-    {% set canCompare = (analysis.tasks|map(attribute='state')|select('equalto', 'reported')|list|length) > 2 %}
+    {% set canCompare = (analysis.tasks|map(attribute='state')|select('equalto', 'reported')|list|length) >= 2 %}
     {% if not canCompare %}
       <p class="banner is-warning">
         <span class="banner-icon">

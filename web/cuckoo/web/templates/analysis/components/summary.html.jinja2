@@ -141,10 +141,10 @@
           {% if analysis.settings.route %}
             {{ analysis.settings.route.type }}
             {% if  analysis.settings.route.type == 'vpn' %}
-              &rarr; <span class="tag">{{ analysis.settings.route.country|capitalize }}</span>
+              {% for k, v in analysis.settings.route.options.items() %}
+                <span class="tag">{{k|capitalize}}: {{ v|capitalize }}</span>
+              {% endfor %}
             {% endif %}
-            {% else %}
-            -
           {% endif %}
         </td>
       </tr>
