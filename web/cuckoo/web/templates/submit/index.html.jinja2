@@ -17,6 +17,7 @@
           <a role="tab" href="#submit-url" class="tabbar-link">URL</a>
         </nav>
         <div role="region" id="submit-file">
+
           <h4 class="label is-set-title has-margin has-padding clear-box">
             Submit a sample by uploading a file or archive
             <a class="is-link pull-right" href="#" title="Go to documentation" data-tooltip><i class="fas fa-book"></i></a>
@@ -28,7 +29,12 @@
                   <label class="file-trigger" for="file">Select file</label>
                   <input class="input" type="file" id="file" name="file" form="submit-file-form" data-enhance required />
                 </div>
-                <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p>
+                {# <p class="has-half-opacity has-padding-bottom">Dragging files from the filesystem into the browser will be implemented later.</p> #}
+                {% if error %}
+                  <div class="banner is-danger has-padding-x has-margin-x">
+                    <p>{{ error }}</p>
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
