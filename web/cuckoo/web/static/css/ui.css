@@ -612,6 +612,9 @@ a.button, .control.is-file a.file-trigger {
   font-weight: 700;
   text-align: center;
 }
+.button.is-big, .control.is-file .is-big.file-trigger {
+  font-size: 1.4em;
+}
 .button:hover, .control.is-file .file-trigger:hover {
   cursor: pointer;
 }
