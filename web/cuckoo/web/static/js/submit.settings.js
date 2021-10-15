@@ -27,7 +27,12 @@
       get fileid() { return category == "file" ? getElement('input[name="selected-file"]:checked').value : null;  }
       get timeout() {
         const checkedOption = getElement('input[name="timeout"]:checked');
-        return parseInt(checkedOption.value);
+        let ret = parseInt(checkedOption.value);
+        if(isNaN(ret)) {
+          // assume that the timeout is from the custom field
+          ret = parseInt(getElement('input#to-custom-value').value) || 120;
+        }
+        return ret;
       }
       get priority() { return parseInt(getElement('select[name="priority"]').value); }
       get command() { return getElement('input[name="command"]').value; }
@@ -37,7 +42,7 @@
         let ret = {};
         let type = getElement('input[name="route"]:checked').value;
         if(type.length) {
-          let ret = { type };
+          ret.type = type;
           if(type.toLowerCase() === 'vpn') ret.country = getElement('select[name="country"]').value;
         }
         return ret;
