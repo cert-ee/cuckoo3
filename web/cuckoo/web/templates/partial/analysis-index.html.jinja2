@@ -44,7 +44,7 @@
       <ul>
       {% for t in analysis.tasks %}
         <li>
-          <a {% if t.state == 'fatal_error' or t.state == 'reported' %}href="{{ url('Task/index', args=[analysis.id, t.id]) }}"{% endif %} class="{% if task and task.id == t.id %}is-active{% endif %}" data-tooltip="state: {{ t.state|capitalize }}">
+          <a {% if t.state == 'fatal_error' or t.state == 'reported' %}href="{{ url('Task/index', args=[analysis.id, t.id]) }}"{% endif %} class="{% if task and task.id == t.id %}is-active{% endif %}" data-tooltip="state: {{ t.state|taskstatehuman }}">
             {{ t.platform }} {{ t.os_version }}
             {% if t.state == 'reported' %}
               <span class="tag has-margin-left has-margin-top is-right {{ color_class(t.score) }}">

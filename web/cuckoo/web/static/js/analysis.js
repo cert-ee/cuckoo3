@@ -292,13 +292,14 @@ const processes = (function() {
       if(checked().length == 2) {
         submit.disabled = false;
         checkboxes.forEach(cb => {
-          if(cb.checked == false)
+          if(cb.checked == false && !cb.classList.contains('is-disabled'))
             cb.disabled = true;
         })
       } else {
         submit.disabled = true;
         checkboxes.forEach(cb => {
-          cb.disabled = false
+          if(!cb.classList.contains('is-disabled'))
+            cb.disabled = false
         });
       }
     }

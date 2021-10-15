@@ -1,14 +1,23 @@
 {% call ui_box(title="Compare") %}
   <p>Select <strong>2</strong> tasks to open in <a href="/compare" class="is-link">Compare</a>.</p>
   <form class="form" method="POST" id="compare-tasks">
+    {% set canCompare = (analysis.tasks|map(attribute='state')|select('equalto', 'reported')|list|length) > 2 %}
+    {% if not canCompare %}
+      <p class="banner is-warning">
+        <span class="banner-icon">
+          <i class="fas fa-exclamation"></i>
+        </span>
+        Cannot compare as there are not enough valid tasks to compare. Valid tasks are tasks that have a 'reported' state.
+      </p>
+    {% endif %}
     {% for task in analysis.tasks %}
-      <div class="control is-checkbox">
-        <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" />
+      <div class="control is-checkbox {% if not task.state == 'reported' %}is-disabled{% endif %}">
+        <input type="checkbox" value="{{ task.id }}" id="{{ task.id }}" name="comparable-tasks" {% if not task.state == 'reported' %}class="is-disabled" disabled{% endif %} />
         <label class="label" for="{{ task.id }}">{{ task.id }}</label>
       </div>
     {% endfor %}
     <div class="control">
-      <input type="submit" value="Compare" class="button is-blue" disabled />
+      <input type="submit" value="Compare" class="button is-blue" {% if not canCompare %}disabled{% endif %} />
     </div>
   </form>
 {% endcall %}
