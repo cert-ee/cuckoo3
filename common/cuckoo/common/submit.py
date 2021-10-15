@@ -134,6 +134,10 @@ class SettingsVerifier:
             return
 
         if settings.route and not settings.platforms:
+            if not settings.route.type:
+                error_list.append("Route type cannot be empty")
+                return
+
             _, has_route, info = nodeinfos.find_support(None, settings.route)
             if not has_route:
                 error_list.append(f"No node has route: {settings.route}")
@@ -146,6 +150,10 @@ class SettingsVerifier:
 
         for platform in settings.platforms:
             route = platform.settings.route or settings.route
+            if route and not route.type:
+                error_list.append("Route type cannot be empty")
+                continue
+
             has_platform, has_route, info = nodeinfos.find_support(
                 platform, route
             )
