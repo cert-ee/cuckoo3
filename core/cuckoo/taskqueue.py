@@ -1,6 +1,7 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+import hashlib
 from threading import RLock
 
 import sqlalchemy
@@ -100,9 +101,12 @@ class QueuedTask(Base):
         self._machine_tags = ",".join(value)
 
     def update_dephash(self):
-        self.dephash = hash((
-            self.platform, self.os_version, self._machine_tags, self._route_str
-        ))
+        md5 = hashlib.md5()
+        md5.update(
+            str((self.platform, self.os_version,
+                 self._machine_tags, self._route_str)).encode(errors="replace")
+        )
+        self.dephash = int(md5.hexdigest()[:12], 16)
 
 class _Counts:
 
@@ -118,7 +122,6 @@ class TaskQuery:
         self._counts = counts
         self._pending_scheduled_count = 0
         self._ignore_hashes = set()
-        self._current_offset = 0
 
         # Create temporary table for the storing of hashes to ignore.
         # table should only remain in existing for the current session.
@@ -159,12 +162,9 @@ class TaskQuery:
         if os_version:
             q = q.filter(QueuedTask.os_version==os_version)
 
-        curoffset = self._current_offset
-        self._current_offset += limit
-
         return q.order_by(
             QueuedTask.priority.desc(), QueuedTask.created_on.asc()
-        ).offset(curoffset).limit(limit).all()
+        ).limit(limit).all()
 
     def count_unscheduled(self):
         return self._ses.query(
@@ -196,6 +196,7 @@ class TaskQueue:
         self._dbms.initialize(f"sqlite:///{queue_db}", tablebaseclass=Base)
         self._lock = RLock()
         self._counts = None
+        self._init_counts()
 
     @property
     def size(self):
@@ -269,6 +270,27 @@ class TaskQueue:
                 ses.commit()
             finally:
                 ses.close()
+
+    def get_scheduled(self):
+        with self._lock:
+            ses = self._dbms.session()
+            try:
+                return ses.query(QueuedTask).filter_by(scheduled=True).all()
+            finally:
+                ses.close()
+
+    def mark_unscheduled(self, *task_ids):
+        with self._lock:
+            ses = self._dbms.session()
+            try:
+                ses.query(QueuedTask).filter(
+                    QueuedTask.id.in_(task_ids)
+                ).update({"scheduled": False}, synchronize_session=False)
+                ses.commit()
+            finally:
+                ses.close()
+
+            self._counts.unscheduled += len(task_ids)
 
     def get_workfinder(self):
         return TaskQuery(
