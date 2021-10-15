@@ -120,7 +120,7 @@ def machine_state(machine):
 
 def shutdown(machinery):
     """Shutdown all machines of the given machinery module"""
-    machinery.shutdown()
+    return machinery.shutdown()
 
 class _MachineryMessages:
 
@@ -411,6 +411,9 @@ class _WorkQueue:
         self._queue = []
         self._lock = threading.Lock()
 
+    def empty(self):
+        return len(self._queue) < 1
+
     def add_work(self, work_action, machine, readerwriter, msghandler):
         log.debug(
             "Machine action request", machine=machine.name, action=work_action
@@ -492,6 +495,7 @@ class MachineryManager(UnixSocketServer):
 
         self.work_queue = _WorkQueue()
         self.responses = queue.Queue()
+        self.enabled = True
 
     def load_machineries(self, machinery_classes, previous_machinelist):
         """Creates instances of each given machinery class, initializes the
@@ -554,7 +558,6 @@ class MachineryManager(UnixSocketServer):
         log.info("Loaded analysis machines", amount=self.machines.count())
 
     def start(self):
-
         for _ in range(self.NUM_MACHINERY_WORKERS):
             worker = MachineryWorker(
                 self.machines, self.ctx, self.work_queue, self.state_waiters,
@@ -570,7 +573,31 @@ class MachineryManager(UnixSocketServer):
         """Shutdown the machines of all loaded machinery modules"""
         for name, module in self._machineries.items():
             log.info("Shutting down machinery.", machinery=name)
-            shutdown(module)
+
+            # Shutdown must return a list of machines that failed to shut down
+            # or has some fatal error while doing so. These machines must
+            # already be disabled. We only set the machine state to error
+            # using the machine list here.
+            failed = shutdown(module)
+            for machine in failed:
+                self.machines.set_state(machine, machines.States.ERROR)
+
+    def disable(self):
+        self.enabled = False
+        log.warning("Machinery manager disabled")
+
+    def enable(self):
+        self.enabled = True
+        log.warning("Machinery manager enabled")
+
+    def wait_work_done(self):
+        """Wait until both the work queue and the work list waiting for a
+        specific machine state are empty"""
+        while True:
+            log.debug("Waiting for work queue and waiter queue to be empty")
+            time.sleep(1)
+            if self.work_queue.empty() and not self.state_waiters:
+                break
 
     def stop(self):
         if not self.do_run and not self.workers:
@@ -608,8 +635,16 @@ class MachineryManager(UnixSocketServer):
     def handle_message(self, sock, msg):
         action = msg.get("action")
         machine_name = msg.get("machine")
-
         readerwriter = self.socks_readers[sock]
+
+        if not self.enabled and action != "stop":
+            self.queue_response(
+                readerwriter,
+                _MachineryMessages.fail(
+                    reason="Machinery manager is disabled"
+                ), close=True
+            )
+            return
 
         # If no action or machine is given, send error and cleanup sock
         if not action or not machine_name:
