@@ -15,11 +15,19 @@
       return error;
   }
 
+  function validate(id) {
+    return new RegExp(/[0-9]{8}-[A-Z0-9]{6}_[0-9|]{0,1}/).test(id);
+  }
+
   if(form) {
     form.addEventListener('submit', ev => {
       ev.preventDefault();
       const left = form.querySelector('input#task-left');
       const right = form.querySelector('input#task-right');
+
+      if(!(validate(left.value) && validate(right.value))) {
+        return makeError('Wrong ID format.');
+      }
 
       if((left.value && right.value)) {
         if(left.value !== right.value) {
