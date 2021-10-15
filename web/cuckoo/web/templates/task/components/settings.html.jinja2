@@ -1,0 +1,25 @@
+{% call ui_box(title="Task settings", has_padding=False) %}
+  <table class="table has-striped-rows">
+    <body>
+      <tr>
+        <td class="has-text-right"><strong>Command</strong></td>
+        <td>{{ analysis.settings.command|join(', ') }}</td>
+      </tr>
+      <tr>
+        <td class="has-text-right"><strong>Route</strong></td>
+        <td>
+          {{ task.route.type|default('-') }}
+          {% if task.route.type == 'vpn' and task.route.country %}
+            &rarr; <span class="tag">{{ task.route.country }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% if task.browser %}
+        <tr>
+          <td class="has-text-right"><strong>Browser</strong></td>
+          <td>{{ task.browser }}</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+{% endcall %}
