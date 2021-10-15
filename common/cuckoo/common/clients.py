@@ -181,6 +181,60 @@ class TaskRunnerClient:
                 f"Error: {resp.get('reason')}"
             )
 
+    @staticmethod
+    def stop_all(sockpath):
+        try:
+            resp = request_unix_socket(sockpath, {"action": "stopall"})
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send stop all message to task runner. {e}"
+            )
+
+        if not resp.get("success"):
+            raise ActionFailedError(
+                f"Task runner failure while stopping all tasks"
+            )
+
+    @staticmethod
+    def disable(sockpath):
+        try:
+            resp = request_unix_socket(sockpath, {"action": "disable"})
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send disable message to task runner {e}"
+            )
+
+        if not resp.get("success"):
+            raise ActionFailedError(f"Task runner failure during disable")
+
+    @staticmethod
+    def enable(sockpath):
+        try:
+            resp = request_unix_socket(sockpath, {"action": "enable"})
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send enable message to task runner {e}"
+            )
+
+        if not resp.get("success"):
+            raise ActionFailedError(f"Task runner failure during enable")
+
+    @staticmethod
+    def get_task_count(sockpath):
+        try:
+            resp = request_unix_socket(sockpath, {"action": "getflowcount"})
+        except IPCError as e:
+            raise ActionFailedError(
+                f"Failed to send enable message to task runner {e}"
+            )
+
+        if "count" not in resp:
+            raise ServerResponseError(
+                f"Missing response key 'count' from task runner"
+            )
+
+        return resp.get("count")
+
 class StateControllerClient:
 
     @staticmethod
@@ -508,6 +562,18 @@ class NodeAPIClient:
         except MachineListError as e:
             raise ClientError(f"Failed to available routes dict: {e}")
 
+    def get_state(self):
+        api = urljoin(self.api_url, "state")
+        try:
+            res = requests.get(api, timeout=5, headers=self.get_headers())
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"Retrieving state failed. {e}")
+
+        if res.status_code != 200:
+            _raise_for_status(_response_ctx(res), api, 200)
+
+        return res.json()["state"]
+
     def download_result(self, task_id, file_path, chunk_size=256*1024):
         if os.path.exists(file_path):
             raise ClientError(f"Path already exists: {file_path}")
@@ -562,6 +628,57 @@ class NodeAPIClient:
         if res.status != 200:
             _raise_for_status(await _aiohttp_response_ctx(res), api, 200)
 
+    def reset(self):
+        api = urljoin(self.api_url, "reset")
+        try:
+            res = requests.post(api, headers=self.get_headers())
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"Error during node reset request.. {e}")
+
+        if res.status_code != 200:
+            _raise_for_status(_response_ctx(res), api, 200)
+
+    async def a_reset(self):
+        api = urljoin(self.api_url, "reset")
+        async with aiohttp.ClientSession(
+                timeout=ClientTimeout(sock_read=0)
+        ) as ses:
+            try:
+                res = await ses.post(
+                    api, headers=self.get_headers(encode_token=False)
+                )
+            except aiohttp.client_exceptions.ClientError as e:
+                raise ClientError(f"Error during node reset request. {e}")
+
+        if res.status != 200:
+            _raise_for_status(await _aiohttp_response_ctx(res), api, 200)
+
+    def delete_analysis_work(self, analysis_id):
+        api = urljoin(self.api_url, f"analysis/{analysis_id}")
+        try:
+            res = requests.delete(api, timeout=10, headers=self.get_headers())
+        except requests.exceptions.RequestException as e:
+            raise ClientError(f"Error analysis work delete request. {e}")
+
+        if res.status_code != 200:
+            _raise_for_status(_response_ctx(res), api, 200)
+
+    async def a_delete_analysis_work(self, analysis_id):
+        api = urljoin(self.api_url, f"analysis/{analysis_id}")
+        async with aiohttp.ClientSession(
+                timeout=ClientTimeout(sock_read=10)
+        ) as ses:
+            try:
+                res = await ses.delete(
+                    api, headers=self.get_headers(encode_token=False)
+                )
+            except aiohttp.client_exceptions.ClientError as e:
+                raise ClientError(f"Error analysis work delete request. {e}")
+
+        if res.status != 200:
+            _raise_for_status(await _aiohttp_response_ctx(res), api, 200)
+
+
 class NodeEventReader:
 
     def __init__(self, nodeapi_client, message_cb, read_end_cb,
@@ -579,6 +696,9 @@ class NodeEventReader:
     @property
     def opened(self):
         return self._evsource.ready_state == sse_client.READY_STATE_OPEN
+
+    def reset_last_id(self):
+        self.last_id = 0
 
     async def close(self):
         if self._evsource.ready_state != sse_client.READY_STATE_CLOSED:

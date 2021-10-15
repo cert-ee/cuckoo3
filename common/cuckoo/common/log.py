@@ -460,8 +460,8 @@ class _KeyBasedFileLogger(CuckooLogger):
         super().__init__(logging.getLogger(name))
         self.key = key
 
-        self._filepath = self.make_logfile_path()
         self._logfile_handler = None
+        self._filepath = self.make_logfile_path()
 
         self._init_multihandler()
         self._multihandler_to_logger(self._logger)

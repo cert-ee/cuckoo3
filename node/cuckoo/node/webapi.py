@@ -8,13 +8,14 @@ from collections import deque
 from aiohttp import web
 from aiohttp_sse import sse_response
 
+from cuckoo.common.analyses import delete_analysis_disk
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 from cuckoo.common.machines import serialize_machinelists
 from cuckoo.common.config import cfg
 from cuckoo.common.storage import (
     random_filename, delete_file, Paths, AnalysisPaths, split_analysis_id,
-    create_analysis_folder, TaskPaths, TASK_ID_REGEX
+    create_analysis_folder, TaskPaths, TASK_ID_REGEX, ANALYSIS_ID_REGEX
 )
 
 from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
@@ -59,6 +60,11 @@ class StateSSE(InfoStreamReceiver):
         self.backlog = deque(maxlen=self.BACKLOG_SIZE)
         self.cur_id = 1
         self._streamlock = asyncio.Lock()
+
+    async def reset_stream(self):
+        async with self._streamlock:
+            self.backlog = deque(maxlen=self.BACKLOG_SIZE)
+            self.cur_id = 1
 
     async def stream_event(self, data):
         async with self._streamlock:
@@ -173,6 +179,10 @@ class API:
             return resp
 
     async def upload_work(self, request):
+        # If the node is resetting, do not start work or accept new work.
+        if self.ctx.is_resetting:
+            return web.HTTPServiceUnavailable()
+
         try:
             reader = await request.multipart()
         except (KeyError, ValueError):
@@ -236,6 +246,10 @@ class API:
         return web.Response()
 
     async def start_task(self, request):
+        # If the node is resetting, do not start work or accept new work.
+        if self.ctx.is_resetting:
+            return web.HTTPServiceUnavailable()
+
         try:
             data = await request.json()
         except json.JSONDecodeError as e:
@@ -275,6 +289,39 @@ class API:
             return web.HTTPNotFound()
 
         return web.FileResponse(path=zipped_result)
+
+    async def cancel_all(self, request):
+        if self.ctx.is_resetting:
+            return web.HTTPServiceUnavailable()
+
+        try:
+            await self.ctx.node.cancel_all()
+        except NodeError as e:
+            return web.json_response(
+                {"error": f"Fatal error during reset: {e}"}, status=500
+            )
+
+        return web.Response()
+
+    async def delete_analysis_work(self, request):
+        analysis_id = request.match_info["analysis_id"]
+        analysis_path = AnalysisPaths.path(analysis_id)
+        counted_lock = await self.get_lock(analysis_id)
+        try:
+            async with counted_lock.lock:
+                if not analysis_path.exists():
+                    return web.HTTPNotFound()
+
+                if self.ctx.node.work_exists(analysis_id):
+                    return web.HTTPConflict()
+
+                delete_analysis_disk(analysis_id)
+                return web.Response()
+        finally:
+            await self.return_lock(counted_lock, analysis_id)
+
+    async def get_node_state(self, request):
+        return web.json_response({"state": self.ctx.node.state})
 
 class APIRunner:
 
@@ -321,6 +368,12 @@ def make_api_runner(nodectx):
         web.post("/uploadwork", api.upload_work),
         web.post(f"/task/{{task_id:{TASK_ID_REGEX}}}/start", api.start_task),
         web.get(f"/task/{{task_id:{TASK_ID_REGEX}}}", api.task_result),
+        web.post("/reset", api.cancel_all),
+        web.delete(
+            f"/analysis/{{analysis_id:{ANALYSIS_ID_REGEX}}}",
+            api.delete_analysis_work
+        ),
+        web.get("/state", api.get_node_state)
     ])
 
     runner = web.AppRunner(app)

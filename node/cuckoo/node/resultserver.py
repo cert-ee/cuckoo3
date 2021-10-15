@@ -395,7 +395,7 @@ class _AsyncResultServer:
         try:
             task_mapping = self.get_task_mapping(ip)
         except UnmappedIPError as e:
-            log.error("Failed to store new task result.", error=e)
+            log.error("Failed to store new task result", error=e)
             writer.close()
             return
 

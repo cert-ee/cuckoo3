@@ -294,6 +294,7 @@ def make_task_id(analysis_id, task_number):
 
 TASK_PREFIX = "task_"
 TASK_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}_[0-9]{0,3}"
+ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
 
 def taskdir_name(task_id):
     return f"{TASK_PREFIX}{split_task_id(task_id)[2]}"

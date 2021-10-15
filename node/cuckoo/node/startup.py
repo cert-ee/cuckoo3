@@ -204,6 +204,7 @@ class NodeCtx:
         self.routes = None
         self.zip_results = False
         self.rooter_sock = None
+        self.is_resetting = False
 
 def start_local(stream_receiver, loglevel):
     ctx = NodeCtx()
