@@ -41,10 +41,10 @@
         {# priority #}
         <label class="label" for="priority">Priority</label>
         <div class="control is-select">
-          <select name="priority" class="input" id="priority" value="{{ default_settings.priority }}">
-            <option value="1" selected>Low</option>
-            <option value="2">Medium</option>
-            <option value="3">High</option>
+          <select name="priority" class="input" id="priority">
+            <option value="1" {% if default_settings.priority == 1 %}selected{% endif %}>Low</option>
+            <option value="2" {% if default_settings.priority == 2 %}selected{% endif %}>Medium</option>
+            <option value="3" {% if default_settings.priority == 3 %}selected{% endif %}>High</option>
             {% if default_settings.priority > 3 %}
               <option value="{{ default_settings.priority }}">Default preset ({{ default_settings.priority }})</option>
             {% endif %}
@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field {% if default_settings.route and default_settings.route.type != 'vpn' %}hidden{% endif %}>
+        <div class="field is-inline no-padding-y no-padding-right no-margin-top" id="select-vpn-country" data-route-country-field {% if default_settings.route or default_settings.route.type != 'vpn' %}hidden{% endif %}>
           <label class="label">Country</label>
           <div class="control is-select">
             <select class="input" name="country" id="country" data-route-country>
