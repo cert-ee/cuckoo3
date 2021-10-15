@@ -133,6 +133,33 @@
         <td class="has-line-break">{{ analysis.settings.priority }}</td>
       </tr>
       <tr>
+        <td class="no-line-break"><strong>Route</strong></td>
+        <td class="has-line-break">
+          {{ analysis.settings.route.type }}
+          {% if analysis.settings.route.type == 'vpn' %}
+            &rarr; <span class="tag">{{ analysis.settings.route.options.country }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td class="no-line-break"><strong>Command</strong></td>
+        <td class="has-line-break">{{ analysis.settings.command|join(', ') }}</td>
+      </tr>
+      <tr>
+        <td class="no-line-break"><strong>Original Filename</strong></td>
+        <td class="has-line-break">{{ analysis.settings.orig_filename }}</td>
+      </tr>
+      {% if analysis.category == 'url' %}
+        <tr>
+          <td class="no-line-break"><strong>Browser</strong></td>
+          <td class="has-line-break">{{ analysis.settings.browser }}</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td class="no-line-break"><strong>Original Filename</strong></td>
+        <td class="has-line-break">{{ analysis.settings.orig_filename }}</td>
+      </tr>
+      <tr>
         <td class="no-line-break"><strong>Platforms</strong></td>
         <td class="has-line-break">
           {# analysis.settings.platforms #}
@@ -141,8 +168,9 @@
               <div class="tag-list no-margin-y">
                 <code class="no-margin-y has-margin-right">{{ p.platform }} {{ p.os_version }}</code>
                 {% if p.tags|length > 0 %}
+                  &rarr;
                   {% for t in p.tags %}
-                    <div class="tag no-margin-y has-margin-bottom">{{ t }}</div>
+                    <span class="tag no-margin-y no-margin-bottom">{{ t }}</span>
                   {% endfor %}
                 {% endif %}
               </div>
