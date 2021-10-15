@@ -253,6 +253,11 @@ def handle_post_done(worktracker):
 def update_final_analysis_state(worktracker):
     if not task.has_unfinished_tasks(worktracker.analysis_id):
         worktracker.analysis.state = analyses.States.FINISHED
+        # Delete stored analysis files on all nodes that worked on this
+        # analysis.
+        worktracker.ctx.nodes.delete_completed_analysis(
+            worktracker.analysis_id
+        )
 
 def set_next_state(worktracker, worktype):
     if worktype == "identification":
@@ -336,6 +341,16 @@ def set_task_running(worktracker, machine, node):
         worktracker.task.id, state=worktracker.task.state,
         platform=machine.platform, os_version=machine.os_version,
         started_on=datetime.utcnow()
+    )
+    task.write_changes(worktracker.task)
+    analyses.write_changes(worktracker.analysis)
+
+def set_task_pending(worktracker):
+    worktracker.log.info("Setting task to pending")
+    worktracker.task.state = task.States.PENDING
+    worktracker.analysis.update_task(
+        worktracker.task.id, state=worktracker.task.state,
+        clear_started_stopped=True
     )
     task.write_changes(worktracker.task)
     analyses.write_changes(worktracker.analysis)
@@ -550,6 +565,14 @@ class StateController(UnixSocketServer):
                 "analysis_id": kwargs["analysis_id"],
                 "machine": kwargs["machine"],
                 "node": kwargs["node"]
+            }
+        )
+
+    def task_pending(self, **kwargs):
+        self.queue_call(
+            set_task_pending, {
+                "task_id": kwargs["task_id"],
+                "analysis_id": kwargs["analysis_id"]
             }
         )
 

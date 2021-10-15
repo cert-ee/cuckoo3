@@ -10,7 +10,7 @@ from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.storage import TaskPaths, Paths
 from cuckoo.common.node import NodeInfos
 
-from .nodeclient import NodeActionError
+from .nodeclient import NodeActionError, NodeUnavailableError
 
 log = CuckooGlobalLogger(__name__)
 
@@ -58,6 +58,10 @@ class NodesTracker:
         self.nodeinfos.add_nodeinfo(node.info)
         self.ctx.scheduler.inform_change()
 
+    def delete_completed_analysis(self, analysis_id):
+        for node in self._get_ready_nodes():
+            node.delete_completed_analysis(analysis_id)
+
     def find_available(self, queued_task):
         """Find a node that has the machine and route the queued task
         needs."""
@@ -88,6 +92,7 @@ class StartableTask:
         self.errtracker = ErrorTracker()
         self._logger = None
         self._released = False
+        self._requeued = False
 
     @property
     def log(self):
@@ -110,12 +115,27 @@ class StartableTask:
             return
 
         self.node.machines.release(self.machine)
-        self.ctx.scheduler.unqueue_task(self.task.id)
-        self.ctx.scheduler.inform_change()
+        # Only request task id to be removed from task queue db
+        # if it has not been rescheduled.
+        if not self._requeued:
+            self.ctx.scheduler.unqueue_task(self.task.id)
+            self.ctx.scheduler.inform_change()
+
         self._released = True
 
+    def requeue(self):
+        self._requeued = True
+        self.ctx.state_controller.task_pending(
+            task_id=self.task.id, analysis_id=self.task.analysis_id
+        )
+        self.ctx.scheduler.requeue_task(self.task.id)
+        self.ctx.scheduler.inform_change()
+
     def close(self):
-        if self.errtracker.has_errors():
+        # Only write errors if task has not been requeued. Otherwise
+        # it might have a fatal error, causing the the reschedule to fail.
+        # The error does not matter since it is rescheduled.
+        if not self._requeued and self.errtracker.has_errors():
             self.errtracker.to_file(TaskPaths.runerr_json(self.task.id))
         if self._logger:
             self._logger.close()
@@ -149,6 +169,17 @@ class TaskStarter(threading.Thread):
             )
             try:
                 startable_task.assign_to_node()
+            except NodeUnavailableError as e:
+                startable_task.log.error(
+                    "Failed to start task. Node unavailable. Requeueing",
+                    node=startable_task.node.name, error=e
+                )
+                # Requeue and close task. Normally the node client would
+                # close the startable task when the tasks ends in either
+                # success/complete or fail. Now we do it here because no node
+                # is tracking it.
+                startable_task.requeue()
+                startable_task.close()
             except NodeActionError as e:
                 startable_task.log.error(
                     "Failed to start task", task_id=startable_task.task.id,
@@ -184,10 +215,56 @@ class Scheduler:
         self._startables_queue = queue.Queue()
         self._completed_lock = threading.Lock()
         self._completed = set()
+        self._requeue_lock = threading.Lock()
+        self._requeue = set()
+
+    def _cancel_abandoned(self, *queuedtasks):
+        """Cancels all the tasks that belong to the queuedtasks. Should
+        only be used on startup, before the scheduler loop starts."""
+        for queuedtask in queuedtasks:
+            log.warning("Cancelling abandoned task", task_id=queuedtask.id)
+            errrs = ErrorTracker()
+            errrs.fatal_error("Cancelled by scheduler")
+            errrs.to_file(TaskPaths.runerr_json(queuedtask.id))
+            self.ctx.state_controller.task_failed(
+                task_id=queuedtask.id, analysis_id=queuedtask.analysis_id
+            )
+
+        # Remove all cancelled task from the task queue.
+        self.taskqueue.remove(*[t.id for t in queuedtasks])
+
+    def _recover_abandoned(self, *queuedtasks):
+        """Recovers all the tasks that belong to the queuedtasks. The
+        scheduler can reschedule the tasks again after this. Should
+        only be used on startup, before the scheduler loop starts."""
+        for queuedtask in queuedtasks:
+            log.warning("Recovering abandoned task", task_id=queuedtask.id)
+            self.ctx.state_controller.task_pending(
+                task_id=queuedtask.id, analysis_id=queuedtask.analysis_id
+            )
+
+        # Mark all recovered tasks as unscheduled again. The scheduler can now
+        # pick them up again and schedule them on a node.
+        self.taskqueue.mark_unscheduled(*[t.id for t in queuedtasks])
+
+    def handle_abandoned(self, cancel=True):
+        queued_abandoned = self.taskqueue.get_scheduled()
+        if not queued_abandoned:
+            return
+
+        log.info("Found abandoned tasks", amount=len(queued_abandoned))
+        if cancel:
+            self._cancel_abandoned(*queued_abandoned)
+        else:
+            self._recover_abandoned(*queued_abandoned)
 
     def unqueue_task(self, task_id):
         with self._completed_lock:
             self._completed.add(task_id)
+
+    def requeue_task(self, task_id):
+        with self._requeue_lock:
+            self._requeue.add(task_id)
 
     def queue_task(self, task_id, kind, created_on, analysis_id, priority,
                    platform, os_version, machine_tags, route):
@@ -222,6 +299,16 @@ class Scheduler:
         with self._completed_lock:
             self._completed = self._completed - completed
 
+    def _requeue_tasks(self):
+        with self._requeue_lock:
+            requeue = self._requeue.copy()
+
+        # Mark all given 'requeue' task ids as unscheduled. This will cause
+        # them to be rescheduled when the resources for it are available.
+        self.taskqueue.mark_unscheduled(*requeue)
+        with self._requeue_lock:
+            self._requeue = self._requeue - requeue
+
     def assign_work(self):
         with self.taskqueue.get_workfinder() as wf:
             for task in wf.get_unscheduled_tasks():
@@ -246,6 +333,11 @@ class Scheduler:
                     return
 
                 wf.mark_scheduled(task)
+
+                # We have assigned work to at least 1 machine here. Ensure
+                # more machines are available before trying to schedule more.
+                if not self.ctx.nodes.machines_available():
+                    return
 
     def inform_change(self):
         self._change_event.set()
@@ -278,6 +370,11 @@ class Scheduler:
             # StartableTask
             if self._completed:
                 self._unqueue_tasks()
+
+            # Mark tasks in the requeue set as unscheduled again in the task
+            # queue db. Tasks can get added to this set when their node fails.
+            if self._requeue:
+                self._requeue_tasks()
 
             # Only continue to search for machines if the task queue is not
             # empty.

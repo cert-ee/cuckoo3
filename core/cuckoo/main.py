@@ -16,8 +16,9 @@ from cuckoo.common.log import (
 @click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
 @click.option("-d", "--debug", is_flag=True, help="Enable debug logging")
 @click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
+@click.option("--cancel-abandoned", is_flag=True, help="Do not recover and cancel tasks that are abandoned and still 'running'")
 @click.pass_context
-def main(ctx, cwd, distributed, debug, quiet, verbose):
+def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
     if not cwd:
         cwd = cuckoocwd.DEFAULT
 
@@ -72,7 +73,7 @@ def main(ctx, cwd, distributed, debug, quiet, verbose):
     register_shutdown(_stopmsg, order=1)
 
     try:
-        start_cuckoo(ctx.loglevel)
+        start_cuckoo(ctx.loglevel, cancel_abandoned=cancel_abandoned)
     except StartupError as e:
         exit_error(f"Failure during Cuckoo startup: {e}")
     finally:

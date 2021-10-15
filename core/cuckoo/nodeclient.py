@@ -18,6 +18,9 @@ from cuckoo.node.node import (
 class NodeActionError(Exception):
     pass
 
+class NodeUnavailableError(NodeActionError):
+    pass
+
 log = CuckooGlobalLogger(__name__)
 
 class AssignedTasks:
@@ -25,6 +28,16 @@ class AssignedTasks:
     def __init__(self):
         self._taskid_startabletask = {}
         self._lock = Lock()
+        self._history_lock = Lock()
+        self._analysis_history = set()
+
+    def in_history(self, analysis_id):
+        with self._history_lock:
+            return analysis_id in self._analysis_history
+
+    def remove_history(self, analysis_id):
+        with self._history_lock:
+            self._analysis_history.discard(analysis_id)
 
     def have_task(self, task_id):
         return task_id in self._taskid_startabletask
@@ -33,6 +46,9 @@ class AssignedTasks:
         with self._lock:
             self._taskid_startabletask[startable_task.task.id] = startable_task
 
+        with self._history_lock:
+            self._analysis_history.add(startable_task.task.analysis_id)
+
     def get_assigned(self, task_id):
         with self._lock:
             return self._taskid_startabletask[task_id]
@@ -40,6 +56,26 @@ class AssignedTasks:
     def untrack_assigned(self, task_id):
         with self._lock:
             self._taskid_startabletask.pop(task_id)
+
+    def requeue_all(self):
+        """Untracks and requeues all tracked tasks. Returns the startable
+        task objects for the task ids that have been requeued. These objects
+        should no longer be used for anything else than reading their
+        attributes."""
+        tasks = []
+        with self._lock:
+            for task_id in list(self._taskid_startabletask.keys()):
+                task = self._taskid_startabletask.pop(task_id)
+                tasks.append(task)
+                task.requeue()
+                try:
+                    task.close()
+                except Exception as e:
+                    log.exception(
+                        "Failed to close started task context after cancel.",
+                        task_id=task_id, error=e
+                    )
+        return tasks
 
 
 class LocalStreamReceiver(InfoStreamReceiver):
@@ -209,6 +245,9 @@ class NodeClient:
     def add_task(self, startable_task):
         raise NotImplementedError
 
+    def delete_completed_analysis(self, analysis_id):
+        pass
+
 class RemoteNodeClient(NodeClient):
 
     def __init__(self, cuckooctx, nodeapi_client, loop_wrapper):
@@ -221,6 +260,7 @@ class RemoteNodeClient(NodeClient):
         self._info = None
         self._events_open = False
         self._fatal_error = False
+        self._resetting = False
 
     @property
     def name(self):
@@ -228,7 +268,8 @@ class RemoteNodeClient(NodeClient):
 
     @property
     def ready(self):
-        return self._info and self._events_open and not self._fatal_error
+        return self._info and self._events_open and not self._fatal_error \
+               and not self._resetting
 
     @property
     def machines(self):
@@ -303,13 +344,77 @@ class RemoteNodeClient(NodeClient):
             log.error("Unhandled message type", msgtype=msgtype)
             return
 
-    async def _open_eventreader(self):
+    async def _nodereset_and_reopen(self):
+        """Requeue all assigned tasks and re-init the node. Use only in case
+        of event stream fail. This is meant to restore the node to a state
+        where we can use it again."""
+        log.warning(
+            "Starting node reset. Node will be unavailable until this is "
+            "complete.", node=self.name
+        )
+        self._resetting = True
+        # First requeue all assigned tasks so that they can still be
+        # scheduled to another node.
+        log.info("Requeueing all tasks assigned to node", node=self.name)
+        requeued = self.assigned_tasks.requeue_all()
+
+        # Only re-open reader if the event reading client was created.
+        # This won't be the cause when the remote node has the wrong state
+        # when Cuckoo main starts.
+        if self.events:
+            log.debug("Trying to re-open event stream", node=self.name)
+            # Reset event id counter and try to re-open the event stream. We
+            # reset the counter because we do not care about missed events,
+            # since we are performing a reset.
+            self.events.reset_last_id()
+            await self._reopen_eventreader()
+
+        log.debug("Requesting remote node reset", node=self.name)
+        # Ask the remote node to cancel all work and reset the states of
+        # the machines to poweroff.
+        try:
+            await self.client.a_reset()
+        except ClientError as e:
+            log.error(
+                "Failure during remote node reset request", node=self.name,
+                error=e
+            )
+            raise NodeActionError(
+                f"Failure during remote node reset request: {e}"
+            )
+
+        log.debug(
+            "Deleting all cancelled analysis work on node", node=self.name
+        )
+        for task in requeued:
+            try:
+                await self.client.a_delete_analysis_work(task.task.analysis_id)
+                self.assigned_tasks.remove_history(task.task.analysis_id)
+            except ClientError as e:
+                log.warning(
+                    "Failure during deletion of analysis work",
+                    node=self.name, error=e, task_id=task.task.analysis_id
+                )
+
+        # Create a new node info with the new available machines and routes
+        # objects.
+        log.debug(
+            "Requesting available machine and routes for reset node",
+            node=self.name
+        )
+        self.init()
+        self._resetting = False
+
+        log.info("Node reset completed", node=self.name)
+        # Finally inform the nodes tracker that this node is ready to
+        # be assigned tasks again.
+        self.ctx.nodes.ready_cb(self)
+
+    async def _reopen_eventreader(self):
         while not self.events.stopped:
             if self.events.opened:
                 break
 
-            # TODO on successful re-open. Retrieve machine list again,
-            # cancel all tasks on that node and resubmit them.
             try:
                 await self.events.open()
                 await self.loop_wrapper.newtask(
@@ -326,10 +431,10 @@ class RemoteNodeClient(NodeClient):
 
     async def _event_read_end(self):
         self._events_open = False
-        log.debug("Node event stream closed", node=self.name)
+        log.error("Node event stream closed", node=self.name)
         self.ctx.nodes.notready_cb(self)
         if not self.events.stopped:
-            await self.loop_wrapper.newtask(self._open_eventreader)
+            await self.loop_wrapper.newtask(self._nodereset_and_reopen)
 
     def _event_conn_err(self, e):
         self._events_open = False
@@ -338,7 +443,11 @@ class RemoteNodeClient(NodeClient):
     def _event_conn_opened(self):
         self._events_open = True
         log.debug("Node event stream opened", node=self.name)
-        self.ctx.nodes.ready_cb(self)
+        # Do not notify the node tracker that we are ready because
+        # another handler is busy performing resetting steps. This handler
+        # must tell the node tracker we are ready when it is done.
+        if not self._resetting:
+            self.ctx.nodes.ready_cb(self)
 
     async def start_reader(self):
         self.events = NodeEventReader(
@@ -436,8 +545,10 @@ class RemoteNodeClient(NodeClient):
             )
 
     def add_task(self, startable_task):
-        self.assigned_tasks.track_assigned(startable_task)
+        if not self.ready:
+            raise NodeUnavailableError("Node not ready for usage")
 
+        self.assigned_tasks.track_assigned(startable_task)
         try:
             nodework = NodeWorkZipper(
                 startable_task.task.analysis_id, startable_task.task.id
@@ -525,6 +636,20 @@ class RemoteNodeClient(NodeClient):
             )
             self.assigned_tasks.untrack_assigned(task_id)
 
+    def delete_completed_analysis(self, analysis_id):
+        if not self.assigned_tasks.in_history(analysis_id):
+            return
+
+        try:
+            self.client.delete_analysis_work(analysis_id)
+        except ClientError as e:
+            log.warning(
+                "Error while deleting analysis work on remote node",
+                node=self.name, analysis_id=analysis_id, error=e
+            )
+            return
+
+        self.assigned_tasks.remove_history(analysis_id)
 
 class LocalNodeClient(NodeClient):
 

@@ -564,7 +564,8 @@ class Analysis(StrictContainer):
     )
 
     def update_task(self, task_id, score=None, state="", platform="",
-                    os_version="", started_on=None, stopped_on=None):
+                    os_version="", started_on=None, stopped_on=None,
+                    clear_started_stopped=False):
         for task in self.tasks:
             if task["id"] == task_id:
 
@@ -584,6 +585,10 @@ class Analysis(StrictContainer):
 
                 if stopped_on:
                     task["stopped_on"] = stopped_on
+
+                if clear_started_stopped:
+                    task["started_on"] = None
+                    task["stopped_on"] = None
 
                 self.set_updated(["tasks"])
                 break

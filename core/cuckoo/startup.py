@@ -262,6 +262,8 @@ def make_node_api_clients():
     return node_clients
 
 def make_remote_node_clients(cuckooctx, node_api_clients):
+    from cuckoo.common.clients import ClientError
+    from cuckoo.node.node import NodeStates
     from .nodeclient import RemoteNodeClient, NodeClientLoop, NodeActionError
     import asyncio
 
@@ -274,6 +276,19 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
     for api in node_api_clients:
         remote_node = RemoteNodeClient(cuckooctx, api, wrapper)
         try:
+            state = api.get_state()
+            if state != NodeStates.WAITING_MAIN:
+                log.warning(
+                    "Remote node does not have expected state. Requesting "
+                    "node to reset itself", node=api.name, state=state,
+                    expected_state=NodeStates.WAITING_MAIN)
+                api.reset()
+        except ClientError as e:
+            raise StartupError(
+                f"Failure during node state retrieval or reset. {e}"
+            )
+
+        try:
             remote_node.init()
             loop.run_until_complete(remote_node.start_reader())
         except NodeActionError as e:
@@ -284,7 +299,7 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
 
     return remotes_nodes, wrapper
 
-def start_cuckoo_controller(loglevel):
+def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
     set_start_method("spawn")
 
@@ -337,6 +352,7 @@ def start_cuckoo_controller(loglevel):
     start_statecontroller(cuckooctx)
 
     log.debug("Starting scheduler")
+    cuckooctx.scheduler.handle_abandoned(cancel=cancel_abandoned)
     cuckooctx.scheduler.start()
 
 def _init_elasticsearch_pre_startup():
@@ -361,7 +377,7 @@ def _init_elasticsearch_pre_startup():
         create_missing_indices=True
     )
 
-def start_cuckoo(loglevel):
+def start_cuckoo(loglevel, cancel_abandoned=False):
     try:
         from multiprocessing import set_start_method
         set_start_method("spawn")
@@ -402,6 +418,7 @@ def start_cuckoo(loglevel):
         start_statecontroller(cuckooctx)
 
         log.debug("Starting scheduler")
+        cuckooctx.scheduler.handle_abandoned(cancel=cancel_abandoned)
         cuckooctx.scheduler.start()
     except Exception as e:
         raise StartupError(e)
