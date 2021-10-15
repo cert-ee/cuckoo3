@@ -117,6 +117,7 @@ class Machinery:
             raise errors.MachineNetCaptureError(str(e))
 
     def shutdown(self):
+        failed_shutdown_machines = []
         for machine in self.machines:
             try:
                 log.info(
@@ -133,12 +134,15 @@ class Machinery:
                     "Error while stopping machine in machinery shutdown.",
                     machinery=self.name, machine=machine.name, error=e
                 )
+                failed_shutdown_machines.append(machine)
 
         for netcapture in self.netcaptures.values():
             try:
                 netcapture.stop()
             except Exception as e:
                 log.error("Error while stopping network capture", error=e)
+
+        return failed_shutdown_machines
 
     def version(self):
         """Return the string version of the virtualization software."""
