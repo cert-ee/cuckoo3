@@ -272,6 +272,7 @@ class TaskRunner(UnixSocketServer):
 
         self.active_flows = []
         self.responses = []
+        self.enabled = True
 
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))
@@ -301,10 +302,20 @@ class TaskRunner(UnixSocketServer):
         self.active_flows.append(flowrunner)
         flowrunner.start()
 
-    def handle_message(self, sock, msg):
-        action = msg.get("action")
-        if not action or action != "starttask":
-            log.debug("Invalid action request received", received=repr(msg))
+    def stop_all_taskflows(self):
+        for flowrunner in self.active_flows[:]:
+            flowrunner.stop()
+            log.info("Cancelled task run", task_id=flowrunner.task.id)
+
+    def _do_new_task(self, sock, msg):
+        readerwriter = self.socks_readers[sock]
+        if not self.enabled:
+            self.responses.append(
+                (readerwriter, {
+                    "success": False,
+                    "reason": "Task runner is disabled"
+                })
+            )
             self.untrack(sock)
             return
 
@@ -317,7 +328,6 @@ class TaskRunner(UnixSocketServer):
             return
 
         task_id = kwargs["task_id"]
-        readerwriter = self.socks_readers[sock]
         try:
             self.start_new_taskflow(**kwargs)
             self.responses.append((readerwriter, {"success": True}))
@@ -336,6 +346,40 @@ class TaskRunner(UnixSocketServer):
                 (readerwriter, {"success": False, "reason": str(e)})
             )
             return
+
+    def _do_enable_disable(self, sock, action):
+        readerwriter = self.socks_readers[sock]
+        if action == "disable":
+            self.enabled = False
+            log.warning("Task runner disable by request")
+        elif action == "enable":
+            self.enabled = True
+            log.warning("Task runner enabled by request")
+
+        self.responses.append((readerwriter, {"success": True}))
+
+    def _do_send_flowscount(self, sock):
+        readerwriter = self.socks_readers[sock]
+        self.responses.append(
+            (readerwriter, {"count": len(self.active_flows)})
+        )
+
+    def handle_message(self, sock, msg):
+        action = msg.get("action")
+        if action == "starttask":
+            self._do_new_task(sock, msg)
+        elif action == "stopall":
+            self.stop_all_taskflows()
+            self.responses.append(
+                (self.socks_readers[sock], {"success": True})
+            )
+        elif action in ("disable", "enable"):
+            self._do_enable_disable(sock, action)
+        elif action == "getflowcount":
+            self._do_send_flowscount(sock)
+        else:
+            log.debug("Invalid action request received", received=repr(msg))
+            self.untrack(sock)
 
     def check_flow_statuses(self):
         for flowrunner in self.active_flows[:]:
@@ -364,9 +408,7 @@ class TaskRunner(UnixSocketServer):
             return
 
         super().stop()
-        for flowrunner in self.active_flows:
-            flowrunner.stop()
-            log.info("Cancelled task run", task_id=flowrunner.task.id)
+        self.stop_all_taskflows()
 
         self.cleanup()
 
