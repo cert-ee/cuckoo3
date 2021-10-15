@@ -220,7 +220,7 @@
     // handle machines being added to the list
     function addMachine(data={}) {
 
-      const { routes } = Application.possible_settings;
+      const { routes, browsers } = Application.possible_settings;
       const uniq = Math.floor(Number.MAX_SAFE_INTEGER * Math.random()).toString(4);
 
       data = Object.assign({
@@ -306,11 +306,8 @@
                   </label>
                   <div class="control is-select" hidden>
                     <select class="input" data-browser>
-                      <option value="">Global Value</option>
-                      <option value="default">Default</option>
-                      <option value="ie">Internet Explorer</option>
-                      <option value="firefox">Firefox</option>
-                      <option value="chrome">Chrome</option>
+                      <option value>Default</option>
+                      ${ browsers.map(b => `<option value="${b}">${b}</option>`).join('') }
                     </select>
                   </div>
                 </div>

@@ -104,8 +104,8 @@
           <div class="control is-select">
             <select class="input" name="browser">
               <option value="default">Default</option>
-              {% for browser in possible_settings.browser %}
-                <option value="{{browser}}">{{ browser }}</option>
+              {% for browser in possible_settings.browsers %}
+                <option value="{{ browser }}">{{ browser }}</option>
               {% endfor %}
             </select>
           </div>
