@@ -123,7 +123,9 @@
       results.innerHTML = matches.map(match => `
         <tr>
           <td><a target="_blank" href="/analysis/${lib.SafeString(match.analysis_id)}">${lib.SafeString(match.analysis_id)}</a></td>
-          <td><a target="_blank" href="/analysis/${lib.SafeString(match.analysis_id)}/task/${match.task_id}">${lib.SafeString(match.task_id)}</a></td>
+          <td>
+            ${ match.task_id ? `<a target="_blank" href="/analysis/${lib.SafeString(match.analysis_id)}/task/${match.task_id}">${lib.SafeString(match.task_id)}</a>` : '-' }
+          </td>
           ${match.matches.map(m => `
             <td>${lib.SafeString(m.field)}</td>
             <td>${m.matches.map(_match => lib.SafeString(_match)).join('<br />')}</td>
