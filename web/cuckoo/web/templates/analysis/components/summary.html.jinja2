@@ -138,9 +138,13 @@
       <tr>
         <td class="no-line-break"><strong>Route</strong></td>
         <td class="has-line-break">
-          {{ analysis.settings.route.type }}
-          {% if  analysis.settings.route.type == 'vpn' %}
-            &rarr; <span class="tag">{{ analysis.settings.route.country|capitalize }}</span>
+          {% if analysis.settings.route %}
+            {{ analysis.settings.route.type }}
+            {% if  analysis.settings.route.type == 'vpn' %}
+              &rarr; <span class="tag">{{ analysis.settings.route.country|capitalize }}</span>
+            {% endif %}
+            {% else %}
+            -
           {% endif %}
         </td>
       </tr>
