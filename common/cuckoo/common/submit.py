@@ -248,7 +248,12 @@ class SettingsHelper:
                     "Setting 'command' must be a list of strings or a string"
                 )
 
-            return shlex.split(command)
+            try:
+                return shlex.split(command)
+            except ValueError as e:
+                raise SubmissionError(
+                    f"Command contains invalid/incomplete parts: {e}"
+                )
 
         for arg in command:
             if not isinstance(arg, str):
