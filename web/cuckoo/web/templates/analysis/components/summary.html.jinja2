@@ -60,6 +60,10 @@
             {% endfor %}
           </div>
         {% endif %}
+        {% if "submittedfiledownload" | feature_enabled %}
+          {# href="{{ url('Analysis/submittedfile', args=[analysis.id]) }}" #}
+          <a href="#" class="button is-small has-margin-y" download>Download submitted file</a>
+        {% endif %}
       </div>
     </div>
   </div>
