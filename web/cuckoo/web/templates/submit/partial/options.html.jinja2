@@ -85,7 +85,7 @@
           <label class="label">Country</label>
           <div class="control is-select">
             <select class="input" name="country" id="country" data-route-country>
-              <option>First available</option>
+              <option value="">First available</option>
               <optgroup label="Available countries">
                 {% for country in possible_settings.routes.vpn.countries %}
                   <option value="{{ country }}" {% if default_settings.route and country == default_settings.route.options.country %}selected{% endif %}>{{ country|capitalize }}</option>
