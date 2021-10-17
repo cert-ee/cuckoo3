@@ -1,7 +1,7 @@
 
 ## What is this config
 
-The cuckoo.yaml is a "general" configuration file. It contains main settings such as
+The `$CWD/conf/cuckoo.yaml` is a "general" configuration file. It contains main settings such as
 the chosen machinery module(s).
 
 ### Default config example
@@ -32,26 +32,24 @@ tcpdump:
   enabled: True
   path: /usr/sbin/tcpdump
 
+# Automatic per-task network routing. Before a task runs, the rooter
+# is asked to apply a submitted or default network route. Cuckoo rooter
+# must be running and its unix socket path must be configured here.
+network_routing:
+  enabled: False
+  # Cuckoo rooter socket path. Must be writable and readable for the user
+  # that runs Cuckoo.
+  rooter_socket: null
+
 platform:
-  # The default platform to use when no platforms are supplied on submission and no required platform is
-  # identified during the identification stage.
-  default_platform:
-    platform: windows
-    os_version: null
-
-  # Which of the supported platforms determined during the identification stage should be used if a target
-  # can run on multiple platforms. A task will be created for each of the specified platforms if it is present in the
-  # determined platforms.
-  multi_platform:
-    - windows
-
   # Use the machine tags determined during the identification phase for machine selection.
   # Enabling this means your analyis machines have been configured with the tags
   # listed in conf/processing/identification.yaml
   autotag: False
 
 state_control:
-  # Cancel an analysis if the file was not identified during the identification stage.
+  # Cancel an analysis if the submitted file was not identified during the
+  # identification stage.
   cancel_unidentified: False
 
 processing:
@@ -66,7 +64,11 @@ processing:
     # Post workers are responsible for the processing of data collected during each task.
     post: 1
 
+# The Cuckoo 'long term storage' host that reported analyses should be moved to when
+# starting 'cuckoocleanup remotestorage'. This host must have an import controller
+# instance and the Cuckoo API running.
 remote_storage:
+  # The API url of a remote running Cuckoo API.
   api_url: null
 
   # API key needs to have administrator privileges to export to

@@ -21,12 +21,18 @@ nav:
   - System dependencies: installation/deps.md
   - Machinery modules: installation/machineries.md
   - VM Creation: installation/vmcreation.md
+  - Network routing: installation/routing.md
 
 - Configuration:
   - System settings: configuration/system.md
   - Cuckoo configuration:
     - Cuckoo.yaml: configuration/cuckooconfs/cuckooyaml.md
     - Distributed.yaml: configuration/cuckooconfs/distributedyaml.md
+    - Web configuration:
+      - Web.yaml: configuration/cuckooconfs/webconfs/webyaml.md
+    - Node configuration:
+      - Routing.yaml: configuration/cuckooconfs/nodeconfs/routingyaml.md
+
 
 - Usage:
   - Web API:

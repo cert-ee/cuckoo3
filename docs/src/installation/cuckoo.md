@@ -83,7 +83,7 @@ of:
     task running nodes.
 
 * One or more task running nodes
-    * This node accepts, runs tasks, and stores the collected behavioral logs. It has an API that the main node uses to tell it to run a task or to download a result for a task. This node type is "dumb" it does not know about other nodes or even the main node.
+    * This node accepts, runs tasks, and stores the collected behavioral logs. It has an API that the main node uses to tell it to run a task or to download a result for a task. This node type is "dumb" it does not know about other nodes or even the main node. This node is also where Cuckoo rooter should be running if automatic network routing is desired.
 
 #### Task running node(s)
 

@@ -20,12 +20,14 @@ The main Cuckoo command. Used to:
     Usage: cuckoo [OPTIONS] COMMAND [ARGS]...
 
     Options:
-    --cwd TEXT     Cuckoo Working Directory
-    --distributed  Start Cuckoo in distributed mode
-    -v, --verbose  Enable debug logging, including for non-Cuckoo modules
-    -d, --debug    Enable debug logging
-    -q, --quiet    Only log warnings and critical messages
-    --help         Show this message and exit.
+    --cwd TEXT          Cuckoo Working Directory
+    --distributed       Start Cuckoo in distributed mode
+    -v, --verbose       Enable debug logging, including for non-Cuckoo modules
+    -d, --debug         Enable debug logging
+    -q, --quiet         Only log warnings and critical messages
+    --cancel-abandoned  Do not recover and cancel tasks that are abandoned and
+                        still 'running'
+    --help              Show this message and exit.
 
     Commands:
     api         Start the Cuckoo web API (development server)
@@ -33,7 +35,7 @@ The main Cuckoo command. Used to:
     getmonitor  Use the monitor and stager binaries from the given Cuckoo...
     importmode  Start the Cuckoo import controller.
     machine     Add machines to machinery configuration files.
-    submit      Create a new file analysis
+    submit      Create a new file/url analysis
     web         Start the Cuckoo web interface (development server)
 
 

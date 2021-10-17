@@ -22,35 +22,40 @@ Data type: **form**
 - `settings` (optional)
 
     - A JSON dictionary which can contain:
-        - `timeout` (Integer) - The task timeout in seconds to use.
-        - `priority` (Integer) - The priority tasks for this analysis should get. A higher number means a higher priority.
-        - `platforms` (list of dictionaries). 
+      - `timeout` (Integer) - The task timeout in seconds to use.
+      - `priority` (Integer) - The priority tasks for this analysis should get. A higher number means a higher priority.
+      - `platforms` (list of dictionaries). 
 
-            Each dictionary must at least contain the keys: `platform` (string), `os_version` (string).
-            
-            Each entry can optionally contain:
-            
-            - `tags` (list of strings). - A task will be created for each platform in the platforms list.
-            - `settings` (Dictionary). This dictionary supports setting a specific `browser` or `command` per selected platform.
-
-
-        - `extrpath` (list of strings). A list of paths to extract that leads to the file that should be selected.
-        
-            A list of paths to indicate what file should be selected for the analysis if an archive is submitted. If the file is in a nested archive, each path must be a path to the next archive. The last path must be the path to the file that should be selected.
-
-            Example: We have an archive containing a dir1, which contains a zipfile nested.zip that contains dir2 with file.exe. The extrpath would be:
-            
-             `["dir1/nested.zip", "dir2/file.exe"]`
+         Each dictionary must at least contain the keys: `platform` (string), `os_version` (string).
          
-        - `orig_filename` (Boolean) - Ignore the filetype identified by the identification stage.
-        - `browser` (String) - The browser to use for a submitted URL.
+         Each entry can optionally contain:
+         
+         - `tags` (list of strings). - A task will be created for each platform in the platforms list.
+         - `settings` (Dictionary). This dictionary supports setting a specific `browser`, `command`, and `route` per selected platform.
 
-            Can only be used if one or more analysis machines have a `browser_<name>` tag. Example: setting browser to chrome will result in a 
-            search for a machine with the `browser_chrome` tag.
-        - `command` (list of strings) - The launch command to use when starting the submitted target.
 
-            The `%PAYLOAD%` placeholder can be used where the filename should be on start. It is automatically replaced.
-            Example to run a specific function from a submitted dll. `["rundll32.exe", "%PAYLOAD%,funcname"]`
+      - `extrpath` (list of strings). A list of paths to extract that leads to the file that should be selected.
+        
+         A list of paths to indicate what file should be selected for the analysis if an archive is submitted. If the file is in a nested archive, each path must be a path to the next archive. The last path must be the path to the file that should be selected.
+
+         Example: We have an archive containing a dir1, which contains a zipfile nested.zip that contains dir2 with file.exe. The extrpath would be:
+         
+            `["dir1/nested.zip", "dir2/file.exe"]`
+         
+      - `orig_filename` (Boolean) - Ignore the filetype identified by the identification stage.
+      - `browser` (String) - The browser to use for a submitted URL.
+
+         Can only be used if one or more analysis machines have a `browser_<name>` tag. Example: setting browser to chrome will result in a 
+         search for a machine with the `browser_chrome` tag.
+
+      - `command` (list of strings) - The launch command to use when starting the submitted target.
+
+         The `%PAYLOAD%` placeholder can be used where the filename should be on start. It is automatically replaced.
+         Example to run a specific function from a submitted dll: `["rundll32.exe", "%PAYLOAD%,funcname"]`
+
+      - `route` (Dictionary) The type of [network routing](../../installation/routing.md#automatic-per-task-routing-by-cuckoo-rooter) to use.
+
+         The route dictionary must contain `type` (string) key containing the routing type. It optionally have an `options` (dictionary) key that contains options such as a chosen country for a VPN.
 
 ##### Example
 
@@ -94,13 +99,22 @@ Data type: **form**
 
 - `settings` (optional)
 
-    - A JSON dictionary which can contain:
-        - `timeout` (Integer) - The task timeout in seconds to use.
-        - `priority` (Integer) - The priority tasks for this analysis should get. A higher number means a higher priority.
-        - `platforms` (list of dictionaries). 
+   - A JSON dictionary which can contain:
+      - `timeout` (Integer) - The task timeout in seconds to use.
+      - `priority` (Integer) - The priority tasks for this analysis should get. A higher number means a higher priority.
+      - `platforms` (list of dictionaries). 
 
-            Each dictionary must at least contain the keys: `platform` (string), `os_version` (string). Each entry can
-            optionally contains `tags` (list of strings). - A task will be created for each platform in the platforms list.
+         Each dictionary must at least contain the keys: `platform` (string), `os_version` (string).
+         Each entry can optionally contain:
+         
+         - `tags` (list of strings). 
+         - `settings` (Dictionary). This dictionary supports setting a specific `route` per selected platform.
+         
+         A task will be created for each platform in the platforms list.
+
+      - `route` (Dictionary) The type of [network routing](../../installation/routing.md#automatic-per-task-routing-by-cuckoo-rooter) to use.
+
+         The route dictionary must contain `type` (string) key containing the routing type. It optionally have an `options` (dictionary) key that contains options such as a chosen country for a VPN.
 
 ##### Example
 
@@ -154,6 +168,71 @@ Type: **JSON**
 ###### Status codes
 - `200` - Successful query
 
+
+---
+
+#### /submit/browsers
+
+Get a list of all supported browsers. This list is populated by finding machines with
+specific machine tags. See [machinery machine config fields](../../installation/vmcreation.md#machinery-config-machines-fields) for more information.
+
+Method: **GET**
+
+##### Example
+
+```bash
+curl http://127.0.0.1:8090/submit/browsers -H "Authorization: token <api key>"
+```
+
+
+##### Response
+
+Type: **JSON**
+
+```json
+["internet explorer"]
+```
+
+###### Status codes
+- `200` - Successful query
+
+---
+
+#### /submit/routes
+
+Get a list of all supported routes. This will only be populated if [Cuckoo rooter](../../installation/routing.md#cuckoo-rooter) is used.
+
+Method: **GET**
+
+##### Example
+
+```bash
+curl http://127.0.0.1:8090/submit/routes -H "Authorization: token <api key>"
+```
+
+
+##### Response
+
+Type: **JSON**
+
+```json
+{
+   "available":[
+      "vpn",
+      "drop",
+      "internet"
+   ],
+   "vpn":{
+      "countries":[
+         "france",
+         "germany"
+      ]
+   }
+}
+```
+
+###### Status codes
+- `200` - Successful query
 
 ---
 
@@ -343,6 +422,31 @@ Type: **JSON**
 
 ---
 
+#### /analysis/(analysis id)/submittedfile
+
+Download the submitted file for the specified analysis.
+
+Method: **GET**
+
+##### Example
+
+```bash
+curl http://127.0.0.1:8090/analysis/20210707-6UZJTX/submittedfile -JO -H "Authorization: token <api key>"
+```
+
+
+##### Response
+
+Type: **File**
+
+
+
+###### Status codes
+
+- `200` - Successful query
+
+---
+
 #### /analysis/(analysis id)/task/(task id)
 
 Retrieve the task information JSON for the specified task id.
@@ -474,6 +578,49 @@ Method: **GET**
 
 ```bash
 curl http://127.0.0.1:8090/analysis/20210707-6UZJTX/task/20210707-6UZJTX_1/pcap -JO -H "Authorization: token <api key>"
+```
+
+##### Response
+
+Type: **File**
+
+###### Status codes
+
+- `200` - Successful query
+
+---
+
+#### /analysis/(analysis id)/task/(task id)/screenshot/(screenshot name)
+
+Download the specified screenshot. The available screenshots are listed in the post report.
+
+Method: **GET**
+
+##### Example
+
+```bash
+curl http://127.0.0.1:8090/analysis/20210707-6UZJTX/task/20210707-6UZJTX_1/screenshot/44997.jpg -JO -H "Authorization: token <api key>"
+```
+
+##### Response
+
+Type: **File**
+
+###### Status codes
+
+- `200` - Successful query
+
+
+#### /targets/file/(sha256 hash)
+
+Download a file that was submitted or ever selected as a target.
+
+Method: **GET**
+
+##### Example
+
+```bash
+curl http://127.0.0.1:8090/targets/file/81de431987304676134138705fc1c21188ad7f27edf6b77a6551aa693194485e -JO -H "Authorization: token <api key>"
 ```
 
 ##### Response

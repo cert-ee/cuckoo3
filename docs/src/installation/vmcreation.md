@@ -21,6 +21,7 @@ The analysis machine must have their own network and default gateway. The defaul
 Cuckoo will start the network capture for traffic from and to a specific machine.
 
 Each machine must:
+
 - Have a unique IP address within the network for a specific virtualization layer/hypervisor.
 - Be able to reach the Cuckoo result server. There will be no results if it is not able to.
 - Have the Cuckoo agent running and exposed on TCP port 8000.
@@ -114,6 +115,8 @@ removed when using the machinery module. Each entry consists of the following:
     - This is the version of the platform supplied earlier. __This should only contain a version__. Not the full OS name. So "10", not "windows 10". Cuckoo uses this together with the platform to differentiate between machines of the same OS.
 - The operating system architecture: amd64, arm, etc (`architecture`)
     - This is used to select the correct (build of) stager and monitor component for the machine
+- The TCP port the agent is listening on (`agent_port`)
+    - This is used to deliver and start the stager and the payload.
 
 **Optional fields per entry:**
 
@@ -130,7 +133,8 @@ removed when using the machinery module. Each entry consists of the following:
     * The network interface name that should be used to dump network traffic for this vm. If not supplied the interface that is configured for the machinery module will be used.
 
 - Machine tags (`tags`)
-    *    Machine tags is a list of strings that are used to identify installed software/particular settings inside a vm. If .NET framework or Adobe PDF reader is installed, the tags should be: `dotnet` and `pdfreader`. 
+    *    Machine tags is a list of strings that are used to identify installed software/particular settings inside a vm. If .NET framework or Adobe PDF reader is installed, the tags should be: `dotnet` and `pdfreader`. To populate the 'supported browser' list in the web UI or API, one or more machines `browser_browsername` tags must exist. These tags are automatically translated to a list of browsers. Use `_` instead of spaces. An example would be
+    `browser_internet_explorer`.
 
 
         The tags are used by Cuckoo to find a machine that can detonate a submitted sample. The file identification stage of Cuckoo determines what dependencies are needed for specific file types. These dependency names are tied to tag names. This mapping can be found in `$CWD/conf/processing/identification.yaml`.
