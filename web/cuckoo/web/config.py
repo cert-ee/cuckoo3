@@ -54,6 +54,14 @@ typeloaders = {
                     "time_range": _ChartTimeRange()
                 }, default_val=[
                     {
+                        "chart_type": "submissions_line",
+                        "time_range": "yearly"
+                    },
+                    {
+                        "chart_type": "submissions_line",
+                        "time_range": "monthly"
+                    },
+                    {
                         "chart_type": "families_bar",
                         "time_range": "weekly"
                     },
@@ -63,6 +71,10 @@ typeloaders = {
                     },
                     {
                         "chart_type": "targettypes_bar",
+                        "time_range": "monthly"
+                    },
+                    {
+                        "chart_type": "categories_bar",
                         "time_range": "monthly"
                     }
                 ])

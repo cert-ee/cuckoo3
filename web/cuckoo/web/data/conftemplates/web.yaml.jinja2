@@ -16,12 +16,14 @@ elasticsearch:
     enabled: {{ elasticsearch.web_search.enabled }}
 
   # Enable or disable Cuckoo web results statistics. Detected family, behavior
-  # graphs, etc.
+  # graphs, amount of submissions, etc.
   statistics:
     enabled: {{ elasticsearch.statistics.enabled }}
 
     # All enabled charts types and the time ranges over which they
     # should display data. Available range: daily, weekly, monthly, yearly.
+    # Available chart examples: families_bar, families_line, targettypes_bar,
+    # categories_bar, categories_line, submissions_line
     charts:
     {% for chart in elasticsearch.statistics.charts %}
     - chart_type: {{ chart.chart_type }}
