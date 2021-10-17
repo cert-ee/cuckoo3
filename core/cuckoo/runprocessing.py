@@ -18,7 +18,7 @@ from cuckoo.common.startup import init_global_logging, load_configurations
 from cuckoo.common.storage import Paths, cuckoocwd
 from cuckoo.common import shutdown
 from cuckoo.processing import abtracts
-from cuckoo.processing.errors import DisablePluginError, PluginError
+from cuckoo.processing.errors import PluginError
 from cuckoo.processing.worker import (
     PreProcessingRunner, AnalysisContext, TaskContext, PostProcessingRunner
 )
