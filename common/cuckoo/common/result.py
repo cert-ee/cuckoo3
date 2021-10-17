@@ -512,7 +512,7 @@ class ResultRetriever:
 
         if not include:
             return RemoteAnalysis(
-                analysis_id, self.api_client, data={}, inculde=include
+                analysis_id, self.api_client, data={}, include=include
             )
 
         try:
