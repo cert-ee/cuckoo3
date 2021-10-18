@@ -30,6 +30,17 @@ WARNINGSONLY = [
 VERBOSE = logging.DEBUG - 1
 _VERBOSE_ENABLED = False
 
+def name_to_level(name):
+    name = name.upper()
+    if name == "verbose":
+        return VERBOSE
+
+    level = logging.getLevelName(name)
+    if not isinstance(level, int):
+        raise ValueError(f"Unknown logging level: {name}")
+
+    return level
+
 def enable_verbose():
     global _VERBOSE_ENABLED
     _VERBOSE_ENABLED = True
@@ -202,7 +213,7 @@ class KeyValueLogFormatter(logging.Formatter):
 class ConsoleFormatter(logging.Formatter):
 
     EXTRA_CHAR_SIZE = len(ColorText.bold(ColorText.green("")))
-    _COLOR_TERMINAL = ColorText.terminal_supported()
+    COLOR_TERMINAL = ColorText.terminal_supported()
 
     def format(self, record):
         # Create a copy of the record and format that. The copy is required
@@ -210,9 +221,9 @@ class ConsoleFormatter(logging.Formatter):
         console_copy = copy(record)
 
         # If the terminal does not support ANSI colors, don't add them.
-        if not self._COLOR_TERMINAL:
+        if not self.COLOR_TERMINAL:
             return super().format(
-                _format_cuckoo_kvs(console_copy, ColorText.magenta)
+                _format_cuckoo_kvs(console_copy, key_color_func=None)
             )
 
         bold_lvlname = ColorText.bold(record.levelname)
@@ -391,6 +402,12 @@ else:
         levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
     )
 
+def disable_console_colors():
+    console_formatter.COLOR_TERMINAL = False
+    global console_log_fmt_str
+    console_log_fmt_str = _set_fmt_colsizes(
+        levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
+    )
 
 class CuckooLogger:
 
