@@ -15,8 +15,8 @@
       return error;
   }
 
-  function validate(id) {
-    return new RegExp(/[0-9]{8}-[A-Z0-9]{6}_[0-9|]{0,1}/).test(id);
+  window.validate = function validate(id) {
+    return new RegExp(/[0-9]{8}-[A-Z0-9]{6}_[0-9]{1,3}/).test(id);
   }
 
   if(form) {
