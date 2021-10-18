@@ -26,7 +26,7 @@
       const right = form.querySelector('input#task-right');
 
       if(!(validate(left.value) && validate(right.value))) {
-        return makeError('Wrong ID format.');
+        return makeError('Incorrect task ID. Task ID format is YYYYMMDD-XXXXXX_<task number>.');
       }
 
       if((left.value && right.value)) {
