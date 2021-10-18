@@ -14,7 +14,7 @@ from cuckoo.common.log import exit_error
 from cuckoo.common.startup import (
     init_global_logging, load_configuration, init_database, StartupError
 )
-from cuckoo.common.storage import cuckoocwd, Paths
+from cuckoo.common.storage import cuckoocwd, Paths, CWD_ENVVAR
 from cuckoo.common.submit import settings_maker
 from cuckoo.common.result import retriever
 from cuckoo.common.clients import APIClient
@@ -91,3 +91,32 @@ def start_api(host="127.0.0.1", port=8000, autoreload=False):
 
 def djangocommands(*args):
     execute_from_command_line(("cuckoo",) + args)
+
+def init_and_get_wsgi():
+    import logging
+    from cuckoo.common.log import disable_console_colors, name_to_level
+    levelname = os.environ.get("CUCKOO_LOGLEVEL")
+    if not levelname:
+        loglevel = logging.DEBUG
+    else:
+        try:
+            loglevel = name_to_level(levelname)
+        except ValueError as e:
+            exit_error(f"Invalid log level name. {e}")
+
+    cwd_path = os.environ.get(CWD_ENVVAR)
+    if not cwd_path:
+        exit_error(
+            f"Cannot start. Environment variable '{CWD_ENVVAR}' must "
+            f"contain path to Cuckoo CWD."
+        )
+
+    # Disable console colors, because log files for services such as uWSGI
+    # capture console logs. Color formatting characters can make the log file
+    # unreadable.
+    disable_console_colors()
+    init_api(cwd_path, loglevel)
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cuckoo.web.api.settings')
+    from django.core.wsgi import get_wsgi_application
+    return get_wsgi_application()

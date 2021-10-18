@@ -337,12 +337,33 @@ def web(ctx, host, port, autoreload):
     )
     start_web(host, port, autoreload=autoreload)
 
+@web.command("generateconfig")
+@click.option("--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo web")
+@click.option("--nginx", is_flag=True, help="Generate basic NGINX configuration to serve static and Cuckoo web run by uWSGI")
+def _generate_web_confs(nginx, uwsgi):
+    """Generate basic configurations for uWSGI and NGINX"""
+    if not nginx and not uwsgi:
+        with click.Context(_generate_web_confs) as ctx:
+            print(_generate_web_confs.get_help(ctx))
+
+    from cuckoo.common.startup import StartupError
+    from cuckoo.web.web.confgen import make_nginx_base, make_uwsgi_base
+    try:
+        if nginx:
+            print(make_nginx_base())
+            return
+        if uwsgi:
+            print(make_uwsgi_base())
+            return
+    except StartupError as e:
+        exit_error(e)
+
 @web.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
 @click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def webdjangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
-    from cuckoo.web.web.startup import(
+    from cuckoo.web.web.startup import (
         djangocommands, set_path_settings, init_web
     )
 
@@ -371,6 +392,27 @@ def api(ctx, host, port, autoreload):
         ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("api.log")
     )
     start_api(host, port, autoreload=autoreload)
+
+@api.command("generateconfig")
+@click.option("--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo API")
+@click.option("--nginx", is_flag=True, help="Generate basic NGINX configuration to serve the Cuckoo web API by uWSGI")
+def _generate_api_confs(nginx, uwsgi):
+    """Generate basic configurations for uWSGI and NGINX"""
+    if not nginx and not uwsgi:
+        with click.Context(_generate_api_confs) as ctx:
+            print(_generate_api_confs.get_help(ctx))
+
+    from cuckoo.common.startup import StartupError
+    from cuckoo.web.api.confgen import make_nginx_base, make_uwsgi_base
+    try:
+        if nginx:
+            print(make_nginx_base())
+            return
+        if uwsgi:
+            print(make_uwsgi_base())
+            return
+    except StartupError as e:
+        exit_error(e)
 
 @api.command("token")
 @click.option("-l", "--list", is_flag=True, help="List all current API tokens and their owners")

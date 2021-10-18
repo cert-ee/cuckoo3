@@ -70,3 +70,13 @@ def tag_to_browser(tag):
         return None
 
     return parts[1].replace("_", " ").strip()
+
+def getuser():
+    try:
+        import pwd
+    except ImportError:
+        return ""
+
+    from os import getuid
+
+    return pwd.getpwuid(getuid()).pw_name

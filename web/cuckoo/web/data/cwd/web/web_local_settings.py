@@ -39,3 +39,8 @@ DEBUG404 = False
 # validation is disabled; any host will be accepted. Thus it's usually only
 # necessary to set it in production.
 ALLOWED_HOSTS = ["*"]
+
+# Uncomment and set this path to a path all static files should be copied to
+# when running 'cuckoo web djangocommand collectstatic'. These files should
+# be served by a web server.
+# STATIC_ROOT = ""
