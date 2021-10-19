@@ -51,7 +51,7 @@
     // - when ran first, skip the tabs that already have a .is-active
     // - but brute-force if there is a hash
     if(!initialized) {
-      _tabs.filter(t => !(t.classList.contains('is-active'))).forEach(tab => tab.classList.remove('is-active'));
+      _tabs.forEach(tab => tab.classList.remove('is-active'));
       _tabpages.filter(p => !p.hasAttribute('hidden')).forEach(page => page.setAttribute('hidden', true));
     } else {
       _tabs.forEach(tab => tab.classList.remove('is-active'));
