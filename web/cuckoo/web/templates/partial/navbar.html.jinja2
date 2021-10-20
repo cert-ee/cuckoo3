@@ -1,14 +1,14 @@
 {% set topleft_nav = [
-  ('Dashboard', 'dashboard', 'Dashboard'),
   ('Analyses/index', 'analyses', 'Analyses'),
+  ('Dashboard', 'dashboard', 'Statistics'),
   ('Compare/index', 'compare', 'Compare'),
   ('Submit/index', 'submit', 'Submit')
 ] -%}
-{% set active_page = active_page|default('Dashboard') -%}
+{% set active_page = active_page|default('dashboard') -%}
 
 <nav class="navbar">
   <div class="navbar-logo">
-    <a class="navbar-link" href="/">
+    <a class="navbar-link" href="/analyses">
       <span class="logo-placeholder"></span>
     </a>
     <a class="navbar-toggle" title="Expand menu">
