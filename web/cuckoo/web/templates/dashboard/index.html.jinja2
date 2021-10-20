@@ -2,6 +2,8 @@
 {% set active_page = "dashboard" %}
 {% set title = "Dashboard" %}
 
+{% from "macros.html.jinja2" import ui_box %}
+
 {% block page_script %}
   <script>
     window.statistics_enabled = {% if 'statistics' | feature_enabled %}true{% else %}false{% endif %};
@@ -13,5 +15,31 @@
 {% endblock %}
 
 {% block body %}
+  <div class="has-margin">
+    {% call ui_box(title="Usage") %}
+      <div class="columns is-divided has-text-center">
+        <div class="column box has-background-light">
+          <p class="has-half-opacity">Reported</p>
+          <h3 class="has-text-blue">2401045</h3>
+        </div>
+        <div class="column box has-background-light">
+          <p class="has-half-opacity">Completed</p>
+          <h3 class="has-text-blue">10</h3>
+        </div>
+        <div class="column box has-background-light">
+          <p class="has-half-opacity">Total</p>
+          <h3 class="has-text-blue">2438398</h3>
+        </div>
+        <div class="column box has-background-light">
+          <p class="has-half-opacity">Running</p>
+          <h3 class="has-text-blue">2</h3>
+        </div>
+        <div class="column box has-background-light">
+          <p class="has-half-opacity">Pending</p>
+          <h3 class="has-text-blue">0</h3>
+        </div>
+      </div>
+    {% endcall %}
+  </div>
   <div class="grid-2x2 has-margin-bottom has-padding-bottom" id="statistics"></div>
 {% endblock %}
