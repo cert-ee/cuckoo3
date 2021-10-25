@@ -25,6 +25,11 @@
   word-break: break-all
   white-space: pre-wrap
 
+  +dark-mode
+    color: $text-color-dark
+    background-color: $dark
+    border-color: $border-dark
+
   &.in
     z-index: 2
   &:not(.in)
@@ -59,11 +64,13 @@
 .tooltip
   width: auto
   white-space: nowrap
-  left: 50%
-  top: calc(100% + #{$gap/2})
+  // left: 50%
+  // top: calc(100% + #{$gap/2})
+  top: 0
+  left: 0
   transform: none
   font-size: .8rem
-  font-weight: 400
+  font-weight: 500
   padding: $gap/4 $gap/2
   transition: opacity 100ms linear
   pointer-events: none

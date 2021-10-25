@@ -601,7 +601,7 @@ input[type=reset].button,
 
 a.button, .control.is-file a.file-trigger {
   text-decoration: none;
-  color: inherit;
+  color: #000000;
 }
 
 .button, .control.is-file .file-trigger {
@@ -1822,6 +1822,29 @@ ul.process-tree .duration--inner {
 .box-title a {
   color: inherit;
 }
+.box-title a.is-icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+}
+.box-title a.is-icon i {
+  pointer-events: none;
+}
+.box-title a.is-icon:active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.is-theme-dark .box-title a.is-icon:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  .is-theme-auto .box-title a.is-icon:active {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
 .box-title.is-red {
   background-color: #ffbfbf;
   border: 0.065rem solid #FF0000;
@@ -2082,6 +2105,20 @@ ul.process-tree .duration--inner {
   word-break: break-all;
   white-space: pre-wrap;
 }
+.is-theme-dark .popover,
+.is-theme-dark .tooltip {
+  color: #AAAAAA;
+  background-color: #0F485A;
+  border-color: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  .is-theme-auto .popover,
+.is-theme-auto .tooltip {
+    color: #AAAAAA;
+    background-color: #0F485A;
+    border-color: #000000;
+  }
+}
 .popover.in,
 .tooltip.in {
   z-index: 2;
@@ -2128,11 +2165,11 @@ ul.process-tree .duration--inner {
 .tooltip {
   width: auto;
   white-space: nowrap;
-  left: 50%;
-  top: calc(100% + 0.375rem);
+  top: 0;
+  left: 0;
   transform: none;
   font-size: 0.8rem;
-  font-weight: 400;
+  font-weight: 500;
   padding: 0.1875rem 0.375rem;
   transition: opacity 100ms linear;
   pointer-events: none;

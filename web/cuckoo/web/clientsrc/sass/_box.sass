@@ -132,6 +132,20 @@
 
     a
       color: inherit
+      &.is-icon
+        display: inline-flex
+        justify-content: center
+        align-items: center
+        width: $gap * 2
+        height: $gap * 2
+        border-radius: $gap
+        text-decoration: none
+        i
+          pointer-events: none
+        &:active
+          background-color: rgba(0, 0, 0, .1)
+          +dark-mode
+            background-color: rgba(255, 255, 255, .2)
 
     &.is-red
       background-color: tint($red, .75)
