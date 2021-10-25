@@ -2,11 +2,14 @@
 
   /**
    * Implementation of web component that renders a ticking countdown
-   * @attribute start - ISO date when started
+   * @attribute start - UTC date when started
    * @attribute end - time to elapse in seconds
+   *
+   * automatically applies timezones
    *
    * The component will calculate when the countdown stops by adding the number
    * of seconds to the start date. Then it displays like hh:mm:ss, ticking down.
+   * it stops at 00:00:00.
    *
    * Example:
    *
@@ -15,7 +18,7 @@
    * - above tag with setup will countdown to 300 seconds after that initial start date
    */
 
-  // replace for luxon
+  // check for luxon
   if(!window.luxon) {
     console.error('requires luxon.js');
     return false;
@@ -24,9 +27,8 @@
   class CountdownTimer extends HTMLElement {
 
     interval = null;
-    from = null;
-    to = null;
-    to_format = "seconds";
+    from = null; // UTC date (string)
+    to = null; // SECONDS (int)
 
     constructor() {
       super();
@@ -54,8 +56,6 @@
 
       this.from = luxon.DateTime.fromISO(dateString, { zone: timeZone });
       this.to = this.from.plus({ seconds: parseInt(this.getAttribute('end')) });
-
-      const diff = luxon.Interval.fromDateTimes(this.from, this.to);
 
       if(this.interval)
         this.interval = clearInterval(this.interval);
