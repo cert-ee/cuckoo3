@@ -28,6 +28,8 @@
     {% endfor %}
   {% endif %}
 
+  <script src="{{ static('js/luxon.min.js') }}"></script>
+  <script src="{{ static('js/webcomponent.countdown-timer.js') }}"></script>
   <script src="{{ static('js/chart.min.js') }}"></script>
   <script>
     window.analysis = "{{ analysis.tasks | safe }}";
@@ -38,6 +40,7 @@
         values: {{ chart_values|tojson }}
       }
     };
+
     // sets default tabs to display when te hash router is not active. This is
     // determined here because it is page-specific.
     (function() {
@@ -52,6 +55,7 @@
         // break here - eg fall back to legacy tabbar navigation scripts.
       }
     }());
+
   </script>
   <script src="{{ static('js/analysis.js') }}"></script>
 {% endblock %}

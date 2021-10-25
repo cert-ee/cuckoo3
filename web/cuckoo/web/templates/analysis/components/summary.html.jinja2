@@ -19,7 +19,20 @@
       <div class="column">
         <h3 class="no-margin-bottom is-monospace">
           <strong>{{ analysis.id }}</strong>
-          <span class="pull-right has-half-opacity">{{ analysis.state|humanstate }}</span>
+          <div class="pull-right">
+            <span class="has-half-opacity">{{ analysis.state|humanstate }}</span>
+
+            {# This should move to task-level  #}
+            {#
+              {% if analysis.state == 'tasks_pending' %}
+                <div class="has-text-small has-margin-top has-text-right" data-tooltip="Analysis start time + timeout in seconds">
+                  <strong class="label">Estimate*:</strong>
+                  <countdown-timer start="{{ analysis.created_on }}" end="{{ analysis.settings.timeout * 2 }}"></countdown-timer>
+                </div>
+              {% endif %}
+            #}
+
+          </div>
         </h3>
         {% if analysis.submitted.category != 'url' %}
           <p class="has-line-break has-text-small">
