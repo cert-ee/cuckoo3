@@ -380,11 +380,27 @@ function handlePopover(trigger) {
  */
 function handleTooltip(elem) {
 
-  let tip;
+  let tip,
+      margin = 5;
   const text = (elem.getAttribute('title') || elem.getAttribute('data-tooltip'));
+
+  function onMousemove(ev) {
+    if(tip) {
+      tip.style.left = (ev.offsetX + margin) + 'px';
+      tip.style.top = (ev.offsetY + margin) + 'px';
+    }
+  }
+
+  function bindMousemoveHandler() {
+    window.addEventListener('mousemove', onMousemove);
+  }
+  function unbindMousemoveHandler() {
+    window.removeEventListener('mousemove', onMousemove);
+  }
 
   const removeTip = t => setTimeout(() => {
     t.classList.remove('in');
+    t.remove();
   }, 100);
 
   elem.classList.add('has-tooltip');
@@ -398,6 +414,7 @@ function handleTooltip(elem) {
     ev.stopPropagation();
     tip = parseDOM(`<span class="tooltip is-bottom">${lib.SafeString(text)}</span>`);
     elem.appendChild(tip);
+    bindMousemoveHandler();
     setTimeout(() => {
       tip.classList.add('in');
     }, 10);
@@ -405,6 +422,7 @@ function handleTooltip(elem) {
 
   elem.addEventListener('mouseout', ev => {
     removeTip(tip);
+    unbindMousemoveHandler();
   });
 
 }

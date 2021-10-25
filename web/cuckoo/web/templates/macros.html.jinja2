@@ -238,7 +238,8 @@
         {% if collapsible %}
           <a href="#"
             onclick="toggleVisibility(this.parentNode.parentNode.querySelector('#{{boxid}}'), null, event);"
-            class="pull-right {% if collapsible %} {% if not collapsed %}visibility-visible{% else %}visibility-hidden{% endif %}{% endif %}">
+            class="pull-right is-icon {% if collapsible %} {% if not collapsed %}visibility-visible{% else %}visibility-hidden{% endif %}{% endif %}"
+            data-tooltip="collapse">
             <i class="fas chevron"></i>
           </a>
         {% endif %}

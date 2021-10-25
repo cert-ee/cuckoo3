@@ -47,19 +47,19 @@
           <a {% if t.state == 'fatal_error' or t.state == 'reported' %}href="{{ url('Task/index', args=[analysis.id, t.id]) }}"{% endif %} class="{% if task and task.id == t.id %}is-active{% endif %}" data-tooltip="state: {{ t.state|taskstatehuman }}">
             {{ t.platform }} {{ t.os_version }}
             {% if t.state == 'reported' %}
-              <span class="tag has-margin-left has-margin-top is-right {{ color_class(t.score) }}">
+              <span class="tag has-margin-left has-margin-top is-right {{ color_class(t.score) }}" style="pointer-events: none;">
                 <strong>{{ t.score }}</strong>
               </span>
             {% elif t.state == 'running' %}
-              <span class="tag has-margin-left has-margin-top is-right">
+              <span class="tag has-margin-left has-margin-top is-right" style="pointer-events: none;">
                 <i class="fas fa-circle-notch fa-spin"></i>
               </span>
             {% elif t.state == 'pending' %}
-              <span class="tag has-margin-left has-margin-top is-right">
+              <span class="tag has-margin-left has-margin-top is-right" style="pointer-events: none;">
                 <i class="far fa-hourglass"></i>
               </span>
             {% elif t.state == 'fatal_error' %}
-              <span class="tag has-margin-left has-margin-top is-right">
+              <span class="tag has-margin-left has-margin-top is-right" style="pointer-events: none;">
                 <i class="fas fa-exclamation has-text-red"></i>
               </span>
             {% endif %}
