@@ -54,7 +54,10 @@
     err.style.marginLeft = 'auto';
     err.style.marginRight = 'auto';
     view.parentNode.appendChild(err);
-    stopLoader();
+    const ics = lib.loaderElement.querySelector('.fas');
+    ['fa-spin','fa-circle-notch','has-text-blue'].forEach(c => ics.classList.remove(c));
+    ['fa-exclamation-triangle','has-text-red'].forEach(c => ics.classList.add(c));
+    ics.parentNode.querySelector('h3').textContent = 'Loading statistics data failed.';
     return;
   }
 
