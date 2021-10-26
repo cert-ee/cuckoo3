@@ -3,7 +3,7 @@
 .banner
   @extend .box
   @extend .columns
-  @extend .is-vcenter
+  @extend .is-vstretch
   @extend .is-divided
   @extend .no-padding
   overflow: hidden
@@ -11,17 +11,23 @@
   border-color: $border
   border-style: solid
   background-color: tint($light, .1)
+  max-width: 40rem
+  align-items: stretch
   .banner-icon
-    @extend .column
     @extend .is-auto
     @extend .has-padding
-    @extend .no-margin-x
+    align-self: stretch
+    min-height: 100%
     background-color: $light
-  .column
-    align-self: center
+    display: flex
+    justify-content: center
+    align-items: center
+  p
+    @extend .has-margin-x
   &.is-danger,
   &.is-red
     background-color: tint($red, .75)
+    color: $text-color
     border: .065rem solid $red
     .banner-icon
       color: $white
@@ -29,6 +35,7 @@
   &.is-yellow,
   &.is-warning
     background-color: tint($yellow, .75)
+    color: $text-color
     border: .0625rem solid $yellow
     .banner-icon
       color: $black

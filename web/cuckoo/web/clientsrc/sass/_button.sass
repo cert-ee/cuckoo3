@@ -59,10 +59,16 @@ a.button
 
   &.is-white
     background-color: $white
-    color: rgba($black, .7)
+    color: $text-color
     &:hover
       background-color: shade($white, .1)
       color: rgba($black, .9)
+
+    +dark-mode
+      color: $white
+      background-color: $dark
+      &:hover
+        background-color: shade($dark, .1)
 
   &.is-yellow
     background-color: $yellow
@@ -113,7 +119,9 @@ a.button
     pointer-events: none
 
 .buttons-conjoined
+
   display: inline-block
+
   & > .button
     border-radius: 0
     border-right-width: 0
