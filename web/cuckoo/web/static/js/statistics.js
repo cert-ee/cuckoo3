@@ -5,6 +5,9 @@
     return;
   }
 
+  // use page-specific loader element
+  lib.loaderElement = document.querySelector('#statistics-loader');
+
   const apiURL      = window.location.origin + "/api/statistics/charts";
   const container   = document.querySelector('#statistics');
   const colorScheme = [
@@ -43,8 +46,17 @@
   }
 
   startLoader();
-  const statistics = await getStatistics();
   const view = document.querySelector('#statistics');
+  const statistics = await getStatistics();
+
+  if(statistics.error) {
+    const err = viewError(statistics.error);
+    err.style.marginLeft = 'auto';
+    err.style.marginRight = 'auto';
+    view.parentNode.appendChild(err);
+    stopLoader();
+    return;
+  }
 
   /*
    * renders a selection of dom elements to render a single chart in.
@@ -73,7 +85,14 @@
    * returns error element for view
    */
   function viewError(data="") {
-    return parseDOM(`<p class="is-error">${lib.SafeString(data)}</p>`);
+    return parseDOM(`
+      <div class="banner is-red">
+        <span class="banner-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </span>
+        <p>${lib.SafeString(data)}</p>
+      </div>
+    `);
   }
 
   /*
