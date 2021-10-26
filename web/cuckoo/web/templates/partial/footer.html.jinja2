@@ -16,6 +16,33 @@
         </a>
       </li>
     </ul>
-    <a class="is-link has-no-underline" href="#">Back to top</a>
+    <div>
+      <div class="has-popover" style="display: inline-block;">
+        <a class="is-link has-margin-x" href="#" data-popover="#popover-theme" data-tooltip="Change theme">
+          <span class="icon" style="pointer-events: none;">
+            <i class="fas fa-paint-brush"></i>
+          </span>
+        </a>
+        <div class="popover no-line-break is-top" id="popover-theme" style="margin-left: -2.5rem;">
+          <div class="control has-margin-top">
+            <div class="dark-mode-toggle">
+              <input type="range" step="1" value="{{ request.COOKIES.colorscheme|default(2) }}" min="0" max="2" />
+              <div class="toggle-overlay">
+                <span class="icon">
+                  <i class="fas fa-sun"></i>
+                </span>
+                <span class="icon">
+                  <i class="fas fa-moon"></i>
+                </span>
+                <span class="icon">
+                  <i class="fas fa-adjust"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a class="is-link has-no-underline" href="#">Back to top</a>
+    </div>
   </div>
 </footer>

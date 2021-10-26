@@ -55,17 +55,19 @@
       border-top-color: $white
       border-width: 7px
       margin-left: -7px
+      +dark-mode
+        border-top-color: $dark
     &:before
       border-top-color: $border
       border-width: 8px
       margin-left: -8px
+      +dark-mode
+        border-top-color: $border-dark
 
 
 .tooltip
   width: auto
   white-space: nowrap
-  // left: 50%
-  // top: calc(100% + #{$gap/2})
   top: 0
   left: 0
   transform: none

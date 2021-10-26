@@ -142,13 +142,20 @@
     justify-content: space-evenly
     align-items: center
     z-index: 1
-    background-color: shade($dark, .3)
+    background-color: $light
+
+    +dark-mode
+      background-color: shade($dark, .3)
 
     .icon
       flex-basis: 100%
       font-size: .8em
       margin-top: .1rem
       text-align: center
+      color: $dark
+
+      +dark-mode
+        color: $white
 
       &:nth-child(1)
         padding-left: .2rem
@@ -170,7 +177,7 @@
       -webkit-appearance: none
       width: 2rem
       height: 2rem
-      margin-top: -.1rem
+      margin-top: -.3rem
       background: transparent
       border: .2rem solid $border
       border-radius: 50%
