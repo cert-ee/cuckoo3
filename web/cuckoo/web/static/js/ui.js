@@ -97,7 +97,8 @@ window.lib = Object.assign(window.lib || {}, {
       if (val.indexOf(name) === 0) res = val.substring(name.length);
     })
     return res;
-  }
+  },
+  loaderElement: document.querySelector('#loader')
 });
 
 /**
@@ -771,13 +772,13 @@ function applyHandler(sel=null, fn=null) {
 
 // starts the async loader symbol
 function startLoader(next) {
-  document.querySelector('#loader').removeAttribute('hidden')
+  lib.loaderElement.removeAttribute('hidden')
   if(next) next();
 }
 
 // stops the async loader symbol
 function stopLoader(next) {
-  document.querySelector('#loader').setAttribute('hidden', true);
+  lib.loaderElement.setAttribute('hidden', true);
   if(next) next();
 }
 
