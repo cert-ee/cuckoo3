@@ -51,6 +51,12 @@ class FileInfoGather(Processor):
                     "Failed to run static analysis handler",
                     handler=handler, error=e
                 )
+            except Exception as e:
+                err = "Unexpected error while running static analysis handler"
+                self.ctx.log.exception(err, handler=handler, error=e)
+                self.ctx.errtracker.add_error(
+                    f"{err}. Handler: {handler}. Error: {e}"
+                )
 
             break
 
