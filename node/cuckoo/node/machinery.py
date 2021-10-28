@@ -23,8 +23,20 @@ log = CuckooGlobalLogger(__name__)
 
 # These call the machines underlying machinery implementation of the called
 # method. All of these cause the state to change. This change can take a while.
-# We therefore return the expected state, a maximum waiting time, and a
-# potential handler function that can be called if the timeout expires.
+# We therefore return the expected state, a maximum waiting time, a
+# potential 'cancel' function that can be called if the timeout expires or
+# a fallback function that gets executed and performs the same action in a
+# different way. An example of this is first trying acpi shutdown, and then
+# force shutdown if that times out.
+class _ExecutedMachineWork:
+
+    def __init__(self, expected_state, state_timeout, fallback_work_func=None,
+                 cancel_work_func=None):
+        self.expected_state = expected_state
+        self.state_timeout = state_timeout
+        self.fallback_work_func = fallback_work_func
+        self.cancel_work_func = cancel_work_func
+
 def stop(machine):
     """Stop the given machine"""
     try:
@@ -35,7 +47,9 @@ def stop(machine):
         except errors.MachineNetCaptureError as e:
             log.error(e)
 
-    return machines.States.POWEROFF, 60, None
+    return _ExecutedMachineWork(
+        expected_state=machines.States.POWEROFF, state_timeout=60
+    )
 
 def acpi_stop(machine):
     """Stop the machine using an ACPI signal. Normal stop is called when the
@@ -48,8 +62,12 @@ def acpi_stop(machine):
             stop_netcapture(machine)
         except errors.MachineNetCaptureError as e:
             log.error(e)
+
     # Call the stop function if stop takes longer than the timeout.
-    return machines.States.POWEROFF, 120, stop
+    return _ExecutedMachineWork(
+        expected_state=machines.States.POWEROFF, state_timeout=120,
+        fallback_work_func=stop
+    )
 
 def restore_start(machine):
     """Restore the machine to its configured snapshot and start the machine"""
@@ -67,7 +85,12 @@ def restore_start(machine):
             log.error(e)
         raise
 
-    return machines.States.RUNNING, 120, stop_netcapture
+    # If the machine is not running within the state timeout, run the stop
+    # machine method. This stops netcapture and the machine.
+    return _ExecutedMachineWork(
+        expected_state=machines.States.RUNNING, state_timeout=15,
+        cancel_work_func=stop
+    )
 
 def norestore_start(machine):
     """Start the machine without restoring a snapshot"""
@@ -85,7 +108,12 @@ def norestore_start(machine):
             log.error(e)
         raise
 
-    return machines.States.RUNNING, 60, stop_netcapture
+    # Return stop_netcapture as fallback so that this is called if the start
+    # timeout expires.
+    return _ExecutedMachineWork(
+        expected_state=machines.States.RUNNING, state_timeout=60,
+        cancel_work_func=stop
+    )
 
 def start_netcapture(machine):
     """Ask the machinery to start network capture for the given machine"""
@@ -112,11 +140,20 @@ def dump_memory(machine):
     machine.machinery.dump_memory(
         machine, TaskPaths.memory_dump(machine.locked_by)
     )
-    return machines.States.RUNNING, 60, None
+
+    return _ExecutedMachineWork(
+        expected_state=machines.States.RUNNING, state_timeout=60
+    )
 
 def machine_state(machine):
     """Return a normalized machine state of the given machine."""
     return machine.machinery.state(machine)
+
+def handle_paused(machine):
+    """Call the pause handler for the machine. Some machinery types have
+    machines that are in a paused state after snapshot restore. This method
+    should change that state to running."""
+    machine.machinery.handle_paused(machine)
 
 def shutdown(machinery):
     """Shutdown all machines of the given machinery module"""
@@ -174,8 +211,81 @@ class MachineryWorker(threading.Thread):
         self._machines.mark_disabled(machine, reason)
         self._ctx.node.infostream.disabled_machine(machine.name, reason)
 
+    def _handle_state(self, work, state):
+        if state == work.expected_state:
+            log.debug(
+                "Updating machine state.",
+                machine=work.machine.name, newstate=work.expected_state
+            )
+            self._machines.set_state(work.machine, work.expected_state)
+            work.work_success()
+        elif state == machines.States.ERROR:
+            err = "Machinery returned error state for machine"
+            log.error(
+                f"{err}. Disabling machine.", machine=work.machine.name
+            )
+            self._disable_machine(work.machine, err)
+            work.work_failed(reason=err)
+        elif state == machines.States.PAUSED:
+            try:
+                handle_paused(work.machine)
+            except errors.MachineryError as e:
+                log.error(
+                    "Failure in pause state handler",
+                    machine=work.machine.name, error=e
+                )
+                work.work_failed(
+                    reason=f"Failure in pause state handler: {e}"
+                )
+        elif work.timeout_reached():
+            # The timeout work the work has reached. The expected
+            # machine state was not reached. Call the fallback or
+            # cancel the work.
+            log.warning(
+                "Timeout reached while waiting for machine to reach "
+                "expected state", machine=work.machine.name,
+                state=state, expected_state=work.expected_state
+            )
+            # Requeue fallback work for machine.
+            if work.has_fallback():
+                log.warning(
+                    "Calling fallback to handle timeout",
+                    machine=work.machine.name,
+                    fallback=work.fallback_func
+                )
+                work.fall_back()
+            else:
+                # If no fallback is available, cancel work and
+                # disable machine. The timeout should not really ever
+                # be hit unless a process is stuck/is not responding,
+                # etc. We do not want to try to handle that.
+                err = "Timeout reached while waiting for machine to " \
+                      "reach expected state."
+                log.error(
+                    f"{err} Disabling machine",
+                    machine=work.machine.name,
+                    expected_state=work.expected_state,
+                    actual_state=state
+                )
+                self._disable_machine(work.machine, err)
+                work.work_failed(reason=err)
+
+                log.warning(
+                    "Calling cancel handler to handle timeout",
+                    machine=work.machine.name,
+                    cancel_func=work.cancel_func
+                )
+                try:
+                    work.run_cancel()
+                except errors.MachineryError as e:
+                    log.error(
+                        "Failure during cancelling of work",
+                        machine=work.machine,
+                        cancel_func=work.cancel_func, error=e
+                    )
+
     def handle_waiters(self):
-        if not self._waiter_lock.acquire(timeout=0.1):
+        if not self._waiter_lock.acquire(blocking=False):
             return
 
         try:
@@ -191,46 +301,18 @@ class MachineryWorker(threading.Thread):
                     self._disable_machine(work.machine, f"{err}. {e}")
                     work.work_failed(reason=f"{err}. {e}")
 
-                    # Remove this work tracker from state waiting work trackers
-                    # as we disabled the machine
-                    work.stop_wait()
-                    continue
-
-                if state == work.expected_state:
-                    log.debug(
-                        "Updating machine state.",
-                        machine=work.machine.name, newstate=work.expected_state
-                    )
-
-                    self._machines.set_state(work.machine, work.expected_state)
-                    work.work_success()
-                elif state == machines.States.ERROR:
-                    err = "Machinery returned error state for machine"
+                except errors.MachineryError as e:
+                    err = "Unexpected machinery error while requesting " \
+                          "machine state"
                     log.error(
-                        f"{err}. Disabling machine.", machine=work.machine.name
+                        f"{err}. Disabling machine", machine=work.machine.name,
+                        error=e
                     )
-                    self._disable_machine(work.machine, err)
-                    work.work_failed(reason=err)
-
-                elif not work.timeout_reached():
-                    # Timeout not reached. Continue with other state waiters.
-                    continue
+                    self._disable_machine(work.machine, f"{err}. {e}")
+                    work.work_failed(reason=f"{err}. {e}")
                 else:
-                    if work.has_fallback():
-                        work.fall_back()
-                    else:
-                        err = "Timeout reached while waiting for machine to " \
-                              "reach expected state."
-                        log.error(
-                            f"{err}. Disabling machine.",
-                            machine=work.machine.name,
-                            expected_state=work.expected_state,
-                            actual_state=state
-                        )
-                        self._disable_machine(work.machine, err)
-                        work.work_failed(reason=err)
+                    self._handle_state(work, state)
 
-                work.stop_wait()
         finally:
             self._waiter_lock.release()
 
@@ -328,6 +410,7 @@ class WorkTracker:
         self.expected_state = ""
         self.timeout = 0
         self.fallback_func = None
+        self.cancel_func = None
 
         # Set when wait starts
         self.waited = 0
@@ -350,25 +433,41 @@ class WorkTracker:
         self.machine.action_lock.release()
 
     def work_failed(self, reason=""):
+        self.stop_wait()
         self.unlock_work()
         self.machinerymngr.queue_response(
             self.readerwriter, _MachineryMessages.fail(reason=reason)
         )
 
     def work_success(self):
+        self.stop_wait()
         self.unlock_work()
         self.machinerymngr.queue_response(
             self.readerwriter, _MachineryMessages.success()
         )
+
+    def run_cancel(self):
+        self.stop_wait()
+        if not self.cancel_func:
+            return
+
+        log.debug(
+            "Running cancel for work", machine=self.machine.name,
+            cancel_func=self.cancel_func, cancelled_work=self.work_func
+        )
+        self.cancel_func(self.machine)
 
     def run_work(self):
         log.debug(
             "Starting work.", machine=self.machine.name,
             action=self.work_func
         )
-        self.expected_state, self.timeout, self.fallback_func = self.work_func(
-            self.machine
-        )
+        executed_work = self.work_func(self.machine)
+
+        self.expected_state = executed_work.expected_state
+        self.timeout = executed_work.state_timeout
+        self.fallback_func = executed_work.fallback_work_func
+        self.cancel_func = executed_work.cancel_work_func
 
     def has_fallback(self):
         return self.fallback_func is not None
@@ -379,6 +478,8 @@ class WorkTracker:
         self.machinerymngr.work_queue.add_work(
             self.work_func, self.machine, self.readerwriter, self.machinerymngr
         )
+        self.stop_wait()
+        self.unlock_work()
 
     def fall_back(self):
         """Queue a work instance of the fallback function in the work queue"""
@@ -386,6 +487,8 @@ class WorkTracker:
             self.fallback_func, self.machine, self.readerwriter,
             self.machinerymngr
         )
+        self.stop_wait()
+        self.unlock_work()
 
     def start_wait(self):
         """Adds this object to the MachineryManager instance state_waiters
@@ -396,10 +499,11 @@ class WorkTracker:
     def stop_wait(self):
         """Remove this object from the MachineryManager instance state_waiters
         list."""
-        self.machinerymngr.state_waiters.remove(self)
+        if self in self.machinerymngr.state_waiters:
+            self.machinerymngr.state_waiters.remove(self)
 
     def timeout_reached(self):
-        self.waited += time.monotonic() - self.since
+        self.waited = time.monotonic() - self.since
         if self.waited >= self.timeout:
             return True
         return False
