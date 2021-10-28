@@ -76,6 +76,10 @@ def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
         start_cuckoo(ctx.loglevel, cancel_abandoned=cancel_abandoned)
     except StartupError as e:
         exit_error(f"Failure during Cuckoo startup: {e}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        exit_error(f"Unexpected failure during Cuckoo startup: {e}")
     finally:
         call_registered_shutdowns()
 

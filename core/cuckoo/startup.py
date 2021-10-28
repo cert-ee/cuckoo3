@@ -378,47 +378,46 @@ def _init_elasticsearch_pre_startup():
     )
 
 def start_cuckoo(loglevel, cancel_abandoned=False):
+    from multiprocessing import set_start_method
+    set_start_method("spawn")
+
+    from cuckoo.common.startup import (
+        init_database, load_configurations, init_global_logging
+    )
+    from .taskqueue import TaskQueue
+
+    # Initialize globing logging to cuckoo.log
+    init_global_logging(loglevel, Paths.log("cuckoo.log"))
+
+    log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
+    log.info("Loading configurations")
     try:
-        from multiprocessing import set_start_method
-        set_start_method("spawn")
-
-        from cuckoo.common.startup import (
-            init_database, load_configurations, init_global_logging
-        )
-        from .taskqueue import TaskQueue
-
-        # Initialize globing logging to cuckoo.log
-        init_global_logging(loglevel, Paths.log("cuckoo.log"))
-
-        log.info("Starting Cuckoo.", cwd=cuckoocwd.root)
-        log.info("Loading configurations")
-        try:
-            load_configurations()
-        except config.MissingConfigurationFileError as e:
-            raise StartupError(f"Missing configuration file: {e}")
-
-        _init_elasticsearch_pre_startup()
-
-        log.debug("Initializing database")
-        init_database()
-
-        log.debug("Initializing task queue")
-        task_queue = TaskQueue(Paths.queuedb())
-        cuckooctx = CuckooCtx()
-        cuckooctx.loglevel = loglevel
-        make_scheduler(cuckooctx, task_queue)
-
-        log.debug("Starting local task node")
-        start_localnode(cuckooctx)
-
-        log.debug("Starting processing handler and workers")
-        start_processing_handler(cuckooctx)
-
-        log.debug("Starting state controller")
-        start_statecontroller(cuckooctx)
-
-        log.debug("Starting scheduler")
-        cuckooctx.scheduler.handle_abandoned(cancel=cancel_abandoned)
-        cuckooctx.scheduler.start()
-    except Exception as e:
+        load_configurations()
+    except config.MissingConfigurationFileError as e:
+        raise StartupError(f"Missing configuration file: {e}")
+    except config.ConfigurationError as e:
         raise StartupError(e)
+
+    _init_elasticsearch_pre_startup()
+
+    log.debug("Initializing database")
+    init_database()
+
+    log.debug("Initializing task queue")
+    task_queue = TaskQueue(Paths.queuedb())
+    cuckooctx = CuckooCtx()
+    cuckooctx.loglevel = loglevel
+    make_scheduler(cuckooctx, task_queue)
+
+    log.debug("Starting local task node")
+    start_localnode(cuckooctx)
+
+    log.debug("Starting processing handler and workers")
+    start_processing_handler(cuckooctx)
+
+    log.debug("Starting state controller")
+    start_statecontroller(cuckooctx)
+
+    log.debug("Starting scheduler")
+    cuckooctx.scheduler.handle_abandoned(cancel=cancel_abandoned)
+    cuckooctx.scheduler.start()
