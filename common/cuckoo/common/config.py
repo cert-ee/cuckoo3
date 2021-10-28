@@ -86,6 +86,14 @@ class TypeLoader:
         self.constraints(value)
 
 class String(TypeLoader):
+
+    def __init__(self, value=None, default_val=None, required=True,
+                 allow_empty=False, sensitive=False, to_lower=False):
+        super().__init__(value=value, default_val=default_val,
+                         required=required, allow_empty=allow_empty,
+                         sensitive=sensitive)
+        self.to_lower = to_lower
+
     def is_empty(self, value):
         return value is None or value == ""
 
@@ -95,6 +103,9 @@ class String(TypeLoader):
 
         if not isinstance(value, str):
             value = str(value)
+
+        if self.to_lower:
+            value = value.lower()
 
         return value.strip()
 
@@ -151,6 +162,8 @@ class Int(TypeLoader):
 
 class FilePath(String):
 
+    _PATHTYPE = "file"
+
     def __init__(self, value=None, default_val=None, required=True,
                  allow_empty=False, sensitive=False, must_exist=False,
                  readable=False, writable=False, executable=False):
@@ -171,21 +184,30 @@ class FilePath(String):
 
         if self.must_exist and not self._exists_check(value):
             raise ConstraintViolationError(
-                f"Filepath {value} does not exist or is not a file."
+                f"Path {value} does not exist or is not a {self._PATHTYPE}."
             )
 
         if self.readable and not os.access(value, os.R_OK):
-            raise ConstraintViolationError(f"Filepath {value} is not readable")
+            raise ConstraintViolationError(f"Path {value} is not readable")
 
         if self.writable and not os.access(value, os.W_OK):
-            raise ConstraintViolationError(f"Filepath {value} is not writable")
+            raise ConstraintViolationError(f"Path {value} is not writable")
 
         if self.executable and not os.access(value, os.X_OK):
             raise ConstraintViolationError(
-                f"Filepath {value} is not executable"
+                f"Path {value} is not executable"
             )
 
+class DirectoryPath(FilePath):
+
+    _PATHTYPE = "directory"
+
+    def _exists_check(self, path):
+        return os.path.isdir(path)
+
 class UnixSocketPath(FilePath):
+
+    _PATHTYPE = "unix socket"
 
     def _exists_check(self, path):
         if os.path.exists(path):
@@ -195,17 +217,30 @@ class UnixSocketPath(FilePath):
 
 class NetworkInterface(String):
 
+    def __init__(self, value=None, default_val=None, required=True,
+                 allow_empty=False, sensitive=False, must_exist=True,
+                 must_be_up=True):
+        super().__init__(value=value, default_val=default_val,
+                         required=required, allow_empty=allow_empty,
+                         sensitive=sensitive)
+
+        self.must_exist = must_exist
+        self.must_be_up = must_be_up
+
     def constraints(self, value):
+        if not self.must_exist and not self.must_be_up:
+            return
+
         from psutil import net_if_stats
         super().constraints(value)
 
         nic = net_if_stats().get(value)
-        if not nic:
+        if self.must_exist and not nic:
             raise ConstraintViolationError(
                 f"Network interface '{value}' does not exist."
             )
 
-        if not nic.isup:
+        if self.must_be_up and not nic.isup:
             raise ConstraintViolationError(
                 f"Network interface '{value}' is not up."
             )

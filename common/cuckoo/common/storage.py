@@ -609,6 +609,10 @@ class UnixSocketPaths:
     def result_retriever():
         return Paths.unix_socket("resultretriever.sock")
 
+    @staticmethod
+    def machinery_socket(machinery_name, sockname):
+        return Paths.unix_socket(f"{machinery_name}_{sockname}.sock")
+
 def create_analysis_folder(day, identifier):
     try:
         AnalysisPaths.day(day).mkdir(mode=DEFAULT_DIRMODE)

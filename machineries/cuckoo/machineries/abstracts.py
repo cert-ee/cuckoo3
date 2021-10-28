@@ -22,6 +22,8 @@ class Machinery:
         pass
 
     def load_machines(self):
+        """Method must read the config machines dict and populate
+        self.machines with machine objects returned from _make_machine."""
         labels = []
         ips = []
         for name, values in self.cfg["machines"].items():
@@ -39,24 +41,27 @@ class Machinery:
                     f"Cannot load machine {name}. It has IP {ip!r}, "
                     f"which already is used for another machine"
                 )
-
-            interface = values["interface"] or self.cfg.get("interface")
-            machine = machines.Machine(
-                name=name, label=label, ip=ip,
-                platform=values["platform"], os_version=values["os_version"],
-                tags=values["tags"], snapshot=values["snapshot"],
-                architecture=values["architecture"],
-                interface=interface, agent_port=values["agent_port"],
-                mac_address=values["mac_address"], machinery=self
-            )
-            self.machines.append(machine)
+            self.machines.append(self._make_machine(name, label))
 
             labels.append(label)
             ips.append(ip)
 
+    def _make_machine(self, name, values):
+        """Method must return a cuckoo.common.machiches.Machine helper object
+        created with the data from values."""
+        return machines.Machine(
+            name=name, label=values["label"], ip=values["ip"],
+            platform=values["platform"], os_version=values["os_version"],
+            tags=values["tags"], snapshot=values["snapshot"],
+            architecture=values["architecture"],
+            interface=values["interface"] or self.cfg.get("interface"),
+            agent_port=values["agent_port"],
+            mac_address=values["mac_address"], machinery=self
+        )
+
     def list_machines(self):
         """"List machines defined in the configuration of a machinery. Should
-        return a list of machine helper objects"""
+        return a list of cuckoo.common.machines.Machine helper objects"""
         return self.machines
 
     def restore_start(self, machine):
@@ -75,6 +80,9 @@ class Machinery:
         raise NotImplementedError
 
     def dump_memory(self, machine, path):
+        raise NotImplementedError
+
+    def handle_paused(self, machine):
         raise NotImplementedError
 
     def start_netcapture(self, machine, pcap_path, ignore_ip_ports=[]):

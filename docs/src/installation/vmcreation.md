@@ -101,7 +101,7 @@ Machinery config files can be found at `$CWD/config/machineries/`
 Each machinery module configuration file has a dictionary of configured machines. An example entry will always exist. This entry should be
 removed when using the machinery module. Each entry consists of the following:
 
-**Mandatory fields per machine entry:**
+**Mandatory fields per machine entry (depends on the machinery module):**
 
 - A unique name in the dictionary
     * The unique identifier that is used by Cuckoo. It is the name of the machine used in reports, the web interface, etc.
@@ -113,16 +113,16 @@ removed when using the machinery module. Each entry consists of the following:
     - The platform is required so that Cuckoo knows what machine to chose for a specific sample. Example value: windows
 - The platform/operating system version (`os_version`)
     - This is the version of the platform supplied earlier. __This should only contain a version__. Not the full OS name. So "10", not "windows 10". Cuckoo uses this together with the platform to differentiate between machines of the same OS.
-- The operating system architecture: amd64, arm, etc (`architecture`)
+- The system architecture: amd64, arm, etc (`architecture`)
     - This is used to select the correct (build of) stager and monitor component for the machine
 - The TCP port the agent is listening on (`agent_port`)
     - This is used to deliver and start the stager and the payload.
 
-**Optional fields per entry:**
+**Optional fields per entry (depends on the machinery module):**
 
 - Snapshot name (`snapshot`)
 
-    * The name of the snapshot to use to restore the machine before sample detonation. This is optional because most
+    * The name of (or path to) the snapshot to use to restore the machine before sample detonation. This is optional because most
         virtualization layers/hypervisors allow a 'current' snapshot to be configured for a vm. If this is configured, this field can be left empty.
 
 - Mac address (`mac_address`)
@@ -133,13 +133,11 @@ removed when using the machinery module. Each entry consists of the following:
     * The network interface name that should be used to dump network traffic for this vm. If not supplied the interface that is configured for the machinery module will be used.
 
 - Machine tags (`tags`)
-    *    Machine tags is a list of strings that are used to identify installed software/particular settings inside a vm. If .NET framework or Adobe PDF reader is installed, the tags should be: `dotnet` and `pdfreader`. To populate the 'supported browser' list in the web UI or API, one or more machines `browser_browsername` tags must exist. These tags are automatically translated to a list of browsers. Use `_` instead of spaces. An example would be
+    * Machine tags is a list of strings that are used to identify installed software/particular settings inside a vm. If .NET framework or Adobe PDF reader is installed, the tags should be: `dotnet` and `pdfreader`.
+    * To populate the 'supported browser' list in the web UI or API, one or more machines with `browser_browsername` tags must exist. These tags are automatically translated to a list of browsers. Use `_` instead of spaces. An example would be
     `browser_internet_explorer`.
-
-
-        The tags are used by Cuckoo to find a machine that can detonate a submitted sample. The file identification stage of Cuckoo determines what dependencies are needed for specific file types. These dependency names are tied to tag names. This mapping can be found in `$CWD/conf/processing/identification.yaml`.
     
-        Automated file dependency tag assigning only occurs if it is enabled in `$CWD/conf/cuckoo.yaml`.
+    * The tags are used by Cuckoo to find a machine that can detonate a submitted sample. The file identification stage of Cuckoo determines what dependencies are needed for specific file types. These dependency names are tied to tag names. This mapping can be found in `$CWD/conf/processing/identification.yaml`. Automated file dependency tag assigning only occurs if it is enabled in `$CWD/conf/cuckoo.yaml`.
 
 #### Machine adding command
 

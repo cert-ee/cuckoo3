@@ -1,0 +1,66 @@
+# Specify the name of the network interface that is the default gateway
+# for the QEMU machines.
+# Example: br0
+interface: {{ interface }}
+
+# Make disposable copies of machine disk images here. Copies are created each
+# time the machine is restored. This directory path must be writable and
+# readable. If this not specified, the directory of the 'qcow2_path' of each
+# machine will be used.
+disposable_copy_dir: {{ dirty_copy_dir }}
+
+# The paths to binaries used to create disks, restore, and
+# start virtual machines
+binaries:
+  # Path to qemu-img.
+  qemu_img: {{ binaries.qemu_img }}
+  # Path to qemu-system-x86_64
+  qemu_system_x86_64: {{ binaries.qemu_system_x86_64 }}
+
+machines:
+{% for name, machine in machines.items() %}
+  {{ name }}:
+    # The path to the QCOW2 disk image. This disk will be used as a backing
+    # for each disposable copy when restoring and booting the machine. The parent
+    # directory is used for disposable disk copies if no disposable_copy_dir
+    # is given. This means the directory must be readable and writable.
+    qcow2_path: {{ machine.qcow2_path}}
+    # The filepath to the machine memory snapshot. A 'QEMU suspend to disk image'.
+    # This is restored using the '-incoming' parameter. Restoring this should
+    # result in a running machine with the agent listening on the specified port.
+    snapshot_path: {{ machine.snapshot_path }}
+    # The amount of RAM this machine has in MB. Needed to start the QEMU machine.
+    ramsize: {{ machine.ramsize }}
+    # The amount of cores this machine has. Needed to start the QEMU machine.
+    cpus: {{ machine.cpus }}
+    # The MAC address of the network interface of the machine that has the
+    # static IP. Needed to start the QEMU machine.
+    mac_address: {{ machine.mac_address }}
+    # The name of the tap network interface that belongs to this machine and
+    # that should be used when dumping network traffic from this machine
+    # with tcpdump. Needed to start the QEMU machine.
+    interface: {{ machine.interface }}
+    # The static IP address that has been configured inside of the machine.
+    ip: {{ machine.ip }}
+    # The operating system platform installed on the machine.
+    platform: {{ machine.platform }}
+    # A string that specifies the version of the operating system installed.
+    # Example: "10" for Windows 10, "7" for Windows 7, "18.04" for Ubuntu 18.04.
+    os_version: "{{ machine.os_version }}"
+    # The system architecture. Amd64, ARM, etc. This is used to
+    # select the correct qemu binary, stager and monitor builds/component for the machine.
+    architecture: {{ machine.architecture }}
+    # Use KVM (the '-enable-kvm' flag). Strongly advised. Do not disable
+    # it is really needed to do so.
+    use_kvm: {{ machine.use_kvm }}
+    # The TCP port of the agent running on the machine.
+    agent_port: {{ machine.agent_port }}
+    # Machine tags that identify the installed software and other characteristics of the machine.
+    # These are used to select the correct machine for a sample that has dependencies. *Notice*: correct tags are
+    # crucial in selecting machines that can actually run a submitted sample.
+    # Existing automatic tags can be found in the conf/processing/identification.yaml config.
+    tags:
+    {% for tag in machine.tags %}
+    - {{ tag }}
+    {% endfor %}
+{% endfor %}

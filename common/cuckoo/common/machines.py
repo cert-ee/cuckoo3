@@ -14,6 +14,7 @@ class MachineListError(Exception):
     pass
 
 class States:
+    STARTING = "starting"
     RUNNING = "running"
     PAUSED = "paused"
     STOPPING = "stopping"

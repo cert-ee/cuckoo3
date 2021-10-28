@@ -19,8 +19,8 @@ machines:
     # A string that specifies the version of the operating system installed.
     # Example: "10" for Windows 10, "7" for Windows 7, "18.04" for Ubuntu 18.04.
     os_version: "{{ machine.os_version }}"
-    # The operating system architecture. Amd64, ARM, etc. This is used to
-    # select the correct stager and monitor component for the machine.
+    # The system architecture. Amd64, ARM, etc. This is used to
+    # select the correct stager and monitor builds/component for the machine.
     architecture: {{ machine.architecture }}
     # The TCP port of the agent running on the machine.
     agent_port: {{ machine.agent_port }}
