@@ -58,7 +58,7 @@ class TCPDump:
 
         add_args(self.binary_path, "-i", self.capture_interface)
         add_args("-U", "-s", "0", "-n")
-        add_args("-w", self.pcap_path)
+        add_args("-w", str(self.pcap_path))
 
         prev = None
         for host in self.capture_hosts:

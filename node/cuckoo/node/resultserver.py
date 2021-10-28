@@ -259,7 +259,7 @@ class ScreenshotUpload(ProtocolHandler):
                 f"Task {self.task.task_id} screenshot upload {fname} "
                 f"cancelled. Header mismatch: {e}"
             )
-        except (MaxBytesWritten, HeaderMisMatch) as e:
+        except MaxBytesWritten as e:
             raise CancelResult(
                 f"Task {self.task.task_id} screenshot upload {fname} "
                 f"cancelled. {e}"
