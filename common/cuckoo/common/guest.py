@@ -190,7 +190,7 @@ class Agent:
         response = self._get_json(self._post(
             "/execute", data={"command": command, "cwd": cwd}, timeout=timeout
         ))
-        return response["stdout"], response["stderr"]
+        return response.get("stdout", ""), response.get("stderr", "")
 
     def pin_host_ip(self):
         """Causes the ip of the client sending the request to be the only one
