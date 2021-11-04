@@ -712,6 +712,9 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
             try:
                 nested_loaders = loader.make_typeloaders(confval)
             except MissingValueError as e:
+                if not check_constraints:
+                    continue
+
                 raise ConfigurationError(
                     f"Key '{key}' cannot be empty. {e}",
                 )
