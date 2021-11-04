@@ -49,6 +49,7 @@
   const view = document.querySelector('#statistics');
   const statistics = await getStatistics();
 
+  // handle statistics fetch errors
   if(statistics.error) {
     const err = viewError(statistics.error);
     err.style.marginLeft = 'auto';
