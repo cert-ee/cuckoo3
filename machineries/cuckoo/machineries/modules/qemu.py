@@ -426,8 +426,7 @@ class QEMU(Machinery):
     def load_machines(self):
         existing = {}
         for name, values in self.cfg["machines"].items():
-            for k in ("ip", "qcow2_path", "snapshot_path",
-                      "mac_address", "interface"):
+            for k in ("ip", "qcow2_path", "snapshot_path", "mac_address"):
                 existing_k = existing.setdefault(k, [])
                 k_val = values[k]
                 if k_val in existing_k:
