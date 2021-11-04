@@ -32,9 +32,9 @@ class Machinery(config.String):
 exclude_autoload = ["distributed.yaml"]
 typeloaders = {
     "cuckoo.yaml": {
-        "machineries": config.List(Machinery, value=["kvm"]),
+        "machineries": config.List(Machinery, value=["qemu"]),
         "resultserver": {
-            "listen_ip": config.String(default_val="192.168.122.1"),
+            "listen_ip": config.String(default_val="192.168.30.101"),
             "listen_port": config.Int(default_val=2042, min_value=1024)
         },
         "tcpdump": {
