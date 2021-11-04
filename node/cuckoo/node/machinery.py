@@ -88,7 +88,7 @@ def restore_start(machine):
     # If the machine is not running within the state timeout, run the stop
     # machine method. This stops netcapture and the machine.
     return _ExecutedMachineWork(
-        expected_state=machines.States.RUNNING, state_timeout=15,
+        expected_state=machines.States.RUNNING, state_timeout=180,
         cancel_work_func=stop
     )
 
