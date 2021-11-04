@@ -7,7 +7,7 @@ import os.path
 import socket
 import time
 from datetime import datetime
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 from pathlib import Path, PureWindowsPath
 from tempfile import mkdtemp
 from zipfile import ZipFile, ZipInfo
@@ -158,7 +158,6 @@ class Agent:
 
             waited += int(time.monotonic() - start)
 
-
         raise WaitTimeout(
             f"Could not connect to: {self.ip}:{self.port} within timeout of "
             f"{timeout} seconds."
@@ -169,12 +168,14 @@ class Agent:
         return response["version"]
 
     def version_check(self):
-        version = self.version()
-        if StrictVersion(version) < StrictVersion("0.9"):
+        version = LooseVersion(self.version())
+        if version < LooseVersion("0.9"):
             raise OutdatedAgentError(
                 f"The minimum required Cuckoo agent version is 0.9. "
                 f"Agent: {self.ip}:{self.port} is version: {version}"
             )
+
+        return version
 
     def mkdtemp(self):
         response = self._get_json(self._get("/mkdtemp"))
@@ -483,9 +484,17 @@ class TmStage(StagerHelper):
         if not self.payload:
             raise ValueError("No payload set to deliver")
 
+        try:
+            agent_version = self.agent.version_check()
+        except AgentError as e:
+            raise StagerError(f"Outdated agent. {e}")
+
         # Delete the agent Python file. It can remain running without the file
         try:
-            self.agent.delete_agent()
+            # Only try to delete agent if it is 1.0, this agent is still a
+            # python file and can be deleted. The new agent is an exe.
+            if agent_version < LooseVersion("1.0"):
+                self.agent.delete_agent()
         except AgentError as e:
             # A failing deletion is not fatal, we can still continue. It can
             # indicate permission problems, however. So we do log it.
