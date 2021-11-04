@@ -28,10 +28,12 @@ typeloaders = {
                     default_val="windows", to_lower=True
                 ),
                 "os_version": config.String(default_val="10"),
-                "mac_address": MACAddress(allow_empty=True, to_lower=True),
-                "snapshot": config.String(allow_empty=True),
+                "mac_address": MACAddress(allow_empty=True, to_lower=True,
+                                          required=False),
+                "snapshot": config.String(allow_empty=True, required=False),
                 "interface": config.NetworkInterface(
-                    allow_empty=True, must_be_up=False, must_exist=False
+                    allow_empty=True, must_be_up=False, must_exist=False,
+                    required=False
                 ),
                 "agent_port": config.Int(
                     default_val=8000, required=False, min_value=1,
@@ -47,7 +49,9 @@ typeloaders = {
         })
     },
     "qemu.yaml": {
-        "interface": config.NetworkInterface(default_val="br0"),
+        "interface": config.NetworkInterface(
+            default_val="br0", must_exist=True, must_be_up=False
+        ),
         "disposable_copy_dir": config.DirectoryPath(
             allow_empty=True, must_exist=True, writable=True
         ),
@@ -61,14 +65,12 @@ typeloaders = {
             )
         },
         "machines": config.NestedDictionary("example1", {
-                "qcow2_path": config.FilePath(default_val="/home/cuckoo/qemu/win10_1/disk.qcow2", readable=True),
-                "snapshot_path": config.FilePath(default_val="/home/cuckoo/qemu/win10_1/win10_1.memory", readable=True),
-                "ip": config.String(default_val="192.168.122.101"),
-                "mac_address": MACAddress(
-                    default_val="46:e5:f3:11:b8:3e", to_lower=True
-                ),
-                "ramsize": config.Int(default_val=4096),
-                "cpus": config.Int(default_val=2),
+                "qcow2_path": config.FilePath(default_val="/home/cuckoo/.vmcloak/vms/qemu/win10_1/disk.qcow2", readable=True),
+                "snapshot_path": config.FilePath(default_val="/home/cuckoo/.vmcloak/vms/qemu/win10_1/memory.snapshot", readable=True),
+                "machineinfo_path": config.FilePath("/home/cuckoo/.vmcloak/vms/qemu/win10_1/machineinfo.json", readable=True),
+                "ip": config.String(default_val="192.168.30.101"),
+                "mac_address": MACAddress(to_lower=True, allow_empty=True,
+                                          required=False),
                 "platform": config.String(
                     default_val="windows", to_lower=True
                 ),
@@ -77,10 +79,9 @@ typeloaders = {
                     default_val="amd64", to_lower=True
                 ),
                 "interface": config.NetworkInterface(
-                    default_val="tap1",
-                    must_exist=True, must_be_up=False
+                    allow_empty=True, must_exist=True, must_be_up=False,
+                    required=False
                 ),
-                "use_kvm": config.Boolean(default_val=True),
                 "agent_port": config.Int(
                     default_val=8000, required=False, min_value=1,
                     max_value=2**16-1

@@ -4,6 +4,7 @@
 import os
 import subprocess
 import time
+import json
 from pathlib import Path
 from re import search
 from shutil import which
@@ -113,12 +114,9 @@ class _QEMUMachine:
     """Helper object that can hold the qemu process, attributes that don't
     belong on the Machine object, etc."""
 
-    def __init__(self, machine, cpus, ramsize, use_kvm, disposables_dir,
-                 qmp_sockpath):
+    def __init__(self, machine, start_args, disposables_dir, qmp_sockpath):
         self.machine = machine
-        self.cpus = cpus
-        self.ramsize = ramsize
-        self.use_kvm = use_kvm
+        self.start_args = start_args
         self.disposables_dir = disposables_dir
         self.qmp_sockpath = qmp_sockpath
         self.qcow2_path = machine.label
@@ -193,58 +191,6 @@ class _QEMUMachine:
 
             self.qmp = None
 
-_MIN_QEMU_VERSION = parse_version("2.11")
-
-_start_commands = {
-    "windows": {
-        "amd64": {
-            "default_version": parse_version("4.1"),
-            "versions": {
-                parse_version("2.11"): [
-                    "%EMULATOR_BINARY%",
-                    "-M", "q35",
-                    "-nodefaults",
-                    "-vga", "std",
-                    "-rtc", "base=localtime,driftfix=slew",
-                    "-realtime", "mlock=off",
-                    "-m", "%RAMSIZE%", "-smp", "%CPUS%",
-                    "-netdev", "type=tap,ifname=%INTERFACE%,script=no,downscript=no,id=net0",
-                    "-device", "rtl8139,netdev=net0,mac=%MAC_ADDRESS%,bus=pcie.0,addr=3",
-                    "-drive", "file=%DISPOSABLE_DISK_PATH%,format=qcow2,if=none,id=disk",
-                    "-device", "ich9-ahci,id=ahci",
-                    "-device", "ide-drive,bus=ahci.0,unit=0,drive=disk,bootindex=2",
-                    "-drive", "if=none,id=cdrom,readonly=on",
-                    "-device", "ide-cd,bus=ahci.1,unit=0,drive=cdrom,bootindex=1",
-                    "-device", "usb-ehci,id=ehci",
-                    "-device", "usb-tablet,bus=ehci.0",
-                    "-soundhw", "hda",
-                ],
-                # From 4.1 the -realtime mlock=off and -device ide-drive
-                # are deprecated and those are removed in higher versions.
-                parse_version("4.1"): [
-                    "%EMULATOR_BINARY%",
-                    "-M", "q35",
-                    "-nodefaults",
-                    "-vga", "std",
-                    "-rtc", "base=localtime,driftfix=slew",
-                    "-overcommit", "mem-lock=off",
-                    "-m", "%RAMSIZE%", "-smp", "%CPUS%",
-                    "-netdev", "type=tap,ifname=%INTERFACE%,script=no,downscript=no,id=net0",
-                    "-device", "rtl8139,netdev=net0,mac=%MAC_ADDRESS%,bus=pcie.0,addr=3",
-                    "-drive", "file=%DISPOSABLE_DISK_PATH%,format=qcow2,if=none,id=disk",
-                    "-device", "ich9-ahci,id=ahci",
-                    "-device", "ide-hd,bus=ahci.0,unit=0,drive=disk,bootindex=2",
-                    "-drive", "if=none,id=cdrom,readonly=on",
-                    "-device", "ide-cd,bus=ahci.1,unit=0,drive=cdrom,bootindex=1",
-                    "-device", "usb-ehci,id=ehci",
-                    "-device", "usb-tablet,bus=ehci.0",
-                    "-soundhw", "hda",
-                ],
-            }
-        }
-    }
-}
-
 _DECOMPRESS_BINARIES = {
     "lz4": which("lz4"),
     "gzip": which("gzip")
@@ -276,35 +222,14 @@ def _find_command(qemu_version, platform_architecture_dict):
 def _make_command(qemu_machine, emulator_path, disposable_disk_path,
                   emulator_version):
 
-    # Find a dictionary containing the correct qemu vm start arguments for
-    # platform and architecture combination.
-    plat_arch_dict = _start_commands.get(
-        qemu_machine.machine.platform, {}).get(
-        qemu_machine.machine.architecture
-    )
-    if not plat_arch_dict:
-        raise errors.MachineryError(
-            f"No QEMU startup command found for the combination of "
-            f"platform {qemu_machine.machine.platform} and "
-            f"architecture: '{qemu_machine.machine.architecture}'."
-        )
-
-    command = _find_command(emulator_version, plat_arch_dict)
-    if not command:
-        raise errors.MachineryError(
-            f"No QEMU startup command found for the combination of "
-            f"platform {qemu_machine.machine.platform} and "
-            f"architecture: '{qemu_machine.machine.architecture}'."
-        )
-
+    # Make a copy of the machine startup args so we don't modify the actual
+    # attribute of the machine. Then insert the qemu binary before
+    # the arguments.
+    command = qemu_machine.start_args.copy()
+    command.insert(0, emulator_path)
     # Map of placeholders in the command to their value.
     lookup = {
-        "%EMULATOR_BINARY%": emulator_path,
-        "%RAMSIZE%": qemu_machine.ramsize,
-        "%CPUS%": qemu_machine.cpus,
-        "%INTERFACE%": qemu_machine.machine.interface,
-        "%MAC_ADDRESS%": qemu_machine.machine.mac_address,
-        "%DISPOSABLE_DISK_PATH%": disposable_disk_path
+        _DISPOSABLE_DISK_PLACEHOLDER: disposable_disk_path
     }
 
     def _do_replace(value):
@@ -318,8 +243,6 @@ def _make_command(qemu_machine, emulator_path, disposable_disk_path,
         return value
 
     command = list(map(_do_replace, command))
-    if qemu_machine.use_kvm:
-        command.append("-enable-kvm")
 
     # The QMP unix socket is what the QMP client connects to and uses to
     # send commands and request states of a VM. Each qemu vm process has
@@ -367,6 +290,120 @@ statemapping = {
 }
 
 
+_ILLEGAL_ARGS = (
+    "-incoming", "-monitor", "-qmp", "-loadvm", "-no-shutdown", "-qmp-pretty",
+    "-snapshot"
+)
+
+_DISPOSABLE_DISK_PLACEHOLDER = "%DISPOSABLE_DISK_PATH%"
+
+
+def _get_valid_start_args(start_args):
+    if not isinstance(start_args, list) or not start_args:
+        raise errors.MachineryError("start_args must be a list of strings")
+
+    start_args = [str(arg) for arg in start_args]
+    if "qemu-system" in start_args[0]:
+        raise errors.MachineryError(
+            "start_args must only contain parameters for qemu. Not the "
+            f"qemu binary/command itself. First arg is: {start_args[0]}"
+        )
+
+    lazystr = " ".join(start_args)
+    if _DISPOSABLE_DISK_PLACEHOLDER not in lazystr:
+        raise errors.MachineryError(
+            "start_args must contain disk device that uses the "
+            f"'{_DISPOSABLE_DISK_PLACEHOLDER}' placeholder where Cuckoo "
+            f"should insert the disposable disk path."
+        )
+
+    illegal = []
+    for c in _ILLEGAL_ARGS:
+        if c in lazystr:
+            illegal.append(c)
+
+    if illegal:
+        raise errors.MachineryError(
+            "start_args contains one or more illegal argument. These "
+            "interfere with how Cuckoo starts the machine. "
+            f"Illegal: {' '.join(illegal)}"
+        )
+
+    return start_args
+
+def vmcloak_info_to_machineconf(machineinfo_path):
+    with open(machineinfo_path, "r") as fp:
+        try:
+            machineinfo_dict = json.load(fp)
+        except json.JSONDecodeError as e:
+            raise errors.MachineryError(
+                f"Invalid machineinfo file: {machineinfo_path}. {e}"
+            )
+
+    machineinfo_path = Path(machineinfo_path)
+    min_keys = (
+        "name", "ip", "agent_port", "os_name", "os_version",
+        "architecture", "bridge", "disk", "memory_snapshot", "tags",
+        "start_args"
+    )
+    machine = machineinfo_dict.get("machine", {})
+    if not machine:
+        raise errors.MachineryError(
+            f"Invalid machineinfo: Missing key 'machine'"
+        )
+
+    missing = []
+    for k in min_keys:
+        if k not in machine:
+            missing.append(k)
+
+    if missing:
+        raise errors.MachineryError(
+            f"One or more keys are missing: {','.join(missing)}"
+        )
+
+    _get_valid_start_args(machine.get("start_args"))
+
+    return {
+        "qcow2_path": str(machineinfo_path.parent.joinpath(machine["disk"])),
+        "snapshot_path": str(machineinfo_path.parent.joinpath(
+            machine["memory_snapshot"]
+        )),
+        "machineinfo_path": str(machineinfo_path),
+        "ip": machine["ip"],
+        "mac_address": machine.get("mac"),
+        "platform": machine["os_name"],
+        "os_version": machine["os_version"],
+        "architecture": machine["architecture"],
+        "interface": machine.get("bridge"),
+        "agent_port": machine["agent_port"],
+        "tags": machine["tags"]
+    }, machine["name"]
+
+def _read_start_args(path):
+    with open(path, "r") as fp:
+        try:
+            info = json.load(fp)
+        except json.JSONDecodeError as e:
+            raise errors.MachineryError(
+                f"Invalid machineinfo file: {path}. {e}"
+            )
+
+    machine = info.get("machine", {})
+    if not machine:
+        raise errors.MachineryError(
+            f"Invalid machineinfo file: {path}. Missing key 'machine'"
+        )
+
+    start_args = machine.get("start_args", {})
+    if not start_args:
+        raise errors.MachineryError(
+            f"Invalid machineinfo file: {path}. Machine is missing key "
+            f"'start_args'"
+        )
+
+    return _get_valid_start_args(start_args)
+
 class QEMU(Machinery):
 
     name = "qemu"
@@ -374,7 +411,8 @@ class QEMU(Machinery):
     def init(self):
         self.vms = {}
         self.emulator_binaries = {
-            "amd64": self.cfg["binaries"]["qemu_system_x86_64"]
+            "amd64": self.cfg["binaries"]["qemu_system_x86_64"],
+            "x86": self.cfg["binaries"]["qemu_system_x86_64"]
         }
 
         self.qemu_version = self.version()
@@ -384,12 +422,6 @@ class QEMU(Machinery):
                 "machinery module to not function properly"
             )
             return
-
-        if self.qemu_version < _MIN_QEMU_VERSION:
-            raise errors.MachineryError(
-                f"The minimum QEMU version is: {_MIN_QEMU_VERSION}. "
-                f"Detected version: {self.qemu_version}"
-            )
 
     def load_machines(self):
         existing = {}
@@ -422,13 +454,6 @@ class QEMU(Machinery):
                     f"Path: {disposables_dir}."
                 )
 
-            if values["platform"] not in _start_commands:
-                raise errors.MachineryError(
-                    f"Machine '{name}' with platform '{values['platform']}' is "
-                    f"not supported. Supported platforms: "
-                    f"{list(_start_commands.keys())}"
-                )
-
             if values["architecture"] not in self.emulator_binaries:
                 raise errors.MachineryError(
                     f"Machine '{name}' CPU architecture "
@@ -438,8 +463,8 @@ class QEMU(Machinery):
 
             machine = self._make_machine(name, values)
             qemu_machine = _QEMUMachine(
-                machine=machine, cpus=values["cpus"],
-                ramsize=values["ramsize"], use_kvm=values["use_kvm"],
+                machine=machine,
+                start_args=_read_start_args(values["machineinfo_path"]),
                 disposables_dir=disposables_dir,
                 qmp_sockpath=UnixSocketPaths.machinery_socket(
                     self.name, machine.name
@@ -533,7 +558,7 @@ class QEMU(Machinery):
         except subprocess.CalledProcessError as e:
             raise errors.MachineryError(
                 f"Failed to create disposable disk with qemu-img. "
-                f"Command: {command}. Exit code: {e.returncode}. "
+                f"Command: {' '.join(command)}. Exit code: {e.returncode}. "
                 f"Stderr: {e.stderr}"
             )
 
@@ -568,7 +593,7 @@ class QEMU(Machinery):
 
         log.debug(
             "Starting machine with command", machine=machine.name,
-            command=start_command
+            command=' '.join(start_command)
         )
         try:
             proc = subprocess.Popen(
