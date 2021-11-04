@@ -144,31 +144,97 @@ def machine():
     pass
 
 @machine.command("add")
-@click.argument("machinery")
-@click.argument("name")
-@click.argument("label")
-@click.argument("ip")
-@click.argument("platform")
-@click.option("--os-version", type=str, help="The version of the platform installed on the machine")
-@click.option("--snapshot", type=str, help="A snapshot to use when restoring, other than the default snapshot.")
-@click.option("--interface", type=str, help="The network interface that should be used to create network dumps.")
-@click.option("--agent-port", type=int, default=8000, show_default=True, help="The TCP port of the agent running on the machine.")
-@click.option("--architecture", type=str, default="amd64", show_default=True, help="The OS architecture. Used to select correct stager and monitor builds.")
+@click.argument("machinery_name")
+@click.argument("machine_name")
+@click.argument("config_fields", nargs=-1)
 @click.option("--tags", default="", type=str, help="A comma separated list of tags that identify what dependencies/software is installed on the machine.")
-def machine_add(machinery, name, label, ip, platform, os_version, snapshot,
-                interface, architecture, tags, agent_port):
-    """Add a machine to a machinery configuration file."""
-    from .startup import add_machine, StartupError
-    try:
-        add_machine(
-            machinery, name=name, label=label, ip=ip, platform=platform,
-            os_version=os_version, snapshot=snapshot, interface=interface,
-            architecture=architecture, agent_port=agent_port,
-            tags=list(filter(None, [t.strip() for t in tags.split(",")]))
+def machine_add(machinery_name, machine_name, config_fields, tags):
+    """Add a machine to the configuration of the specified machinery.
+    config_fields be all non-optional configuration entries in key=value
+    format."""
+    if not config_fields:
+        exit_error(
+            f"No configuration fields specified. See the '{machinery_name}' "
+            f"machinery configuration file to determine what fields "
+            f"must be given"
         )
-        print_info(f"Added machine {name} to machinery {machinery}")
+
+    machine_dict = {
+        "tags": list(filter(None, [t.strip() for t in tags.split(",")]))
+    }
+    for entry in config_fields:
+        try:
+            key, value = tuple(filter(None, entry.split("=", 1)))
+            if key == "tags":
+                exit_error("Use --tags to provide tags")
+        except ValueError:
+            exit_error(
+                f"Invalid argument: {entry}. Each config field must be in "
+                f"key=value format."
+            )
+
+        machine_dict[key] = value
+
+    from cuckoo.common.startup import StartupError
+    from .startup import add_machine
+
+    try:
+        add_machine(machinery_name, machine_name, machine_dict)
+        print_info(
+            f"Added machine: '{machine_name}' to machinery: '{machinery_name}'"
+        )
     except StartupError as e:
-        exit_error(f"Failed to add machine. {e}")
+        exit_error(e)
+
+@machine.command("import")
+@click.argument("machinery_name")
+@click.argument("vms_path")
+@click.argument("machine_names", nargs=-1)
+def vmcloak_import(machinery_name, vms_path, machine_names):
+    """Import all or 'machine names' from the specified VMCloak vms path to the
+    specified machinery module."""
+    if not os.path.isdir(vms_path):
+        exit_error(f"'{vms_path}' is not a directory")
+
+    if not os.listdir(vms_path):
+        exit_error(f"'{vms_path}' is an empty directory")
+
+    from cuckoo.common.startup import StartupError
+    from .startup import import_vmcloak_vms
+    try:
+        imported = import_vmcloak_vms(machinery_name, vms_path, machine_names)
+    except StartupError as e:
+        exit_error(e)
+
+    if not imported:
+        print_warning("No machines imported. Is it the correct directory?")
+    else:
+        for name in imported:
+            print_info(
+                f"Imported machine: '{name}' to machinery '{machinery_name}'"
+            )
+
+@machine.command("delete")
+@click.argument("machinery_name")
+@click.argument("machine_names", nargs=-1)
+def delete_machines(machinery_name, machine_names):
+    """Delete the specified machines from the specified machinery names
+    configuration file."""
+    if not machine_names:
+        exit_error("No machines specified")
+
+    from cuckoo.common.startup import StartupError
+    from .startup import delete_machines
+    try:
+        deleted = delete_machines(machinery_name, machine_names)
+    except StartupError as e:
+        exit_error(e)
+
+    if not deleted:
+        print_warning("No machines deleted. Are the names correct?")
+    else:
+        for name in deleted:
+            print_info(f"Deleted machine: {name}")
 
 
 def _submit_files(settings, *targets):

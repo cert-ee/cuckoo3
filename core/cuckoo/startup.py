@@ -88,69 +88,38 @@ def make_scheduler(cuckooctx, task_queue):
     # Ensure schedule stop is always called second (after stop message)
     shutdown.register_shutdown(sched.stop, order=2)
 
-def add_machine(machinery_name, name, label, ip, platform, os_version="",
-                mac_address=None, interface=None, snapshot=None,
-                architecture=None, agent_port=None, tags=[]):
-    import cuckoo.machineries
-    import shutil
-    import tempfile
-    from cuckoo.common.config import load_config, render_config, load_values
+def import_vmcloak_vms(machinery_name, vms_path, machine_names=[]):
+    from cuckoo.machineries.configtools import import_vmcloak_machines
+    from cuckoo.machineries.errors import MachineryError
 
-    conf_name = f"{machinery_name}.yaml"
-    conf_path = Paths.config(conf_name, subpkg="machineries")
-    if not os.path.exists(conf_path):
-        raise StartupError(f"Configuration does not exist: {conf_path}")
+    if not os.path.isdir(vms_path):
+        raise StartupError(f"'{vms_path}' is not a directory")
 
-    conf_templates = get_conftemplates(cuckoo.machineries)
-
-    template_path = conf_templates.get(conf_name)
-    if not template_path:
-        raise StartupError(
-            f"Cannot render configuration. No configuration "
-            f"template for: {machinery_name}"
-        )
+    if not os.listdir(vms_path):
+        raise StartupError(f"'{vms_path}' is an empty directory")
 
     try:
-        loaders = load_config(
-            conf_path, subpkg="machineries", cache_config=False
-        )
-    except config.ConfigurationError as e:
-        raise StartupError(
-            f"Failed to load config file {conf_path}. {e}"
-        )
+        return import_vmcloak_machines(machinery_name, vms_path, machine_names)
+    except MachineryError as e:
+        raise StartupError(f"Import failed. {e}")
 
-    newmachine = {
-        name: {
-            "label": label,
-            "ip": ip,
-            "platform": platform,
-            "os_version": os_version,
-            "mac_address": mac_address,
-            "snapshot": snapshot,
-            "interface": interface,
-            "architecture": architecture,
-            "agent_port": agent_port,
-            "tags": tags
-        }
-    }
-    if name in loaders["machines"].value:
-        raise StartupError(f"Machine {name} already exists in {conf_name}.")
-
-    nested_loaders = loaders["machines"].make_typeloaders(newmachine)
+def delete_machines(machinery_name, machine_names):
+    from cuckoo.machineries.configtools import delete_machines
+    from cuckoo.machineries.errors import MachineryError
     try:
-        load_values(newmachine, nested_loaders)
-    except config.ConfigurationError as e:
-        raise StartupError(f"Configuration value error. {e}")
+        return delete_machines(machinery_name, machine_names)
+    except MachineryError as e:
+        raise StartupError(f"Failure during deletion. {e}")
 
-    loaders["machines"].value.update(nested_loaders)
+def add_machine(machinery_name, name, machine_dict):
+    from cuckoo.machineries.configtools import add_machine
+    from cuckoo.machineries.errors import MachineryError
 
-    tmpdir = tempfile.mkdtemp()
-    tmp_path = os.path.join(tmpdir, conf_name)
     try:
-        render_config(template_path, loaders, tmp_path)
-        shutil.move(tmp_path, conf_path)
-    finally:
-        shutil.rmtree(tmpdir)
+        add_machine(machinery_name, name, machine_dict)
+    except MachineryError as e:
+        raise StartupError(f"Failed to add machine. {e}")
+
 
 def start_importcontroller(cuckooctx):
     from .control import ImportController
