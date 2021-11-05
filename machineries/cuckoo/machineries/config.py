@@ -20,7 +20,9 @@ exclude_autoload = []
 typeloaders = {
     "kvm.yaml": {
         "dsn": config.String(default_val="qemu:///system"),
-        "interface": config.NetworkInterface(default_val="virbr0"),
+        "interface": config.NetworkInterface(
+            default_val="virbr0", must_be_up=False
+        ),
         "machines": config.NestedDictionary("example1", {
                 "label": config.String(default_val="example1"),
                 "ip": config.String(default_val="192.168.122.101"),
