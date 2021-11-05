@@ -41,7 +41,7 @@ class Machinery:
                     f"Cannot load machine {name}. It has IP {ip!r}, "
                     f"which already is used for another machine"
                 )
-            self.machines.append(self._make_machine(name, label))
+            self.machines.append(self._make_machine(name, values))
 
             labels.append(label)
             ips.append(ip)
