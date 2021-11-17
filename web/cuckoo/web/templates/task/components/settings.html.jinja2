@@ -3,14 +3,14 @@
     <body>
       <tr>
         <td class="has-text-right"><strong>Command</strong></td>
-        <td>{{ analysis.settings.command|join(', ') }}</td>
+        <td>{{ task.command|join(', ') }}</td>
       </tr>
       <tr>
         <td class="has-text-right"><strong>Route</strong></td>
         <td>
           {% if task.route %}
             {{ task.route.type }}
-            {% if  task.route.type == 'vpn' %}
+            {% if task.route.type == 'vpn' %}
               {% for k, v in task.route.options.items() %}
                 <span class="tag">{{k|capitalize}}: {{ v|capitalize }}</span>
               {% endfor %}
