@@ -21,6 +21,7 @@ class JSONDump(Reporter):
         self.max_ioc_size = cfg(
             "post.yaml", "signatures", "max_ioc_bytes", subpkg="processing"
         )
+
     def report_identification(self):
         selected = self.ctx.result.get("selected", {})
         info = {
@@ -38,6 +39,17 @@ class JSONDump(Reporter):
         include_result = [
             "virustotal", "static", "misp", "intelmq", "command"
         ]
+
+        # Pre might change settings such as launch args for specific chosen
+        # browser. In this case, the platforms list is changed. This means
+        # it must be updated/overwritten in analysis.json. We tell the
+        # state control component this by adding the platforms list to the
+        # pre report.
+        if self.ctx.analysis.settings.was_updated:
+            platforms = self.ctx.analysis.settings.platforms
+        else:
+            platforms = []
+
         static = {
             "analysis_id": self.ctx.analysis.id,
             "score": self.ctx.signature_tracker.score,
@@ -46,7 +58,8 @@ class JSONDump(Reporter):
             "category": self.ctx.analysis.category,
             "ttps": self.ctx.ttp_tracker.to_dict(),
             "tags": self.ctx.tag_tracker.tags,
-            "families": self.ctx.family_tracker.families
+            "families": self.ctx.family_tracker.families,
+            "platforms": platforms
         }
 
         for resultkey in include_result:

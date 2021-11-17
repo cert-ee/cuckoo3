@@ -140,15 +140,18 @@ def handle_pre_done(worktracker):
 
     pre = Pre.from_file(pre_path)
 
+    # Overwrite the analysis.settings.platforms list with one that was
+    # changed during the pre stage. Pre can add things such as launch commands
+    # to platforms.
+    if pre.platforms:
+        analyses.overwrite_platforms(analysis, pre.platforms)
+
     # Update analysis settings of the final target using information identified
     # during the identification phase.
-    analyses.merge_target_settings(analysis, pre.target)
+    analyses.determine_final_platforms(analysis, pre)
 
     # Set the final target in analysis.json
     analysis.target = pre.target
-
-    if not analysis.settings.command and pre.command:
-        analysis.settings.command = pre.command
 
     # Update analysis score, tags, and detected families
     worktracker.analysis.update_from_report(pre)

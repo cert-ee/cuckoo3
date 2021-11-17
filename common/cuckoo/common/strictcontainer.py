@@ -340,20 +340,23 @@ class Platform(StrictContainer):
         if not self._loaded["settings"]:
             self._loaded["settings"] = PlatformSettings()
 
+        # Ensure tags list is unique
+        self._loaded["tags"] = list(set(kwargs.get("tags", [])))
+
     def set_route(self, route):
-        self._loaded["settings"]["route"] = route
+        self._loaded["settings"].route = route
 
     def set_command(self, command):
         if not isinstance(command, list):
             raise TypeError("Command must be list or args")
 
-        self.settings["command"] = command
+        self._loaded["settings"].command = command
 
     def set_browser(self, browser):
         if not isinstance(browser, str):
             raise TypeError("Browser must be a string")
 
-        self.settings["browser"] = browser
+        self._loaded["settings"].browser = browser
 
     def __str__(self):
         s = f"Platform: {self.platform}"
@@ -365,6 +368,25 @@ class Platform(StrictContainer):
 
         return s
 
+def _make_platforms_list(platform_dict_list):
+    if not platform_dict_list:
+        return []
+
+    platform_objs = []
+    # The platforms list should always be either a list of dicts
+    # or a list of Platform objects.
+    for plat in platform_dict_list:
+        if isinstance(plat, dict):
+            platform_objs.append(Platform(**plat))
+        elif isinstance(plat, Platform):
+            platform_objs.append(plat)
+        else:
+            raise TypeError(
+                f"Platform dict must be a dictionary, got: {type(plat)}. "
+                f"Value: {plat}"
+            )
+
+    return platform_objs
 
 class Settings(StrictContainer):
 
@@ -387,19 +409,9 @@ class Settings(StrictContainer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        platforms = self._loaded["platforms"]
-
-        # The platforms list should always be either a list of dicts
-        # or a list of Platform objects. Assume the entire list will be of the
-        # same type as the first one.
-        if not platforms or not isinstance(platforms[0], dict):
-            return
-
-        # Create a list of Platform objects if the platforms list is a
-        # list of dictionaries.
-        self._loaded["platforms"] = [
-            Platform(**plat_dict) for plat_dict in self._loaded["platforms"]
-        ]
+        self._loaded["platforms"] = _make_platforms_list(
+            kwargs.get("platforms", [])
+        )
 
     def to_dict(self):
         d = super().to_dict()
@@ -525,10 +537,25 @@ class Pre(StrictContainer):
         "signatures": list,
         "target": (TargetFile, TargetURL),
         "category": str,
-        "command": list,
+        "command": dict,
+        "platforms": list,
         "errors": Errors
     }
-    ALLOW_EMPTY = ("errors", "signatures", "command")
+    ALLOW_EMPTY = ("errors", "signatures", "command", "platforms")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._loaded["platforms"] = _make_platforms_list(
+            kwargs.get("platforms", [])
+        )
+
+    def to_dict(self):
+        d = super().to_dict()
+        d["platforms"] = [
+            p.to_dict() if isinstance(p, StrictContainer) else p
+            for p in self.platforms
+        ]
+        return d
 
 class Post(StrictContainer):
 

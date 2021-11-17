@@ -201,96 +201,152 @@ def track_imported(analysis):
     finally:
         ses.close()
 
-def merge_target_settings(analysis, target):
+def overwrite_platforms(analysis, platforms):
+    analysis.update_settings(platforms=platforms)
+
+def _update_existing_platforms(analysis, pre):
+    """Update an existing platform list with machine tags if auto tagging
+    is enabled. Does not modify the start command. For existing platforms this
+    is already done in the pre processing stage."""
+    if not cfg("cuckoo", "platform", "autotag"):
+        return analysis.settings.platforms
+
+    if not pre.target.machine_tags:
+        return analysis.settings.platforms
+
+    for platform in analysis.settings.platforms:
+        # Add automatically determined (dependency) machine tags for each
+        # platform.
+        platform.tags.extend(pre.target.machine_tags)
+
+        # Ensure tags list is unique.
+        platform.tags = list(set(platform.tags))
+
+    return analysis.settings.platforms
+
+def _platforms_from_target(analysis, pre):
+    """Determine one or more platforms to create tasks for by using the
+    identified platforms the target can run on. Use the pre command map to
+    determine how a target should be started for a specific platform."""
+    autotag = cfg("cuckoo", "platform", "autotag")
+    versions_dict = cfg("analysissettings", "platform", "versions")
+    allowed_multi = cfg("analysissettings", "platform", "multi_platform")
+
     browser_tag = ""
     if analysis.settings.browser:
         browser_tag = browser_to_tag(analysis.settings.browser)
 
-    autotag = cfg("cuckoo", "platform", "autotag")
+    # See if we should add a platform for each identified potential platform
+    # for this target.
+    auto_platforms = []
+    for target_platform in pre.target.platforms:
+        # In case multiple potential platforms are identified, only choose
+        # those that are in the 'multi_platform' setting of the analysis
+        # settings.
+        if len(pre.target.platforms) > 1:
+            if target_platform["platform"] not in allowed_multi:
+                continue
+
+        platform_copy = deepcopy(target_platform)
+        platform_copy["tags"] = []
+        # Add a browser tag for the analysis settings browser if no
+        # platform browser was chosen.
+        if browser_tag:
+            platform_copy["tags"].append(browser_tag)
+
+        if autotag and pre.target.machine_tags:
+            platform_copy["tags"].extend(pre.target.machine_tags)
+
+        # Create a platform entry for each specified platform version in
+        # analysis settings. Otherwise just create an entry without a version.
+        if platform_copy["platform"] in versions_dict:
+            for version in versions_dict[platform_copy["platform"]]:
+                version_copy = deepcopy(platform_copy)
+                version_copy["os_version"] = version
+                platform_obj = Platform(**version_copy)
+                # Set the command to the automatically determined launch
+                # command for the specific platform
+                platform_obj.set_command(
+                    pre.command.get(platform_obj.platform, [])
+                )
+                auto_platforms.append(platform_obj)
+        else:
+            platform_obj = Platform(**platform_copy)
+            # Set the command to the automatically determined launch
+            # command for the specific platform
+            platform_obj.set_command(
+                pre.command.get(platform_obj.platform, [])
+            )
+            auto_platforms.append(platform_obj)
+
+    return auto_platforms
+
+def _get_fallback_platforms(analysis, pre):
+    """Uses the fallback platform settings and versions to determine one or
+    more platforms to create tasks for. Use the pre command map to
+    determine how a target should be started for a specific platform."""
+    fallback_platforms = cfg(
+        "analysissettings", "platform", "fallback_platforms"
+    )
     versions_dict = cfg("analysissettings", "platform", "versions")
+    browser_tag = ""
+    if analysis.settings.browser:
+        browser_tag = browser_to_tag(analysis.settings.browser)
 
-    # Merge target settings with submission specific platform settings
+    settings_platforms = []
+    for fallback_platform in fallback_platforms:
+        versions = versions_dict.get(fallback_platform)
+        if not versions:
+            platform_obj = Platform(
+                platform=fallback_platform,
+                tag=[] if not browser_tag else [browser_tag]
+            )
+            # Set the command to the automatically determined launch
+            # command for the specific platform
+            platform_obj.set_command(
+                pre.command.get(platform_obj.platform, [])
+            )
+            settings_platforms.append(platform_obj)
+        else:
+            # Create a platform entry for each version of the fallback platform
+            for os_version in versions:
+                platform_obj = Platform(
+                    platform=fallback_platform, os_version=os_version,
+                    tag=[] if not browser_tag else [browser_tag]
+                )
+                # Set the command to the automatically determined launch
+                # command for the specific platform
+                platform_obj.set_command(
+                    pre.command.get(platform_obj.platform, [])
+                )
+                settings_platforms.append(platform_obj)
+
+    for platform in settings_platforms:
+        log.debug(
+            "No platform given or identified. Using fallback_platform",
+            analysis_id=analysis.id, platform=platform.platform,
+            os_version=platform.os_version
+        )
+
+    return settings_platforms
+
+def determine_final_platforms(analysis, pre):
+    """Determine and set the final platforms list that will be used to
+    create tasks for an analysis."""
+    # Merge target settings with submission existing specified platform
+    # settings
     if analysis.settings.platforms:
-
-        for platform in analysis.settings.platforms:
-
-            # Only add identified dependency tags if auto tag is enabled.
-            if autotag and target.machine_tags:
-                platform.tags.extend(target.machine_tags)
-
-            # Ensure tags list is unique.
-            platform.tags = list(set(platform.tags))
-
-        analysis.update_settings(platforms=analysis.settings.platforms)
-
+        platforms = _update_existing_platforms(analysis, pre)
     # Choose one or more platforms based on identified platform(s). This is
     # done when no platforms are supplied on submission.
-    elif target.platforms:
-        # Only use the platforms specified in the config if more than one
-        # platform was identified during the identification phase.
-        allowed_multi = cfg("analysissettings", "platform", "multi_platform")
-        all_identified = target.platforms
-
-        settings_platforms = []
-
-        for platform in all_identified:
-            if len(all_identified) > 1:
-                if platform["platform"] not in allowed_multi:
-                    continue
-
-            platform_copy = deepcopy(platform)
-            platform_copy["tags"] = []
-            # Add a browser tag for the analysis settings browser if no
-            # platform browser was chosen.
-            if browser_tag:
-                platform_copy["tags"].append(browser_tag)
-
-            if autotag and target.machine_tags:
-                platform_copy["tags"].extend(target.machine_tags)
-
-            if platform["platform"] in versions_dict:
-                for version in versions_dict[platform["platform"]]:
-                    version_copy = deepcopy(platform_copy)
-                    version_copy["os_version"] = version
-                    settings_platforms.append(Platform(**version_copy))
-            else:
-                settings_platforms.append(Platform(**platform_copy))
-
-        analysis.update_settings(platforms=settings_platforms)
-
+    elif pre.target.platforms:
+        platforms = _platforms_from_target(analysis, pre)
     # Use the default platform from the settings. This is done when no
     # platform is supplied on submission and no platform is identified.
     else:
-        fallback_platforms = cfg(
-            "analysissettings", "platform", "fallback_platforms"
-        )
-        settings_platforms = []
+        platforms = _get_fallback_platforms(analysis, pre)
 
-        for fallback_platform in fallback_platforms:
-
-            versions = versions_dict.get(fallback_platform)
-            if not versions:
-                settings_platforms.append(Platform(
-                    platform=fallback_platform,
-                    tag=[] if not browser_tag else [browser_tag]
-                ))
-            else:
-                for os_version in versions:
-                    settings_platforms.append(
-                        Platform(
-                            platform=fallback_platform, os_version=os_version,
-                            tag=[] if not browser_tag else [browser_tag]
-                        )
-                    )
-
-        for platform in settings_platforms:
-            log.debug(
-                "No platform given or identified. Using fallback_platform",
-                analysis_id=analysis.id, platform=platform.platform,
-                os_version=platform.os_version
-            )
-
-        analysis.update_settings(platforms=settings_platforms)
+    overwrite_platforms(analysis, platforms)
 
 def merge_errors(analysis, error_container):
     if analysis.errors:

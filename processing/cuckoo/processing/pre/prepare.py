@@ -126,8 +126,8 @@ class DetermineTarget(Processor):
 
         extrpath = self.ctx.analysis.settings.extrpath
         if not extrpath:
-            # Do not use the identified filename/extension for the selected file
-            # if the orig_filename setting is set to True.
+            # Do not use the identified filename/extension for the selected
+            # file if the orig_filename setting is set to True.
             if self.ctx.analysis.settings.orig_filename:
                 name = self.ctx.identification.target.orig_filename
                 self.ctx.identification.target.filename = name
