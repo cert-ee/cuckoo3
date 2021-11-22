@@ -266,29 +266,38 @@ def _submit_urls(settings, *targets):
             yield None, url, e
 
 def _parse_settings(**kwargs):
-    kv_options = ("option", "route_option")
+    """Transform and yield (per platform) settings to a format that the
+    settings helper can use."""
+    kv_options = ("options", "route_option")
     for kw, vals in kwargs.items():
         for val in vals:
-
+            val = val.strip()
             plat_index = None
             value = None
             split = val.split(",", 1)
+            # If comma separated and the first value is an integer
+            # this should be the index of one of the '--platform' parameters.
+            # This means the setting is for that platform.
             if len(split) == 2:
-                if split[0].isdigit():
-                    plat_index = int(split[0]) - 1
-                    value = split[1]
+                idx = split[0].strip()
+                if idx.isdigit():
+                    plat_index = int(idx)
+                    value = split[1].strip()
                 else:
+                    # Use the original unsplit version as it is not a valid
+                    # specified platform and the entire value might be needed.
                     value = val
             elif len(split) == 1:
-                value = split[0]
+                value = split[0].strip()
 
             if kw in kv_options:
                 try:
                     option, val = value.split("=", 1)
-                    value = {option:val}
+                    value = {option: val}
                 except ValueError:
                     yield None, None, None, \
-                          f"Invalid option value for {kw}. {val!r}"
+                          f"Invalid option value for {kw}. {val!r}. " \
+                          f"Format must be key=value."
 
             yield plat_index, kw, value, None
 
@@ -299,19 +308,26 @@ def _parse_settings(**kwargs):
 @click.option(
     "--platform", multiple=True,
     help="The platform and optionally the OS version the analysis task must "
-         "run on. Specified as platform,osversion or just platform."
+         "run on. Specified as platform,osversion or just platform. "
+         "Use <index of param>,value to specific browser, command, and route settings."
 )
 @click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds.")
 @click.option("--priority", type=int, default=1, help="The priority of this analysis.")
 @click.option("--orig-filename", is_flag=True, help="Ignore auto detected file extension and use the original file extension.")
-@click.option("--browser",  multiple=True, help="The browser to use for a URL analysis.")
+@click.option("--browser",  multiple=True, help="The browser to use for a URL analysis. (Supports per platform configuration).")
 @click.option("--command", multiple=True, help="The command/args that should be used to start the target. Enclose in quotes. "
-                                "Use %PAYLOAD% where the target should be in the command.")
-@click.option("--route-type", multiple=True, help="The route type to use.")
-@click.option("--route-option", multiple=True, help="Options for given routes")
+                                "Use %PAYLOAD% where the target should be in the command. (Supports per platform configuration)")
+@click.option("--route-type", multiple=True, help="The route type to use. (Supports per platform configuration)")
+@click.option("--route-option", multiple=True, help="Option for given route. Key=value format. (Supports per platform configuration)")
+@click.option("--option", multiple=True, help="Option for the analysis. Key=value format.")
 def submission(target, url, platform, timeout, priority, orig_filename,
-               browser, command, route_type, route_option):
-    """Create a new file/url analysis"""
+               browser, command, route_type, route_option, option):
+    """Create a new file/url analysis. Use index,value of the used --platform
+    parameter to specify a platform specific setting. No index given means the
+    setting is the default for all platforms.
+
+
+    E.G: --platform windows --browser 0,browsername"""
     if not target:
         exit_error("No target specified")
 
@@ -360,7 +376,7 @@ def submission(target, url, platform, timeout, priority, orig_filename,
 
         for platform_index, setting_key, value, error in _parse_settings(
             browser=browser, command=command, route_type=route_type,
-            route_option=route_option
+            route_option=route_option, options=option
         ):
             if error:
                 raise submit.SubmissionError(error)

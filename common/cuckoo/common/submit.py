@@ -194,7 +194,8 @@ class SettingsHelper:
             "browser": self.set_browser,
             "command": self.set_command,
             "password": self.set_password,
-            "orig_filename": self.set_orig_filename
+            "orig_filename": self.set_orig_filename,
+            "options": self.add_options
         }
 
     def set_timeout(self, timeout):
@@ -217,6 +218,24 @@ class SettingsHelper:
             raise SubmissionError("Manual must be a boolean")
 
         self._settings["manual"] = manual
+
+    def add_option(self, key, value):
+        if not isinstance(key, str):
+            raise SubmissionError(
+                f"Option keys must be strings. {key!r} is {type(key)}"
+            )
+
+        self._settings["options"][key] = value
+
+    def add_options(self, options):
+        if not options:
+            return
+
+        if not isinstance(options, dict):
+            raise SubmissionError("Options must be a dictionary")
+
+        for k, v in options.items():
+            self.add_option(k, v)
 
     def _check_browser(self, browser):
         if not isinstance(browser, str):
