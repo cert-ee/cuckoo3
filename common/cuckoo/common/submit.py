@@ -21,12 +21,46 @@ from .storage import File, Binaries, Paths, AnalysisPaths, make_analysis_folder
 from .strictcontainer import (
     Analysis, SubmittedFile, SubmittedURL, Platform, Route
 )
-from .utils import force_valid_encoding, browser_to_tag
+from .utils import force_valid_encoding, browser_to_tag, parse_bool
 
 log = CuckooGlobalLogger(__name__)
 
 class SubmissionError(Exception):
     pass
+
+class OptionsReader:
+
+    # Option name: (type, reader func/cast class, can have children)
+    KNOWN_OPTIONS = {
+        "disablemonitor": (bool, parse_bool, False),
+        "disableaux": (bool, parse_bool, True)
+    }
+
+    @classmethod
+    def read_value(cls, key, value):
+        dtype, type_reader, _ = cls.KNOWN_OPTIONS.get(key, (None, None, None))
+        if not dtype:
+            if "." not in key:
+                return value
+
+            for opt, vals in cls.KNOWN_OPTIONS.items():
+                # Can it have child options?
+                if not vals[2]:
+                    continue
+
+                if key.startswith(opt):
+                    dtype, type_reader, _ = vals
+                    break
+
+        if not dtype:
+            return value
+
+        try:
+            return type_reader(value)
+        except (ValueError, TypeError):
+            raise SubmissionError(
+                f"Option {key!r} must be of type: {dtype.__name__}"
+            )
 
 
 def _write_analysis(analysis_id, settings, target_strictcontainer):
@@ -225,7 +259,7 @@ class SettingsHelper:
                 f"Option keys must be strings. {key!r} is {type(key)}"
             )
 
-        self._settings["options"][key] = value
+        self._settings["options"][key] = OptionsReader.read_value(key, value)
 
     def add_options(self, options):
         if not options:
