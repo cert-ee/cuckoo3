@@ -143,21 +143,8 @@
   </div>
 
   <div class="field has-margin-x" hidden>
-    <div class="control is-checkable">
-      <input type="checkbox" id="disablemonitor" name="disablemonitor" checked />
-      <label for="disablemonitor">Disable behavioral tracking</label>
-      <p class="has-text-small has-half-opacity no-margin-bottom">
-        <span class="icon">
-          <i class="fas fa-info-circle"></i>
-        </span>
-        Disable monitoring behavior
-      </p>
-    </div>
-  </div>
-
-  <div class="field has-margin-x" hidden>
     <div class="control">
-      <label for="command" class="label">Launch commands:</label>
+      <label for="command" class="label">Launch command:</label>
       <div class="control">
         <input class="input" type="text" name="command" id="command" />
       </div>
@@ -166,6 +153,19 @@
           <i class="fas fa-info-circle"></i>
         </span>
         Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
+      </p>
+    </div>
+  </div>
+
+  <div class="field has-margin-x" hidden>
+    <div class="control is-checkable">
+      <input type="checkbox" id="disablemonitor" name="disablemonitor" checked />
+      <label for="disablemonitor">Disable behavioral tracking</label>
+      <p class="has-text-small has-half-opacity no-margin-bottom">
+        <span class="icon">
+          <i class="fas fa-info-circle"></i>
+        </span>
+        Disable monitoring behavior
       </p>
     </div>
   </div>
