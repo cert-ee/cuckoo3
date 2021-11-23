@@ -159,9 +159,9 @@
 
   <div class="field has-margin-x">
 
-    <label for="command" class="label">Custom options:</label>
+    <label for="key-custom" class="label">Custom options:</label>
 
-    <table class="key-value-fields">
+    <table class="key-value-fields" id="custom-options">
       <thead>
         <tr>
           <th>Key</th>
@@ -170,49 +170,23 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="field-key">Custom key</td>
-          <td class="field-value">Custom value</td>
-          <td>
-            <button type="button" class="button is-small is-red">
-              <i class="fas fa-times"></i>
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td class="field-key">Custom key</td>
-          <td class="field-value">Custom value</td>
-          <td>
-            <button type="button" class="button is-small is-red">
-              <i class="fas fa-times"></i>
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td class="field-key">Custom key</td>
-          <td class="field-value">Custom value</td>
-          <td>
-            <button type="button" class="button is-small is-red">
-              <i class="fas fa-times"></i>
-            </button>
-          </td>
-        </tr>
+
       </tbody>
       <!-- type-ahead fields -->
       <tfoot>
         <tr>
           <td class="field-key">
             <div class="control">
-              <input type="text" class="input" placeholder="Key" />
+              <input type="text" class="input" placeholder="Key" id="key-custom" />
             </div>
           </td>
           <td class="field-value">
             <div class="control">
-              <input type="text" class="input" placeholder="Value" />
+              <input type="text" class="input" placeholder="Value" id="value-custom" />
             </div>
           </td>
           <td>
-            <button type="button" class="button is-small is-green">
+            <button type="button" class="button is-small is-green" id="add-custom">
               <i class="fas fa-plus"></i>
             </button>
           </td>

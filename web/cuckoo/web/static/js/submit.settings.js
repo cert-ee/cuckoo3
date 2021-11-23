@@ -96,7 +96,9 @@
           }
         });
       }
-
+      get options() {
+        return JSON.parse(document.querySelector('#custom-options').dataset.value || '{}');
+      }
       // returns object populated with field values
       serialize() {
         let ret = {
@@ -105,7 +107,8 @@
           command: this.command,
           orig_filename: this.orig_filename,
           route: this.route,
-          platforms: this.platforms
+          platforms: this.platforms,
+          options: this.options
         }
         switch(category) {
           case "file":
@@ -447,6 +450,90 @@
 
   }
 
+  // handles custom options field interactions
+  function customOptionsHandler() {
+
+    const elem = document.querySelector('#custom-options');
+    if(!elem) {
+      console.info('not initializing custom options because the element is not on this page.');
+      return false;
+    };
+
+    const entries     = [];
+    const customBody  = elem.querySelector('tbody');
+    const customKey   = elem.querySelector('input#key-custom');
+    const customValue = elem.querySelector('input#value-custom');
+    const customAdd   = elem.querySelector('button#add-custom');
+
+    const template = (data={}) => parseDOM(`
+      <table>
+        <tr data-id="${data.id}">
+          <td class="field-key">${lib.SafeString(data.key)}</td>
+          <td class="field-value">${lib.SafeString(data.value)}</td>
+          <td>
+            <button type="button" class="button is-small is-red">
+              <i class="fas fa-times"></i>
+            </button>
+          </td>
+        </tr>
+      </table>
+    `).querySelector('tr');
+
+    function writeEntries() {
+      let result = {};
+      for(let e in entries) {
+        result[entries[e].key] = entries[e].value;
+      }
+      elem.dataset.value = JSON.stringify(result);
+    }
+
+    function addRow(key, value) {
+
+      if(!key || !value)
+        return;
+
+      const id = Math.random().toString(16).substr(2, 8);
+      const data = { key, value, id };
+      const tmpl = template(data);
+      customBody.appendChild(tmpl);
+
+      tmpl.querySelector('button').addEventListener('click', () => {
+        tmpl.remove();
+        let entryIndex = entries.map(e => e.id).indexOf(id);
+        entries.splice(entryIndex, 1);
+        writeEntries();
+      });
+
+      entries.push(data);
+      writeEntries();
+
+    }
+
+    customAdd.addEventListener('click', ev => {
+      addRow(customKey.value, customValue.value);
+      customKey.value   = '';
+      customValue.value = '';
+      customKey.focus();
+    });
+
+    [customKey, customValue].forEach(el => {
+      el.addEventListener('keypress', ev => {
+        if(ev.keyCode === 13) {
+          if(customKey.value.length == 0) {
+            customKey.focus();
+            return;
+          }
+          if(customValue.value.length == 0) {
+            customValue.focus();
+            return;
+          }
+          customAdd.dispatchEvent(new Event('click'));
+        }
+      });
+    })
+
+  }
+
   // sends a PUT request to the settings api to conclude and finalize the
   // submission and proceed to analysis
   function finishSubmission() {
@@ -480,6 +567,7 @@
     platformHandler();
     customTimeoutHandler();
     routingHandler();
+    customOptionsHandler();
     finish.addEventListener('click', ev => {
       finishSubmission();
     });
