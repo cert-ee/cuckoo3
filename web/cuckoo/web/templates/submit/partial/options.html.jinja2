@@ -129,7 +129,7 @@
 
   <a class="button is-beveled has-margin-x" onclick="toggleVisibility(this.parentNode.querySelectorAll('.field'));">Toggle extra options</a>
 
-  <div class="field has-margin-x">
+  <div class="field has-margin-x" hidden>
     <div class="control is-checkable">
       <input type="checkbox" id="orig-filename" name="orig-filename" {% if default_settings.orig_filename is defined and default_settings.orig_filename == True %}checked{% endif %} />
       <label for="orig-filename">Use original filename</label>
@@ -142,7 +142,20 @@
     </div>
   </div>
 
-  <div class="field has-margin-x">
+  <div class="field has-margin-x" hidden>
+    <div class="control is-checkable">
+      <input type="checkbox" id="disablemonitor" name="disablemonitor" checked />
+      <label for="disablemonitor">Disable behavioral tracking</label>
+      <p class="has-text-small has-half-opacity no-margin-bottom">
+        <span class="icon">
+          <i class="fas fa-info-circle"></i>
+        </span>
+        Disable monitoring behavior
+      </p>
+    </div>
+  </div>
+
+  <div class="field has-margin-x" hidden>
     <div class="control">
       <label for="command" class="label">Launch commands:</label>
       <div class="control">
@@ -157,10 +170,8 @@
     </div>
   </div>
 
-  <div class="field has-margin-x">
-
+  <div class="field has-margin-x" hidden>
     <label for="key-custom" class="label">Custom options:</label>
-
     <table class="key-value-fields" id="custom-options">
       <thead>
         <tr>
@@ -169,10 +180,7 @@
           <th>&nbsp;</th>
         </tr>
       </thead>
-      <tbody>
-
-      </tbody>
-      <!-- type-ahead fields -->
+      <tbody></tbody>
       <tfoot>
         <tr>
           <td class="field-key">
@@ -200,5 +208,4 @@
       Add extra custom options.
     </p>
   </div>
-
 </div>

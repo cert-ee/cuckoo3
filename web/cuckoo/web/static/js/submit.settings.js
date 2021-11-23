@@ -37,6 +37,7 @@
       get priority() { return parseInt(getElement('select[name="priority"]').value); }
       get command() { return getElement('input[name="command"]').value; }
       get orig_filename() { return getElement('input[name="orig-filename"]').checked }
+      get disable_monitor() { return getElement('input[name="disablemonitor"]').checked }
       get browser() { return category == "url" ? getElement('select[name="browser"]').value : null; }
       get route() {
         let ret = {};
@@ -108,7 +109,10 @@
           orig_filename: this.orig_filename,
           route: this.route,
           platforms: this.platforms,
-          options: this.options
+          options: {
+            disablemonitor: this.disable_monitor,
+            ...this.options
+          }
         }
         switch(category) {
           case "file":
