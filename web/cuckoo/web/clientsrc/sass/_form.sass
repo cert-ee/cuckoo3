@@ -197,3 +197,43 @@
       background-color: $white
       &:hover
         cursor: not-allowed
+
+.key-value-fields
+  width: 100%
+  border-collapse: collapse
+
+  th
+    @extend .label
+    display: table-cell
+    text-align: left
+
+  tbody td:not(:last-child),
+  thead th:not(:last-child)
+    padding: $gap/2
+
+  tbody tr:hover td
+    background-color: $light
+    +dark-mode
+      background-color: $dark
+
+  tbody tr:not(:last-child) td
+    border-bottom: .0625rem solid $border
+    +dark-mode
+      border-bottom-color: $border-dark
+
+  .button
+    display: block
+    width: 100%
+
+  tfoot
+    text-align: center
+    .field-key
+      padding-right: 0
+    .field-value
+      padding-left: 0
+    td.field-key .control .input
+      border-top-right-radius: 0
+      border-bottom-right-radius: 0
+    td.field-value .control .input
+      border-top-left-radius: 0
+      border-bottom-left-radius: 0

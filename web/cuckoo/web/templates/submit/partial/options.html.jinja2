@@ -129,7 +129,7 @@
 
   <a class="button is-beveled has-margin-x" onclick="toggleVisibility(this.parentNode.querySelectorAll('.field'));">Toggle extra options</a>
 
-  <div class="field has-margin-x" hidden>
+  <div class="field has-margin-x">
     <div class="control is-checkable">
       <input type="checkbox" id="orig-filename" name="orig-filename" {% if default_settings.orig_filename is defined and default_settings.orig_filename == True %}checked{% endif %} />
       <label for="orig-filename">Use original filename</label>
@@ -142,7 +142,7 @@
     </div>
   </div>
 
-  <div class="field has-margin-x" hidden>
+  <div class="field has-margin-x">
     <div class="control">
       <label for="command" class="label">Launch commands:</label>
       <div class="control">
@@ -155,6 +155,76 @@
         Command that is used to launch the target. Use <span data-click-to-copy class="is-monospace has-text-red">%PAYLOAD%</span> where the target name should be on launch
       </p>
     </div>
+  </div>
+
+  <div class="field has-margin-x">
+
+    <label for="command" class="label">Custom options:</label>
+
+    <table class="key-value-fields">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="field-key">Custom key</td>
+          <td class="field-value">Custom value</td>
+          <td>
+            <button type="button" class="button is-small is-red">
+              <i class="fas fa-times"></i>
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td class="field-key">Custom key</td>
+          <td class="field-value">Custom value</td>
+          <td>
+            <button type="button" class="button is-small is-red">
+              <i class="fas fa-times"></i>
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td class="field-key">Custom key</td>
+          <td class="field-value">Custom value</td>
+          <td>
+            <button type="button" class="button is-small is-red">
+              <i class="fas fa-times"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+      <!-- type-ahead fields -->
+      <tfoot>
+        <tr>
+          <td class="field-key">
+            <div class="control">
+              <input type="text" class="input" placeholder="Key" />
+            </div>
+          </td>
+          <td class="field-value">
+            <div class="control">
+              <input type="text" class="input" placeholder="Value" />
+            </div>
+          </td>
+          <td>
+            <button type="button" class="button is-small is-green">
+              <i class="fas fa-plus"></i>
+            </button>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    <p class="has-text-small has-half-opacity no-margin-bottom">
+      <span class="icon">
+        <i class="fas fa-info-circle"></i>
+      </span>
+      Add extra custom options.
+    </p>
   </div>
 
 </div>
