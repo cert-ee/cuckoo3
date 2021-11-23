@@ -110,10 +110,13 @@
           route: this.route,
           platforms: this.platforms,
           options: {
-            disablemonitor: this.disable_monitor,
             ...this.options
           }
         }
+
+        if(this.disable_monitor === true)
+          ret.options.disablemonitor = this.disable_monitor;
+        
         switch(category) {
           case "file":
             ret.fileid = this.fileid;
