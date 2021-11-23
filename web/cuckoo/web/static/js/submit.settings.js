@@ -24,7 +24,14 @@
     return new class SubmitOptions {
 
       // getters for the various DOM fields
-      get fileid() { return category == "file" ? getElement('input[name="selected-file"]:checked').value : null;  }
+      get fileid() {
+        if(category !== "file") return null;
+        const selected = getElement('input[name="selected-file"]:checked');
+        if(selected)
+          return selected.value;
+        else
+          return false;
+      }
       get timeout() {
         const checkedOption = getElement('input[name="timeout"]:checked');
         let ret = parseInt(checkedOption.value);
@@ -116,7 +123,7 @@
 
         if(this.disable_monitor === true)
           ret.options.disablemonitor = this.disable_monitor;
-        
+
         switch(category) {
           case "file":
             ret.fileid = this.fileid;
@@ -547,6 +554,9 @@
 
     if(!analysis_id)
       return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
+
+    if(category == "file" && !Model.fileid)
+      return handleError('No file selected. Select a file from the tree and try again.');
 
     fetch('/api/analyses/'+analysis_id+'/settings', {
       method: 'PUT',
