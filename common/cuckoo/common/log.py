@@ -30,6 +30,12 @@ WARNINGSONLY = [
 VERBOSE = logging.DEBUG - 1
 _VERBOSE_ENABLED = False
 
+_initialized = False
+
+def set_initialized():
+    global _initialized
+    _initialized = True
+
 def name_to_level(name):
     name = name.upper()
     if name == "verbose":
@@ -106,19 +112,6 @@ class ColorText:
     @staticmethod
     def bold(text):
         return ColorText.color(text, 1)
-
-def print_info(msg):
-    print(ColorText.green(force_valid_encoding(msg)))
-
-def print_warning(msg):
-    print(ColorText.yellow(force_valid_encoding(msg)))
-
-def print_error(msg):
-    print(ColorText.red(force_valid_encoding(msg)))
-
-def exit_error(msg):
-    sys.exit(ColorText.red(force_valid_encoding(msg)))
-
 
 _level = logging.INFO
 
@@ -557,3 +550,20 @@ class AnalysisLogger(_KeyBasedFileLogger):
 
     def make_logfile_path(self):
         return AnalysisPaths.analysislog(self.key)
+
+log = CuckooGlobalLogger(__name__)
+
+def print_info(msg):
+    print(ColorText.green(force_valid_encoding(msg)))
+
+def print_warning(msg):
+    print(ColorText.yellow(force_valid_encoding(msg)))
+
+def print_error(msg):
+    print(ColorText.red(force_valid_encoding(msg)))
+
+def exit_error(msg):
+    msg = force_valid_encoding(msg)
+    if _initialized:
+        log.error(msg)
+    sys.exit(ColorText.red(msg))
