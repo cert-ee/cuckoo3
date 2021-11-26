@@ -14,7 +14,9 @@ from cuckoo.common.ipc import (
 )
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
-from cuckoo.common.startup import init_global_logging, load_configurations
+from cuckoo.common.startup import (
+    init_global_logging, load_configurations, StartupError
+)
 from cuckoo.common.storage import Paths, cuckoocwd
 from cuckoo.common import shutdown
 from cuckoo.processing import abtracts
@@ -108,7 +110,13 @@ class WorkReceiver(UnixSocketServer):
                 "Missing configuration file.", error=e, includetrace=False
             )
 
-        self.initialize_workrunners()
+        try:
+            self.initialize_workrunners()
+        except StartupError as e:
+            log.fatal_error(
+                "Error during work runner initialization",
+                worker=self.name, error=e, includetrace=False
+            )
 
         self.create_socket(backlog=1)
         self.start_accepting()

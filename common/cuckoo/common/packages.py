@@ -36,6 +36,9 @@ def find_cuckoo_packages():
 
     return found
 
+def get_module(name):
+    return import_module(name)
+
 def get_data_dir(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
         raise NotACuckooPackageError(

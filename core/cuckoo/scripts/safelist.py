@@ -4,9 +4,10 @@
 import click
 from tabulate import tabulate
 
-from cuckoo.common.storage import cuckoocwd, Paths
+from cuckoo.common.storage import cuckoocwd
 from cuckoo.common import safelist
 from cuckoo.common.log import exit_error, print_info
+from cuckoo.common.startup import init_safelist_db, MigrationNeededError
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
@@ -24,10 +25,11 @@ def main(ctx, cwd):
         )
 
     cuckoocwd.set(cwd)
-    safelist.safelistdb.initialize(
-        f"sqlite:///{Paths.safelist_db()}",
-        tablebaseclass=safelist.SafelistTable
-    )
+    try:
+        init_safelist_db()
+    except MigrationNeededError as e:
+        exit_error(e)
+
     if ctx.invoked_subcommand:
         return
 

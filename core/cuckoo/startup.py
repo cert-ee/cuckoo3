@@ -8,7 +8,7 @@ from threading import Thread
 
 from cuckoo.common import config, shutdown
 from cuckoo.common.log import CuckooGlobalLogger
-from cuckoo.common.startup import StartupError
+from cuckoo.common.startup import StartupError, MigrationNeededError
 from cuckoo.common.storage import Paths, UnixSocketPaths, cuckoocwd
 
 from .scheduler import NodesTracker
@@ -50,10 +50,12 @@ def start_processing_handler(cuckooctx):
         if cuckooctx.processing_handler.setup_finished():
             break
 
-        time.sleep(1)
+        if cuckooctx.processing_handler.has_failed_workers():
+            raise StartupError(
+                "One or more processing workers failed to start"
+            )
 
-    if cuckooctx.processing_handler.has_failed_workers():
-        raise StartupError("One or more processing workers failed to start")
+        time.sleep(1)
 
 def start_statecontroller(cuckooctx):
     from .control import StateController
@@ -267,6 +269,15 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
 
     return remotes_nodes, wrapper
 
+def make_task_queue():
+    from cuckoo.common.db import DatabaseMigrationNeeded
+    from .taskqueue import TaskQueue
+
+    try:
+        return TaskQueue(Paths.queuedb())
+    except DatabaseMigrationNeeded as e:
+        raise MigrationNeededError(e, "Task queue database (taskqueuedb)")
+
 def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
     set_start_method("spawn")
@@ -274,7 +285,6 @@ def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
-    from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
@@ -303,7 +313,7 @@ def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     start_resultretriever(cuckooctx, api_clients)
 
     log.debug("Initializing task queue")
-    task_queue = TaskQueue(Paths.queuedb())
+    task_queue = make_task_queue()
 
     make_scheduler(cuckooctx, task_queue)
 
@@ -352,7 +362,6 @@ def start_cuckoo(loglevel, cancel_abandoned=False):
     from cuckoo.common.startup import (
         init_database, load_configurations, init_global_logging
     )
-    from .taskqueue import TaskQueue
 
     # Initialize globing logging to cuckoo.log
     init_global_logging(loglevel, Paths.log("cuckoo.log"))
@@ -372,7 +381,7 @@ def start_cuckoo(loglevel, cancel_abandoned=False):
     init_database()
 
     log.debug("Initializing task queue")
-    task_queue = TaskQueue(Paths.queuedb())
+    task_queue = make_task_queue()
     cuckooctx = CuckooCtx()
     cuckooctx.loglevel = loglevel
     make_scheduler(cuckooctx, task_queue)

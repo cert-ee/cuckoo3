@@ -631,9 +631,12 @@ def create_analysis_folder(day, identifier):
 def todays_daydir():
     return datetime.utcnow().date().strftime("%Y%m%d")
 
-def make_analysis_folder():
+def make_analysis_folder(tries=0):
     """Generates today's day dir and a unique analysis id and its dir and
     returns the analysis id and path to its directory"""
+    if tries >= 1000:
+        raise OSError("Tried to generate a unique ID 1000 times. Giving up.")
+
     today = todays_daydir()
 
     identifier = ''.join(
@@ -641,10 +644,11 @@ def make_analysis_folder():
             string.ascii_uppercase + string.digits, k=ANALYSIS_ID_LEN
         )
     )
+    tries += 1
     try:
         return create_analysis_folder(today, identifier)
     except FileExistsError:
-        return make_analysis_folder()
+        return make_analysis_folder(tries)
 
     # TODO create potential subdirs
 

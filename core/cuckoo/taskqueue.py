@@ -23,6 +23,16 @@ class Ignore(TmpBase):
     dephash = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 
 
+class AlembicVersion(Base):
+    """Database schema version. Used for automatic database migrations."""
+    __tablename__ = "alembic_version"
+
+    SCHEMA_VERSION = None
+
+    version_num = sqlalchemy.Column(
+        sqlalchemy.String(32), nullable=False, primary_key=True
+    )
+
 class QueuedTask(Base):
 
     __tablename__ = "qeueudtasks"
@@ -192,7 +202,10 @@ class TaskQuery:
 class TaskQueue:
 
     def __init__(self, queue_db):
-        self._dbms = DBMS()
+        self._dbms = DBMS(
+            schema_version=AlembicVersion.SCHEMA_VERSION,
+            alembic_version_table=AlembicVersion
+        )
         self._dbms.initialize(f"sqlite:///{queue_db}", tablebaseclass=Base)
         self._lock = RLock()
         self._counts = None

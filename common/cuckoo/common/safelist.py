@@ -16,10 +16,21 @@ class SafelistError(Exception):
 
 @as_declarative()
 class SafelistTable:
+
     def to_dict(self):
         return {
             c.name: getattr(self, c.name) for c in self.__table__.columns
         }
+
+class AlembicVersion(SafelistTable):
+    """Database schema version. Used for automatic database migrations."""
+    __tablename__ = "alembic_version"
+
+    SCHEMA_VERSION = None
+
+    version_num = sqlalchemy.Column(
+        sqlalchemy.String(32), nullable=False, primary_key=True
+    )
 
 class SafelistEntry(SafelistTable):
 
@@ -37,7 +48,6 @@ class SafelistEntry(SafelistTable):
     description = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
     source = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
 
-
     def __str__(self):
         return f"<id={self.id}, name={self.name}, value={self.value!r}, " \
                f"valuetype={self.valuetype}, regex={self.regex}, " \
@@ -47,7 +57,11 @@ class SafelistEntry(SafelistTable):
     def __repr__(self):
         return str(self)
 
-safelistdb = DBMS()
+
+safelistdb = DBMS(
+    schema_version=AlembicVersion.SCHEMA_VERSION,
+    alembic_version_table=AlembicVersion
+)
 
 class LoadedSafelistEntry:
 

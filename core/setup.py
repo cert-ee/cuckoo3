@@ -53,7 +53,8 @@ setuptools.setup(
         "console_scripts": [
             "cuckoo = cuckoo.main:main",
             "cuckoosafelist = cuckoo.scripts.safelist:main",
-            "cuckoocleanup = cuckoo.scripts.cleanup:main"
+            "cuckoocleanup = cuckoo.scripts.cleanup:main",
+            "cuckoomigrate = cuckoo.scripts.migrate:main"
         ],
     },
     install_requires=[
@@ -61,6 +62,7 @@ setuptools.setup(
         "Cuckoo-processing==0.1.0",
         "Cuckoo-machineries==0.1.0",
         "Cuckoo-web==0.1.0",
+        "sqlalchemy>=1.4, <1.5",
         "sflock>=0.4.0, <0.5",
         "tabulate>=0.8, <0.9"
     ]

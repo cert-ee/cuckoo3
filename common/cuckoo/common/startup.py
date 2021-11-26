@@ -15,6 +15,26 @@ log = CuckooGlobalLogger(__name__)
 class StartupError(Exception):
     pass
 
+class MigrationNeededError(StartupError):
+
+    def __init__(self, migrate_exception, migrate_what=""):
+        super().__init__(self._err_str(migrate_exception, migrate_what))
+
+    def _err_str(self, migrate_exception, migrate_what=""):
+        from cuckoo.common.db import DatabaseMigrationNeeded
+
+        if migrate_what:
+            msg = f"{migrate_what} requires migration(s). " \
+                  f"{migrate_exception}. "
+        else:
+            msg = f"Migration(s) required. {migrate_exception}. "
+
+        if isinstance(migrate_exception, DatabaseMigrationNeeded): # TODO add command
+            return msg + "Use 'cuckoomigrate database all' to migrate " \
+                         "database(s)"
+
+        return msg
+
 def init_elasticsearch(hosts, indice_names, timeout=300,
                        max_result_window=10000,
                        create_missing_indices=False):
@@ -53,7 +73,7 @@ def init_global_logging(level, filepath="", use_logqueue=True,
         add_rootlogger_handler, set_logger_level, logtime_fmt_str,
         file_handler, file_formatter, file_log_fmt_str, console_formatter,
         console_handler, console_log_fmt_str, WARNINGSONLY, VERBOSE,
-        enable_verbose
+        enable_verbose, set_initialized
     )
 
     if not warningsonly:
@@ -103,19 +123,32 @@ def init_global_logging(level, filepath="", use_logqueue=True,
     # Let log to console printing be handled at by the actual caller.
     add_rootlogger_handler(consolelog_handler)
 
-def init_database():
-    from cuckoo.common.db import dbms, CuckooDBDTable
-    dbms.initialize(
-        f"sqlite:///{Paths.dbfile()}", tablebaseclass=CuckooDBDTable
-    )
+    set_initialized()
+
+def init_database(migration_check=True, create_tables=True):
+    from cuckoo.common.db import dbms, CuckooDBTable, DatabaseMigrationNeeded
+    try:
+        dbms.initialize(
+            f"sqlite:///{Paths.dbfile()}", tablebaseclass=CuckooDBTable,
+            migration_check=migration_check, create_tables=create_tables
+        )
+    except DatabaseMigrationNeeded as e:
+        raise MigrationNeededError(e, "Cuckoo database (cuckoodb)")
+
     shutdown.register_shutdown(dbms.cleanup, order=998)
 
 
-def init_safelist_db():
+def init_safelist_db(migration_check=True, create_tables=True):
+    from cuckoo.common.db import DatabaseMigrationNeeded
     from cuckoo.common.safelist import SafelistTable, safelistdb
-    safelistdb.initialize(
-        f"sqlite:///{Paths.safelist_db()}", tablebaseclass=SafelistTable
-    )
+    try:
+        safelistdb.initialize(
+            f"sqlite:///{Paths.safelist_db()}", tablebaseclass=SafelistTable,
+            migration_check=migration_check, create_tables=create_tables
+        )
+    except DatabaseMigrationNeeded as e:
+        raise MigrationNeededError(e, "Safelist database (safelistdb)")
+
     shutdown.register_shutdown(safelistdb.cleanup, order=999)
 
 def create_configurations():
