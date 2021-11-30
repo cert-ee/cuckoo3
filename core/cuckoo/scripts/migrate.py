@@ -4,7 +4,7 @@
 import click
 
 from cuckoo.common.storage import cuckoocwd
-from cuckoo.common.log import exit_error
+from cuckoo.common.log import exit_error, print_warning
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
@@ -38,3 +38,24 @@ def migrate_database(name):
             DBMigrator.migrate(name)
     except MigrationError as e:
         exit_error(e)
+
+@main.command("cwdfiles")
+@click.option("--overwrite", is_flag=True, help="Skip confirmation and overwrite file(s) when user-modified files are detected.")
+@click.option("--delete-unused", is_flag=True, help="Remove files from CWD that Cuckoo no longer uses")
+def migrate_cwdfiles(overwrite, delete_unused):
+    """Overwrite files in the CWD to their newer version(s)."""
+    from cuckoo.common.migrate import CWDFileMigrator
+
+    for migratable in CWDFileMigrator.find_migratable_files():
+        if migratable.unknown_hash and not overwrite:
+            print_warning(
+                f"'{migratable.cwdpath}' has an unexpected file hash. "
+                f"It looks like it was modified by something else than a "
+                f"migration. "
+                f"Overwriting the file is needed to continue migrating. "
+                f"It is recommended to create a backup before continuing"
+            )
+            if not click.confirm(f"Overwrite file?"):
+                exit_error("CWD files migration aborted.")
+
+        migratable.do_migrate(remove_deleted=delete_unused)
