@@ -226,18 +226,30 @@ class _CuckooCWD:
             if not pkg_cwd_files:
                 continue
 
-            for entry in os.listdir(pkg_cwd_files):
+            # Iterate over all dirs and files in the data/cwd dir of each
+            # package. Copy/create missing dirs/files.
+            for currdir, currdir_dirs, currdir_files in os.walk(pkg_cwd_files):
+                relpath = os.path.relpath(currdir, pkg_cwd_files)
+                if relpath == ".":
+                    cwdpath = Path(path)
+                else:
+                    cwdpath = Path(path, relpath)
 
-                entry_path = os.path.join(pkg_cwd_files, entry)
-                cwd_entry = os.path.join(path, entry)
-                if os.path.exists(cwd_entry):
-                    continue
+                if not cwdpath.is_dir():
+                    cwdpath.mkdir(mode=DEFAULT_DIRMODE)
 
-                if os.path.isfile(entry_path):
-                    shutil.copyfile(entry_path, cwd_entry)
+                for dirname in currdir_dirs:
+                    dirname_cwd = cwdpath.joinpath(dirname)
+                    if not dirname_cwd.is_dir():
+                        dirname_cwd.mkdir(mode=DEFAULT_DIRMODE)
 
-                elif os.path.isdir(entry_path):
-                    shutil.copytree(entry_path, cwd_entry)
+                for filename in currdir_files:
+                    filename_cwd = cwdpath.joinpath(filename)
+                    if filename_cwd.is_file():
+                        continue
+
+                    shutil.copyfile(Path(currdir, filename), filename_cwd)
+
 
 cuckoocwd = _CuckooCWD()
 
@@ -653,14 +665,14 @@ def make_analysis_folder(tries=0):
     # TODO create potential subdirs
 
 
-def safe_copyfile(source, destination):
+def safe_copyfile(source, destination, overwrite=False):
     """Copies source to destination. Full paths must be provided.
     First copies under a tmp name and create file exclusively when copy has
     finished, then renames tmp file to destination filename.
 
     :raise: FileExistsError, IOError
     """
-    if os.path.exists(destination):
+    if not overwrite and os.path.exists(destination):
         raise FileExistsError(f"Destination file exists: {destination}")
 
     dst_dir = os.path.dirname(destination)
@@ -671,7 +683,9 @@ def safe_copyfile(source, destination):
     shutil.copyfile(source, tmp_path)
 
     try:
-        open(destination, "x").close()
+        if not overwrite:
+            open(destination, "x").close()
+
         os.replace(tmp_path, destination)
     except (OSError, FileExistsError):
         os.unlink(tmp_path)
