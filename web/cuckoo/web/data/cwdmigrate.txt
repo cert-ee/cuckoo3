@@ -1,0 +1,3 @@
+# First migration entry. All files
+new,web/api_local_settings.py,f9f12b6341016c90b20f8a1694276e8a5d145e31
+new,web/web_local_settings.py,fff4e56d54078cfbdec73e703da2eec13fca24f0

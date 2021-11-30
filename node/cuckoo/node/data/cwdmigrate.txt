@@ -1,0 +1,2 @@
+# First migration entry. All files
+new,rooter/scripts/openvpnroutes.sh,2d3e8582f528911e9e7ad9e6a0fb9fa64c844a8b

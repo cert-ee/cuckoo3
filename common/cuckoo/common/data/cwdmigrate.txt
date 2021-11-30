@@ -1,0 +1,4 @@
+# First migration entry. All files
+new,elasticsearch/analysesmapping.json,7aa8cff9a299d5757752602b8ae23227e5045d9b
+new,elasticsearch/eventsmapping.json,7184b96c3d26b8f8dab9790549e851ea3dd2c012
+new,elasticsearch/tasksmapping.json,2f008c533612f3e8c45d96151af621bdf0381098

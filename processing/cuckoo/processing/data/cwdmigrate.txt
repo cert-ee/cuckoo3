@@ -1,0 +1,3 @@
+# First migration entry. All files
+new,signatures/mitreattack/attack.json,41586eb6b195bc8c0cec8c3c7c559f6d84b50d48
+new,signatures/peutils/userdb.txt,7534822f04e2245c2ab914411dc4bf368df75249
