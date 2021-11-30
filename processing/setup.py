@@ -13,7 +13,6 @@ if sys.version[0] == "2":
 
 setuptools.setup(
     name="Cuckoo-processing",
-    version="0.1.0",
     author="",
     author_email="",
     packages=setuptools.find_namespace_packages(include=["cuckoo.*"]),

@@ -213,8 +213,6 @@ class _CuckooCWD:
 
     def update_missing(self):
         """Create missing directories and new files"""
-        # Note: Currently only copies missing files if the file's directory
-        # does not exist yet. TODO: create updating helper that solves this.
         cwdroot = self.root
         RootDirs.create(cwdroot)
         _CuckooCWD._add_package_cwdfiles(cwdroot)

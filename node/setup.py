@@ -17,7 +17,6 @@ if platform.system().lower() != "linux":
 
 setuptools.setup(
     name="Cuckoo-node",
-    version="0.1.0",
     author="",
     author_email="",
     packages=setuptools.find_namespace_packages(include=["cuckoo.*"]),
