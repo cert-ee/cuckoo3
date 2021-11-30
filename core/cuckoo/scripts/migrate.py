@@ -29,6 +29,8 @@ def main(ctx, cwd):
 @main.command("database")
 @click.argument("name", type=str)
 def migrate_database(name):
+    """Migrate Cuckoo SQL databases to their newer schema versions.
+    Migrations perform by Alembic. Use 'all' to migrate all databases."""
     from cuckoo.common.migrate import DBMigrator, MigrationError
 
     try:
