@@ -5,7 +5,7 @@ import os
 import click
 import logging
 
-from cuckoo.common.storage import cuckoocwd, Paths, InvalidCWDError
+from cuckoo.common.storage import cuckoocwd, Paths, CWDError
 from cuckoo.common.log import (
     exit_error, print_info, print_error, print_warning, VERBOSE
 )
@@ -35,8 +35,8 @@ def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
 
     try:
         cuckoocwd.set(cwd)
-    except InvalidCWDError as e:
-        exit_error(f"Invalid Cuckoo working directory: {e}")
+    except CWDError as e:
+        exit_error(f"Failed to set Cuckoo working directory: {e}")
 
     if verbose:
         ctx.loglevel = VERBOSE

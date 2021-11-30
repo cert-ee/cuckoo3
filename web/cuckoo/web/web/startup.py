@@ -12,7 +12,7 @@ from cuckoo.common.startup import (
     init_global_logging, load_configuration, init_database,
     init_elasticsearch, StartupError
 )
-from cuckoo.common.storage import cuckoocwd, Paths, CWD_ENVVAR
+from cuckoo.common.storage import cuckoocwd, Paths, CWD_ENVVAR, CWDError
 from cuckoo.common.submit import settings_maker
 from cuckoo.common.result import retriever
 from cuckoo.common.clients import APIClient
@@ -66,7 +66,10 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
             f"running Cuckoo with this CWD path"
         )
 
-    cuckoocwd.set(cuckoo_cwd)
+    try:
+        cuckoocwd.set(cuckoo_cwd)
+    except CWDError as e:
+        exit_error(f"Failed to set Cuckoo working directory: {e}")
 
     # Ensure any existing signal handlers for SIGINT/TERM are called after
     # any Cuckoo specific shutdown handlers.

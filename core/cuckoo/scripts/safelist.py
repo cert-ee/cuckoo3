@@ -4,7 +4,7 @@
 import click
 from tabulate import tabulate
 
-from cuckoo.common.storage import cuckoocwd
+from cuckoo.common.storage import cuckoocwd, CWDError
 from cuckoo.common import safelist
 from cuckoo.common.log import exit_error, print_info
 from cuckoo.common.startup import init_safelist_db, MigrationNeededError
@@ -24,7 +24,11 @@ def main(ctx, cwd):
             f"running Cuckoo with this CWD path"
         )
 
-    cuckoocwd.set(cwd)
+    try:
+        cuckoocwd.set(cwd)
+    except CWDError as e:
+        exit_error(f"Failed to set Cuckoo working directory: {e}")
+
     try:
         init_safelist_db()
     except MigrationNeededError as e:

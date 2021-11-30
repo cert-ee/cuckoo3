@@ -14,12 +14,20 @@ from tempfile import gettempdir
 
 import sflock
 
-from .packages import find_cuckoo_packages, get_cwdfiles_dir
+from .packages import (
+    find_cuckoo_packages, get_cwdfiles_dir, get_package_versions
+)
 
-class CWDNotSetError(Exception):
+class CWDError(Exception):
     pass
 
-class InvalidCWDError(Exception):
+class CWDNotSetError(CWDError):
+    pass
+
+class InvalidCWDError(CWDError):
+    pass
+
+class CWDOutdatedError(CWDError):
     pass
 
 _allowed_deletion_dirs = set()
@@ -120,10 +128,12 @@ class _CuckooCWD:
 
     _DEFAULT_NAME = ".cuckoocwd"
     _CWD_FILE_NAME = ".cuckoocwd"
+    _VERSIONS_FILE = ".versions"
 
     def __init__(self):
         self._dir = None
         self._analyses_dir = None
+        self._versions = {}
 
     @property
     def DEFAULT(self):
@@ -165,7 +175,39 @@ class _CuckooCWD:
     def have_permission(path):
         return os.access(path, os.R_OK | os.W_OK | os.X_OK)
 
-    def set(self, path, analyses_dir=StorageDirs.ANALYSES):
+    @staticmethod
+    def write_versions_file(path):
+        safe_json_dump(
+            path.joinpath(_CuckooCWD._VERSIONS_FILE),
+            get_package_versions(), overwrite=True
+        )
+
+    def discover_outdated_versions(self):
+        from pkg_resources import parse_version
+        outdated = []
+        for pkgname, installed_version in get_package_versions().items():
+            cwd_version = self._versions.get(pkgname)
+            if not cwd_version:
+                outdated.append((pkgname, None, installed_version))
+                continue
+
+            if parse_version(cwd_version) < parse_version(installed_version):
+                outdated.append((pkgname, cwd_version, installed_version))
+
+        return outdated
+
+    def _load_versions_file(self):
+        versions_file = self.root.joinpath(self._VERSIONS_FILE)
+        if not versions_file.is_file():
+            self.write_versions_file(self.root)
+
+        with open(versions_file, "r") as fp:
+            d = json.load(fp)
+            for pkg, version in d.items():
+                self._versions[pkg] = version
+
+    def set(self, path, analyses_dir=StorageDirs.ANALYSES,
+            skip_migration_check=False):
         path = Path(path)
         if not _CuckooCWD.exists(path):
             raise InvalidCWDError(f"Cuckoo CWD {path} does not exist.")
@@ -193,6 +235,26 @@ class _CuckooCWD:
         os.environ[CWD_ENVVAR] = str(path)
         _add_deletion_dir(self._dir)
 
+        if skip_migration_check:
+            return
+
+        self._load_versions_file()
+        outdated = self.discover_outdated_versions()
+        if outdated:
+            versions = []
+            for pkg, cwdversion, installedversion in outdated:
+                versions.append(
+                    f"'{pkg}' CWD files version: {cwdversion}. "
+                    f"Installed version: {installedversion}"
+                )
+
+            versions_newlines = "\n".join(versions)
+            raise CWDOutdatedError(
+                f"One or more packages require a CWD files "
+                f"migration: {versions_newlines}.\n"
+                f"Run 'cuckoomigrate cwdfiles' to migrate your CWD files."
+            )
+
     @staticmethod
     def create(path):
         cwdroot = Path(path)
@@ -210,6 +272,11 @@ class _CuckooCWD:
         # Create empty file with specific name so that a given directory
         # can later be identified as a Cuckoo cwd
         cwdroot.joinpath(_CuckooCWD._CWD_FILE_NAME).touch()
+
+        # Create a json versions file. This contains the versions of all
+        # installed Cuckoo packages. We use this to discover if a package was
+        # updated and might require CWD files migration.
+        _CuckooCWD.write_versions_file(cwdroot)
 
     def update_missing(self):
         """Create missing directories and new files"""
@@ -254,32 +321,32 @@ cuckoocwd = _CuckooCWD()
 ANALYSIS_ID_LEN = 6
 
 def split_analysis_id(analysis_id):
-        date_analysis = analysis_id.split("-", 1)
-        if len(date_analysis) != 2:
-            raise ValueError(
-                "Invalid analysis ID given. Format must be "
-                f"YYYYMMDD-identifier. Given: {analysis_id}"
-            )
+    date_analysis = analysis_id.split("-", 1)
+    if len(date_analysis) != 2:
+        raise ValueError(
+            "Invalid analysis ID given. Format must be "
+            f"YYYYMMDD-identifier. Given: {analysis_id}"
+        )
 
-        if len(date_analysis[1]) != ANALYSIS_ID_LEN:
-            raise ValueError(
-                f"Invalid identifier length. Must be {ANALYSIS_ID_LEN} "
-                f"characters. Given: {date_analysis[1]}"
-            )
+    if len(date_analysis[1]) != ANALYSIS_ID_LEN:
+        raise ValueError(
+            f"Invalid identifier length. Must be {ANALYSIS_ID_LEN} "
+            f"characters. Given: {date_analysis[1]}"
+        )
 
-        if not date_analysis[1].isalnum():
-            raise ValueError(
-                "Invalid analysis ID given. ID part can only contain "
-                f"A-Z and 0-9. Given {date_analysis[1]}"
-            )
+    if not date_analysis[1].isalnum():
+        raise ValueError(
+            "Invalid analysis ID given. ID part can only contain "
+            f"A-Z and 0-9. Given {date_analysis[1]}"
+        )
 
-        if len(date_analysis[0]) != len("YYYYMMDD"):
-            raise ValueError(
-                "Date part must be in YYYYMMDD format. "
-                f"Given: {date_analysis[0]}"
-            )
+    if len(date_analysis[0]) != len("YYYYMMDD"):
+        raise ValueError(
+            "Date part must be in YYYYMMDD format. "
+            f"Given: {date_analysis[0]}"
+        )
 
-        return date_analysis
+    return date_analysis
 
 def split_task_id(task_id):
 

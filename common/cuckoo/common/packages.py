@@ -36,6 +36,13 @@ def find_cuckoo_packages():
 
     return found
 
+def get_package_versions():
+    pkg_versions = {}
+    for fullname, _, pkg in find_cuckoo_packages():
+        pkg_versions[fullname] = pkg.__version__
+
+    return pkg_versions
+
 def get_module(name):
     return import_module(name)
 

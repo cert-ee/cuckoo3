@@ -6,7 +6,7 @@ import logging
 
 from cuckoo.common.log import exit_error, print_info
 from cuckoo.common.startup import StartupError
-from cuckoo.common.storage import cuckoocwd
+from cuckoo.common.storage import cuckoocwd, CWDError
 
 def start_export(older_than_days, loglevel, without_confirm=False):
     from cuckoo.common.log import set_logger_level
@@ -73,7 +73,11 @@ def main(ctx, cwd, debug):
             f"running Cuckoo with this CWD path"
         )
 
-    cuckoocwd.set(cwd)
+    try:
+        cuckoocwd.set(cwd)
+    except CWDError as e:
+        exit_error(f"Failed to set Cuckoo working directory: {e}")
+
     if debug:
         ctx.loglevel = logging.DEBUG
     else:

@@ -3,7 +3,7 @@
 
 import click
 
-from cuckoo.common.storage import cuckoocwd
+from cuckoo.common.storage import cuckoocwd, CWDError
 from cuckoo.common.log import exit_error, print_warning
 
 @click.group(invoke_without_command=True)
@@ -20,8 +20,10 @@ def main(ctx, cwd):
             f"'cuckoo createcwd' if this is the first time you are "
             f"running Cuckoo with this CWD path"
         )
-
-    cuckoocwd.set(cwd)
+    try:
+        cuckoocwd.set(cwd, skip_migration_check=True)
+    except CWDError as e:
+        exit_error(f"Failed to set Cuckoo working directory: {e}")
 
     if ctx.invoked_subcommand:
         return
@@ -61,3 +63,5 @@ def migrate_cwdfiles(overwrite, delete_unused):
                 exit_error("CWD files migration aborted.")
 
         migratable.do_migrate(remove_deleted=delete_unused)
+
+    cuckoocwd.write_versions_file(cuckoocwd.root)
