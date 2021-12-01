@@ -15,7 +15,8 @@ from tempfile import gettempdir
 import sflock
 
 from .packages import (
-    find_cuckoo_packages, get_cwdfiles_dir, get_package_versions
+    find_cuckoo_packages, get_cwdfiles_dir, get_package_versions,
+    get_package_version
 )
 
 class CWDError(Exception):
@@ -613,6 +614,10 @@ class Paths:
         return cuckoocwd.root.joinpath(*tuple(args))
 
     @staticmethod
+    def config_versionfile(subpkg=None):
+        return Paths.config(".versions", subpkg=subpkg)
+
+    @staticmethod
     def monitor(*args):
         return cuckoocwd.root.joinpath("monitor", *args)
 
@@ -756,8 +761,8 @@ def safe_copyfile(source, destination, overwrite=False):
         os.unlink(tmp_path)
         raise
 
-def move_file(source, destination):
-    if os.path.exists(destination):
+def move_file(source, destination, overwrite=False):
+    if not overwrite and os.path.exists(destination):
         raise FileExistsError(f"Destination file exists: {destination}")
 
     dst_dir = os.path.dirname(destination)
@@ -1116,3 +1121,49 @@ def merge_logdata(logfile_path, logdata):
     with open(logfile_path, "a") as fp:
         for line in logdata.split(b"\n"):
             fp.write(f"{line.decode()}\n")
+
+class ConfigVersions:
+
+    def __init__(self, path, full_packagename):
+        self.path = Path(path)
+        self.full_packagename = full_packagename
+
+        self.versions = {}
+        self._updated = False
+
+    def exists(self):
+        return self.path.is_file()
+
+    def load(self):
+        if not self.path.is_file():
+            return
+
+        with open(self.path, "r") as fp:
+            self.versions = json.load(fp)
+
+    def update_version(self, confname, version):
+        self.versions[confname] = version
+        self._updated = True
+
+    def has_config(self, confname):
+        return confname in self.versions
+
+    def write(self):
+        if self._updated:
+            safe_json_dump(self.path, self.versions, overwrite=True)
+
+    def is_outdated(self, confname):
+        if not self.path.is_file():
+            raise KeyError(f"Versions file '{self.path}' does not exist")
+
+        if not self.versions:
+            self.load()
+
+        from pkg_resources import parse_version
+        confversion = self.versions[confname]
+        return parse_version(confversion) < parse_version(
+            get_package_version(self.full_packagename)
+        )
+
+    def get_version(self, confname):
+        return self.versions[confname]

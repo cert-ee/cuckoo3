@@ -527,7 +527,11 @@ def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
         json.dumps(config_dictionary, default=_typeloader_to_yamlval)
     )
 
-def render_config(template_path, typeloaders, write_to):
+def render_config_from_typeloaders(template_path, typeloaders, write_to):
+    values = typeloaders_to_templatedict(typeloaders, filter_sensitive=False)
+    render_config_from_dict(template_path, values, write_to)
+
+def render_config_from_dict(template_path, values_dict, write_to):
     if os.path.exists(write_to):
         raise ConfigurationError(f"Path {write_to} exists")
 
@@ -536,15 +540,17 @@ def render_config(template_path, typeloaders, write_to):
             f"Configuration template path: {template_path} does not exist"
         )
 
-    values = typeloaders_to_templatedict(typeloaders, filter_sensitive=False)
-
     import jinja2
     with open(template_path, "r") as fp:
         template = jinja2.Template(
             fp.read(), lstrip_blocks=True, trim_blocks=True
         )
 
-    rendered = template.render(values)
+    try:
+        rendered = template.render(values_dict)
+    except jinja2.exceptions.TemplateError as e:
+        raise ConfigurationError(f"Failed to render template. {e}")
+
     with open(write_to, "w") as fp:
         fp.write(rendered)
 
@@ -614,6 +620,18 @@ def _dump_to_cache(loaded_values, filename, subpkg):
     else:
         _cache[filename] = values_dict
 
+def read_config_raw(filepath):
+    if not os.path.isfile(filepath):
+        raise MissingConfigurationFileError(
+            f"Configuration file {filepath} not found."
+        )
+
+    with open(filepath, "r") as fp:
+        try:
+            return yaml.safe_load(fp)
+        except yaml.YAMLError as e:
+            raise ConfigurationError(f"Invalid YAML in {filepath}. {e}")
+
 def load_config(filepath, subpkg="", cache_config=True,
                 check_constraints=True):
     if not os.path.isfile(filepath):
@@ -646,18 +664,14 @@ def load_config(filepath, subpkg="", cache_config=True,
             f"Loaders are available for: {loaders.keys()}"
         )
 
-    with open(filepath, "r") as fp:
-        try:
-            conf = yaml.safe_load(fp)
-        except yaml.YAMLError as e:
-            raise ConfigurationError(f"Invalid YAML in {filepath}. {e}")
-
     # Copy the typeloaders are we do not want to overwrite values of the
     # original.
     loadercopy = deepcopy(loader)
-
     try:
-        load_values(conf, loadercopy, check_constraints=check_constraints)
+        load_values(
+            read_config_raw(filepath), loadercopy,
+            check_constraints=check_constraints
+        )
     except ConfigurationError as e:
         raise ConfigurationError(
             f"Error in config file: {filepath}. {e}"

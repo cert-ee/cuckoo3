@@ -5,7 +5,8 @@ import os
 
 from .log import CuckooGlobalLogger
 from .packages import (
-    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders
+    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders,
+    get_package_version
 )
 from .storage import Paths
 from . import config, shutdown
@@ -154,6 +155,7 @@ def init_safelist_db(migration_check=True, create_tables=True):
 def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
     has already been set."""
+    from cuckoo.common.storage import ConfigVersions
     for pkgname, subpkg, pkg in find_cuckoo_packages():
         conf_typeloaders, _ = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
@@ -163,6 +165,11 @@ def create_configurations():
         if not templates:
             continue
 
+        pkg_version = get_package_version(pkgname)
+        confversions = ConfigVersions(
+            Paths.config_versionfile(subpkg=subpkg), full_packagename=pkgname
+        )
+        confversions.load()
         for confname, typeloaders in conf_typeloaders.items():
             if subpkg:
                 subpkg_confdir = Paths.config(subpkg=subpkg)
@@ -172,7 +179,11 @@ def create_configurations():
             config_path = Paths.config(file=confname, subpkg=subpkg)
             # Skip the creation of the configuration file if it already exists
             if os.path.isfile(config_path):
-                # TODO implement configuration migration code.
+                # It is probably a pre-versions file config if it exists and is
+                # not in the versions file. Add it with the current version
+                # of the package.
+                if not confversions.has_config(confname):
+                    confversions.update_version(confname, pkg_version)
                 continue
 
             template_path = templates.get(confname)
@@ -181,25 +192,57 @@ def create_configurations():
                     f"No configuration template exists for {confname}"
                 )
 
-            config.render_config(template_path, typeloaders, config_path)
-
-
-def _load_machinery_configs():
-    for machinery in config.cfg("cuckoo", "machineries"):
-        confpath = Paths.config(file=f"{machinery}.yaml", subpkg="machineries")
-        log.debug("Loading config.", confpath=confpath)
-        try:
-            config.load_config(confpath, subpkg="machineries")
-        except config.ConfigurationError as e:
-            raise StartupError(
-                f"Failed to load config file {confpath}. {e}"
+            config.render_config_from_typeloaders(
+                template_path, typeloaders, config_path
             )
+            confversions.update_version(confname, pkg_version)
+
+        confversions.write()
+
+
+_confversions = {}
+
+def _raise_for_conf_migration(confname, subpkg):
+    from cuckoo.common.storage import ConfigVersions
+    if subpkg:
+        fullpkgname = f"cuckoo.{subpkg}"
+    else:
+        fullpkgname = "cuckoo"
+
+    confversions = _confversions.get(fullpkgname)
+    if not confversions:
+        confversions = _confversions.setdefault(
+            fullpkgname,
+            ConfigVersions(Paths.config_versionfile(subpkg), fullpkgname)
+        )
+        confversions.load()
+
+    if not confversions.exists():
+        raise StartupError(
+            "Configuration file versions file is missing. "
+            "Run 'cuckoo createcwd --regen-configs' to create it or "
+            "'cuckoomigrate configs' to create it and perform config "
+            "migrations."
+        )
+
+    if not confversions.has_config(confname) or \
+            confversions.is_outdated(confname):
+        raise StartupError(
+            f"One or more config files need migration "
+            f"({confname}).\nRun 'cuckoomigrate configs' "
+            f"to perform automatic config migrations"
+        )
 
 def load_configuration(confname, subpkg=None, check_constraints=True):
     config_path = Paths.config(file=confname, subpkg=subpkg)
     if not config_path.is_file():
-        raise StartupError(f"Configuration file {config_path} is missing.")
+        raise StartupError(
+            f"Configuration file {config_path} is missing. "
+            f"Run 'cuckoo createcwd --regen-configs' "
+            f"to create missing config files."
+        )
 
+    _raise_for_conf_migration(confname, subpkg)
     log.debug("Loading config", confpath=config_path)
     try:
         config.load_config(
@@ -209,6 +252,10 @@ def load_configuration(confname, subpkg=None, check_constraints=True):
         raise StartupError(
             f"Failed to load config file {config_path}. {e}"
         )
+
+def _load_machinery_configs():
+    for machinery in config.cfg("cuckoo", "machineries"):
+        load_configuration(f"{machinery}.yaml", subpkg="machineries")
 
 def load_configurations():
     # Load cuckoo all configurations for Cuckoo and all installed Cuckoo

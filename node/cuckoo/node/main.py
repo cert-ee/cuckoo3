@@ -108,7 +108,7 @@ def create_cwd(ctx, update_directories, regen_configs):
                 cuckoocwd.update_missing()
                 print_info("Created missing directories")
                 return
-            except InvalidCWDError as e:
+            except CWDError as e:
                 exit_error(f"Failed during directory updating: {e}")
 
     cuckoocwd.create(cwd_path)

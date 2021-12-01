@@ -7,7 +7,8 @@ from pathlib import Path
 
 from cuckoo.common.storage import Paths
 from cuckoo.common.config import (
-    load_config, render_config, load_values, ConfigurationError
+    load_config, render_config_from_typeloaders, load_values,
+    ConfigurationError
 )
 from cuckoo.common.packages import get_conftemplates
 
@@ -62,7 +63,9 @@ def _update_machinery_config(machinery_name, updated_loaders):
     tmpdir = tempfile.mkdtemp()
     tmp_path = Path(tmpdir, conf_name)
     try:
-        render_config(machinery_template, updated_loaders, tmp_path)
+        render_config_from_typeloaders(
+            machinery_template, updated_loaders, tmp_path
+        )
         shutil.move(tmp_path, Paths.config(conf_name, subpkg="machineries"))
     finally:
         shutil.rmtree(tmpdir)

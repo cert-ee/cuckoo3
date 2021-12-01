@@ -1,9 +1,10 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+import logging
 import click
 
-from cuckoo.common.storage import cuckoocwd, CWDError
+from cuckoo.common.storage import cuckoocwd, CWDError, Paths
 from cuckoo.common.log import exit_error, print_warning
 
 @click.group(invoke_without_command=True)
@@ -26,6 +27,10 @@ def main(ctx, cwd):
         exit_error(f"Failed to set Cuckoo working directory: {e}")
 
     if ctx.invoked_subcommand:
+        from cuckoo.common.startup import init_global_logging
+        init_global_logging(
+            logging.DEBUG, Paths.log("migrations.log"), use_logqueue=False
+        )
         return
 
 @main.command("database")
@@ -65,3 +70,13 @@ def migrate_cwdfiles(overwrite, delete_unused):
         migratable.do_migrate(remove_deleted=delete_unused)
 
     cuckoocwd.write_versions_file(cuckoocwd.root)
+
+@main.command("configs")
+def migrate_configs():
+    """Attempts to automatically migrate configuration files to a newer
+    version. This is needed after a (subpackage) update."""
+    from cuckoo.common.migrate import ConfigMigrator, MigrationError
+    try:
+        ConfigMigrator.migrate_all()
+    except MigrationError as e:
+        exit_error(e)

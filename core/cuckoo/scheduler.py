@@ -349,6 +349,7 @@ class Scheduler:
             starter.start()
 
         self._change_event.set()
+        log.info("Scheduler started")
         while self.do_run:
             self._change_event.wait(timeout=60)
 

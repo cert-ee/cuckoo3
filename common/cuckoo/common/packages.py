@@ -46,6 +46,10 @@ def get_package_versions():
 def get_module(name):
     return import_module(name)
 
+def get_package_version(name):
+    pkg = get_module(name)
+    return pkg.__version__
+
 def get_data_dir(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
         raise NotACuckooPackageError(
@@ -69,7 +73,7 @@ def has_conftemplates(cuckoo_package):
 
 def get_conftemplates(cuckoo_package):
     if not has_conftemplates(cuckoo_package):
-        return []
+        return {}
 
     path = get_conftemplate_dir(cuckoo_package)
     templates = {}
@@ -100,6 +104,20 @@ def get_conf_typeloaders(cuckoo_package):
         exclude_autoload = config.exclude_autoload
 
     return config.typeloaders, exclude_autoload
+
+def get_conf_migrations(cuckoo_package):
+    if not is_cuckoo_package(cuckoo_package):
+        raise NotACuckooPackageError(
+            f"{cuckoo_package} is not a Cuckoo package"
+        )
+
+    pkgname = f"{cuckoo_package.__name__}.confmigrations"
+    try:
+        confmigrations = import_module(pkgname)
+    except ModuleNotFoundError:
+        return None
+
+    return confmigrations.migrations
 
 def enumerate_plugins(package_path, namespace, class_, attributes={}):
 
