@@ -35,7 +35,9 @@ nav:
 
 
 - Usage:
+  - Submission: usage/submission/index.md
   - Web API:
     - Setup: usage/webapi/setup.md
     - Endpoints: usage/webapi/endpoints.md
+  - Web UI: usage/webui/setup.md
   - Commands: usage/commands.md 

@@ -1,6 +1,6 @@
 # Cuckoo commands and tools
 
-This page lists all available tools and commands.
+This page lists available tools and commands.
 
 #### cuckoo
 
@@ -41,7 +41,7 @@ The main Cuckoo command. Used to:
 
 #### cuckoonode
 
-The Cuckoo node command is used to start a Cuckoo task running node.
+The Cuckoo node command is used to start a Cuckoo task running node. Only used if running Cuckoo in distributed mode.
 
 ##### Help
 
@@ -65,7 +65,8 @@ The Cuckoo node command is used to start a Cuckoo task running node.
 #### cuckoosafelist
 
 This command/tool is used to manage Cuckoo safelists. The safelists are used
-in modules such as network processing.
+in modules such as network processing. 
+A restart of Cuckoo is usually needed after adding entries.
 
 ##### Help
 
