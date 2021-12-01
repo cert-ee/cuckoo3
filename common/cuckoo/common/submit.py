@@ -421,7 +421,9 @@ class SettingsHelper:
         if platform_index is None:
             self._settings["route"]["type"] = route_type
         else:
-            self._get_platform(platform_index).set_route(type=route_type)
+            self._get_platform(
+                platform_index
+            ).settings.route = Route(type=route_type)
 
     def set_route_option(self, option, platform_index=None):
         if not isinstance(option, dict):

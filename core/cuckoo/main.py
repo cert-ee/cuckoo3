@@ -312,7 +312,7 @@ def _parse_settings(**kwargs):
          "Use <index of param>,value to specific browser, command, and route settings."
 )
 @click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds.")
-@click.option("--priority", type=int, default=1, help="The priority of this analysis.")
+@click.option("--priority", type=int, default=1, help="The priority of this analysis. A higher number means a higher priority.")
 @click.option("--orig-filename", is_flag=True, help="Ignore auto detected file extension and use the original file extension.")
 @click.option("--browser",  multiple=True, help="The browser to use for a URL analysis. (Supports per platform configuration).")
 @click.option("--command", multiple=True, help="The command/args that should be used to start the target. Enclose in quotes. "
