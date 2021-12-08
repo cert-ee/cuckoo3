@@ -39,7 +39,7 @@ setuptools.setup(
         "jinja2",
         "requests",
         "python-dateutil",
-        "sflock>=0.4, <0.5",
+        "sflock>=1.0, <1.1",
         "sqlalchemy>=1.4, <1.5",
         "elasticsearch>=7.8.1, <8.0",
         "elasticsearch-dsl>=7.2.1, <7.3",

@@ -62,7 +62,7 @@ setuptools.setup(
         "Cuckoo-machineries==0.1.0",
         "Cuckoo-web==0.1.0",
         "sqlalchemy>=1.4, <1.5",
-        "sflock>=0.4.0, <0.5",
+        "sflock>=1.0, <1.1",
         "tabulate>=0.8, <0.9"
     ]
 )
