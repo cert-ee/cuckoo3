@@ -26,6 +26,7 @@ docs/book/_build/
 .project
 .pydevproject
 docs/site/
+web/cuckoo/web/static/docs/
 
 # Python package stuff
 .eggs/

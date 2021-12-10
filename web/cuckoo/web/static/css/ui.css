@@ -303,11 +303,11 @@ p {
   color: #FFFFFF;
 }
 .is-theme-dark .navbar {
-  background-color: #000000;
+  background-color: #0F485A;
 }
 @media (prefers-color-scheme: dark) {
   .is-theme-auto .navbar {
-    background-color: #000000;
+    background-color: #0F485A;
   }
 }
 .navbar-logo, .navbar-start, .navbar-end {
@@ -2421,10 +2421,12 @@ ul.process-tree .duration--inner {
 }
 .is-theme-dark .footer {
   color: #AAAAAA;
+  background-color: #0F485A;
 }
 @media (prefers-color-scheme: dark) {
   .is-theme-auto .footer {
     color: #AAAAAA;
+  background-color: #0F485A;
   }
 }
 .footer, .footer-push {

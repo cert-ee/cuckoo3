@@ -1,5 +1,5 @@
-site_name: Cuckoo docs
-site_url: https://example.com/
+site_name: Cuckoo 3 docs
+site_url: https://cuckoo-hatch.cert.ee/static/docs/
 theme:
   name: readthedocs
   highlightjs: true
@@ -13,11 +13,11 @@ plugins:
 docs_dir: src
 nav:
 - Introduction:
-  - Cuckoo: introduction/cuckoo.md
+  - Cuckoo 3: introduction/cuckoo.md
   - Sandboxing: introduction/sandboxing.md
 
 - Installation:
-  - Cuckoo installation: installation/cuckoo.md
+  - Cuckoo 3 installation: installation/cuckoo.md
   - System dependencies: installation/deps.md
   - Machinery modules: installation/machineries.md
   - VM Creation: installation/vmcreation.md
@@ -25,7 +25,7 @@ nav:
 
 - Configuration:
   - System settings: configuration/system.md
-  - Cuckoo configuration:
+  - Cuckoo 3 configuration:
     - Cuckoo.yaml: configuration/cuckooconfs/cuckooyaml.md
     - Distributed.yaml: configuration/cuckooconfs/distributedyaml.md
     - Web configuration:
@@ -40,4 +40,4 @@ nav:
     - Setup: usage/webapi/setup.md
     - Endpoints: usage/webapi/endpoints.md
   - Web UI: usage/webui/setup.md
-  - Commands: usage/commands.md 
+  - Commands: usage/commands.md

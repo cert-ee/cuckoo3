@@ -1,4 +1,4 @@
-# What is Cuckoo?
+# What is Cuckoo 3?
 
 Cuckoo 3 is a Python 3 open source automated malware analysis system.
 
@@ -19,4 +19,3 @@ The recommended Python versions are 3.6 or 3.8. Lower than 3.6 will not work.
 - Windows 10 (Build 1703)
   - Stager: Tmstage
   - Monitor: Threemon
-  

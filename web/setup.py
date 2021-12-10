@@ -21,7 +21,7 @@ setuptools.setup(
         "Intended Audience :: Information Technology",
         "Intended Audience :: Science/Research",
         "Natural Language :: English",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
