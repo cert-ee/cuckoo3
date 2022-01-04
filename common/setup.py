@@ -47,6 +47,7 @@ setuptools.setup(
         "pymisp>=2.4.135.3, <2.5",
         "aiohttp>=3.7.4, <3.8",
         "aiohttp-sse-client>=0.2.1, <0.3",
-        "psutil>=5.8.0, <5.9"
+        "psutil>=5.8.0, <5.9",
+        "alembic[tz]"
     ]
 )
