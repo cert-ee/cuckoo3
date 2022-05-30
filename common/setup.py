@@ -41,13 +41,13 @@ setuptools.setup(
         "python-dateutil",
         "sflock>=1.0, <1.1",
         "sqlalchemy>=1.4, <1.5",
-        "elasticsearch>=7.8.1, <8.0",
-        "elasticsearch-dsl>=7.2.1, <7.3",
-        "vt-py>=0.5.4, <0.6",
-        "pymisp>=2.4.135.3, <2.5",
-        "aiohttp>=3.7.4, <3.8",
+        "elasticsearch>=7.17.3, <8.0",
+        "elasticsearch-dsl>=7.4.0, <7.5",
+        "vt-py>=0.6, <0.7",
+        "pymisp>=2.4.159, <2.5",
+        "aiohttp>=3.8.1, <3.9",
         "aiohttp-sse-client>=0.2.1, <0.3",
-        "psutil>=5.8.0, <5.9",
+        "psutil>=5.9.0, <5.10",
         "alembic[tz]"
     ]
 )
