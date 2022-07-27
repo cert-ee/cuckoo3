@@ -15,6 +15,10 @@ from cuckoo.common.result import retriever, ResultDoesNotExistError, Results
 
 from cuckoo.web.decorators import accepts_json
 
+from ipaddress import ip_network, ip_address
+from ipware import get_client_ip
+
+
 class Analysis(View):
     def get(self, request, analysis_id):
         try:
@@ -23,6 +27,7 @@ class Analysis(View):
             return JsonResponse({"error": str(e)}, status=400)
 
         return JsonResponse(analysis.to_dict())
+
 
 class Settings(View):
 
@@ -68,6 +73,7 @@ class Settings(View):
 
         return JsonResponse(settings.to_dict())
 
+
 class ReadyForManual(View):
     def get(self, request, analysis_id):
         state = analyses.get_state(analysis_id)
@@ -92,7 +98,7 @@ class ReadyForManual(View):
                 )
                 return resp
             if state in (analyses.States.NO_SELECTED,
-                           analyses.States.PENDING_PRE):
+                         analyses.States.PENDING_PRE):
                 # Analysis page cannot (yet) be viewed. Tell UI to redirect
                 # to the overview page
                 resp["location"] = reverse("Analyses/index")
@@ -103,15 +109,32 @@ class ReadyForManual(View):
             resp["location"] = reverse("Analysis/index", args=[analysis_id])
             return resp
 
+
 class SubmittedFileDownload(View):
 
     def get(self, request, analysis_id):
         if not cfg(
             "web.yaml", "web", "downloads", "submitted_file", subpkg="web"
-        ):
-            return HttpResponseForbidden(
+        )
+        return HttpResponseForbidden(
                 "Submitted file downloading is disabled"
             )
+        allowed_subnets = cfg(
+            "web.yaml", "web", "downloads", "allowed_subnets", subpkg="web"
+        )
+        if allowed_subnets:
+            ip = get_client_ip(request, request_header_order=['X-Real-IP'])
+            isAllowed = False
+            if ip:
+                for network in allowed_subnets.split(","):
+                    network = ip_network(network)
+                    if ip_address(ip) in network:
+                        isAllowed = True
+
+            if not isAllowed:
+                return HttpResponseForbidden(
+                            "Submitted file downloading is forbidden"
+                        )
 
         try:
             result = retriever.get_analysis(

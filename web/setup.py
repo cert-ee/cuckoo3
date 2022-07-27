@@ -38,6 +38,8 @@ setuptools.setup(
         "Cuckoo-common>=0.1.0",
         "django",
         "django-rest-framework",
+        "django-ipware",
+        "ipaddress"
         "tabulate>=0.8, <0.9"
     ],
 )
