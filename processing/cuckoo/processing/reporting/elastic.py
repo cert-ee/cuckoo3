@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2022 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 import json
@@ -14,6 +14,7 @@ from cuckoo.common.storage import TaskPaths
 
 from ..abtracts import Reporter
 from cuckoo.processing.event.events import Kinds
+
 
 class ElasticSearch(Reporter):
 
@@ -31,9 +32,19 @@ class ElasticSearch(Reporter):
         max_result = cfg(
             "elasticsearch.yaml", "max_result_window", subpkg="processing"
         )
+        user = cfg(
+            "intelmq.yaml", "processing", "user", subpkg="processing"
+        )
+        password = cfg(
+            "intelmq.yaml", "processing", "password", subpkg="processing"
+        )
+        ca_certs = cfg(
+            "intelmq.yaml", "processing", "ca_certs", subpkg="processing"
+        )
         init_elasticsearch(
             hosts, indices, timeout=timeout, max_result_window=max_result,
-            create_missing_indices=False
+            create_missing_indices=False,
+            user=user, password=password, ca_certs=ca_certs
         )
 
     def report_pre_analysis(self):

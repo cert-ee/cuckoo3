@@ -7,6 +7,7 @@ from cuckoo.common.config import cfg
 from ..abtracts import Processor
 from ..errors import DisablePluginError
 
+
 class IntelMQInfoGather(Processor):
 
     CATEGORY = ["file", "url"]
@@ -31,10 +32,19 @@ class IntelMQInfoGather(Processor):
         link_url = cfg(
             "intelmq.yaml", "processing", "link_url", subpkg="processing"
         )
+        user = cfg(
+            "intelmq.yaml", "processing", "user", subpkg="processing"
+        )
+        password = cfg(
+            "intelmq.yaml", "processing", "password", subpkg="processing"
+        )
+        ca_certs = cfg(
+            "intelmq.yaml", "processing", "ca_certs", subpkg="processing"
+        )
 
         cls.intelmq = IntelMQElastic(
             elastic_hosts=hosts, index_name=index_name, event_limit=limit,
-            link_url=link_url
+            link_url=link_url, user=user, password=password, ca_certs=ca_certs
         )
 
     def init(self):

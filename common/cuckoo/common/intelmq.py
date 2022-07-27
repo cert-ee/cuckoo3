@@ -147,11 +147,12 @@ class IntelMQEventMaker:
 
 
 class IntelMQElastic:
-    def __init__(self, elastic_hosts, index_name, event_limit=10, link_url=""):
+    def __init__(self, elastic_hosts, index_name, event_limit=10, link_url="", user="", password="", ca_certs=""):
         self._index_name = index_name
         self._limit = event_limit
         self._link_url = link_url
-        self._es = Elasticsearch(elastic_hosts, timeout=60)
+        self._es = Elasticsearch(elastic_hosts, timeout=60,
+                                 http_auth=(user, password), ca_certs=ca_certs)
 
     def verify(self):
         if not self._es.ping():
@@ -171,7 +172,6 @@ class IntelMQElastic:
         for hit in hits:
             d = hit.to_dict()
             event = {
-                ElasticFields.FEED_NAME:d.get(ElasticFields.FEED_NAME, ""),
                 ElasticFields.FEED_PROVIDER: d.get(
                     ElasticFields.FEED_PROVIDER, ""
                 ),

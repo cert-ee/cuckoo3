@@ -5,6 +5,7 @@ from cuckoo.common import config
 
 from .signatures.signature import Levels
 
+
 class ScoringLevel(config.String):
 
     def constraints(self, value):
@@ -175,7 +176,10 @@ typeloaders = {
         },
         "timeout": config.Int(default_val=300),
         "max_result_window": config.Int(default_val=10000),
-        "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"])
+        "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"]),
+        "user": config.String(allow_empty=True),
+        "password": config.String(allow_empty=True),
+        "ca_certs": config.String(default_val="/etc/ssl/certs/ca-certificates.crt"),
     },
     "suricata.yaml": {
         "enabled": config.Boolean(default_val=False),

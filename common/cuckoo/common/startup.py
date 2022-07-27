@@ -13,8 +13,10 @@ from . import config, shutdown
 
 log = CuckooGlobalLogger(__name__)
 
+
 class StartupError(Exception):
     pass
+
 
 class MigrationNeededError(StartupError):
 
@@ -30,22 +32,24 @@ class MigrationNeededError(StartupError):
         else:
             msg = f"Migration(s) required. {migrate_exception}. "
 
-        if isinstance(migrate_exception, DatabaseMigrationNeeded): # TODO add command
             return msg + "Use 'cuckoomigrate database all' to migrate " \
                          "database(s)"
 
         return msg
 
+
 def init_elasticsearch(hosts, indice_names, timeout=300,
                        max_result_window=10000,
-                       create_missing_indices=False):
+                       create_missing_indices=False,
+                       user="", password="", ca_certs=""):
 
     from cuckoo.common.elastic import manager, ElasticSearchError
 
     manager.configure(
         hosts=hosts, analyses_index=indice_names["analyses"],
         tasks_index=indice_names["tasks"], events_index=indice_names["events"],
-        timeout=timeout, max_result_window=max_result_window
+        timeout=timeout, max_result_window=max_result_window,
+        user=user, password=password, ca_certs=ca_certs
     )
     try:
         manager.verify()
@@ -65,6 +69,7 @@ def init_elasticsearch(hosts, indice_names, timeout=300,
                 )
         else:
             log.warning("One or more Elasticsearch indices missing")
+
 
 def init_global_logging(level, filepath="", use_logqueue=True,
                         warningsonly=[]):
@@ -126,6 +131,7 @@ def init_global_logging(level, filepath="", use_logqueue=True,
 
     set_initialized()
 
+
 def init_database(migration_check=True, create_tables=True):
     from cuckoo.common.db import dbms, CuckooDBTable, DatabaseMigrationNeeded
     try:
@@ -151,6 +157,7 @@ def init_safelist_db(migration_check=True, create_tables=True):
         raise MigrationNeededError(e, "Safelist database (safelistdb)")
 
     shutdown.register_shutdown(safelistdb.cleanup, order=999)
+
 
 def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
@@ -202,6 +209,7 @@ def create_configurations():
 
 _confversions = {}
 
+
 def _raise_for_conf_migration(confname, subpkg):
     from cuckoo.common.storage import ConfigVersions
     if subpkg:
@@ -233,6 +241,7 @@ def _raise_for_conf_migration(confname, subpkg):
             f"to perform automatic config migrations"
         )
 
+
 def load_configuration(confname, subpkg=None, check_constraints=True):
     config_path = Paths.config(file=confname, subpkg=subpkg)
     if not config_path.is_file():
@@ -253,9 +262,11 @@ def load_configuration(confname, subpkg=None, check_constraints=True):
             f"Failed to load config file {config_path}. {e}"
         )
 
+
 def _load_machinery_configs():
     for machinery in config.cfg("cuckoo", "machineries"):
         load_configuration(f"{machinery}.yaml", subpkg="machineries")
+
 
 def load_configurations():
     # Load cuckoo all configurations for Cuckoo and all installed Cuckoo

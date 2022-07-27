@@ -22,6 +22,9 @@ processing:
   # create a link to the Elasticsearch document. These links are
   # part of the report and UI. Do not include credentials.
   link_url: {{ processing.link_url }}
+  user: {{ user }}
+  password: {{ password }}
+  ca_certs: {{ ca_certs }}
 
 reporting:
   enabled: {{ reporting.enabled }}

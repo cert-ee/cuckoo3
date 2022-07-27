@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2022 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 import json
@@ -19,16 +19,20 @@ set_logger_level("urllib3.connectionpool", logging.ERROR)
 
 log = CuckooGlobalLogger(__name__)
 
+
 class ElasticSearchError(Exception):
     pass
 
+
 class SearchError(ElasticSearchError):
     pass
+
 
 class _Indices:
     EVENTS = "events"
     ANALYSES = "analyses"
     TASKS = "tasks"
+
 
 class _ESManager:
 
@@ -78,7 +82,7 @@ class _ESManager:
         return self._names_realnames[name]
 
     def configure(self, hosts, analyses_index, tasks_index, events_index,
-                  max_result_window=10000, timeout=60):
+                  max_result_window=10000, timeout=60, user="", password="", ca_certs=""):
 
         self._names_realnames["analyses"] = analyses_index
         self._names_realnames["tasks"] = tasks_index
@@ -86,7 +90,8 @@ class _ESManager:
 
         self._max_result_window = max_result_window
         self._hosts = hosts
-        self._client = Elasticsearch(hosts, timeout=timeout)
+        self._client = Elasticsearch(hosts, timeout=timeout,
+                                     http_auth=(user, password), ca_certs=ca_certs)
         self._initialized = True
 
     def verify(self):
@@ -178,8 +183,10 @@ _INDEX_KEYWORDS = {
 
 _FILTER_PREFIXES = tuple(_PREFIX_INDEX.keys())
 
+
 def _make_ts():
     return int(time.time() * 1000)
+
 
 def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
 
@@ -204,6 +211,7 @@ def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
         raise ElasticSearchError(
             f"Failed to create event entry in Elasticsearch. {e}"
         )
+
 
 def index_analysis(analysis, target, signatures, tags, families, ttps):
     body = {
@@ -259,6 +267,7 @@ def index_analysis(analysis, target, signatures, tags, families, ttps):
                 f"Failed to create analysis entry in Elasticsearch. {e}"
             )
 
+
 def index_task(task, score, machine, signatures, tags, families,
                ttps):
     body = {
@@ -288,12 +297,14 @@ def index_task(task, score, machine, signatures, tags, families,
             f"Failed to create task entry in Elasticsearch. {e}"
         )
 
+
 _unique_script_template = """
 for (p in params.%FIELD%) {
     if(!ctx._source.%FIELD%.contains(p)) {
         ctx._source.%FIELD%.add(p)
     }
 }"""
+
 
 def update_analysis(analysis_id, tags=[], families=[], ttps=[]):
     params = {}
@@ -325,6 +336,7 @@ def update_analysis(analysis_id, tags=[], families=[], ttps=[]):
             f"Failed to update analysis entry in Elasticsearch. {e}"
         )
 
+
 def _unique_values_field(index, field, start, end):
     start_ts = int(start.timestamp() * 1000)
     end_ts = int(end.timestamp() * 1000)
@@ -350,11 +362,13 @@ def _unique_values_field(index, field, start, end):
 
     return vals_counts
 
+
 def analysis_unique_values_field(field, start, end):
     return _unique_values_field(
         manager.index_realname(_Indices.ANALYSES), field=field, start=start,
         end=end
     )
+
 
 def _count_index_fieldvals(index, field, value, start, end):
     start_ts = int(start.timestamp() * 1000)
@@ -381,11 +395,13 @@ def analysis_count_field_val(field, value, start, end):
         start=start, end=end
     )
 
+
 _query_pattern = {
     "analysis.target.md5": re.compile("^[a-f0-9]{32}$", re.IGNORECASE),
     "analysis.target.sha1": re.compile("^[a-f0-9]{40}$", re.IGNORECASE),
     "analysis.target.sha256": re.compile("^[a-f0-9]{64}$", re.IGNORECASE)
 }
+
 
 class _SearchQueryParser:
 
@@ -419,7 +435,6 @@ class _SearchQueryParser:
 
             self._searches.setdefault(_Indices.EVENTS, []).append(search)
             return
-
 
         raise SearchError(
             f"No further subkey possible after {filter_fields[1]!r}"
@@ -548,6 +563,7 @@ class _SearchQueryParser:
             return index, [search]
 
         return None, None
+
 
 class _SearchResultTracker:
 

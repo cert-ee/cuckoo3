@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2022 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 import setuptools
@@ -35,13 +35,13 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-        "Cuckoo-common==0.1.0",
+        "Cuckoo-common>=0.1.0",
         "sflock>=1.0, <1.1",
         "protobuf>=3.20.1, <4.0.0",
         "httpreplay>=1.0, <1.1",
         "pefile>=2022.5.30, <2023.0.0",
         "oletools>=0.60.1, <0.61",
-        "cryptography>=36.0.2, <37.0.0",
+        "cryptography>=37.0.4, <38.0.0",
         "hyperscan>=0.1.5, <0.2",
         "yara-python>=4.2.0, <4.3",
         "roach>=1.0, <1.1",

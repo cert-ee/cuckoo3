@@ -21,10 +21,12 @@ from cuckoo.common.config import cfg
 
 import cuckoo.web
 
+
 def set_path_settings():
     os.chdir(cuckoo.web.__path__[0])
     sys.path.insert(0, cuckoo.web.__path__[0])
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.web.settings")
+
 
 def _init_remote_storage():
     api = APIClient(
@@ -32,6 +34,7 @@ def _init_remote_storage():
         cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
     )
     retriever.set_api_client(api)
+
 
 def _init_elasticsearch_web():
     hosts = cfg("web.yaml", "elasticsearch", "hosts", subpkg="web")
@@ -41,9 +44,20 @@ def _init_elasticsearch_web():
     max_window = cfg(
         "web.yaml", "elasticsearch", "max_result_window", subpkg="web"
     )
+    user = cfg(
+        "web.yaml", "elasticsearch", "user", subpkg="web"
+    )
+    password = cfg(
+        "web.yaml", "elasticsearch", "password", subpkg="web"
+    )
+    ca_certs = cfg(
+        "web.yaml", "elasticsearch", "ca_certs", subpkg="web"
+    )
 
     init_elasticsearch(hosts, indices, max_result_window=max_window,
-                       create_missing_indices=False)
+                       create_missing_indices=False,
+                       user=user, password=password, ca_certs=ca_certs)
+
 
 def _init_statistics_web():
     charts = cfg(
@@ -57,6 +71,7 @@ def _init_statistics_web():
             )
     except StatisticsError as e:
         raise StartupError(f"Failed initializing statistics chart data. {e}")
+
 
 def init_web(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
@@ -108,6 +123,7 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
 
     set_path_settings()
 
+
 def start_web(host="127.0.0.1", port=8000, autoreload=False):
     args = ("cuckoo", "runserver", f"{host}:{port}")
     if not autoreload:
@@ -115,8 +131,10 @@ def start_web(host="127.0.0.1", port=8000, autoreload=False):
 
     execute_from_command_line(args)
 
+
 def djangocommands(*args):
     execute_from_command_line(("cuckoo",) + args)
+
 
 def init_and_get_wsgi():
     import logging

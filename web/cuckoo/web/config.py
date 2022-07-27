@@ -4,6 +4,7 @@
 from cuckoo.common import config
 from cuckoo.common.resultstats import ChartDataMaker, RangeTypes
 
+
 class _ChartType(config.String):
 
     def constraints(self, value):
@@ -15,6 +16,7 @@ class _ChartType(config.String):
                 f"types: {', '.join(ChartDataMaker.CHARTS.keys())}"
             )
 
+
 class _ChartTimeRange(config.String):
 
     def constraints(self, value):
@@ -25,6 +27,7 @@ class _ChartTimeRange(config.String):
                 f"Invalid chart time range: {value}. "
                 f"Existing ranges: {RangeTypes.all_types()}"
             )
+
 
 exclude_autoload = []
 typeloaders = {
@@ -44,6 +47,9 @@ typeloaders = {
             },
             "max_result_window": config.Int(default_val=10000),
             "hosts": config.List(config.HTTPUrl, ["http://127.0.0.1:9200"]),
+            "user": config.String(allow_empty=True),
+            "password": config.String(allow_empty=True),
+            "ca_certs": config.String(allow_empty=True, default_val="/etc/ssl/certs/ca-certificates.crt"),
             "web_search": {
                 "enabled": config.Boolean(default_val=False)
             },

@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2022 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 import logging
 import os
@@ -16,10 +16,11 @@ from .scheduler import NodesTracker
 log = CuckooGlobalLogger(__name__)
 
 
-"""All Cuckoo startup helper functions that start or prepare components 
-must be declared here and register a stopping or cleanup method 
-with shutdown.register_shutdown if anything has to be stopped 
+"""All Cuckoo startup helper functions that start or prepare components
+must be declared here and register a stopping or cleanup method
+with shutdown.register_shutdown if anything has to be stopped
 on Cuckoo shutdown"""
+
 
 class CuckooCtx:
 
@@ -29,6 +30,7 @@ class CuckooCtx:
         self.scheduler = None
         self.state_controller = None
         self.processing_handler = None
+
 
 def start_processing_handler(cuckooctx):
     from .runprocessing import ProcessingWorkerHandler
@@ -57,6 +59,7 @@ def start_processing_handler(cuckooctx):
 
         time.sleep(1)
 
+
 def start_statecontroller(cuckooctx):
     from .control import StateController
     sockpath = UnixSocketPaths.state_controller()
@@ -79,6 +82,7 @@ def start_statecontroller(cuckooctx):
     state_th = Thread(target=cuckooctx.state_controller.start)
     state_th.start()
 
+
 def make_scheduler(cuckooctx, task_queue):
     from .scheduler import Scheduler
     sched = Scheduler(cuckooctx, task_queue)
@@ -88,6 +92,7 @@ def make_scheduler(cuckooctx, task_queue):
 
     # Ensure schedule stop is always called second (after stop message)
     shutdown.register_shutdown(sched.stop, order=2)
+
 
 def import_vmcloak_vms(machinery_name, vms_path, machine_names=[]):
     from cuckoo.machineries.configtools import import_vmcloak_machines
@@ -104,6 +109,7 @@ def import_vmcloak_vms(machinery_name, vms_path, machine_names=[]):
     except MachineryError as e:
         raise StartupError(f"Import failed. {e}")
 
+
 def delete_machines(machinery_name, machine_names):
     from cuckoo.machineries.configtools import delete_machines
     from cuckoo.machineries.errors import MachineryError
@@ -111,6 +117,7 @@ def delete_machines(machinery_name, machine_names):
         return delete_machines(machinery_name, machine_names)
     except MachineryError as e:
         raise StartupError(f"Failure during deletion. {e}")
+
 
 def add_machine(machinery_name, name, machine_dict):
     from cuckoo.machineries.configtools import add_machine
@@ -138,6 +145,7 @@ def start_importcontroller(cuckooctx):
     import_controller.import_importables()
     import_controller.start()
 
+
 def start_importmode(loglevel):
     from multiprocessing import set_start_method
     set_start_method("spawn")
@@ -163,6 +171,7 @@ def start_importmode(loglevel):
     log.info("Starting import controller")
     start_importcontroller(ctx)
 
+
 def start_localnode(cuckooctx):
     from cuckoo.node.startup import start_local
 
@@ -173,6 +182,7 @@ def start_localnode(cuckooctx):
     client = LocalNodeClient(cuckooctx, nodectx.node)
     stream_receiver.set_client(client)
     cuckooctx.nodes.add_node(client)
+
 
 def start_resultretriever(cuckooctx, nodeapi_clients):
     from .retriever import ResultRetriever
@@ -213,6 +223,7 @@ def start_resultretriever(cuckooctx, nodeapi_clients):
         waited += 0.5
         time.sleep(0.5)
 
+
 def make_node_api_clients():
     from cuckoo.common.clients import NodeAPIClient, ClientError
     node_clients = []
@@ -230,6 +241,7 @@ def make_node_api_clients():
         node_clients.append(client)
 
     return node_clients
+
 
 def make_remote_node_clients(cuckooctx, node_api_clients):
     from cuckoo.common.clients import ClientError
@@ -269,6 +281,7 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
 
     return remotes_nodes, wrapper
 
+
 def make_task_queue():
     from cuckoo.common.db import DatabaseMigrationNeeded
     from .taskqueue import TaskQueue
@@ -277,6 +290,7 @@ def make_task_queue():
         return TaskQueue(Paths.queuedb())
     except DatabaseMigrationNeeded as e:
         raise MigrationNeededError(e, "Task queue database (taskqueuedb)")
+
 
 def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
@@ -333,6 +347,7 @@ def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     cuckooctx.scheduler.handle_abandoned(cancel=cancel_abandoned)
     cuckooctx.scheduler.start()
 
+
 def _init_elasticsearch_pre_startup():
     # Elasticsearch initialization before starting processing workers.
     # This init is responsible for ensuring the indices will exist.
@@ -350,10 +365,20 @@ def _init_elasticsearch_pre_startup():
     max_result = config.cfg(
         "elasticsearch.yaml", "max_result_window", subpkg="processing"
     )
+    user = config.cfg(
+        "elasticsearch.yaml", "user", subpkg="processing"
+    )
+    password = config.cfg(
+        "elasticsearch.yaml", "password", subpkg="processing"
+    )
+    ca_certs = config.cfg(
+        "elasticsearch.yaml", "ca_certs", subpkg="processing"
+    )
     init_elasticsearch(
         hosts, indices, timeout=timeout, max_result_window=max_result,
-        create_missing_indices=True
+        create_missing_indices=True, user=user, password=password, ca_certs=ca_certs
     )
+
 
 def start_cuckoo(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
