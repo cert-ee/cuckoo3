@@ -39,7 +39,7 @@ setuptools.setup(
         "django",
         "django-rest-framework",
         "django-ipware",
-        "ipaddress"
+        "ipaddress",
         "tabulate>=0.8, <0.9"
     ],
 )
