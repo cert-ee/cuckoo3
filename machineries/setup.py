@@ -35,6 +35,6 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-        "Cuckoo-common==0.1.0",
+        "Cuckoo-common>=0.1.1",
     ],
 )
