@@ -33,13 +33,13 @@ class ElasticSearch(Reporter):
             "elasticsearch.yaml", "max_result_window", subpkg="processing"
         )
         user = cfg(
-            "intelmq.yaml", "processing", "user", subpkg="processing"
+            "elasticsearch.yaml", "user", subpkg="processing"
         )
         password = cfg(
-            "intelmq.yaml", "processing", "password", subpkg="processing"
+            "elasticsearch.yaml", "password", subpkg="processing"
         )
         ca_certs = cfg(
-            "intelmq.yaml", "processing", "ca_certs", subpkg="processing"
+            "elasticsearch.yaml",  "ca_certs", subpkg="processing"
         )
         init_elasticsearch(
             hosts, indices, timeout=timeout, max_result_window=max_result,
