@@ -42,7 +42,7 @@ setuptools.setup(
         "pefile>=2022.5.30, <2023.0.0",
         "oletools>=0.60.1, <0.61",
         "cryptography>=37.0.4, <38.0.0",
-        "hyperscan>=0.1.5, <0.2",
+        "hyperscan==0.3.2",
         "yara-python>=4.2.0, <4.3",
         "roach>=1.0, <1.1",
         "suricatactl==0.0.1.dev3",
