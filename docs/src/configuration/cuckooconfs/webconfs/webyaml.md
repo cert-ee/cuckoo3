@@ -50,7 +50,11 @@ elasticsearch:
   # The Elasticsearch hosts where results are reported to during processing.
   # Should be one ore more host:port combinations.
   hosts:
-    - http://127.0.0.1:9200
+    - https://127.0.0.1:9200
+  # The Elasticsearch auth and ssl cert
+  user:
+  password: 
+  ca_certs: /etc/ssl/certs/ca-certificates.crt
 
   indices:
     # The names to use when searching Elasticsearch. Each name must be unique

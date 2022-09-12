@@ -36,6 +36,10 @@ elasticsearch:
   {% for host in elasticsearch.hosts %}
     - {{ host }}
   {% endfor %}
+  # The Elasticsearch auth and ssl cert
+  user: {{ user }}
+  password: {{ password }}
+  ca_certs: {{ ca_certs }}
 
   indices:
     # The names to use when searching Elasticsearch. Each name must be unique
