@@ -115,8 +115,8 @@ class SubmittedFileDownload(View):
     def get(self, request, analysis_id):
         if not cfg(
             "web.yaml", "web", "downloads", "submitted_file", subpkg="web"
-        )
-        return HttpResponseForbidden(
+        ):
+            return HttpResponseForbidden(
                 "Submitted file downloading is disabled"
             )
         allowed_subnets = cfg(
