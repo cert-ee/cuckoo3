@@ -320,6 +320,7 @@ class _CuckooCWD:
 cuckoocwd = _CuckooCWD()
 
 ANALYSIS_ID_LEN = 6
+MAX_TASK_ID_LEN = 6
 
 def split_analysis_id(analysis_id):
     date_analysis = analysis_id.split("-", 1)
@@ -341,10 +342,16 @@ def split_analysis_id(analysis_id):
             f"A-Z and 0-9. Given {date_analysis[1]}"
         )
 
-    if len(date_analysis[0]) != len("YYYYMMDD"):
+    if len(date_analysis[0]) != len("YYYYMMDD") and date_analysis[0].isdigit():
         raise ValueError(
             "Date part must be in YYYYMMDD format. "
             f"Given: {date_analysis[0]}"
+        )
+
+    if not date_analysis[0].isdigit():
+        raise ValueError(
+            "Invalid analysis ID given. Date part can only contain "
+            f"0-9. Given {date_analysis[0]}"
         )
 
     return date_analysis
@@ -356,6 +363,18 @@ def split_task_id(task_id):
         raise ValueError(
             f"Invalid task ID given. Format must be "
             f"analysisid_tasknumber. Not: {task_id}"
+        )
+
+    if len(analysis_id_tasknumber[1]) > MAX_TASK_ID_LEN:
+        raise ValueError(
+            f"Invalid task ID length. Can be max {MAX_TASK_ID_LEN} "
+            f"characters. Given: {analysis_id_tasknumber[1]}"
+        )
+
+    if not analysis_id_tasknumber[1].isdigit():
+        raise ValueError(
+            "Invalid task ID given. Task id can only contain "
+            f"0-9. Given {analysis_id_tasknumber[1]}"
         )
 
     date, analysis = split_analysis_id(analysis_id_tasknumber[0])
