@@ -6,6 +6,7 @@ from django.http import HttpResponseBadRequest
 
 from cuckoo.common import analyses
 
+
 def index(request):
     limit = request.GET.get("limit", 20)
     offset = request.GET.get("offset", 0)
@@ -19,7 +20,7 @@ def index(request):
 
     if offset < 0:
         offset = 0
-    if limit < 0:
+    if limit < 0 or limit > 100:
         limit = 20
 
     try:
