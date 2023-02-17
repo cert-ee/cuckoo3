@@ -544,10 +544,10 @@ class QEMU(Machinery):
         path = Path(vm.disposables_dir, f"{vm.machine.name}_disposable.qcow2")
         command = [
             self.cfg["binaries"]["qemu_img"],
-            "create", "-f", "qcow2",
+            "create", "-F", "qcow2",
             "-o", "lazy_refcounts=on,cluster_size=2M",
             "-b", vm.qcow2_path,
-            str(path)
+            "-f", "qcow2", str(path)
         ]
         try:
             subprocess.run(
