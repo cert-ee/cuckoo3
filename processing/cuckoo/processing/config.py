@@ -63,12 +63,12 @@ typeloaders = {
         "min_malicious": config.Int(default_val=5, min_value=1)
     },
     "misp.yaml": {
-        "enabled": config.Boolean(default_val=False),
-        "url": config.HTTPUrl(),
-        "verify_tls": config.Boolean(default_val=True),
-        "key": config.String(sensitive=True),
-        "timeout": config.Int(default_val=5, min_value=0),
         "processing": {
+            "enabled": config.Boolean(default_val=False),
+            "url": config.HTTPUrl(),
+            "verify_tls": config.Boolean(default_val=True),
+            "key": config.String(sensitive=True),
+            "timeout": config.Int(default_val=5, min_value=0),
             "pre": {
                 "event_limit": config.Int(default_val=1, min_value=1),
                 "file": {
@@ -96,6 +96,10 @@ typeloaders = {
         },
         "reporting": {
             "enabled": config.Boolean(default_val=False),
+            "url": config.HTTPUrl(),
+            "verify_tls": config.Boolean(default_val=True),
+            "key": config.String(sensitive=True),
+            "timeout": config.Int(default_val=5, min_value=0),
             "min_score": config.Int(default_val=7, min_value=1, max_value=10),
             "web_baseurl": config.HTTPUrl(allow_empty=True),
             "event": {

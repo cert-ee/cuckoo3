@@ -14,17 +14,14 @@ class MispInfoGather(Processor):
 
     @classmethod
     def enabled(cls):
-        return cfg("misp.yaml", "enabled", subpkg="processing")
+        return cfg("misp.yaml", "processing", "enabled", subpkg="processing")
 
     @classmethod
     def init_once(cls):
-        cls.hashes = cfg(
-            "misp", "processing", "pre", "file", "hashes", subpkg="processing"
-        )
-        cls.url = cfg("misp", "url", subpkg="processing")
-        cls.verify_tls = cfg("misp", "verify_tls", subpkg="processing")
-        cls.key = cfg("misp", "key", subpkg="processing")
-        cls.conn_timeout = cfg("misp", "timeout", subpkg="processing")
+        cls.url = cfg("misp", "processing", "url", subpkg="processing")
+        cls.verify_tls = cfg("misp", "processing", "verify_tls", subpkg="processing")
+        cls.key = cfg("misp", "processing", "key", subpkg="processing")
+        cls.conn_timeout = cfg("misp", "processing", "timeout", subpkg="processing")
         cls.query_limits = cfg(
             "misp", "processing", "post", "query_limits", subpkg="processing"
         )

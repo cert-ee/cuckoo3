@@ -19,10 +19,10 @@ class MISP(Reporter):
 
     @classmethod
     def init_once(cls):
-        cls.url = cfg("misp", "url", subpkg="processing")
-        cls.verify_tls = cfg("misp", "verify_tls", subpkg="processing")
-        cls.key = cfg("misp", "key", subpkg="processing")
-        cls.conn_timeout = cfg("misp", "timeout", subpkg="processing")
+        cls.url = cfg("misp", "reporting", "url", subpkg="processing")
+        cls.verify_tls = cfg("misp", "reporting", "verify_tls", subpkg="processing")
+        cls.key = cfg("misp", "reporting", "key", subpkg="processing")
+        cls.conn_timeout = cfg("misp", "reporting", "timeout", subpkg="processing")
         cls.min_score = cfg(
             "misp", "reporting", "min_score", subpkg="processing"
         )

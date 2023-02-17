@@ -1,22 +1,22 @@
-# Enable the usage of MISP queries in pre and post processing for
-# the discovered IOCs.
-enabled: {{ enabled }}
-
-# The MISP API url. Is also used as the base URL for creating links to
-# events.
-url: {{ url }}
-
-# Verify if the configured MISP server is using a valid TLS certificate.
-# Disable this your certificate is self-signed or no certificate is used.
-verify_tls: {{ verify_tls }}
-
-# The API key to access the MISP api.
-key: {{ key }}
-
-# A connection timeout to use when using the MISP api.
-timeout: {{ timeout }}
-
 processing:
+  # Enable the usage of MISP queries in pre and post processing for
+  # the discovered IOCs.
+  enabled: {{ processing.enabled }}
+
+  # The MISP API url. Is also used as the base URL for creating links to
+  # events.
+  url: {{ processing.url }}
+
+  # Verify if the configured MISP server is using a valid TLS certificate.
+  # Disable this your certificate is self-signed or no certificate is used.
+  verify_tls: {{ processing.verify_tls }}
+
+  # The API key to access the MISP api.
+  key: {{ processing.key }}
+
+  # A connection timeout to use when using the MISP api.
+  timeout: {{ processing.timeout }}
+
   # Settings for pre-processing
   pre:
     # The maximum amount of events that should be asked from MISP per query.
@@ -49,6 +49,20 @@ processing:
 reporting:
   # Enable the reporting of discovered IOCs as a new event.
   enabled: {{ reporting.enabled }}
+
+  # The MISP API url. Is also used as the base URL for creating links to
+  # events.
+  url: {{ reporting.url }}
+
+  # Verify if the configured MISP server is using a valid TLS certificate.
+  # Disable this your certificate is self-signed or no certificate is used.
+  verify_tls: {{ reporting.verify_tls }}
+
+  # The API key to access the MISP api.
+  key: {{ reporting.key }}
+
+  # A connection timeout to use when using the MISP api.
+  timeout: {{ reporting.timeout }}
 
   # The minimum Cuckoo score a task must have before discovered
   # IOCs are reported to MISP.
