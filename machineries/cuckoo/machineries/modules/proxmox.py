@@ -13,6 +13,8 @@ except ImportError:
     _HAVE_PROXMOXER = False
 
 class Proxmox(Machinery):
+    name = "proxmox"
+
     def init(self):
         pass
 
