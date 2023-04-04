@@ -68,8 +68,13 @@ class Proxmox(Machinery):
         breakpoint()
 
     def _create_proxmoxer_connection(self):
-        return ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
+        tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
                           verify_ssl=False)
+        if tmp is None:
+            raise errors.MachineryConnectionError(
+                    f"Couldn't connect to Proxmox."
+                    )
+        return tmp
 
     def _get_vm_info(self, name):
         """
