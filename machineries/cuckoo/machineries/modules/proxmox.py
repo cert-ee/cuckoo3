@@ -44,5 +44,10 @@ class Proxmox(Machinery):
 
     @staticmethod
     def verify_dependencies():
-        breakpoint()
+        if not _HAVE_PROXMOXER:
+            raise errors.MachineryDependencyError(
+                    "Python package 'proxmoxer' is not installed. "
+                    "To install it, the following python dependency must also be "
+                    "installed: 'pip install proxmoxer'"
+                    )
 
