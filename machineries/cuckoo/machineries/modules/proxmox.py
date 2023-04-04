@@ -7,7 +7,7 @@ from .. import errors
 from ..abstracts import Machinery
 
 try:
-    import proxmoxer
+    from proxmoxer import ProxmoxAPI
     _HAVE_PROXMOXER = True
 except ImportError:
     _HAVE_PROXMOXER = False
