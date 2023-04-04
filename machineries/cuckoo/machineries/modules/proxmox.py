@@ -16,33 +16,33 @@ class Proxmox(Machinery):
     name = "proxmox"
 
     def init(self):
-        pass
+        breakpoint()
 
     def restore_start(self, machine):
-        pass
+        breakpoint()
 
     def norestore_start(self, machine):
-        pass
+        breakpoint()
 
     def stop(self, machine):
-        pass
+        breakpoint()
 
     def acpi_stop(self, machine):
-        pass
+        breakpoint()
 
     def state(self, machine):
-        pass
+        breakpoint()
 
     def dump_memory(self, machine, path):
-        pass
+        breakpoint()
 
     def handle_paused(self, machine):
-        pass
+        breakpoint()
 
     def version(self):
-        pass
+        breakpoint()
 
     @staticmethod
     def verify_dependencies():
-        pass
+        breakpoint()
 
