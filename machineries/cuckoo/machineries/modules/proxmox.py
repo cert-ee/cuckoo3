@@ -1,7 +1,7 @@
 import threading
 
 from cuckoo.common import machines
-from cuckoo.common import cfg
+from cuckoo.common.config import cfg
 
 from .. import errors
 from ..abstracts import Machinery
