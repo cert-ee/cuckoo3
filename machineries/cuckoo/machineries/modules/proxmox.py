@@ -16,7 +16,10 @@ class Proxmox(Machinery):
     name = "proxmox"
 
     def init(self):
-        breakpoint()
+        self.dsn = cfg("proxmox.yaml", "dsn", subpkg="machineries")
+        self.user = cfg("proxmox.yaml", "user", subpkg="machineries")
+        self.pw = cfg("proxmox.yaml", "pw", subpkg="machineries")
+        self.vms = {}
 
     def restore_start(self, machine):
         breakpoint()
