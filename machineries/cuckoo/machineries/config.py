@@ -18,6 +18,38 @@ class MACAddress(config.String):
 
 exclude_autoload = []
 typeloaders = {
+    "proxmox.yaml": {
+        "dsn": config.String(default_val="xxx.xxx.xxx.xxx"),
+        "interface": config.NetworkInterface(
+            default_val="eno1", must_be_up=False
+        ),
+        "machines": config.NestedDictionary("example1", {
+                "label": config.String(default_val="example1"),
+                "ip": config.String(default_val="192.168.1.101"),
+                "platform": config.String(
+                    default_val="windows", to_lower=True
+                ),
+                "os_version": config.String(default_val="10"),
+                "mac_address": MACAddress(allow_empty=True, to_lower=True,
+                                          required=False),
+                "snapshot": config.String(allow_empty=True, required=False),
+                "interface": config.NetworkInterface(
+                    allow_empty=True, must_be_up=False, must_exist=False,
+                    required=False
+                ),
+                "agent_port": config.Int(
+                    default_val=8000, required=False, min_value=1,
+                    max_value=2**16-1
+                ),
+                "architecture": config.String(
+                    default_val="amd64", to_lower=True
+                ),
+                "tags": config.List(
+                    config.String, ["exampletag1", "exampletag2"],
+                    allow_empty=True
+                )
+        })
+    },
     "kvm.yaml": {
         "dsn": config.String(default_val="qemu:///system"),
         "interface": config.NetworkInterface(
