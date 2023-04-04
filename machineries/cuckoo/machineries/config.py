@@ -20,6 +20,8 @@ exclude_autoload = []
 typeloaders = {
     "proxmox.yaml": {
         "dsn": config.String(default_val="xxx.xxx.xxx.xxx"),
+        "user": config.String(default_val="root@pam"),
+        "pw": config.String(default_val="input your password here"),
         "interface": config.NetworkInterface(
             default_val="eno1", must_be_up=False
         ),
