@@ -45,6 +45,10 @@ class Proxmox(Machinery):
     def version(self):
         breakpoint()
 
+    def _create_proxmoxer_connection(self):
+        return ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
+                          verify_ssl=False)
+
     @staticmethod
     def verify_dependencies():
         if not _HAVE_PROXMOXER:
