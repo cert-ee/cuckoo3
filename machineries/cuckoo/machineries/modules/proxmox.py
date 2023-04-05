@@ -91,7 +91,7 @@ class Proxmox(Machinery):
             raise errors.MachineryConnectionError(
                     f"Cloudn't get Node list from Proxmox server."
                     )
-        elif len(nodes) <= 1:
+        elif len(nodes) <= 0:
             raise errors.MachineNotFoundError(
                     f"No Nodes found while loading Machines Info"
                     )
