@@ -56,7 +56,35 @@ class Proxmox(Machinery):
         breakpoint()
 
     def state(self, machine):
-        breakpoint()
+        vm = self.vms.get(machine.label)
+        if vm is None:
+            raise errors.MachineNotFoundError(
+                    f"While getting the state of {machine.label} "
+                    f"the machine wasn't found in the VMs list."
+                    )
+
+        prox = self._create_proxmoxer_connection()
+        current_status = prox.nodes(vm.node_name).qemu(vm.vm_id)\
+                .status.current.get()
+        if current_status is None:
+            raise errors.MachineryConnectionError(
+                    f"Error while getting status of {machine.label} "
+                    f"response was None"
+                    )
+        if current_status.get("qmpstatus") is None:
+            raise errors.MachineUnexpectedStateError(
+                    f"Error While getting qmpstatus of {machine.label} "
+                    f"qmpstatus is None"
+                    )
+
+        state = statemapping.get(current_status["qmpstatus"])
+        if state is None:
+            raise errors.MachineUnexpectedStateError(
+                    f"Error while getting qmpstatus of {machine.label} "
+                    f"qmpstatus doesn't match with machinery state"
+                    )
+
+        return state
 
     def dump_memory(self, machine, path):
         breakpoint()
@@ -137,4 +165,11 @@ class _VM:
     def __init__(self, vm_id, node_name):
         self.vm_id = vm_id
         self.node_name = node_name
+
+statemapping = {
+        # Transforms qmpstatus to a Machinery state
+        "running": machines.States.RUNNING,
+        "paused": machines.States.PAUSED,
+        "stopped": machines.States.POWEROFF,
+        }
 
