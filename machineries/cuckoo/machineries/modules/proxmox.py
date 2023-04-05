@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from cuckoo.common import machines
 from cuckoo.common.config import cfg
+from cuckoo.common.log import CuckooGlobalLogger
 
 from .. import errors
 from ..abstracts import Machinery
@@ -13,6 +14,8 @@ try:
     _HAVE_PROXMOXER = True
 except ImportError:
     _HAVE_PROXMOXER = False
+
+log = CuckooGlobalLogger(__name__)
 
 class Proxmox(Machinery):
     name = "proxmox"
@@ -44,7 +47,35 @@ class Proxmox(Machinery):
                 machine.snapshot = tmp[0]["name"]
 
     def restore_start(self, machine):
-        breakpoint()
+        state = self.state(machine)
+        if state != machines.States.POWEROFF:
+            raise errors.MachineUnexpectedStateError(
+                    f"Failed to start machine. Expected state 'poweroff'. "
+                    f"Actual state: {state}"
+                    )
+
+        if not machine.snapshot:
+            raise errors.MachineNotFoundError(
+                    f"While restore_start of {machine.label}."
+                    f"Didn't found snapshot. "
+                    f"This should never happen."
+                    )
+
+        vm = self.vms.get(machine.label)
+        if vm is None:
+            raise errors.MachineNotFoundError(
+                    f"while restore_start of {machine.label}. "
+                    f"Couldn't map label to ID"
+                    )
+
+        prox = self._create_proxmoxer_connection()
+        prox.nodes(vm.node_name).qemu(vm.vm_id)\
+                .snapshot(machine.snapshot).rollback.post()
+
+        while self.state(machine) != machines.States.RUNNING:
+            log.debug(f"Waiting for {machine.label} to restore snapshot {machine.snapshot}...")
+
+        log.info(f"restore_start from {machine.label} completed.")
 
     def norestore_start(self, machine):
         breakpoint()
