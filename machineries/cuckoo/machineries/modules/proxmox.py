@@ -1,5 +1,3 @@
-import threading
-
 from dataclasses import dataclass
 
 from cuckoo.common import machines
@@ -78,7 +76,7 @@ class Proxmox(Machinery):
         log.info(f"restore_start from {machine.label} completed.")
 
     def norestore_start(self, machine):
-        breakpoint()
+        raise NotImplemented
 
     def stop(self, machine):
         state = self.state(machine)
@@ -102,7 +100,7 @@ class Proxmox(Machinery):
         log.info(f"{machine.label} was stopped")
 
     def acpi_stop(self, machine):
-        breakpoint()
+        raise NotImplemented
 
     def state(self, machine):
         vm = self.vms.get(machine.label)
@@ -136,13 +134,13 @@ class Proxmox(Machinery):
         return state
 
     def dump_memory(self, machine, path):
-        breakpoint()
+        raise NotImplemented
 
     def handle_paused(self, machine):
-        breakpoint()
+        raise NotImplemented
 
     def version(self):
-        breakpoint()
+        raise NotImplemented
 
     def _create_proxmoxer_connection(self):
         tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
