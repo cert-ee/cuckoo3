@@ -81,7 +81,25 @@ class Proxmox(Machinery):
         breakpoint()
 
     def stop(self, machine):
-        breakpoint()
+        state = self.state(machine)
+        if state == machines.States.POWEROFF:
+            raise errors.MachineUnexpectedStateError(
+                    f"VM {machine.label} is already powered off."
+                    )
+
+        vm = self.vms.get(machine.label)
+        if vm is None:
+            raise errors.MachineNotFoundError(
+                    f"While stopping vm {machine.label}: "
+                    f"Couldn't find in vms list."
+                    )
+
+        prox = self._create_proxmoxer_connection()
+        prox.nodes(vm.node_name).qemu(vm.vm_id).status.stop.post()
+
+        while self.state(machine) != machines.States.POWEROFF:
+            log.debug(f"Waiting for {machine.label} to stop...")
+        log.info(f"{machine.label} was stopped")
 
     def acpi_stop(self, machine):
         breakpoint()
