@@ -26,11 +26,14 @@ class Proxmox(Machinery):
 
     def load_machines(self):
         """Get all IDs needed to control the VMs and check config problems"""
+        log.debug(f"Starting to load Proxmox VMs")
         super().load_machines()
         for machine in self.list_machines():
+            log.debug(f"loading {machine.label}")
             vm_id, vm_node = self._get_vm_info(machine.label)
             self.vms[machine.label] = _VM(vm_id, vm_node)
             if machine.snapshot is None:
+                log.debug(f"no snapshot was given tyting to load first snapshot in list")
                 prox = self._create_proxmoxer_connection()
                 tmp = prox.nodes(vm_node).qemu(vm_id).snapshot.get()
                 if tmp is None:
@@ -66,6 +69,7 @@ class Proxmox(Machinery):
                     f"Couldn't map label to ID"
                     )
 
+        log.debug(f"Starting analysis machine {machine.label}")
         prox = self._create_proxmoxer_connection()
         prox.nodes(vm.node_name).qemu(vm.vm_id)\
                 .snapshot(machine.snapshot).rollback.post()
@@ -92,12 +96,13 @@ class Proxmox(Machinery):
                     f"Couldn't find in vms list."
                     )
 
+        log.debug(f"Attempting to stop {machine.label}")
         prox = self._create_proxmoxer_connection()
         prox.nodes(vm.node_name).qemu(vm.vm_id).status.stop.post()
 
         while self.state(machine) != machines.States.POWEROFF:
             log.debug(f"Waiting for {machine.label} to stop...")
-        log.info(f"{machine.label} was stopped")
+        log.debug(f"{machine.label} was stopped")
 
     def acpi_stop(self, machine):
         raise NotImplemented
@@ -110,6 +115,7 @@ class Proxmox(Machinery):
                     f"the machine wasn't found in the VMs list."
                     )
 
+        log.debug(f"Determine state of {machine.label}")
         prox = self._create_proxmoxer_connection()
         current_status = prox.nodes(vm.node_name).qemu(vm.vm_id)\
                 .status.current.get()
@@ -131,6 +137,8 @@ class Proxmox(Machinery):
                     f"qmpstatus doesn't match with machinery state"
                     )
 
+        log.debug(f"{machine.label} has state: {state}")
+
         return state
 
     def dump_memory(self, machine, path):
@@ -143,6 +151,7 @@ class Proxmox(Machinery):
         raise NotImplemented
 
     def _create_proxmoxer_connection(self):
+        log.debug(f"Attempting to connect to Proxmox server in {self.dsn}")
         tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
                           verify_ssl=False)
         if tmp is None:
@@ -157,6 +166,7 @@ class Proxmox(Machinery):
         Wont stop on first occurence, instead it will try to detect ambiguity
         and if it does it will raise an exception.
         """
+        log.debug(f"Attempting to get vmid and node name from {name}")
         prox = self._create_proxmoxer_connection()
 
         vm_id = 0
@@ -196,6 +206,7 @@ class Proxmox(Machinery):
 
     @staticmethod
     def verify_dependencies():
+        log.debug(f"Checking if Proxmoxer is installed...")
         if not _HAVE_PROXMOXER:
             raise errors.MachineryDependencyError(
                     "Python package 'proxmoxer' is not installed. "
