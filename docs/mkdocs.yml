@@ -41,3 +41,6 @@ nav:
     - Endpoints: usage/webapi/endpoints.md
   - Web UI: usage/webui/setup.md
   - Commands: usage/commands.md
+
+- Development:
+  - Creating new machinery modules: development/creating_machinery.md
