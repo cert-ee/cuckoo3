@@ -25,7 +25,13 @@ class Proxmox(Machinery):
         self.vms = {}
 
     def load_machines(self):
-        """Get all IDs needed to control the VMs and check config problems"""
+        """
+        Loads additional Info about the VMs.
+        Particularly it Populates the self.vms dict with instances of the _VM class.
+        The _VM class in turn contains: the vmid of the vm
+        and the node name in which the vm resides.
+        Additionally vms names are checked for ambiguity
+        """
         log.debug(f"Starting to load Proxmox VMs")
         super().load_machines()
         for machine in self.list_machines():
@@ -48,6 +54,7 @@ class Proxmox(Machinery):
                 machine.snapshot = tmp[0]["name"]
 
     def restore_start(self, machine):
+        """Checks if the VM is already running and if its not restores VMs snapshot"""
         state = self.state(machine)
         if state != machines.States.POWEROFF:
             raise errors.MachineUnexpectedStateError(
@@ -83,6 +90,7 @@ class Proxmox(Machinery):
         raise NotImplemented
 
     def stop(self, machine):
+        """Checks if the VM is running and if it is ungracefully shuts it down"""
         state = self.state(machine)
         if state == machines.States.POWEROFF:
             raise errors.MachineUnexpectedStateError(
@@ -108,6 +116,7 @@ class Proxmox(Machinery):
         raise NotImplemented
 
     def state(self, machine):
+        """Gets the qmpstatus of the VM and turns is to cuckoo compatible state"""
         vm = self.vms.get(machine.label)
         if vm is None:
             raise errors.MachineNotFoundError(
@@ -142,15 +151,22 @@ class Proxmox(Machinery):
         return state
 
     def dump_memory(self, machine, path):
+        """Not sure if this is even possible..."""
         raise NotImplemented
 
     def handle_paused(self, machine):
+        """Not needed as by restoring the snapshot the VM is already running"""
         raise NotImplemented
 
     def version(self):
         raise NotImplemented
 
     def _create_proxmoxer_connection(self):
+        """
+        As I'm not sure if the connection to Proxmox is held for a prolonged
+        amount of time. This handy functions creates one every time a connection
+        is needed.
+        """
         log.debug(f"Attempting to connect to Proxmox server in {self.dsn}")
         tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
                           verify_ssl=False)
@@ -217,6 +233,7 @@ class Proxmox(Machinery):
 
 @dataclass
 class _VM:
+    """Helper class for handling additional VM info"""
     vm_id: int
     node_name: str
 
