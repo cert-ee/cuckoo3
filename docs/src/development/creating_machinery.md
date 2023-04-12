@@ -178,3 +178,42 @@ powered of machine)
     For examples check the modules `QEMU` and `kvm`
     in `$A/machineries/cuckoo/machineries/abstracts`
 
+### Optional machinery functions
+
+```python
+def norestore_start(self, machine):
+    raise NotImplementedError
+```
+
+As the name suggest, this function starts the VM like `restore_start`.
+But unlike `restore_start` the given snapshot isn't restored.
+
+```python
+def acpi_stop(self, machine):
+    raise NotImplementedError
+```
+
+The same as the `stop` function but shutdowns the machine
+gracefully instead of virtually pulling the plug.
+
+```python
+def dump_memory(self, machine, path):
+    raise NotImplementedError
+```
+
+Does exactly what the name suggest. This may not be possible with all
+machineries. Prominently the `kvm` module does not support this function.
+
+```python
+def handle_paused(self, machine):
+    raise NotImplementedError
+```
+
+Some machineries may restore the VM to a paused state, like the `QEMU`
+machinery. This function is used to unpaused the machine.
+
+!!! note "Note"
+    It is also a good idea to override existing machinery functions
+    if you need to alter their functionality. (e.g. `load_machines`
+    gets overwritten by the `kvm` module)
+
