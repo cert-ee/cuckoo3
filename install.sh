@@ -8,6 +8,7 @@ pip install -U git+https://github.com/cert-ee/roach
 pip install -U git+https://github.com/cert-ee/httpreplay
 
 pip install -U requests
+pip install -U wheel
 
 declare -a pkglist=("./common" "./processing" "./machineries" "./web" "./node" "./core")
 
