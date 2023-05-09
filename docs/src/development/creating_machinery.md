@@ -178,6 +178,19 @@ powered of machine)
     For examples check the modules `QEMU` and `kvm`
     in `$A/machineries/cuckoo/machineries/abstracts`
 
+### Config-Template
+
+After fisnishing the machinery-module, you will want to create a Config-Template.
+This will prevent `cuckoo createcwd` from producing an error and will create
+an example config from installation on.
+
+The Config-Template is a jinja2 document. It's name must chosen like this:
+`<module-name>.yaml.jinja2` and be located in `cuckoo3/machineries/cuckoo/machineries/data/conftemplates`
+The file must contain the configuration constrains defined earlier.
+
+!!! note "Note"
+    Using an existing Template is a great starting point for this step.
+
 ### Optional machinery functions
 
 ```python
