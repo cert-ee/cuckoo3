@@ -100,19 +100,19 @@ class IntelMQEventMaker:
     def add_dst_ip(self, ip):
         self._add_event(
             {Fields.DESTINATION_IP: ip},
-            taxonomy="malicous-code", classification_type="infected-system"
+            taxonomy="malicious-code", classification_type="infected-system"
         )
 
     def add_dst_domain(self, domain):
         self._add_event(
             {Fields.DESTINATION_FQDN: domain},
-            taxonomy="malicous-code", classification_type="infected-system"
+            taxonomy="malicious-code", classification_type="infected-system"
         )
 
     def add_dst_url(self, url):
         self._add_event(
             {Fields.DESTINATION_URL: url},
-            taxonomy="malicous-code", classification_type="infected-system"
+            taxonomy="malicious-code", classification_type="infected-system"
         )
 
     def add_malware_file(self, md5, sha1, sha256, family=None):
