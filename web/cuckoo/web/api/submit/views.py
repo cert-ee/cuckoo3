@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from rest_framework.parsers import MultiPartParser
@@ -8,13 +8,16 @@ from rest_framework.views import APIView
 
 from cuckoo.common import submit
 
+
 class FileSubmission(serializers.Serializer):
     file = serializers.FileField(help_text="A file to analyze")
     settings = serializers.JSONField(help_text="A settings dictionary")
 
+
 class URLSubmission(serializers.Serializer):
-    url = serializers.CharField(help_text="A URL to analyze")
+    url = serializers.URLField(help_text="A URL to analyze")
     settings = serializers.JSONField(help_text="A settings dictionary")
+
 
 class SubmitFile(APIView):
 
@@ -56,6 +59,7 @@ class SubmitFile(APIView):
             "settings": final_settings.to_dict()
         })
 
+
 class SubmitURL(APIView):
 
     serializer_class = URLSubmission
@@ -92,15 +96,18 @@ class SubmitURL(APIView):
             "settings": final_settings.to_dict()
         })
 
+
 class AvailablePlatforms(APIView):
 
     def get(self, request):
         return Response(submit.settings_maker.available_platforms())
 
+
 class AvailableRoutes(APIView):
 
     def get(self, request):
         return Response(submit.settings_maker.available_routes())
+
 
 class AvailableBrowsers(APIView):
 

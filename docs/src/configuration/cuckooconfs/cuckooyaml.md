@@ -74,4 +74,12 @@ remote_storage:
   # API key needs to have administrator privileges to export to
   # a remote Cuckoo.
   api_key: null
+
+# Settings used by Cuckoo submit
+submit:
+  # min_file_size for submit
+  min_file_size: 133
+
+  # max_file_size for submit, default 4gb
+  max_file_size: 4294967296
 ```

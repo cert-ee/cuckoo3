@@ -1,6 +1,10 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+from urllib.parse import urlparse
+
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 from django.http import (
     HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
     HttpResponseNotFound
@@ -13,6 +17,27 @@ from cuckoo.common.config import cfg
 from cuckoo.common.result import (
     retriever, Results, ResultDoesNotExistError, InvalidResultDataError
 )
+
+
+def _validate_website_url(website):
+    """Validate website into valid URL"""
+    msg = "Cannot validate this URL: %s" % website
+    validate = URLValidator(message=msg)
+    try:
+        validate(website)
+    except:
+        o = urlparse(website)
+        if o.path:
+            path = o.path
+            while path.endswith('/'):
+                path = path[:-1]
+            path = "https://"+path
+            validate(path)
+            return path
+        else:
+            raise ValidationError(message=msg)
+    return website
+
 
 def _make_web_platforms(available_platforms):
     fallbacks = cfg(
@@ -57,6 +82,7 @@ def _make_web_platforms(available_platforms):
 
     return platforms
 
+
 class Submit(View):
 
     def get(self, request):
@@ -64,7 +90,13 @@ class Submit(View):
 
     def post(self, request):
         uploaded = request.FILES.get("file")
-        url = request.POST.get("url")
+        try:
+            url = _validate_website_url(request.POST.get("url"))
+        except ValidationError as e:
+            return render(
+                request, template_name="submit/index.html.jinja2",
+                status=400, context={"error": str(e)}
+            )
         if not uploaded and not url:
             return HttpResponseBadRequest()
 
@@ -99,6 +131,7 @@ class Submit(View):
 
         return redirect("Submit/waitidentify", analysis_id=analysis_id)
 
+
 class WaitIdentify(View):
 
     def get(self, request, analysis_id):
@@ -106,6 +139,7 @@ class WaitIdentify(View):
             request, template_name="submit/loading.html.jinja2",
             context={"analysis_id": analysis_id}
         )
+
 
 class Settings(View):
 

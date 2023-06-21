@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from secrets import token_hex
@@ -65,6 +65,10 @@ typeloaders = {
         "remote_storage": {
             "api_url": config.HTTPUrl(allow_empty=True),
             "api_key": config.String(sensitive=True, allow_empty=True)
+        },
+        "submit": {
+            "min_file_size" : config.Int(default_val=133, min_value=1),
+            "max_file_size" : config.Int(default_val=4294967296, min_value=1)
         },
     },
     "distributed.yaml": {

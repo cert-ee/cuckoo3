@@ -76,6 +76,7 @@ def init_api(cuckoo_cwd, loglevel, logfile=""):
             settings_maker.set_nodesinfosdump_path(nodeinfos_dump)
 
         load_configuration("web.yaml", subpkg="web")
+        load_configuration("cuckoo.yaml", check_constraints=False)
         load_configuration("analysissettings.yaml")
         settings_maker.set_limits(cfg("analysissettings.yaml", "limits"))
         settings_maker.set_defaults(cfg("analysissettings.yaml", "default"))

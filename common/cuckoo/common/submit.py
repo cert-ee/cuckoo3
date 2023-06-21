@@ -14,6 +14,7 @@ from .analyses import (
     States as AnalysisStates
 )
 from .clients import StateControllerClient, ActionFailedError
+from .config import cfg
 from .log import CuckooGlobalLogger
 from .machines import find_in_lists
 from .node import NodeInfos, read_nodesinfos_dump
@@ -684,11 +685,21 @@ def url(url, settings):
     return analysis_id
 
 def file(filepath, settings, file_name=""):
+    MIN_SUBMIT_SIZE = cfg("cuckoo", "submit", "min_file_size")
+    MAX_SUBMIT_SIZE = cfg("cuckoo", "submit", "max_file_size")
     if file_name:
         file_name = force_valid_encoding(file_name)
 
     try:
         file_helper = File(filepath)
+        if file_helper.size == 0:
+            raise SubmissionError("Empty file")
+        if MIN_SUBMIT_SIZE:
+            if file_helper.size < MIN_SUBMIT_SIZE:
+                raise SubmissionError(f"File smaller than min_file_size: {MIN_SUBMIT_SIZE} bytes")
+        if MAX_SUBMIT_SIZE:
+            if file_helper.size > MAX_SUBMIT_SIZE:
+                raise SubmissionError(f"File bigger than max_file_size: {MAX_SUBMIT_SIZE/(1024 * 1024 * 1024)} Gigabytes")
     except FileNotFoundError as e:
         raise SubmissionError(e)
 
