@@ -73,5 +73,6 @@ web:
   downloads:
     # Enable/disable submitted file downloading.
     submitted_file: True
+    allowed_subnets: 127.0.0.0/8,10.0.0.0/8 
 
 ```

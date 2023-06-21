@@ -123,7 +123,7 @@ class SubmittedFileDownload(View):
             "web.yaml", "web", "downloads", "allowed_subnets", subpkg="web"
         )
         if allowed_subnets:
-            ip = get_client_ip(request, request_header_order=['X-Real-IP'])
+            ip, isPrivate = get_client_ip(request, request_header_order=['X-Real-IP'])
             isAllowed = False
             if ip:
                 for network in allowed_subnets.split(","):

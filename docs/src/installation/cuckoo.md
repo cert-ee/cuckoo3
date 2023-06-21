@@ -23,7 +23,7 @@ The following steps are for a normal/generic Cuckoo setup. This is the type of s
 
 **2. Installing Cuckoo 3 from a delivery archive.**
 
-2.1 Create and activate a new Python >=3.6 virtualenv
+2.1 Create and activate a new Python >=3.8 virtualenv
 
 2.2 Navigate to the `$A/cuckoo/cuckoo3` directory and run install.sh
 
@@ -42,9 +42,9 @@ Cuckoo stores all its results, configurations, and other files. The CWD will be 
 
     cuckoo createcwd
 
-**4. Installing the stager and monitor binaries** 
+**4. Installing the stager and monitor binaries**
 
-The next step is to install the stager and monitor binaries. These are components that 
+The next step is to install the stager and monitor binaries. These are components that
 are uploaded to the analysis vm and perform the actual behavioral collection.
 
     cuckoo getmonitor $A/cuckoo/monitor.zip
@@ -129,7 +129,7 @@ For each created/installed task running node, add an entry.
 
 **3. Start Cuckoo in distributed mode**
 
-Starting Cuckoo in distributed mode will cause Cuckoo to request information from each node on startup. Any connection error with one of 
+Starting Cuckoo in distributed mode will cause Cuckoo to request information from each node on startup. Any connection error with one of
 the nodes will result in the stopping of startup.
 
 If the startup is successful, the setup is ready for submission.

@@ -37,9 +37,9 @@ elasticsearch:
     - {{ host }}
   {% endfor %}
   # The Elasticsearch auth and ssl cert
-  user: {{ user }}
-  password: {{ password }}
-  ca_certs: {{ ca_certs }}
+  user: {{ elasticsearch.user }}
+  password: {{ elasticsearch.password }}
+  ca_certs: {{ elasticsearch.ca_certs }}
 
   indices:
     # The names to use when searching Elasticsearch. Each name must be unique
@@ -58,5 +58,5 @@ web:
   downloads:
     # Enable/disable submitted file downloading.
     submitted_file: {{ web.downloads.submitted_file }}
-    # A list of strings representing the subnets or ipaddresses that can download 
+    # A list of strings representing the subnets or ipaddresses that can download
     allowed_subnets: {{ web.downloads.allowed_subnets }}

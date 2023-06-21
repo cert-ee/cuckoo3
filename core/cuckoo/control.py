@@ -421,7 +421,8 @@ class _WorkTracker:
         self._func(self, **self._func_kwargs)
 
     def close(self):
-        self.log.close()
+        if self.log:
+            self.log.close()
         if self.errtracker.has_errors():
             errors_container = self.errtracker.to_container()
             if self.task_id:
@@ -507,7 +508,7 @@ class _AnalysisLocker:
 class StateController(UnixSocketServer):
 
     NUM_STATE_CONTROLLER_WORKERS = 6
-    
+
     def __init__(self, controller_sock_path, cuckooctx):
         super().__init__(controller_sock_path)
         self.ctx = cuckooctx

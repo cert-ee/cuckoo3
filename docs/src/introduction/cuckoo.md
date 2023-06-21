@@ -8,8 +8,8 @@ isolated operating system.
 
 #### Supported host(s)
 
-The recommended host operating system is Ubuntu 18.04 or 20.04. Cuckoo 3 currently only runs on Linux hosts.
-The recommended Python versions are 3.6 or 3.8. Lower than 3.6 will not work.
+The recommended host operating system is Ubuntu 20.04. Cuckoo 3 currently only runs on Linux hosts.
+The recommended Python versions is 3.8.
 
 #### Supported guest operating systems
 
