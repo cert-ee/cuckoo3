@@ -168,21 +168,8 @@ class Proxmox(Machinery):
         is needed.
         """
         log.debug(f"Attempting to connect to Proxmox server in {self.dsn}")
-
-        for count in range(3):
-            try:
-                tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
+        tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
                           verify_ssl=False)
-            except (TimeoutError):
-                log.warning("Connection to Proxmox timedout retrying...")
-                if count >= 2:
-                    log.error("Aborting on timedout")
-                    raise errors.MachineryConnectionError(
-                            f"Connection to proxmox timedout 3 times."
-                            )
-                else:
-                    pass
-
         if tmp is None:
             raise errors.MachineryConnectionError(
                     f"Couldn't connect to Proxmox."
