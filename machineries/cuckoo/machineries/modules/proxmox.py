@@ -22,6 +22,7 @@ class Proxmox(Machinery):
         self.dsn = cfg("proxmox.yaml", "dsn", subpkg="machineries")
         self.user = cfg("proxmox.yaml", "user", subpkg="machineries")
         self.pw = cfg("proxmox.yaml", "pw", subpkg="machineries")
+        self.timeout = cfg("proxmox.yaml", "timeout", subpkg="machineries")
         self.vms = {}
 
     def load_machines(self):
@@ -168,8 +169,14 @@ class Proxmox(Machinery):
         is needed.
         """
         log.debug(f"Attempting to connect to Proxmox server in {self.dsn}")
-        tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
-                          verify_ssl=False)
+        try:
+            tmp = ProxmoxAPI(self.dsn, user=self.user, password=self.pw,
+                          verify_ssl=False, timeout=self.timeout)
+        except Exception as e:
+            log.error(f"Connecting to Proxmox server timedout"
+                      f"Try increasing the timeout value in <cwd>)/conf/machineries/proxmox.yaml")
+            raise e
+
         if tmp is None:
             raise errors.MachineryConnectionError(
                     f"Couldn't connect to Proxmox."
