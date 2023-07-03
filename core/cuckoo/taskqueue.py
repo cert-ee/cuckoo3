@@ -178,8 +178,8 @@ class TaskQuery:
 
     def count_unscheduled(self):
         return self._ses.query(
-            sqlalchemy.func.count(QueuedTask.id)
-        ).filter_by(scheduled=False).scalar()
+            QueuedTask.id
+        ).filter_by(scheduled=False).count()
 
     def get_unscheduled_tasks(self, platform=None, os_version=None):
         tasks = []
