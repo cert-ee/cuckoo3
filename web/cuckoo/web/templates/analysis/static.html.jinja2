@@ -16,7 +16,7 @@
         <h2>Static analysis</h2>
         <p>Static analysis and an overview from the results of other analysis providers.</p>
 
-        <nav class="tabbar has-background-transparent" data-enhance {# data-priority="tab-pefiles,tab-virustotal" #} id="staticReport">
+        <nav class="tabbar has-background-transparent" data-enhance {# data-priority="tab-pefiles,tab-virustotal,tab-irma" #} id="staticReport">
           <a class="tabbar-link" href="#tab-summary">Summary</a>
         </nav>
 
@@ -89,6 +89,19 @@
                   data=pre.virustotal.avs,
                   cols=["category","engine_name","engine_version","method","result"],
                   labels=["Category","Name","Version","Method","Result"],
+                  has_sticky_header=True
+              )}}
+            {% endcall %}
+          </div>
+        {% endif %}
+        {# tab: static.irma #}
+        {% if pre.irma %}
+        <div id="tab-irma" hidden>
+            {% call ui_box(title="IRMA Antivirus Engines", has_padding=False) %}
+              {{ render_table(
+                  data=pre.irma.probe_results.antivirus,
+                  cols=["engine_name","result"],
+                  labels=["Name","Result"],
                   has_sticky_header=True
               )}}
             {% endcall %}

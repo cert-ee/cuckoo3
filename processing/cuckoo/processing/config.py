@@ -62,6 +62,18 @@ typeloaders = {
         "min_suspicious": config.Int(default_val=3, min_value=1),
         "min_malicious": config.Int(default_val=5, min_value=1)
     },
+    "irma.yaml": {
+        "enabled": config.Boolean(default_val=False),
+        "min_suspicious": config.Int(default_val=3, min_value=1),
+        "min_malicious": config.Int(default_val=5, min_value=1),
+        "timeout": config.Int(default_val=60, min_value=0),
+        "scan": config.Boolean(default_val=False),
+        "force": config.Boolean(default_val=False),
+        "url": config.HTTPUrl(required=True),
+        "probes": config.String(required=False),
+        "submitter": config.String(required=True),
+        "rescan_time": config.Int(required=False),
+    },
     "misp.yaml": {
         "processing": {
             "enabled": config.Boolean(default_val=False),

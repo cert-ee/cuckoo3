@@ -20,6 +20,11 @@
                 <a role="tab" href="#virus-total">Antivirus</a>
               </li>
             {% endif %}
+            {% if pre.irma is defined %}
+              <li>
+                <a role="tab" href="#irma">IRMA</a>
+              </li>
+            {% endif %}
             {% if pre.misp %}
               <li>
                 <a role="tab" href="#misp">MISP</a>
