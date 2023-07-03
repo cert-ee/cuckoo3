@@ -90,13 +90,15 @@ class Submit(View):
 
     def post(self, request):
         uploaded = request.FILES.get("file")
-        try:
-            url = _validate_website_url(request.POST.get("url"))
-        except ValidationError as e:
-            return render(
-                request, template_name="submit/index.html.jinja2",
-                status=400, context={"error": str(e)}
-            )
+        url = request.POST.get("url")
+        if url:
+            try:
+                url = _validate_website_url(request.POST.get("url"))
+            except ValidationError as e:
+                return render(
+                    request, template_name="submit/index.html.jinja2",
+                    status=400, context={"error": str(e)}
+                )
         if not uploaded and not url:
             return HttpResponseBadRequest()
 
