@@ -88,8 +88,8 @@ typeloaders = {
         },
         "web": {
             "downloads": {
-                "submitted_file": config.Boolean(default_val=True),
-                "allowed_subnets": config.String(allow_empty=False)
+                "submitted_file": config.Boolean(default_val=False),
+                "allowed_subnets": config.String(allow_empty=False, default_val="127.0.0.0/8,10.0.0.0/8")
             }
         }
     }
