@@ -69,10 +69,10 @@ typeloaders = {
         "timeout": config.Int(default_val=60, min_value=0),
         "scan": config.Boolean(default_val=False),
         "force": config.Boolean(default_val=False),
-        "url": config.HTTPUrl(required=True),
-        "probes": config.String(required=False),
-        "submitter": config.String(required=True),
-        "rescan_time": config.Int(required=False),
+        "url": config.HTTPUrl(),
+        "probes": config.String(),
+        "submitter": config.String(),
+        "rescan_time": config.Int(default_val=15, min_value=1),
     },
     "misp.yaml": {
         "processing": {

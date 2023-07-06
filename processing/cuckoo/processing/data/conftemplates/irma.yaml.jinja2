@@ -10,7 +10,7 @@ min_suspicious: {{ min_suspicious }}
 min_malicious: {{ min_malicious }}
 
 # How much time we can wait to establish IRMA connection and get the report.
-timeout = {{ timeout }}
+timeout: {{ timeout }}
 
 # Enable this option if you want to submit files to IRMA not yet available.
 scan: {{ scan }}
@@ -27,3 +27,9 @@ url: {{ url }}
 # Expects comma separated list
 # For example : ClamAV,F-Secure,Avast,ESET,eScan,Avira,Sophos,McAfee,Kaspersky,GData,Comodo,Bitdefender
 probes: {{ probes }}
+
+#unknown, webui, probe_result, cli, kiosk, suricata
+submitter = {{ processing.irma.submitter }}
+
+# Rescan time in minutes
+rescan_time = {{ processing.irma.rescan_time }}
