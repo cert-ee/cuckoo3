@@ -547,3 +547,42 @@ def delete_analysis_disk(analysis_id):
     # Delete day dir if it is empty
     if sum(1 for _ in daydir.iterdir()) < 1:
         delete_dir(daydir)
+
+
+def find_waiting_url_analysis(url=None):
+    ses = db.dbms.session()
+    try:
+        query = ses.query(db.Analysis)
+        query = query.filter_by(state=States.WAITING_MANUAL)
+        query = query.join(db.Target).filter(db.Target.target == url)
+        query = query.order_by(db.Analysis.created_on.desc())
+        first = query.first()
+        if first:
+            return first.id
+        else:
+            return None
+    # If a too large offset or limit is provided, some DBMSs (Such as SQLite),
+    # can throw an overflow error because they cannot convert it.
+    except OverflowError:
+        return None
+    finally:
+        ses.close()
+
+def find_waiting_file_analysis(sha256):
+    ses = db.dbms.session()
+    try:
+        query = ses.query(db.Analysis)
+        query = query.filter_by(state=States.WAITING_MANUAL)
+        query = query.join(db.Target).filter(db.Target.sha256 == sha256)
+        query = query.order_by(db.Analysis.created_on.desc())
+        first = query.first()
+        if first:
+            return first.id
+        else:
+            return None
+    # If a too large offset or limit is provided, some DBMSs (Such as SQLite),
+    # can throw an overflow error because they cannot convert it.
+    except OverflowError:
+        return None
+    finally:
+        ses.close()

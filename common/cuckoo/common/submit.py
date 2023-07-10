@@ -11,7 +11,8 @@ from threading import RLock
 
 from .analyses import (
     Kinds as AnalysisKinds, AnalysisError, Settings, get_state,
-    States as AnalysisStates
+    States as AnalysisStates,
+    find_waiting_url_analysis, find_waiting_file_analysis
 )
 from .clients import StateControllerClient, ActionFailedError
 from .config import cfg
@@ -677,11 +678,14 @@ settings_maker = SettingsMaker()
 
 
 def url(url, settings):
-    analysis_id, folder_path = make_analysis_folder()
-    _write_analysis(
-        analysis_id, settings,
-        SubmittedURL(category="url", url=force_valid_encoding(url))
-    )
+    analysis_id = find_waiting_url_analysis(url)
+
+    if not analysis_id:
+        analysis_id, folder_path = make_analysis_folder()
+        _write_analysis(
+            analysis_id, settings,
+            SubmittedURL(category="url", url=force_valid_encoding(url))
+        )
     return analysis_id
 
 def file(filepath, settings, file_name=""):
@@ -703,6 +707,9 @@ def file(filepath, settings, file_name=""):
     except FileNotFoundError as e:
         raise SubmissionError(e)
 
+    analysis_id = find_waiting_file_analysis(file_helper.sha256)
+    if analysis_id:
+        return analysis_id
     analysis_id, folder_path = make_analysis_folder()
 
     try:

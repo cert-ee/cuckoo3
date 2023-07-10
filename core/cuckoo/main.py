@@ -9,6 +9,7 @@ from cuckoo.common.storage import cuckoocwd, Paths, CWDError
 from cuckoo.common.log import (
     exit_error, print_info, print_error, print_warning, VERBOSE
 )
+from cuckoo.common.startup import init_database
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
@@ -240,6 +241,7 @@ def delete_machines(machinery_name, machine_names):
 def _submit_files(settings, *targets):
     from cuckoo.common import submit
     from cuckoo.common.storage import enumerate_files
+
     files = []
     for path in targets:
         if not os.path.exists(path):
@@ -337,6 +339,7 @@ def submission(target, url, platform, timeout, priority, orig_filename,
     from cuckoo.common.startup import load_configuration, StartupError
 
     try:
+        load_configuration("cuckoo.yaml", check_constraints=False)
         load_configuration("analysissettings.yaml")
         submit.settings_maker.set_limits(
             cfg("analysissettings.yaml", "limits")
@@ -345,6 +348,7 @@ def submission(target, url, platform, timeout, priority, orig_filename,
             cfg("analysissettings.yaml", "default")
         )
         submit.settings_maker.set_nodesinfosdump_path(Paths.nodeinfos_dump())
+        init_database(migration_check=False, create_tables=False)
     except (submit.SubmissionError, StartupError, ConfigurationError) as e:
         exit_error(f"Submission failed: {e}")
 
