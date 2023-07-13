@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from copy import deepcopy
@@ -13,6 +13,7 @@ from .storage import (
 )
 from .strictcontainer import Settings as _Settings, Analysis, Errors, Platform
 from .utils import parse_bool, browser_to_tag
+from .result import ResultDoesNotExistError
 
 log = CuckooGlobalLogger(__name__)
 
@@ -536,17 +537,46 @@ def write_changes(analysis):
 
 
 def delete_analysis_disk(analysis_id):
-    daypart, _ = split_analysis_id(analysis_id)
-    delete_dirtree(AnalysisPaths.path(analysis_id))
+    try:
+        daypart, _ = split_analysis_id(analysis_id)
+        delete_dirtree(AnalysisPaths.path(analysis_id))
 
-    # If the daydir is today, never delete it.
-    if daypart == todays_daydir():
-        return
+        # If the daydir is today, never delete it.
+        if daypart == todays_daydir():
+            return
 
-    daydir = AnalysisPaths.day(daypart)
-    # Delete day dir if it is empty
-    if sum(1 for _ in daydir.iterdir()) < 1:
-        delete_dir(daydir)
+        daydir = AnalysisPaths.day(daypart)
+        # Delete day dir if it is empty
+        if sum(1 for _ in daydir.iterdir()) < 1:
+            delete_dir(daydir)
+    except FileNotFoundError as e:
+        log.error(
+            "Failed to delete analysis", analysis_id=analysis_id, error=e
+        )
+        raise ResultDoesNotExistError(
+            f"Analysis {analysis_id} not found"
+        )
+
+
+def delete_analysis_db(analysis_id):
+    ses = db.dbms.session()
+    try:
+        analysis_sql = db.Analysis.__table__.delete().where(db.Analysis.id == analysis_id)
+        target_sql = db.Target.__table__.delete().where(db.Target.analysis_id == analysis_id)
+        tasks_sql = db.Task.__table__.delete().where(db.Task.analysis_id == analysis_id)
+        ses.execute(target_sql)
+        ses.execute(tasks_sql)
+        ses.execute(analysis_sql)
+        ses.commit()
+    except Exception as e:
+        log.error(
+            "Failed to delete analysis", analysis_id=analysis_id, error=e
+        )
+        raise ResultDoesNotExistError(
+            f"Analysis {analysis_id} not found"
+        )
+    finally:
+        ses.close()
 
 
 def find_waiting_url_analysis(url=None):

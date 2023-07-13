@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from django.urls import path, register_converter, include
@@ -26,5 +26,9 @@ urlpatterns = [
     path(
         "<analysis_id:analysis_id>/task/",
         include("cuckoo.web.api.analysis.task.urls")
+    ),
+    path(
+        "<analysis_id:analysis_id>/deleteanalysis",
+        views.DeleteAnalysis.as_view()
     )
 ]

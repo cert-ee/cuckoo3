@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from django.http import (
@@ -12,6 +12,7 @@ from django.views import View
 from cuckoo.common import submit, analyses
 from cuckoo.common.config import cfg
 from cuckoo.common.result import retriever, ResultDoesNotExistError, Results
+from cuckoo.common.analyses import delete_analysis_disk, delete_analysis_db
 
 from cuckoo.web.decorators import accepts_json
 
@@ -149,3 +150,12 @@ class SubmittedFileDownload(View):
             submittedfile_fp, as_attachment=True,
             filename=analysis.submitted.sha256
         )
+
+class DeleteAnalysis(View):
+    def get(self, request, analysis_id):
+        try:
+            delete_analysis_db(analysis_id)
+            delete_analysis_disk(analysis_id)
+        except (ResultDoesNotExistError) as e:
+            return JsonResponse({"error": f"Analysis {analysis_id} does not exist."}, status=400)
+        return JsonResponse({}, status=200)

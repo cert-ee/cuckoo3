@@ -2,6 +2,7 @@
 
   const conclude = document.querySelector('#conclude-analysis');
   const finish = conclude.querySelector('#start-analysis');
+  const delete_analysis = conclude.querySelector('#delete-analysis');
   const { analysis_id, category } = window.Application;
 
   /**
@@ -578,6 +579,30 @@
 
   }
 
+  function deleteSubmission() {
+
+    if(!analysis_id)
+      return handleError('Found no analysis ID to send this request to. Refresh the page and try again.');
+
+
+    fetch('/api/analyses/'+analysis_id+'/deleteanalysis', {
+      method: 'GET',
+      headers: {
+        'X-CSRFToken': window.csrf_token
+      }
+    }).then(response => response.json())
+      .then(response => {
+        const { error } = response;
+
+        if(error) {
+          handleError(error);
+        } else {
+          window.location = '/analyses/';
+        }
+      });
+
+  }
+
   // apply all the handlers
   document.addEventListener('DOMContentLoaded', () => {
     fileTreeHandler();
@@ -587,6 +612,9 @@
     customOptionsHandler();
     finish.addEventListener('click', ev => {
       finishSubmission();
+    });
+    delete_analysis.addEventListener('click', ev => {
+      deleteSubmission();
     });
   });
 
