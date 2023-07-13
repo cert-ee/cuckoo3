@@ -130,9 +130,11 @@
 
         {# tab: static.irma #}
         {% if pre.irma is defined %}
-          <div role="region" id="irma" hidden>
-            {% include "analysis/components/irma.html.jinja2" %}
-          </div>
+          {% if pre.irma %}
+            <div role="region" id="irma" hidden>
+              {% include "analysis/components/irma.html.jinja2" %}
+            </div>
+          {% endif %}
         {% endif %}
 
         {# tab: pre.misp #}
