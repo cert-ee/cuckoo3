@@ -40,7 +40,7 @@ class FileInfoGather(Processor):
 
         for ext, handler_subkey in self._EXTENSION_HANDLER.items():
 
-            if not target.filename.endswith(ext):
+            if not target.filename.lower().endswith(ext):
                 continue
 
             handler, subkey = handler_subkey
