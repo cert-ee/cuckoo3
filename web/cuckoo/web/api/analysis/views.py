@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 Estonian Information System Authority.
+# Copyright (C) 2019-2023 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
 from django.http import FileResponse
@@ -10,6 +10,8 @@ from rest_framework.views import APIView
 from cuckoo.common.result import (
     retriever, ResultDoesNotExistError, InvalidResultDataError, Results
 )
+from cuckoo.common.analyses import delete_analysis_disk, delete_analysis_db
+
 
 class Analysis(APIView):
 
@@ -25,6 +27,7 @@ class Analysis(APIView):
 
         return Response(analysis.to_dict())
 
+
 class Identification(APIView):
 
     def get(self, request, analysis_id):
@@ -38,6 +41,7 @@ class Identification(APIView):
             return Response({"error": str(e)}, status=500)
 
         return Response(ident.to_dict())
+
 
 class Pre(APIView):
 
@@ -53,12 +57,14 @@ class Pre(APIView):
 
         return Response(pre.to_dict())
 
+
 class CompositeRequest(serializers.Serializer):
     retrieve = serializers.ListField(
         allow_empty=False, child=serializers.CharField(),
         help_text="A list of one or more analysis information types to "
                   "retrieve",
     )
+
 
 class CompositeAnalysis(APIView):
 
@@ -78,6 +84,7 @@ class CompositeAnalysis(APIView):
 
         return Response(composite.to_dict())
 
+
 class SubmittedFile(APIView):
 
     def get(self, request, analysis_id):
@@ -94,3 +101,13 @@ class SubmittedFile(APIView):
             submitted_fp, as_attachment=True,
             filename=analysis.submitted.sha256
         )
+
+
+class DeleteAnalysis(APIView):
+    def get(self, request, analysis_id):
+        try:
+            delete_analysis_db(analysis_id)
+            delete_analysis_disk(analysis_id)
+        except (ResultDoesNotExistError):
+            return Response(status=404)
+        return Response(status=200)

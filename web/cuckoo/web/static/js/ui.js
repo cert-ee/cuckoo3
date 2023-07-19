@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Estonian Information System Authority.
+// Copyright (C) 2019-2023 Estonian Information System Authority.
 // See the file 'LICENSE' for copying permission.
 window.lib = Object.assign(window.lib || {}, {
   // splits url in its counterparts
@@ -780,6 +780,43 @@ function startLoader(next) {
 function stopLoader(next) {
   lib.loaderElement.setAttribute('hidden', true);
   if(next) next();
+}
+
+function deleteSubmission(analysis_id) {
+  if(!analysis_id)
+    return handleOverviewError('Found no analysis ID to send this request to. Refresh the page and try again.');
+
+  fetch('/api/analyses/'+analysis_id+'/deleteanalysis', {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': window.csrf_token
+    }
+  }).then(response => response.json())
+    .then(response => {
+      const { error } = response;
+      if(error) {
+        handleOverviewError(error);
+      } else {
+        window.location = '/analyses/';
+      }
+    });
+}
+
+// prints error in the conclusive block
+function handleOverviewError(msg) {
+  const overview = document.getElementById("overview:analysis");
+  const err = overview.querySelector('#error');
+  if(err) err.remove();
+
+  const html = parseDOM(`
+    <div class="box has-background-red no-margin-top" id="error">
+      <p class="no-margin-top"><strong>${lib.SafeString(msg)}</strong></p>
+      <button class="button is-red has-text-small">Dismiss</button>
+    </div>
+  `);
+
+  overview.insertBefore(html, overview.children[1]);
+  html.querySelector('button').onclick = () => html.remove();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
