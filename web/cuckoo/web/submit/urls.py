@@ -17,4 +17,8 @@ urlpatterns = [
         "settings/<analysis_id:analysis_id>/", views.Settings.as_view(),
         name="Submit/settings"
     ),
+    path(
+        "re/<analysis_id:analysis_id>/", views.Resubmit.as_view(),
+        name="Submit/resubmit"
+    ),
 ]
