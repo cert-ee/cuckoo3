@@ -77,6 +77,7 @@
           <a href="{{ url('Analysis/submittedfile', args=[analysis.id]) }}" class="button is-small has-margin-y">Download submitted file</a>
         {% endif %}
         <a onclick="deleteSubmission('{{ analysis.id}}')" class="button is-small has-margin-y">Delete analysis</a>
+        <a href="{{ url('Submit/resubmit', args=[analysis.id]) }}" class="button is-small has-margin-y">Resubmit</a>
       </div>
     </div>
   </div>

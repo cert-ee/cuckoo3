@@ -13,7 +13,6 @@ from .storage import (
 )
 from .strictcontainer import Settings as _Settings, Analysis, Errors, Platform
 from .utils import parse_bool, browser_to_tag
-from .result import ResultDoesNotExistError
 
 log = CuckooGlobalLogger(__name__)
 
@@ -553,7 +552,7 @@ def delete_analysis_disk(analysis_id):
         log.error(
             "Failed to delete analysis", analysis_id=analysis_id, error=e
         )
-        raise ResultDoesNotExistError(
+        raise AnalysisError(
             f"Analysis {analysis_id} not found"
         )
 
@@ -572,7 +571,7 @@ def delete_analysis_db(analysis_id):
         log.error(
             "Failed to delete analysis", analysis_id=analysis_id, error=e
         )
-        raise ResultDoesNotExistError(
+        raise AnalysisError(
             f"Analysis {analysis_id} not found"
         )
     finally:

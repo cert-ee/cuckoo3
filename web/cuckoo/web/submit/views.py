@@ -11,32 +11,37 @@ from django.http import (
 )
 from django.shortcuts import render, redirect
 from django.views import View
+import re
 
 from cuckoo.common import submit, analyses
 from cuckoo.common.config import cfg
 from cuckoo.common.result import (
     retriever, Results, ResultDoesNotExistError, InvalidResultDataError
 )
+from cuckoo.common.storage import AnalysisPaths
 
 
 def _validate_website_url(website):
     """Validate website into valid URL"""
-    msg = "Cannot validate this URL: %s" % website
+    msg = f"Cannot validate this URL: {website}"
     validate = URLValidator(message=msg)
     try:
         validate(website)
     except:
-        o = urlparse(website)
-        if o.path:
-            path = o.path
-            while path.endswith('/'):
-                path = path[:-1]
-            path = "https://"+path
-            validate(path)
-            return path
-        else:
-            raise ValidationError(message=msg)
+        raise ValidationError(message=msg)
     return website
+
+
+def _validate_analysis_id(analysis_id):
+    """Validate analysis id"""
+    ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
+
+    msg = f"Cannot validate this analysis_id: {analysis_id}"
+    complied_regex = re.compile(ANALYSIS_ID_REGEX)
+    match = complied_regex.fullmatch(analysis_id)
+    if not match:
+        raise ValidationError(message=msg)
+    return analysis_id
 
 
 def _make_web_platforms(available_platforms):
@@ -118,6 +123,56 @@ class Submit(View):
                 )
             else:
                 analysis_id = submit.url(url, settings)
+        except submit.SubmissionError as e:
+            return render(
+                request, template_name="submit/index.html.jinja2",
+                status=400, context={"error": str(e)}
+            )
+
+        try:
+            submit.notify()
+        except submit.SubmissionError as e:
+            return HttpResponseServerError(
+                f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
+            )
+
+        return redirect("Submit/waitidentify", analysis_id=analysis_id)
+
+class Resubmit(View):
+
+    def get(self, request, *args, **kwargs):
+        analysis_id = kwargs.get("analysis_id")
+
+        if analysis_id:
+            try:
+                analysis_id = _validate_analysis_id(analysis_id)
+            except ValidationError as e:
+                return render(
+                    request, template_name="submit/index.html.jinja2",
+                    status=400, context={"error": str(e)}
+                )
+        else:
+            return HttpResponseBadRequest()
+
+        analysis = retriever.get_analysis(analysis_id).analysis
+
+
+        try:
+            s_maker = submit.settings_maker.new_settings()
+            s_maker.set_manual(True)
+
+            password = analysis.settings.password
+            if password:
+                s_maker.set_password(password)
+
+            settings = s_maker.make_settings()
+            if analysis.category == "file":
+                submit_path = AnalysisPaths.submitted_file(analysis_id, resolve=True)
+                analysis_id = submit.file(
+                    submit_path, settings, file_name=analysis.target.target
+                )
+            else:
+                analysis_id = submit.url(analysis.target.target, settings)
         except submit.SubmissionError as e:
             return render(
                 request, template_name="submit/index.html.jinja2",

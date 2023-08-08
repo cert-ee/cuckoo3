@@ -32,9 +32,6 @@ def index(request, analysis_id):
                 "analysis_id": analysis_id
             }
         )
-        allowed_subnets = cfg(
-            "web.yaml", "web", "downloads", "allowed_subnets", subpkg="web"
-        )
 
     try:
         pre = result.pre
