@@ -1,3 +1,4 @@
+from time import sleep
 from dataclasses import dataclass
 
 from cuckoo.common import machines
@@ -129,6 +130,11 @@ class Proxmox(Machinery):
         prox = self._create_proxmoxer_connection()
         current_status = prox.nodes(vm.node_name).qemu(vm.vm_id)\
                 .status.current.get()
+        # prevents spamming during starting and stoping VMs,
+        # which leads to "too many redirection"-exception
+        log.debug("Waiting for status to change...")
+        sleep(5)
+
         if current_status is None:
             raise errors.MachineryConnectionError(
                     f"Error while getting status of {machine.label} "
