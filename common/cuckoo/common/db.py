@@ -10,6 +10,10 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import inspect as sqlalchemy_inspect
 
+from .log import CuckooGlobalLogger
+
+log = CuckooGlobalLogger(__name__)
+
 class DatabaseError(Exception):
     pass
 
@@ -173,7 +177,13 @@ class DBMS:
                 )
 
         if create_tables:
-            tablebaseclass.metadata.create_all(engine)
+            try:
+                tablebaseclass.metadata.create_all(engine)
+            except Exception as e:
+                log.error(
+                    "Failed to create tables", error=e
+                )
+
 
         self.initialized = True
 
