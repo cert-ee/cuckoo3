@@ -83,8 +83,8 @@
 
         {# tab: static.virustotal #}
         {% if pre.virustotal %}
-          <div id="tab-virus-total" hidden>
-            {% call ui_box(title="Antivirus Engines", has_padding=False) %}
+          <div id="tab-virus-total">
+            {% call ui_box(title="Antivirus Engines", has_padding=False, collapsed=True) %}
               {{ render_table(
                   data=pre.virustotal.avs,
                   cols=["category","engine_name","engine_version","method","result"],
@@ -96,8 +96,8 @@
         {% endif %}
         {# tab: static.irma #}
         {% if pre.irma %}
-        <div id="tab-irma" hidden>
-            {% call ui_box(title="IRMA Antivirus Engines", has_padding=False) %}
+        <div id="tab-irma">
+            {% call ui_box(title="IRMA Antivirus Engines", has_padding=False, collapsed=True) %}
               {{ render_table(
                   data=pre.irma.probe_results.antivirus,
                   cols=["engine_name","result"],
@@ -109,8 +109,8 @@
         {% endif %}
         {# tab: static.misp #}
         {% if pre.misp %}
-          <div id="tab-misp" hidden>
-            {% call ui_box(title="MISP", has_padding=False) %}
+          <div id="tab-misp">
+            {% call ui_box(title="MISP", has_padding=False, collapsed=True) %}
               <table class="table">
                 <thead>
                   <tr>
@@ -136,8 +136,8 @@
         {% endif %}
         {# tab: pre.intelmq #}
         {% if pre.intelmq %}
-          <div id="tab-intelmq" hidden>
-            {% call ui_box(title="IntelMQ", has_padding=False) %}
+          <div id="tab-intelmq">
+            {% call ui_box(title="IntelMQ", has_padding=False, collapsed=True) %}
               <table class="table has-sticky-header">
                 <thead>
                   <tr>
@@ -169,8 +169,8 @@
           </div>
         {% endif %}
         {% if pre.static and pre.static.office %}
-          <div id="tab-office" hidden>
-            {% call ui_box(title="Extracted macros", has_padding=False) %}
+          <div id="tab-office">
+            {% call ui_box(title="Extracted macros", has_padding=False, collapsed=True) %}
               <table class="table has-border no-border-x">
                 <tbody>
                   {% for macro in pre.static.office.macros %}
