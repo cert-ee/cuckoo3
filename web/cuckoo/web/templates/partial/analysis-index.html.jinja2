@@ -25,7 +25,14 @@
                 <li>
                   <a role="tab" href="#irma">IRMA</a>
                 </li>
-              {% endif %}    
+              {% endif %}
+            {% endif %}
+            {% if pre.mhr is defined %}
+              {% if pre.mhr %}
+                <li>
+                  <a role="tab" href="#mhr">MHR</a>
+                </li>
+              {% endif %}
             {% endif %}
             {% if pre.misp %}
               <li>

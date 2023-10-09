@@ -1,0 +1,21 @@
+# Enable or disable MHR usage during processing. Module performs hash and url lookups for submissions.
+enabled: {{ enabled }}
+
+# What percentage of AV engines should mark a sample as malicious for Cuckoo to
+# mark it as suspicious? Take into account that false positives happen.
+min_suspicious: {{ min_suspicious }}
+
+# What percentage of AV engines should mark a sample as malicious for Cuckoo to
+# mark it as malicious? Take into account that false positives happen.
+min_malicious: {{ min_malicious }}
+
+# How much time we can wait to establish MHR connection and get the report.
+timeout: {{ timeout }}
+
+
+# URL to your Malware Hash Registry (MHR) REST API
+url: {{ url }}
+
+# Registration is needed: https://hash.cymru.com/signup
+user: {{ user }}
+password: {{ password }}

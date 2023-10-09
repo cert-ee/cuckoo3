@@ -137,6 +137,15 @@
           {% endif %}
         {% endif %}
 
+        {# tab: static.mhr #}
+        {% if pre.mhr is defined %}
+          {% if pre.mhr.antivirus_detection_rate %}
+            <div role="region" id="mhr" hidden>
+              {% include "analysis/components/mhr.html.jinja2" %}
+            </div>
+          {% endif %}
+        {% endif %}
+
         {# tab: pre.misp #}
         {% if pre.misp %}
           <div role="region" id="misp" hidden>

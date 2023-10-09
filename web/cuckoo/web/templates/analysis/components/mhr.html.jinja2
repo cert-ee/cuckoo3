@@ -1,0 +1,16 @@
+{% call ui_box(title="Malware Hash Registry (MHR)", has_padding=False) %}
+  <table class="table has-sticky-header has-striped-rows">
+    <thead>
+      <tr>
+        <th>Antivirus Detection Rate</th>
+        <th>Last Run</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td {{ pre.mhr.antivirus_detection_rate }}</td>
+          <td>{{ pre.mhr.last_run_date|formatisodatetime }}</td>
+        </tr>
+    </tbody>
+  </table>
+{% endcall %}
