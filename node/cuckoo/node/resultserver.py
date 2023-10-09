@@ -440,7 +440,7 @@ class _AsyncResultServer:
         incoming results that are mapped."""
         self.loop = asyncio.get_event_loop()
         routine = asyncio.start_server(
-            self.new_result, listen_ip, listen_port, loop=self.loop
+            self.new_result, listen_ip, listen_port
         )
 
         try:
