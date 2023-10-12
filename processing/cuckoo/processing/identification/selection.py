@@ -82,9 +82,15 @@ class Identify(Processor):
             raise CancelProcessing(f"Unexpected Sflock unpacking failure. {e}")
 
         if f.mode:
-            raise CancelProcessing(
-                f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
-            )
+            #Continue if unpack fails for pdf
+            if not f.unpacker=="pdffile":
+                raise CancelProcessing(
+                    f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
+                )
+            else:
+                self.ctx.log.error(
+                    f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
+                )
 
         selected = []
         find_selected(f, selected)
