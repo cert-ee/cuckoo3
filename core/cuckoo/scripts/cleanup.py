@@ -7,6 +7,7 @@ import logging
 from cuckoo.common.log import exit_error, print_info
 from cuckoo.common.startup import StartupError
 from cuckoo.common.storage import cuckoocwd, CWDError
+from cuckoo.common.analyses import States, delete_analysis_disk, delete_analysis_db
 
 def start_export(older_than_days, loglevel, without_confirm=False):
     from cuckoo.common.log import set_logger_level
@@ -38,7 +39,7 @@ def start_export(older_than_days, loglevel, without_confirm=False):
         )
 
     init_database()
-    analyses, date = find_analyses(older_than_days)
+    analyses, date = find_analyses(older_than_days, States.FINISHED)
     if not analyses:
         print_info(f"No finished analyses older than {date} found.")
         return
@@ -56,6 +57,40 @@ def start_export(older_than_days, loglevel, without_confirm=False):
             ex.start()
         except CleanerError as e:
             raise StartupError(e)
+
+def delete_waiting(older_than_days, loglevel, without_confirm=False):
+    from cuckoo.common.log import set_logger_level
+    from cuckoo.common.startup import init_global_logging, init_database
+    from cuckoo.common.clients import APIClient
+    from cuckoo.common.config import (
+        cfg, MissingConfigurationFileError, ConfigurationError
+    )
+    from cuckoo.common.storage import Paths
+    from ..clean import find_analyses, AnalysisRemoteExporter, CleanerError
+
+    init_global_logging(loglevel, Paths.log("export.log"))
+    set_logger_level("urllib3.connectionpool", logging.ERROR)
+
+    init_database()
+    analyses, date = find_analyses(older_than_days, States.WAITING_MANUAL)
+    if not analyses:
+        print_info(f"No finished analyses older than {date} found.")
+        return
+
+    print_info(f"Found {len(analyses)} older than {date}")
+    if not without_confirm and not click.confirm(
+            f"Delete {len(analyses)} analyses? "
+            f"This cannot be undone."
+        ):
+            return
+
+    for a in analyses:
+        try:
+            delete_analysis_db(a.id)
+            delete_analysis_disk(a.id)
+        except (ResultDoesNotExistError):
+            print_info(f"Not found {a.id}.")
+
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
@@ -107,3 +142,21 @@ def remotestorage(ctx, days, yes):
         exit_error(e)
     finally:
         call_registered_shutdowns()
+
+
+@main.command("deletewaiting")
+@click.argument("days", type=int)
+@click.option("--yes", is_flag=True, help="Skip confirmation screen")
+@click.pass_context --ye
+def deletewaiting(ctx, days, yes):
+    """Delete Waiting manual analyses older than the specified
+    amount of days.
+
+    \b
+    DAYS The age in days of analyses that should be deleted
+    """
+
+    try:
+        delete_waiting(days, loglevel=ctx.parent.loglevel, without_confirm=yes)
+    except StartupError as e:
+        exit_error(e)
