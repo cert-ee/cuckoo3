@@ -125,16 +125,12 @@ class TriggerSafelist:
             process = matchctx.processing_ctx.process_tracker.lookup_process(
                 matchctx.event.procid
             )
-
-            if process.normalized_image not in self._images:
-                return False
-
             # If the process image is safelisted, but it has been injected,
             # ignore the safelist entry for this image.
             if process.injected:
                 return False
 
-            if not self._eventkind_regex:
+            if process.normalized_image in self._images:
                 return True
 
         for value_subtypes in matchctx.extra_safelistdata:
