@@ -7,7 +7,7 @@ import sys
 
 if sys.version[0] == "2":
     sys.exit(
-        "The latest version of Cuckoo is Python >=3.6 only. Any Cuckoo version "
+        "The latest version of Cuckoo is Python >=3.8 only. Any Cuckoo version "
         "earlier than 3.0.0 supports Python 2."
     )
 
@@ -23,12 +23,12 @@ setuptools.setup(
         "Natural Language :: English",
         "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Security",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     url="https://cuckoosandbox.org/",
     license="GPLv3",
     description="Cuckoo machinery modules and helpers",
