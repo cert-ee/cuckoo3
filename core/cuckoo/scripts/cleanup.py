@@ -58,7 +58,7 @@ def start_export(older_than_days, loglevel, without_confirm=False):
         except CleanerError as e:
             raise StartupError(e)
 
-def delete_waiting(older_than_days, loglevel, without_confirm=False):
+def delete_analyses(state, older_than_hours, loglevel, without_confirm=False):
     from cuckoo.common.log import set_logger_level
     from cuckoo.common.startup import init_global_logging, init_database
     from cuckoo.common.clients import APIClient
@@ -66,13 +66,15 @@ def delete_waiting(older_than_days, loglevel, without_confirm=False):
         cfg, MissingConfigurationFileError, ConfigurationError
     )
     from cuckoo.common.storage import Paths
-    from ..clean import find_analyses, AnalysisRemoteExporter, CleanerError
+    from ..clean import find_analyses_hours, AnalysisRemoteExporter, CleanerError
 
-    init_global_logging(loglevel, Paths.log("export.log"))
+    init_global_logging(loglevel, Paths.log("delete.log"))
     set_logger_level("urllib3.connectionpool", logging.ERROR)
 
     init_database()
-    analyses, date = find_analyses(older_than_days, States.WAITING_MANUAL)
+    if not state in States.list():
+        exit_error(f"Invalid state: {state}")
+    analyses, date = find_analyses_hours(older_than_hours, state)
     if not analyses:
         print_info(f"No finished analyses older than {date} found.")
         return
@@ -144,19 +146,22 @@ def remotestorage(ctx, days, yes):
         call_registered_shutdowns()
 
 
-@main.command("deletewaiting")
-@click.argument("days", type=int)
+@main.command("delete")
+@click.argument("state", type=string)
+@click.argument("hours", type=int)
 @click.option("--yes", is_flag=True, help="Skip confirmation screen")
-@click.pass_context --ye
-def deletewaiting(ctx, days, yes):
+@click.pass_context
+def delete(ctx, state, hours, yes):
     """Delete Waiting manual analyses older than the specified
-    amount of days.
+    amount of hours.
 
     \b
-    DAYS The age in days of analyses that should be deleted
+    STATE  untracked, pending_identification, waiting_manual, pending_pre,
+            tasks_pending, no_selected, fatal_error, finished
+    HOURS The age in hours of analyses that should be deleted
     """
 
     try:
-        delete_waiting(days, loglevel=ctx.parent.loglevel, without_confirm=yes)
+        delete_analyses(state, hours, loglevel=ctx.parent.loglevel, without_confirm=yes)
     except StartupError as e:
         exit_error(e)

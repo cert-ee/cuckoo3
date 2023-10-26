@@ -61,6 +61,13 @@ class States:
                 f"No human readable version for state {state!r} exists"
             )
 
+    @classmethod
+    def list(self):
+        return [self.UNTRACKED, self.PENDING_IDENTIFICATION, self.WAITING_MANUAL,
+                self.PENDING_PRE, self.TASKS_PENDING, self.NO_SELECTED,
+                self.FATAL_ERROR, self.FINISHED]
+
+
 class Kinds:
     STANDARD = "standard"
 

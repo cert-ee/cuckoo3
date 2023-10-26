@@ -33,6 +33,16 @@ def find_analyses(older_than_days, state):
         remote=False
     ), match_before
 
+def find_analyses_hours(older_than_hours, state):
+    match_before = datetime.datetime.now() - datetime.timedelta(
+        hours=older_than_hours
+    )
+
+    return analyses.list_analyses(
+        state=state, older_than=match_before,
+        remote=False
+    ), match_before
+
 
 class AnalysisRemoteExporter:
 
