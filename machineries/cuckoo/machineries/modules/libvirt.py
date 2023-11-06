@@ -1,7 +1,10 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+import io
 import threading
+
+import PIL
 
 from cuckoo.common import machines
 from cuckoo.common.config import cfg
@@ -235,6 +238,21 @@ class Libvirt(Machinery):
             raise errors.MachineryUnhandledStateError(err)
 
         return normalized_state
+
+    @LibvirtConn.inject_connection
+    def screenshot(self, machine, path, conn):
+        vm = self._get_vm(machine)
+        stream0, screen = conn.newStream(), 0
+        vm.screenshot(stream0, screen)
+
+        buffer = io.BytesIO()
+        def stream_handler(_, data, buf):
+            buf.write(data)
+
+        stream0.recvAll(stream_handler, buffer)
+        stream0.finish()
+        streamed_img = PIL.Image.open(buffer)
+        streamed_img.convert(mode="RGB").save(path)
 
     def dump_memory(self, machine, path):
         # TODO implement this. There are some issues with libvirt creating

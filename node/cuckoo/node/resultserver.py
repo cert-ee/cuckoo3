@@ -9,6 +9,7 @@ import socket
 import threading
 import time
 
+from cuckoo.common.config import cfg
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter, IPCError
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.node import ExistingResultServer
@@ -132,6 +133,12 @@ async def copy_to_fd(reader, fd, max_size=None, readsize=16384, header=None):
     finally:
         fd.flush()
 
+async def drain_buffer(reader, readsize=16384):
+    while True:
+        buf = await reader.read(readsize)
+        if buf == b"":
+            break
+
 class ProtocolHandler(object):
     """Abstract class for protocol handlers used by _AsyncResultServer.
     An implement protocol should be added to _AsyncResultServer.protocols.
@@ -234,6 +241,10 @@ class ScreenshotUpload(ProtocolHandler):
         # The timestamp is an approximation of when the screenshot was taken
         # during the task run. It will be off by the amount of time it takes
         # to start the vm, run the screenshot aux module, etc.
+        if cfg("cuckoo.yaml", "machinery_screenshots", "enabled"):
+            self.task.log.debug("Discarding screenshot upload")
+            await drain_buffer(self.reader)
+            return
         fname = f"{self.task.ts}.jpg"
         self.task.log.debug("New screenshot upload", newfile=fname)
         upload_path = TaskPaths.screenshot(self.task.task_id, fname)

@@ -85,6 +85,9 @@ class Machinery:
     def handle_paused(self, machine):
         raise NotImplementedError
 
+    def screenshot(self, machine, path):
+        raise NotImplementedError
+
     def start_netcapture(self, machine, pcap_path, ignore_ip_ports=[]):
         if machine.interface:
             capture_interface = machine.interface

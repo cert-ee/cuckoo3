@@ -19,6 +19,10 @@ the chosen machinery module(s).
 machineries:
   - kvm
 
+# Enable screenshots of analysis machines while running.
+machinery_screenshots:
+  enabled: False
+
 # The resultserver is a Cuckoo component that running analysis machines upload their results to
 # it should be reachable from the analysis machine. A resultserver will be started on the configured
 # listen IP and port. Make sure the IP is off a network interface that is part of the analysis machine network or

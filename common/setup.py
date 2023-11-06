@@ -48,6 +48,7 @@ setuptools.setup(
         "aiohttp>=3.8.1, <3.9",
         "aiohttp-sse-client>=0.2.1, <0.3",
         "psutil>=5.9.0, <5.10",
-        "alembic[tz]"
+        "alembic[tz]",
+        "Pillow"
     ]
 )

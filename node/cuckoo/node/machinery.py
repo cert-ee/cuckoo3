@@ -145,6 +145,11 @@ def dump_memory(machine):
         expected_state=machines.States.RUNNING, state_timeout=60
     )
 
+def screenshot(machine):
+    if not cfg("cuckoo.yaml", "machinery_screenshots", "enabled"):
+        return
+    # TODO use timestamp-based screenshots similar to cuckoo 3's resultserver
+
 def machine_state(machine):
     """Return a normalized machine state of the given machine."""
     return machine.machinery.state(machine)
@@ -577,7 +582,8 @@ class MachineryManager(UnixSocketServer):
         "restore_start": restore_start,
         "norestore_start": norestore_start,
         "stop": stop,
-        "acpi_stop": acpi_stop
+        "acpi_stop": acpi_stop,
+        "screenshot": screenshot,
     }
 
     # TODO read number of MachineryWorkers from a configuration file?
