@@ -319,7 +319,7 @@ Type: **JSON**
   
 ```json
 {%
- include-markdown "analysis.json"
+ include-markdown "./analysis.json"
  comments=false
 %}
 ```
@@ -409,7 +409,7 @@ Type: **JSON**
   
 ```json
 {%
- include-markdown "pre.json"
+ include-markdown "./pre.json"
  comments=false
 %}
 ```
@@ -555,7 +555,7 @@ Type: **JSON**
   
 ```json
 {%
- include-markdown "post.json"
+ include-markdown "./post.json"
  comments=false
 %}
 ```
