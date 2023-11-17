@@ -51,11 +51,11 @@ are uploaded to the analysis vm and perform the actual behavioral collection.
 
 **5. Choosing a machinery module and configuring machines.**
 
-6.1 Choose the virtualization/machinery software from the [machineries modules page](machineries.md) and perform the required steps listed.
+5.1 Choose the virtualization/machinery software from the [machineries modules page](machineries.md) and perform the required steps listed.
 
-6.2 Create analysis VMs taking into account the [requirements listed here](vmcreation.md).
+5.2 Create analysis VMs taking into account the [requirements listed here](vmcreation.md).
 
-6.3 Add the VMs to the chosen machinery configuration as [described here](vmcreation.md#adding-machines-to-cuckoo).
+5.3 Add the VMs to the chosen machinery configuration as [described here](vmcreation.md#adding-machines-to-cuckoo).
 
 **6. Installing the Cuckoo signatures**.
 
