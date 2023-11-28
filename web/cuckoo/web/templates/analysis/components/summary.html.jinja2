@@ -73,13 +73,16 @@
             {% endfor %}
           </div>
         {% endif %}
-        {% if (("submittedfiledownload" | feature_enabled) and filedownload_allowed and analysis.category == "file") %}
+        {% if (("submittedfiledownload" | feature_enabled) and (filedownload_allowed is sameas true) and (analysis.category == "file")) %}
           <a href="{{ url('Analysis/submittedfile', args=[analysis.id]) }}" class="button is-small has-margin-y">Download submitted file</a>
         {% endif %}
         <a onclick="deleteSubmission('{{ analysis.id}}')" class="button is-small has-margin-y">Delete analysis</a>
-        <a href="{{ url('Submit/resubmit', args=[analysis.id]) }}" class="button is-small has-margin-y">Resubmit</a>
+        <a onclick="reSubmission('{{ analysis.id}}')" class="button is-small has-margin-y">Resubmit</a>
       </div>
     </div>
+    {% if pre and pre.signatures|length %}
+      {% include "analysis/components/static-signatures.html.jinja2" %}
+    {% endif %}
   </div>
   <table role="region" class="table has-striped-rows" id="overview:submission" hidden>
     <thead>
@@ -234,6 +237,10 @@
         <tr>
           <td class="no-line-break"><strong>SHA256</strong></td>
           <td class="has-line-break">{{ analysis.target.sha256 }}</td>
+        </tr>
+        <tr>
+          <td class="no-line-break"><strong>SHA512</strong></td>
+          <td class="has-line-break">{{ analysis.target.sha512 }}</td>
         </tr>
       {% else %}
         <tr>

@@ -97,10 +97,6 @@
           {% include "analysis/components/summary.html.jinja2" %}
 
           {# include components if they exist inside the template scope #}
-          {% if pre and pre.signatures|length %}
-            {% include "analysis/components/static-signatures.html.jinja2" %}
-          {% endif %}
-
           {% if analysis and analysis.ttps|length %}
             {% include "analysis/components/mitre.html.jinja2" %}
           {% endif %}

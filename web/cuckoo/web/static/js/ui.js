@@ -802,6 +802,14 @@ function deleteSubmission(analysis_id) {
     });
 }
 
+function reSubmission(analysis_id) {
+  if(!analysis_id)
+    return handleOverviewError('Found no analysis ID to send this request to. Refresh the page and try again.');
+
+  location.href = '/submit/resubmit/'+analysis_id;
+
+}
+
 // prints error in the conclusive block
 function handleOverviewError(msg) {
   const overview = document.getElementById("overview:analysis");

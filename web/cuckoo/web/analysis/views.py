@@ -45,7 +45,7 @@ def index(request, analysis_id):
     )
     isAllowed = False
     if allowed_subnets:
-        ip, isPrivate = get_client_ip(request)
+        ip, isPrivate = get_client_ip(request, request_header_order=['X-Real-IP'])
         if ip:
             for network in allowed_subnets.split(","):
                 network = ip_network(network)
