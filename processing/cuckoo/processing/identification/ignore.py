@@ -14,6 +14,7 @@ def _make_ignorefile_entry(filename, filetype, md5, sha1, sha256, reason,
         "md5": md5,
         "sha1": sha1,
         "sha256": sha256,
+        "sha512": sha512,        
         "reason": reason,
         "description": description
     }

@@ -22,7 +22,7 @@ def update_target_row(analysis, target):
             "md5": target.md5,
             "sha1": target.sha1,
             "sha256": target.sha256,
-            "sha512": ""
+            "sha512": target.sha512
         }
     else:
         raise TargetError(f"No such target category: {analysis.category!r}")

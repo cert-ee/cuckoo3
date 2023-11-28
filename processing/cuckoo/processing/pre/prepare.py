@@ -164,7 +164,8 @@ class DetermineTarget(Processor):
             media_type=target["finger"]["mime"],
             extrpath=target["extrpath"],
             container=len(target["children"]) > 0,
-            sha256=target["sha256"], sha1=target["sha1"], md5=target["md5"]
+            sha512=target["sha512"], sha256=target["sha256"], 
+            sha1=target["sha1"], md5=target["md5"]
         )
 
 class CreateZip(Processor):

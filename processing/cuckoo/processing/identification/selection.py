@@ -255,6 +255,7 @@ class SelectFile(Processor):
                 "password": target.password or "",
                 "machine_tags": self._get_tags_dep(target.dependency),
                 "container": len(target.children) > 0,
+                "sha512": target.sha512,
                 "sha256": target.sha256,
                 "sha1": target.sha1,
                 "md5": target.md5,

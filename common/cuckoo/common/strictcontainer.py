@@ -444,6 +444,7 @@ class SubmittedFile(StrictContainer):
         "md5": str,
         "sha1": str,
         "sha256": str,
+        "sha512": str,
         "media_type": str,
         "type": str,
         "category": str
@@ -493,13 +494,14 @@ class TargetFile(StrictContainer):
         "size": int,
         "filetype": str,
         "media_type": str,
+        "sha512": str,    
         "sha256": str,
         "sha1": str,
         "md5": str,
         "extrpath": list,
         "container": bool
     }
-    ALLOW_EMPTY = ("extrpath",)
+    ALLOW_EMPTY = ("extrpath","sha512")
 
     @property
     def target(self):

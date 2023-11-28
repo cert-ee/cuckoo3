@@ -26,7 +26,7 @@ class HumanStates:
     UNTRACKED = "Untracked"
     PENDING_IDENTIFICATION = "Pending identification"
     WAITING_MANUAL = "Waiting manual"
-    PENDING_PRE = "Pending pre"
+    PENDING_PRE = "Running pre"
     TASKS_PENDING = "Task(s) pending"
     NO_SELECTED = "No selected target"
     FATAL_ERROR = "Fatal error"
@@ -132,7 +132,7 @@ def track_analyses(analysis_ids):
                 "md5": analysis.submitted.md5,
                 "sha1": analysis.submitted.sha1,
                 "sha256": analysis.submitted.sha256,
-                "sha512": ""
+                "sha512": analysis.submitted.sha512
             })
 
         submitted_targets.append(submitted_target)
@@ -191,7 +191,7 @@ def track_imported(analysis):
             "md5": analysis.target.md5,
             "sha1": analysis.target.sha1,
             "sha256": analysis.target.sha256,
-            "sha512": ""
+            "sha512": analysis.target.sha512
         })
 
     db_target = db.Target(**target_dict)
