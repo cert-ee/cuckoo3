@@ -306,11 +306,11 @@ for (p in params.%FIELD%) {
 }"""
 
 
-def update_analysis(analysis_id, tags=[], families=[], ttps=[]):
+def update_analysis(analysis_id, tags=[], families=[], ttps=[], score=0):
     params = {}
     script = ""
     for key, values in (
-            ("tags", tags), ("families", families), ("ttps", ttps)
+            ("tags", tags), ("families", families), ("ttps", ttps), ("score", score)
     ):
         if not values:
             continue
