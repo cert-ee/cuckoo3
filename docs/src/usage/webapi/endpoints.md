@@ -97,7 +97,7 @@ Data type: **form**
 
     - The url to create the analysis with.
 
-- `settings` (optional)
+- `settings`
 
    - A JSON dictionary which can contain:
       - `timeout` (Integer) - The task timeout in seconds to use.
@@ -121,7 +121,7 @@ Data type: **form**
 ```bash
 curl http://127.0.0.1:8090/submit/file -H "Authorization: token <api key>" \
 -F "url=http://example.com" \
--F 'settings={"platforms": [{"platform": "windows": "os_version": "10"}], "timeout": 120}'
+-F 'settings={"platforms": [{"platform": "windows", "os_version": "10"}], "timeout": 120}'
 ```
 
 
