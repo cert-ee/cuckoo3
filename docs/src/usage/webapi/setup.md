@@ -90,7 +90,7 @@ The header format must be: `Authentication: token <api key>`.
 Example: 
 
 ```bash
-curl "http://127.0.0.1:8090/analyses" -H "Authentication: token cb60aa0d689d7f0281a5ae4d661544927273b087"
+curl "http://127.0.0.1:8090/analyses/" -H "Authorization: token cb60aa0d689d7f0281a5ae4d661544927273b087"
 ```
 
 All API keys can be listed using: `cuckoo api token --list`
