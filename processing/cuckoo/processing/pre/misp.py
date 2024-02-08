@@ -30,6 +30,12 @@ class MISPInfoGather(Processor):
         cls.event_limit = cfg(
             "misp", "processing", "pre", "event_limit", subpkg="processing"
         )
+        cls.to_ids = cfg(
+            "misp", "processing", "pre", "query_ids_flag", subpkg="processing"
+        )
+        cls.publish_timestamp = cfg(
+            "misp", "processing", "pre", "publish_timestamp", subpkg="processing"
+        )
 
     def init(self):
         try:
@@ -57,7 +63,8 @@ class MISPInfoGather(Processor):
                 continue
 
             events.extend(
-                lookup_handler(target[hashalgo], limit=self.event_limit)
+                lookup_handler(target[hashalgo], limit=self.event_limit,
+                to_ids=self.to_ids, publish_timestamp=self.publish_timestamp)
             )
 
         return events
@@ -67,7 +74,8 @@ class MISPInfoGather(Processor):
         events = []
         try:
             if self.ctx.analysis.category == "url":
-                events = self.misp_client.find_url(target.target)
+                events = self.misp_client.find_url(target.target, limit=self.event_limit,
+                to_ids=self.to_ids, publish_timestamp=self.publish_timestamp)
             elif self.ctx.analysis.category == "file":
                 events = self._search_events_hashes(target)
         except MispError as e:

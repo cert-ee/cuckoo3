@@ -149,11 +149,30 @@ class MispClient:
                 f"Failed to create MISP client. Error: {e}"
             ).with_traceback(e.__traceback__)
 
-    def find_events(self, value, type_attribute=None, limit=1):
+    def find_event(self, eventid):
         try:
             events = self._client.search(
+                eventid=eventid, controller='events'
+            )
+        except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
+            raise MispError(
+                f"Event query failed for value '{eventid}'. "
+                f"Type: '{type_attribute}'. Error: {e}"
+            ).with_traceback(e.__traceback__)
+        try:
+            return events[0]
+        except (ValueError, TypeError) as e:
+            raise MispError(
+                f"Failure while reading MISP response JSON. Error: {e}"
+            )
+
+    def find_events(self, value, type_attribute=None, limit=1, to_ids=1, publish_timestamp="365d"):
+        try:
+            attributes = self._client.search(
                 value=value, type_attribute=type_attribute, limit=limit,
-                metadata=True, return_format="json", object_name=None
+                metadata=True, return_format="json", object_name=None,
+                to_ids=to_ids, publish_timestamp=publish_timestamp,
+                controller='attributes'
             )
         except (pymisp.PyMISPError, requests.exceptions.RequestException) as e:
             raise MispError(
@@ -163,47 +182,52 @@ class MispClient:
 
         try:
             return [
-                ExistingMispEvent(event_dict["Event"], value, self._misp_url)
-                for event_dict in events
+                ExistingMispEvent(self.find_event(attribute['event_id'])["Event"], value, self._misp_url)
+                for attribute in attributes['Attribute']
             ]
         except (ValueError, TypeError) as e:
-            raise MispError(
-                f"Failure while reading MISP response JSON. Error: {e}"
-            )
+            return []
 
-    def find_file_md5(self, md5, limit=1):
+    def find_file_md5(self, md5, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=md5, type_attribute="md5", limit=limit
+            value=md5, type_attribute="md5", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_file_sha1(self, sha1, limit=1):
+    def find_file_sha1(self, sha1, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=sha1, type_attribute="sha1", limit=limit
+            value=sha1, type_attribute="sha1", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_file_sha256(self, sha256, limit=1):
+    def find_file_sha256(self, sha256, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=sha256, type_attribute="sha256", limit=limit
+            value=sha256, type_attribute="sha256", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_file_sha512(self, sha512, limit=1):
+    def find_file_sha512(self, sha512, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=sha512, type_attribute="sha512", limit=limit
+            value=sha512, type_attribute="sha512", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_url(self, url, limit=1):
+    def find_url(self, url, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=url, type_attribute="url", limit=limit
+            value=url, type_attribute="url", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_ip_dst(self, ip, limit=1):
+    def find_ip_dst(self, ip, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=ip, type_attribute="ip-dst", limit=limit
+            value=ip, type_attribute="ip-dst", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
-    def find_domain(self, domain, limit=1):
+    def find_domain(self, domain, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(
-            value=domain, type_attribute="domain", limit=limit
+            value=domain, type_attribute="domain", limit=limit,
+            to_ids=to_ids, publish_timestamp=publish_timestamp
         )
 
     def create_event(self, new_misp_event):

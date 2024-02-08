@@ -21,6 +21,10 @@ processing:
   pre:
     # The maximum amount of events that should be asked from MISP per query.
     event_limit: {{ processing.pre.event_limit }}
+    #To restrict the returned data set to to_ids only attributes set this parameter to 1
+    query_ids_flag: {{ processing.pre.query_ids_flag }}
+    # Filter on event’s publish timestamp.
+    publish_timestamp: {{ processing.pre.publish_timestamp }}
 
     file:
       # What target file hashes to use when searching for MISP events.
@@ -43,6 +47,18 @@ processing:
     # asked from MISP per query.
     event_limits:
     {% for ioctype, limit in processing.post.event_limits.items() %}
+      {{ ioctype }}: {{ limit }}
+    {% endfor %}
+
+    # To restrict the returned data set to to_ids only attributes
+    query_ids_flags:
+    {% for ioctype, limit in processing.post.query_ids_flags.items() %}
+      {{ ioctype }}: {{ limit }}
+    {% endfor %}
+
+    # To restrict the returned data set by publish_timestamp
+    publish_timestamps:
+    {% for ioctype, limit in processing.post.publish_timestamps.items() %}
       {{ ioctype }}: {{ limit }}
     {% endfor %}
 

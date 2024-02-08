@@ -92,6 +92,8 @@ typeloaders = {
             "timeout": config.Int(default_val=5, min_value=0),
             "pre": {
                 "event_limit": config.Int(default_val=1, min_value=1),
+                "query_ids_flag": config.Int(default_val=1, min_value=0, max_value=1),
+                "publish_timestamp": config.String(default_val="365d"),
                 "file": {
                     "hashes": config.List(
                         config.String, default_val=["sha256"]
@@ -112,7 +114,21 @@ typeloaders = {
                         "domain": 1,
                         "url": 1
                     }
-                )
+                ),
+                "query_ids_flags": config.Dict(
+                    config.Int, default_val={
+                        "dst_ip": 1,
+                        "domain": 1,
+                        "url": 1
+                    }
+                ),
+                "publish_timestamps": config.Dict(
+                    config.String, default_val={
+                        "dst_ip": "365d",
+                        "domain": "365d",
+                        "url": "365d"
+                    }
+                ),
             }
         },
         "reporting": {
