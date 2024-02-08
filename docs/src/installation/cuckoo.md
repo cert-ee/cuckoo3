@@ -23,7 +23,7 @@ The following steps are for a normal/generic Cuckoo setup. This is the type of s
 
 **2. Installing Cuckoo 3 from a delivery archive.**
 
-2.1 Create and activate a new Python >=3.8 virtualenv
+2.1 Create and activate a new Python >=3.10 virtualenv
 
 2.2 Navigate to the `$A/cuckoo/cuckoo3` directory and run install.sh
 

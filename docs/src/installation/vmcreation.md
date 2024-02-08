@@ -53,14 +53,14 @@ name of the snapshot to use in the machinery configuration for the machine.
 #### Threemon (default)
 
 Threemon is a kernel driver. Windows must be patched so that the stager (Tmstage) can actually load
-the monitor before the sample detonation occurs. 
+the monitor before the sample detonation occurs.
 
 Threemon supports Windows 7 and 10 versions:
 
-- Windows 7 with SP1. Build 1706 ([link](https://hatching.dev/hatchvm/win7ultimate.iso))
-- Windows 10. Build 1703 ([link](https://hatching.dev/hatchvm/Win10_1703_English_x64.iso))
+- Windows 7 with SP1. Build 1706 ([link](https://cuckoo-hatch.cert.ee/static/vm/win7ultimate.iso))
+- Windows 10. Build 1703 ([link](https://cuckoo-hatch.cert.ee/static/vm/Win10_1703_English_x64.iso))
 
-Download the patch tool [here](https://hatching.dev/hatchvm/patchandgo_amd64.exe)
+Download the patch tool [here](https://cuckoo-hatch.cert.ee/static/vm/patchandgo_amd64.exe)
 
 Only perform these steps after all software has been installed. This should be the last step before
 making snapshots.
@@ -136,7 +136,7 @@ removed when using the machinery module. Each entry consists of the following:
     * Machine tags is a list of strings that are used to identify installed software/particular settings inside a vm. If .NET framework or Adobe PDF reader is installed, the tags should be: `dotnet` and `pdfreader`.
     * To populate the 'supported browser' list in the web UI or API, one or more machines with `browser_browsername` tags must exist. These tags are automatically translated to a list of browsers. Use `_` instead of spaces. An example would be
     `browser_internet_explorer`.
-    
+
     * The tags are used by Cuckoo to find a machine that can detonate a submitted sample. The file identification stage of Cuckoo determines what dependencies are needed for specific file types. These dependency names are tied to tag names. This mapping can be found in `$CWD/conf/processing/identification.yaml`. Automated file dependency tag assigning only occurs if it is enabled in `$CWD/conf/cuckoo.yaml`.
 
 #### Machine adding command
@@ -161,7 +161,7 @@ Options:
 
 ```
 
-As an example, suppose we want to add a QEMU Windows 10 VM called win10x64_1 and has the IP 192.168.30.101. 
+As an example, suppose we want to add a QEMU Windows 10 VM called win10x64_1 and has the IP 192.168.30.101.
 We will also assume it has .NET and Adobe pdf reader installed and add the tags for those.
 We can add this machine using the following command:
 
@@ -244,7 +244,7 @@ This is located in at `VMCLOAK_CWD/vms/`. If we made the machines for qemu, they
 
 The helper tool we can use to import machine is: `cuckoo machine import`.
 The tool will write a new entry to the machines dictionary of the specific machinery module for each
-discovered machine in the VMCloak vms machinery directory. 
+discovered machine in the VMCloak vms machinery directory.
 
 The help output looks as follows:
 

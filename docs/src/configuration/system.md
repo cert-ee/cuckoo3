@@ -4,11 +4,11 @@ This page contains settings/changes that need to be made to system (packages) be
 
 !!! info "Assumptions"
     - All commands on this page assume you are running Cuckoo under the 'cuckoo' user.
-    - The assumed operating system is Ubuntu 18.04 or higher.
+    - The assumed operating system is Ubuntu 22.04 or higher.
 
 ### Tcpdump
 
-Tcpdump requires root privileges, but Cuckoo should never run as root. This means you will have to 
+Tcpdump requires root privileges, but Cuckoo should never run as root. This means you will have to
 set specific Linux capabilities to the binary.
 
 1. Adding the Cuckoo user to the pcap group.
@@ -26,7 +26,7 @@ sudo chgrp pcap /usr/sbin/tcpdump
     If the system has other (potentially untrusted) users. We recommend to run Cuckoo on a dedicated system or a trusted environment where the privileged tcpdump execution is contained otherwise.
 
 
-The `setcap` tool is part of the `libcap2-bin` package. 
+The `setcap` tool is part of the `libcap2-bin` package.
 ```bash
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 ```
