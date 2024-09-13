@@ -1,4 +1,4 @@
-# Cuckoo4 - Malware analysis tool
+# Cuckoo3 - Malware analysis tool
 <img alt="Cuckoo3 logo" src="./INSTALL/logos/cuckoo3-github-readme-logo.png"/>
 
 <a href="https://badge.fury.io/py/Cuckoo3"><img src="https://badge.fury.io/py/Cuckoo3.svg" alt="PyPI version" height="24"></a>
