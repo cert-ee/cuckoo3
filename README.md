@@ -32,3 +32,6 @@ the instructions in documentation at
 ## Next steps
 - For more indepth guides and references, please check out our [documentation](https://cuckoo-hatch.cert.ee/static/docs/)
 
+## IMPORTANT!
+**This is not a production ready solution just yet.  
+We highly advise you not to use it production environment!**
