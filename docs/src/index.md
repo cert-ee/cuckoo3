@@ -1,6 +1,6 @@
 # Cuckoo 3 documentation
 
-<img src="images/cuckoo3-logo.png"  alt="cuckoo3 logo"/>
+<img src="assets/images/cuckoo3-logo.png"  alt="cuckoo3 logo"/>
 <a href="https://badge.fury.io/py/Cuckoo3"><img src="https://badge.fury.io/py/Cuckoo3.svg" alt="PyPI version" height="24"></a>
 <img alt="GitHub License" src="https://img.shields.io/github/license/cert-ee/cuckoo3" height="24">
 <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/cert-ee/cuckoo3" height="24">

@@ -1,5 +1,5 @@
-@import url(fonts/Merriweather-Regular.ttf);
-@import url(fonts/Merriweather_Sans/MerriweatherSans-VariableFont_wght.ttf);
+@import url(assets/fonts/Merriweather-Regular.ttf);
+@import url(assets/fonts/Merriweather_Sans/MerriweatherSans-VariableFont_wght.ttf);
 
 html, body {
     font-family: 'Merriweather Sans', sans-serif;
