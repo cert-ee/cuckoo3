@@ -2,39 +2,55 @@ site_name: Cuckoo 3 docs
 site_url: https://cuckoo-hatch.cert.ee/static/docs/
 theme:
   name: readthedocs
-  highlightjs: true
+  hljs_style: gml
+
+extra_css:
+  - style.css
+
 markdown_extensions:
 - admonition
 - attr_list
 
 plugins:
 - include-markdown
+- search:
+    min_search_length: 2
+    indexing: 'full'
 
 docs_dir: src
+
 nav:
-- Introduction:
-  - Cuckoo 3: introduction/cuckoo.md
-  - Sandboxing: introduction/sandboxing.md
+- About:
+  - Cuckoo3: about/cuckoo.md
+  - Sandboxing: about/sandboxing.md
+  - System dependencies: about/dependencies.md
+  - Terminology: about/terminology.md
 
-- Installation:
-  - Cuckoo 3 installation: installation/cuckoo.md
-  - System dependencies: installation/deps.md
-  - Machinery modules: installation/machineries.md
-  - VM Creation: installation/vmcreation.md
-  - Network routing: installation/routing.md
+- Installing:
+  - Overview: installation/overview.md
+  - Quickstart: installation/quickstart.md
+  - VMCloak: installation/vmcloak.md
+  - Cuckoo3: installation/cuckoo.md
 
-- Configuration:
-  - System settings: configuration/system.md
-  - Cuckoo 3 configuration:
-    - Cuckoo.yaml: configuration/cuckooconfs/cuckooyaml.md
-    - Distributed.yaml: configuration/cuckooconfs/distributedyaml.md
-    - Web configuration:
+- Configuring:
+  - System system dependencies: configuration/system.md
+  - Cuckoo3:
+    - Cuckoo.yaml (needs work): configuration/cuckooconfs/cuckooyaml.md
+    - Distributed.yaml (needs work): configuration/cuckooconfs/distributedyaml.md
+    - Web configuration (needs work):
       - Web.yaml: configuration/cuckooconfs/webconfs/webyaml.md
-    - Node configuration:
-      - Routing.yaml: configuration/cuckooconfs/nodeconfs/routingyaml.md
+    - Node configuration (needs work):
+      - Routing.yaml (needs work): configuration/cuckooconfs/nodeconfs/routingyaml.md
+  - Machinery modules (needs work): configuration/machineries.md
+  - Network routing (needs work): configuration/routing.md
 
+- Creating virtual machines:
+  - VM creation: vms/vmcreation.md
 
-- Usage:
+- Using the web frontend:
+  - WebUI (needs  work): web/ui.md
+
+- Usage (needs work):
   - Submission: usage/submission/index.md
   - Web API:
     - Setup: usage/webapi/setup.md
@@ -42,5 +58,8 @@ nav:
   - Web UI: usage/webui/setup.md
   - Commands: usage/commands.md
 
-- Development:
+- Developing your own(needs work):
   - Creating new machinery modules: development/creating_machinery.md
+
+- Troubleshooting:
+  - Common errors: errors/common.md
