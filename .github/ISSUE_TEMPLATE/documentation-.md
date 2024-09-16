@@ -1,5 +1,5 @@
 ---
-name: 'Documentation '
+name: 'Documentation'
 about: Help us enhance documentation
 title: ''
 labels: documentation
@@ -8,14 +8,14 @@ assignees: ''
 ---
 
 ## Documentation issue type
-Add what type of issue this is:
-- update
-- add
-- create
-- fix
+_Add what type of issue this is:_
+- update_
+- add_
+- create_
+- fix_
 
 ## Content
-What you want to add/modify and why
+_What you want to add/modify and why_
 
 ## Links
-Links to documentation where changes should occur
+_Link to documentation where changes should occur_
