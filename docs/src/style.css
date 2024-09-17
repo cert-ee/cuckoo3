@@ -163,3 +163,12 @@ hr {
     border-radius: 0.5rem;
     border: 2px solid #f29f97;
 }
+
+.rst-content .warning {
+    border-radius: 0.5rem;
+    border: 2px solid #f0b37e;
+}
+
+.rst-content table.docutils thead {
+    border-bottom: 2px solid #4f5153;
+}
