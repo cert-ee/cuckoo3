@@ -1,103 +1,74 @@
-# VMCloak manual installation
+# Installing VMCloak
 
-!!! note "Environment"
-    All commands here except TLDR and git are to be executed inside VMCloak root
-    directory unless stated otherwise and user created for Cuckoo3 is cuckoo
+!!! note "Environment and requirements"
 
-## Installation
-### TLDR
+    Make sure you are logged in as your Cuckoo3 user and that you have:  
 
-**Installation**
+    - installed all system dependencies form the [VMCloak dependencies section](dependencies.md#vmcloak-dependencies){:target=_blank}
 
-```bash
-sudo apt-get update && \
-sudo apt-get install -y genisoimage qemu-system-common qemu-utils qemu-system-x86 && \
+You need VMs for Cuckoo3 to run analyses on. VMCloak is a great tool to help create and configure such VMs.
+
+## All-in-one install
+
+```console
 git clone https://github.com/cert-ee/vmcloak.git && \
 cd vmcloak && \
-python3 -m venv venv && \
+python3.10 -m venv venv && \
 source venv/bin/activate && \
-pip3 install .
+python3.10 -m pip install .
 ```
 
----
+**Steps**
 
-### Requirements
-- Python 3.10
-- VMCloak requires either `mkisofs` or `genisoimage` to generate images.  
-We recommend using `genisoimage`.
-- QEMU 3
-
-For system level dependencies, please see the [System dependencies](../about/deps.md).
-
-### Installing dependencies
-
-- **qemu-system-common** - provides common files needed for target-specific full 
-system emulation (qemu-system-*) packages
-- **qemu-utils** - provides QEMU related utilities
-- **qemu-system-x86** - provides the full system emulation binaries to emulate the 
-following x86 hardware: i386 x86_64
-
-```bash
-sudo apt-get update
-sudo apt-get install -y genisoimage qemu-system-common qemu-utils qemu-system-x86
-```
-
-### Installing VMCloak
-
-1. Clone the repository (replace the `<destination>` with desired location)
+1. Clone the repository (replace the `<destination>` with desired location).
         
         git clone https://github.com/cert-ee/vmcloak.git <destination>
 
-2. Create and activate Python virtual environment 
+2. Create and activate Python virtual environment.
         
-        python3 -m venv venv && source venv/bin/activate
+        python3.10 -m venv venv && source venv/bin/activate
 
-3. Install Python dependencies
+3. Install Python dependencies.
 
-        pip3 install .
+        python3.10 -m pip install .
 
-### Downloading an image
+---
+
+## Downloading an image
 
 CERT-EE hosts images for VMCloak to download.  
-Replace the `--win10x64` with appropriate option form 
+Replace the `--win10x64` with the appropriate option form 
 [Supported sandbox environments](../about/cuckoo.md#supported-sandbox-environments).  
 
 
-1. To download desired image, run:
+Download the desired image, run:
             
         vmcloak isodownload --win10x64 --download-to /home/cuckoo/win10x64.iso
 
 ---
 
-## Configuration
+## Configuring VMCloak
+!!! note "Environment"
+    Configuration commands require sudo permission, so they should be run by a priviledged user.
 
-For creating VM-s, VMCloak needs a separate subnet and a mount point for images.
-Cuckoo3 user also needs to be part of the `kvm` group.  
-VMCloak offers a tool called `vmcloak-qemubridge` to create a subnet. It 
-requires sudo permission.  
-`vmcloak-qemubridge` command takes two arguments - **bridge_interface** (name) and **bridge_ip/cidr** (subnet)
-
-### TLDR
-
+### All-in-one configuration
 ```bash
-sudo /home/cuckoo/vmcloak/bin/vmcloak-qemubridge qemubr0 192.168.30.1/24 && \
-sudo mkdir -p /etc/qemu/ && echo "allow qemubr0" | sudo tee /etc/qemu/bridge.conf && \
+sudo /home/cuckoo/vmcloak/bin/vmcloak-qemubridge br0 192.168.30.1/24 && \
+sudo mkdir -p /etc/qemu/ && echo "allow br0" | sudo tee /etc/qemu/bridge.conf && \
 sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper && \
-sudo mkdir -p /mnt/win10x64 && sudo mount -o loop,ro /home/cuckoo/win10x64.iso /mnt/win10x64
+sudo mkdir -p /mnt/win10x64 && sudo mount -o loop,ro /home/cuckoo/win10x64.iso /mnt/win10x64 && \
+sudo adduser cuckoo kvm && sudo chmod 666 /dev/kvm
 ```
 
-### Configuring VMCloak
-!!! note "Environment"
-    Configuration commands require sudo permission so they should be run by
-    priviledged user.
+**Steps**  
 
 1. To create a new subnet, run:
 
-        sudo /home/cuckoo/vmcloak/bin/vmcloak-qemubridge qemubr0 192.168.30.1/24
+        sudo /home/cuckoo/vmcloak/bin/vmcloak-qemubridge br0 192.168.30.1/24
 
-2. Add the following line `allow qemubr0` to qemu-bridge-helper ACL file (create at `/etc/qemu/bridge.conf`):
+2. Add `allow br0` to qemu-bridge-helper ACL file (create at `/etc/qemu/bridge.conf`):
         
-        sudo mkdir -p /etc/qemu/ && echo "allow qemubr0" | sudo tee /etc/qemu/bridge.conf
+        sudo mkdir -p /etc/qemu/ && echo "allow br0" | sudo tee /etc/qemu/bridge.conf
 
 3. Add setuid bit to `qemu-bridge-helper` (should be at `/usr/lib/qemu/qemu-bridge-helper`):
 
@@ -114,7 +85,7 @@ sudo mkdir -p /mnt/win10x64 && sudo mount -o loop,ro /home/cuckoo/win10x64.iso /
 ---
 
 ## VM creation
-For detailed information about VM creation with VMCloak please refer to [VM Creation](../vms/vmcreation.md)
+For detailed information about VM creation with VMCloak, please refer to [Creating virtual machines](../vms/vmcreation.md).
 
 ---
 

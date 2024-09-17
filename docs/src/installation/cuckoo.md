@@ -1,78 +1,102 @@
-## Cuckoo installation
+# Installing Cuckoo3
 
-This page describes the steps required to install Cuckoo. Cuckoo can be set up in two ways:
+!!! note "Environment and requirements"
 
-* Default/single node.
-    * The main and task running Cuckoo components run on the same machine. They are automatically started
-    when starting Cuckoo. This is the type of setup that fits the most scenarios.
+    Make sure you are logged in as your Cuckoo3 user (`cuckoo` in our context) and that you have:  
 
-* Distributed, one main node and one or more task running nodes.
-    * The main Cuckoo node runs on one machine. One or more task running Cuckoo nodes run on other servers/locations.
-    Each task running node much be reachable over a network.
+    - installed all system dependencies from the [Cuckoo3 dependencies section](dependencies.md#vmcloak){:target=_blank}
+    - meet the requirements to [run Cuckoo3](../about/cuckoo.md#cuckoo3-requirements)
+    - have VMs made by VMCloak by following [Creating VMs with VMCloak](../vms/vmcreation.md){:target=_blank}
 
+## All-in-one install
 
-### Installing Cuckoo
+```console
+git clone https://github.com/cert-ee/cuckoo3.git && \
+cd vmcloak && \
+python3.10 -m venv venv && \
+source venv/bin/activate && \
+./install.sh && \
+cuckoo createcwd &&\
+cuckoo getmonitor monitor.zip && \
+unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
+```
 
-The following steps are for a normal/generic Cuckoo setup. This is the type of setup fits the most scenarios.
+**Steps**
 
-**1. Install all [system dependencies](deps.md)**
+1. Clone the repository (replace the `<destination>` with the desired location).
+        
+        git clone https://github.com/cert-ee/cuckoo3.git <destination>
 
-!!! note "Note"
-    `$A` is used as the location where the delivery archive was extracted.
+2. Create and activate Python virtual environment.
+        
+        python3.10 -m venv venv && source venv/bin/activate
 
+3. Install Python dependencies using the install script.
 
-**2. Installing Cuckoo 3 from a delivery archive.**
+        python3.10 -m pip install .
 
-2.1 Create and activate a new Python >=3.10 virtualenv
+4. Create Cuckoo3 configuration directory with all configuration files.
 
-2.2 Navigate to the `$A/cuckoo/cuckoo3` directory and run install.sh
+        cuckoo createcwd
 
+5. Unpack monitor and stager, which are needed to gather behavioral data
 
-    ./install.sh
+        cuckoo getmonitor monitor.zip
 
+6. Unpack signatures
 
-!!! note "Note"
-    When specifying `$CWD`, this refers to the Cuckoo working directory that is used.
+        unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
-**3. Creating the Cuckoo CWD.**
+---
 
-By default this will be in `$HOME/.cuckoocwd`. The CWD is where
-Cuckoo stores all its results, configurations, and other files. The CWD will be referred to as $CWD.
+## Configuring
 
+For a full list of configurations, please refer to [Cuckoo3 configuration](../configuration/cuckoo.md){:target=_blank}.
 
-    cuckoo createcwd
+### VMs
 
-**4. Installing the stager and monitor binaries**
+```console
+cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu && \
+cuckoo machine delete qemu example1 &&\
+```
 
-The next step is to install the stager and monitor binaries. These are components that
-are uploaded to the analysis vm and perform the actual behavioral collection.
+**Steps**
 
-    cuckoo getmonitor $A/cuckoo/monitor.zip
+1. Imports VMs and snapshots you have made with VMCloak
+        
+        cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu && \
 
-**5. Choosing a machinery module and configuring machines.**
+2. Delete the default `example1` configuration in `~/.cuckoocwd/conf/machineries/qemu.yaml`
+        
+        cuckoo machine delete qemu example1 &&\
 
-5.1 Choose the virtualization/machinery software from the [machineries modules page](machineries.md) and perform the required steps listed.
+All machine configurations can be found in `~/.cuckoocwd/conf/machineries/`.  
+All configuration files have comments above the fields if you wish to manually adjust them.
 
-5.2 Create analysis VMs taking into account the [requirements listed here](vmcreation.md).
+### Cuckoo3 
+```console
+cuckoomigrate database all
+```
 
-5.3 Add the VMs to the chosen machinery configuration as [described here](vmcreation.md#adding-machines-to-cuckoo).
+Before you run Cuckoo3, you need to migrate the databases.
 
-**6. Installing the Cuckoo signatures**.
+---
 
- Unpack everything from `$A/cuckoo/signatures.zip` to `$CWD/signatures/cuckoo`
+## Start Cuckoo3
+```console
+cuckoo
+```
 
-**7. Start Cuckoo**
+This command starts Cuckoo3 backend. To run in debug mode, use the `--debug` flag.
 
-Cuckoo can now be started using the following command:
+---
 
-    cuckoo --cwd <cwd path>
+## Installing distributed mode
+!!! warning "Under review"
 
-Or with the default cwd:
+    This section is from the old documentation.  
+    We are currently reviewing and improving it.
 
-    cuckoo
-
-
-### Installing Cuckoo distributed
 
 The following steps are for a distributed Cuckoo setup. A distributed Cuckoo setup consists
 of:
@@ -83,7 +107,7 @@ of:
     task running nodes.
 
 * One or more task running nodes
-    * This node accepts, runs tasks, and stores the collected behavioral logs. It has an API that the main node uses to tell it to run a task or to download a result for a task. This node type is "dumb" it does not know about other nodes or even the main node. This node is also where Cuckoo rooter should be running if automatic network routing is desired.
+    * This node accepts, runs tasks, and stores the collected behavioral logs. It has an API that the main node uses to tell it to run a task or to download a result for a task. This node type is "dumb"; it does not know about other nodes or even the main node. This node is also where Cuckoo rooter should be running if automatic network routing is desired.
 
 #### Task running node(s)
 
@@ -135,3 +159,157 @@ the nodes will result in the stopping of startup.
 If the startup is successful, the setup is ready for submission.
 
     cuckoo --distributed
+
+---
+
+## Usage
+
+### cuckoo
+
+    $ cuckoo --help
+
+    Usage: cuckoo [OPTIONS] COMMAND [ARGS]...
+
+    Options:
+      --cwd TEXT          Cuckoo Working Directory
+      --distributed       Start Cuckoo in distributed mode
+      -v, --verbose       Enable debug logging, including for non-Cuckoo modules
+      -d, --debug         Enable debug logging
+      -q, --quiet         Only log warnings and critical messages
+      --cancel-abandoned  Do not recover and cancel tasks that are abandoned and
+                          still 'running'
+
+    Commands:
+      api         Start the Cuckoo web API (development server)
+      createcwd   Create the specified Cuckoo CWD
+      getmonitor  Use the monitor and stager binaries from the given Cuckoo...
+      importmode  Start the Cuckoo import controller.
+      machine     Add machines to machinery configuration files.
+      submit      Create a new file/url analysis.
+      web         Start the Cuckoo web interface (development server)
+
+### Machine adding command
+
+    $ cuckoo machine add --help
+    Usage: cuckoo machine add [OPTIONS] MACHINERY_NAME MACHINE_NAME
+                              [CONFIG_FIELDS]...
+
+      Add a machine to the configuration of the specified machinery. config_fields
+      be all non-optional configuration entries in key=value format.
+
+    Options:
+      --tags TEXT  A comma separated list of tags that identify what
+                   dependencies/software is installed on the machine.
+
+
+
+Adding machines to the machinery config using a helper tool: `cuckoo machine add`.
+The tool will write a new entry to the `machines` dictionary of the specific machinery module.
+
+**Example:**
+
+Suppose we want to add a QEMU Windows 10 VM called win10x64_1 and has the IP 192.168.30.1.
+We will also assume it has .NET and Adobe pdf reader installed and add the tags for those.
+We can add this machine using the following command:
+
+```bash
+cuckoo machine add qemu --tags dotnet,adobepdf win10x64_1 ip=192.168.30.101 qcow2_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/disk.qcow2 snapshot_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/memory.snapshot machineinfo_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/machineinfo.json platform=windows os_version=10 architecture=amd64 interface=br0
+
+```
+This creates an entry into `~/.cuckoocwd/conf/machineries/qemu.yaml` config file with the following information:
+
+```yaml
+# Specify the name of the network interface/bridge that is the default gateway
+# for the QEMU machines.
+# Example: br0
+interface: br0
+
+# Make disposable copies of machine disk images here. Copies are created each
+# time the machine is restored. This directory path must be writable and
+# readable. If this not specified, the directory of the 'qcow2_path' of each
+# machine will be used.
+disposable_copy_dir:
+
+# The paths to binaries used to create disks, restore, and
+# start virtual machines
+binaries:
+  # Path to qemu-img.
+  qemu_img: /usr/bin/qemu-img
+  # Path to qemu-system-x86_64
+  qemu_system_x86_64: /usr/bin/qemu-system-x86_64
+
+machines:
+  example1:
+    # The path to the QCOW2 disk image. This disk will be used as a backing
+    # for each disposable copy when restoring and booting the machine. The parent
+    # directory is used for disposable disk copies if no disposable_copy_dir
+    # is given. This means the directory must be readable and writable.
+    # Should be made with the 'lazy_refcounts=on,cluster_size=2M' options.
+    qcow2_path: /home/cuckoo/.vmcloak/vms/qemu/win10_1/disk.qcow2
+    # The filepath to the machine memory snapshot. A 'QEMU suspend to disk image'.
+    # This is restored using the '-incoming' parameter. Restoring this should
+    # result in a running machine with the agent listening on the specified port.
+    snapshot_path: /home/cuckoo/.vmcloak/vms/qemu/win10_1/memory.snapshot
+    # The filepath to a JSON dump containing information on how to start this
+    # machine. This file is generated by VMCloak. It can be made by hand:
+    # {'machine': {'start_args': []}}, where the start args value is a list of arguments
+    # for qemu, using %DISPOSABLE_DISK_PATH% where the path to the qcow2 should
+    # be inserted by Cuckoo.
+    machineinfo_path: /home/cuckoo/.vmcloak/vms/qemu/win10_1/machineinfo.json
+    # The static IP address that has been configured inside of the machine.
+    ip: 192.168.30.1
+    # The operating system platform installed on the machine.
+    platform: windows
+    # A string that specifies the version of the operating system installed.
+    # Example: "10" for Windows 10, "7" for Windows 7, "18.04" for Ubuntu 18.04.
+    os_version: "10"
+    # The system architecture. Amd64, ARM, etc. This is used to
+    # select the correct stager and monitor builds/component for the machine.
+    architecture: amd64
+    # The TCP port of the agent running on the machine.
+    agent_port: 8000
+    # (Optional) The MAC address of the network interface of the machine that is used to connect to
+    # to the resultserver and the internet.
+    mac_address: null
+    # (Optional) Specify the name of the network interface that should be used
+    # when dumping network traffic from this machine with tcpdump.
+    interface: br0
+    # Machine tags that identify the installed software and other characteristics of the machine.
+    # These are used to select the correct machine for a sample that has dependencies. *Notice*: correct tags are
+    # crucial in selecting machines that can actually run a submitted sample.
+    # Existing automatic tags can be found in the conf/processing/identification.yaml config.
+    tags:
+    - dotnet
+    - adobepdf            
+```
+
+### Machine importing command
+
+    $ cuckoo machine import --help
+    Usage: cuckoo machine import [OPTIONS] MACHINERY_NAME VMS_PATH
+                                 [MACHINE_NAMES]...
+
+      Import all or 'machine names' from the specified VMCloak vms path to the
+      specified machinery module.
+
+    Options:
+      --help  Show this message and exit.
+
+
+Cuckoo can also import machines created by VMCloak. To do this, we first need to know the 'VMs path' of VMCloak.
+This is located at `VMCLOAK_CWD/vms/`. If we make the machines for qemu, they will be located in the `qemu` subdirectory (`VMCLOAK_CWD/vms/qemu).
+
+The helper tool we can use to import machines is: `cuckoo machine import`.
+The tool will write a new entry to the machines dictionary of the specific machinery module for each
+discovered machine in the VMCloak vms machinery directory.
+
+The help output looks as follows:
+
+**Example:**  
+
+An example situation: we create 10 machines with VMCloak for QEMU and the VMCloak CWD is at /home/cuckoo/.vmcloak.
+We can run the following command to import all the machines.
+
+```bash
+cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu
+```

@@ -23,17 +23,18 @@ nav:
 - About:
   - Cuckoo3: about/cuckoo.md
   - Sandboxing: about/sandboxing.md
-  - System dependencies: about/dependencies.md
   - Terminology: about/terminology.md
 
 - Installing:
   - Overview: installation/overview.md
+  - System dependencies: installation/dependencies.md
   - Quickstart: installation/quickstart.md
   - VMCloak: installation/vmcloak.md
   - Cuckoo3: installation/cuckoo.md
 
 - Configuring:
   - System system dependencies: configuration/system.md
+  - VMCloak: configuration/vmcloak.md
   - Cuckoo3:
     - Cuckoo.yaml (needs work): configuration/cuckooconfs/cuckooyaml.md
     - Distributed.yaml (needs work): configuration/cuckooconfs/distributedyaml.md
