@@ -47,7 +47,7 @@ sudo apt-get -y install git
 
 ### Python dev and venv
 
-Python3.10-venv and Python3.10-dev arerequired to create and activate virtual environments for
+Python3.10-venv and Python3.10-dev are required to create and activate virtual environments for
 Cuckoo3 and VMCloak.
 
 ```console
