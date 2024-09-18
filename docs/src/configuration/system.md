@@ -61,7 +61,7 @@ sudo aa-status
 ```
 If `tcpdump` is enabled, it will be among the loaded profiles and you can continue with the next section.
 
-### Add permissions
+**Add permissions**
 ```console
 echo "~/.cuckoocwd/storage/analyses/* rw" > /etc/apparmor.d/usr.bin.tcpdump
 sudo apparmor_parser -r /etc/apparmor.d/usr.bin.tcpdump
