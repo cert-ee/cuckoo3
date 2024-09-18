@@ -33,17 +33,16 @@ nav:
   - Cuckoo3: installation/cuckoo.md
 
 - Configuring:
-  - System system dependencies: configuration/system.md
+  - System dependencies: configuration/system.md
   - VMCloak: configuration/vmcloak.md
-  - Cuckoo3:
-    - Cuckoo.yaml (needs work): configuration/cuckooconfs/cuckooyaml.md
-    - Distributed.yaml (needs work): configuration/cuckooconfs/distributedyaml.md
-    - Web configuration (needs work):
-      - Web.yaml: configuration/cuckooconfs/webconfs/webyaml.md
-    - Node configuration (needs work):
-      - Routing.yaml (needs work): configuration/cuckooconfs/nodeconfs/routingyaml.md
-  - Machinery modules (needs work): configuration/machineries.md
-  - Network routing (needs work): configuration/routing.md
+  - Cuckoo3: configuration/cuckoo.md
+    # - Web configuration (needs work):
+    #   - Web.yaml: configuration/cuckooconfs/webconfs/webyaml.md
+    # - Node configuration (needs work):
+    #   - Routing.yaml (needs work): configuration/cuckooconfs/nodeconfs/routingyaml.md
+  # NOTE(raidar): See if anything in Machineries modules is still relevant. If not, delete
+  # - Machinery modules : configuration/machineries.md
+  - Network routing: configuration/routing.md
 
 - Creating virtual machines:
   - VM creation: vms/vmcreation.md
