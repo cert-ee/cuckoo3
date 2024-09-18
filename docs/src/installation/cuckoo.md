@@ -92,11 +92,11 @@ This command starts Cuckoo3 backend. To run in debug mode, use the `--debug` fla
 ---
 
 ## Installing distributed mode
-!!! warning "Under review"
 
-    This section is from the old documentation.  
-    We are currently reviewing and improving it.
+!!! error "Unverified"
 
+    This is from the old documentation.  
+    We are currently reviewing and updating distributed installation.
 
 The following steps are for a distributed Cuckoo setup. A distributed Cuckoo setup consists
 of:

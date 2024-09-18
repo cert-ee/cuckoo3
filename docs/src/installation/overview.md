@@ -19,9 +19,6 @@ For more in-depth information, please see [Cuckoo3 installation](cuckoo.md){:tar
 
 ## Nodes
 
-!!! error "Incomplete"
-    We are currently reviewing distributed documentation.
-
 - Default/single node.
     - The main and task-running Cuckoo3 components run on the same machine. They are automatically started when starting Cuckoo3. This is the type of setup that fits the most scenarios.
 - Distributed, one main node and one or more task-running nodes.
