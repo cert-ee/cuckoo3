@@ -39,9 +39,6 @@ Here we will point out the main ones that might require your attention.
 
 - `tcpdump` - make sure this is enabled and pointing to `tcpdump` binary.
 
-<details>
-<summary><u>click to see entire cuckoo.yaml</u></summary>
-
 ```yaml
 # A YAML list of all machinery modules that should be enabled and Cuckoo will be using. Machines for
 # each of the modules specified here have to be configured in their respective configuration file
@@ -118,16 +115,12 @@ submit:
 
   # max_file_size for submit, default 4gb
 ```
-</details>
 </br>
 
 ### analysissettings.yaml
 Location: `conf/analysissettings.yaml`
 
 It contains submission settings limits and defaults.
-
-<details>
-<summary><u>click to see entire analysissettings.yaml</u></summary>
 
 ```yaml
 # Limits on settings. Submissions will be denied if they exceed any
@@ -179,7 +172,6 @@ platform:
   fallback_platforms:
   - windows
 ```
-</details>
 </br>
 
 ### qemu.yaml
@@ -187,11 +179,7 @@ Location: `conf/machineries/qemu.yaml`
 
 This configuration handles QEMU VMs for Cuckoo.
 
-- `interface` - this needs to match the interface that was created using `vmcloak-qemubridge` in [Configuring VMCloak](../installation/vmcloak.md#configuring-vmcloak){:target=_blank}
-
-
-<details>
-<summary><u>click to see entire qemu.yaml</u></summary>
+- `interface` - this needs to match the interface that was created using `vmcloak-qemubridge` in [Configuring VMCloak](../installing/vmcloak.md#configuring-vmcloak){:target=_blank}
 
 ```yaml
 # Specify the name of the network interface/bridge that is the default gateway
@@ -353,8 +341,177 @@ machines:
     - browser_edge
     - browser_internet_explorer
 ```
-</details>
 </br>
+
+### routing.yaml
+
+Location: `conf/node/routing.yaml`
+This configuration contains all settings used by Cuckoo rooter such as:
+
+- Outgoing interfaces and a routing table for internet routing.
+- Existing VPN interfaces and routing tables for VPN routing.
+- OpenVPN configuration files and up script paths for automatically starting VPNs.
+
+Cuckoo rooter automatically applies per-task network routes and settings.
+
+```yaml
+# This is the configuration file for Cuckoo rooter. Rooter performs
+# automatic routing for analysis machines. This file contains the
+# routes that will be available to each Cuckoo node. Cuckoo rooter must be
+# running for these routes to work.
+
+# Internet/dirty line routing routes machine traffic directly over the
+# specified interface. The machine IP will be added to the specified
+# routing table. Note that this will route the malicious traffic over the
+# configured network. An example of internet route could be a preconfigured
+# VPN interface and routing table.
+internet:
+  # Enable or disable internet routing.
+  enabled: False
+  # The interface the network should be forwarded to to reach the internet.
+  interface: null
+  # The routing table id/name rooter should add machine IPs to. This table
+  # should have the routes that result in traffic being routed over the
+  # specified interface.
+  routing_table: main
+
+# Rooter can use preconfigured VPN interfaces and routing tables and can also
+# start OpenVPN VPNs if their configuration paths are specified. VPN
+# routing is used when a country is specified as a routing option.
+#
+# If both preconfigured and VPN pool is enabled, Cuckoo will choose the first
+# available VPN that matches the specified country or the first available
+# VPN if no country is specified.
+vpn:
+  # Preconfigured and running VPN interfaces and their routing tables.
+  preconfigured:
+    # Disable or enable the use of preconfigured VPNs.
+    enabled: False
+    # A mapping of one or more preconfigured VPNs that Cuckoo rooter can use.
+    vpns:
+      # The VPN name that used in logging.
+      example_vpn:
+        # The existing VPN tun interface.
+        interface: tun0
+        # The routing table for the existing VPN.
+        routing_table: vpn0
+        # The country of that the VPN IP is identified as. Any string can be
+        # used.
+        country: country1
+
+  # A pool of VPN providers with OpenVPN VPN configurations. Rooter can
+  # automatically start and stop these VPNs when needed. This feature is
+  # useful if you want to support a large amount of exit countries.
+  vpnpool:
+    # Disable or enable the automatic starting of available VPNs.
+    enabled: False
+
+    # The range of routing table IDs that rooter can use to pass to up scripts.
+    # These tables *must not* interfere with other ranges/existing tables.
+    # The size of the range limits the amount of automatically started VPNs
+    # that can be active at the same time.
+    routing_tables:
+      start_range: 100
+      end_range: 200
+
+    providers:
+      example_provider:
+        # The maximum amount of connections/devices the VPN provider allows.
+        # This is the maximum amount of configurations that rooter will
+        # use simultaneously for this provider.
+        max_connections: 5
+
+        # A list of dictionaries with all the VPN configuration for this
+        # provider that rooter can start.
+        vpns:
+          # The type of VPN. Only OpenVPN is currently supported.
+        - type: openvpn
+          # The VPN configuration file. OVPN file, for example.
+          config_path: /path/to/ovpns/country1.ovpn
+          # The up script that adds the required routes to the automatically
+          # determine routing table. Do not change unless your custom script
+          # also performs what the default script does.
+          up_script: /home/cuckoo/.cuckoocwd/rooter/scripts/openvpnroutes.sh
+          # The country of that the VPN IP is identified as. Any string can be
+          # used.
+          country: country1
+```
+
+### web.yaml
+Location: `/conf/web/web.yaml` 
+This configuration file contains settings for the web API and UI.  
+It contains settings such as the enabling/disabling of sample downloading and statistics.
+
+```yaml
+# Remote storage usage is the retrieval of analysis reports etc from
+# a remote Cuckoo 'long term storage' host.
+remote_storage:
+  enabled: False
+  api_url: null
+
+  # API key does not need administrator privileges
+  api_key: null
+
+elasticsearch:
+  # The Elasticsearch settings must be configured to be able to use any of
+  # the features in this section.
+
+  # Enable or disable the Cuckoo web results search functionality
+  web_search:
+    enabled: False
+
+  # Enable or disable Cuckoo web results statistics. Detected family, behavior
+  # graphs, amount of submissions, etc.
+  statistics:
+    enabled: False
+
+    # All enabled charts types and the time ranges over which they
+    # should display data. Available range: daily, weekly, monthly, yearly.
+    # Available chart examples: families_bar, families_line, targettypes_bar,
+    # categories_bar, categories_line, submissions_line
+    charts:
+    - chart_type: submissions_line
+      time_range: yearly
+    - chart_type: submissions_line
+      time_range: monthly
+    - chart_type: families_bar
+      time_range: weekly
+    - chart_type: families_line
+      time_range: weekly
+    - chart_type: targettypes_bar
+      time_range: monthly
+    - chart_type: categories_bar
+      time_range: monthly
+
+  # The Elasticsearch hosts where results are reported to during processing.
+  # Should be one ore more host:port combinations.
+  hosts:
+    - https://127.0.0.1:9200
+  # The Elasticsearch auth and ssl cert
+  user:
+  password: 
+  ca_certs: /etc/ssl/certs/ca-certificates.crt
+
+  indices:
+    # The names to use when searching Elasticsearch. Each name must be unique
+    # and should also be used in reporting.
+    names:
+      analyses: analyses
+      tasks: tasks
+      events: events
+
+  # The max result window that will be used in searches. The Elasticsearch default is 10000. This
+  # window has impact in how far back you can search with queries that match a large amount of documents.
+  max_result_window: 10000
+
+# Specific web features that can be disabled/enabled
+web:
+  downloads:
+    # Enable/disable submitted file downloading.
+    submitted_file: True
+    allowed_subnets: 127.0.0.0/8,10.0.0.0/8 
+
+```
 
 ---
 

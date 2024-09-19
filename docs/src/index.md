@@ -11,19 +11,13 @@
 Welcome to Cuckoo3!
 Here you can find a brief overview of different parts of the documentation.
 
-- [About](about/cuckoo.md) - Covers the basics about Cuckoo, sandboxing and 
-dependencies.
-- [Installing Cuckoo3](installation/overview.md) - Guides you through how to 
-install Cuckoo3.
-- [Configuration](configuration/index.md) - Covers all related configurations 
-and vm creation topics.
-- [Virtual Machines](vms/index.md) - Explains how you can create and configure 
-virtual machines.
-- [Web](web/index.md) - Covers how to set up Cuckoo3 Django frontend.
-- [Usage](usage/index.md) - Describes how to use various parts of Cuckoo.
-- [Development](developer/index.md) - Developer focused section to create your 
-own machineries.
-- [Troubleshooting](faq/index.md) - List known problems and solutions to 
+- [About](about/cuckoo.md) - A gentle introduction to Cuckoo.
+- [Installing overview](installing/overview.md) - Guides you through how to install various parts and dependencies.
+- [Configuring](configuring/index.md) - Covers all related configurations and vm creation topics.
+- [Creating](creating/index.md) - Explains how you can build and create virtual machines and other things.
+- [Web](web/ui.md) - Covers how to set up Cuckoo3 Django frontend.
+- [Using](usage/index.md) - Describes how to use various Cuckoo commands and API endpoints.
+- [Troubleshooting](faq/common.md) - List known problems and solutions to 
 those problems.
 
 ## Links

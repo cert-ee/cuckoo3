@@ -15,7 +15,7 @@ For more in-depth information on what Quickstart installer does, please see [Qui
 Manual installation allows you to be more flexible about how you set up your Cuckoo3.
 You can choose which virtualization solution you want to use, which network bridge to use, how many nodes to run, and much more.
 
-For more in-depth information, please see [Cuckoo3 installation](cuckoo.md){:target="_blank"} 
+For more in-depth information, please see [Installing Cuckoo3](cuckoo.md){:target="_blank"} 
 
 ## Nodes
 

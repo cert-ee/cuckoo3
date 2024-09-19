@@ -2,11 +2,11 @@
 
 !!! note "Environment and requirements"
 
-    Make sure you are logged in as your Cuckoo3 user and that you have:  
+    Make sure you are logged in as your Cuckoo user and that you have:  
 
     - installed all system dependencies form the [VMCloak dependencies section](dependencies.md#vmcloak-dependencies){:target=_blank}
 
-You need VMs for Cuckoo3 to run analyses on. VMCloak is a great tool to help create and configure such VMs.
+You need VMs for Cuckoo to run analyses on. VMCloak is a great tool to help create and configure such VMs.
 
 ## All-in-one install
 
@@ -85,7 +85,7 @@ sudo adduser cuckoo kvm && sudo chmod 666 /dev/kvm
 ---
 
 ## VM creation
-For detailed information about VM creation with VMCloak, please refer to [Creating virtual machines](../vms/vmcreation.md).
+For detailed information about VM creation with VMCloak, please refer to [Creating virtual machines](../creating/vms.md).
 
 ---
 

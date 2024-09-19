@@ -2,15 +2,15 @@
 
 !!! note "Environment and requirements"
 
-    Make sure you are logged in as your Cuckoo3 user (`cuckoo` in our context) and that you have:  
+    Make sure you are logged in as your Cuckoo user (`cuckoo` in our context) and that you have:  
 
-    - installed all system dependencies from the [Cuckoo3 dependencies section](dependencies.md#vmcloak){:target=_blank}
+    - installed all system dependencies from the [Cuckoo3 dependencies section](dependencies.md#cuckoo3-dependencies){:target=_blank}
     - meet the requirements to [run Cuckoo3](../about/cuckoo.md#cuckoo3-requirements)
-    - have VMs made by VMCloak by following [Creating VMs with VMCloak](../vms/vmcreation.md){:target=_blank}
+    - have VMs made by VMCloak by following [Creating VMs with VMCloak](../creating/vms.md){:target=_blank}
 
 ## All-in-one install
 
-```console
+```bash
 git clone https://github.com/cert-ee/cuckoo3.git && \
 cd vmcloak && \
 python3.10 -m venv venv && \
@@ -35,7 +35,7 @@ unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
         python3.10 -m pip install .
 
-4. Create Cuckoo3 configuration directory with all configuration files.
+4. Create Cuckoo configuration directory with all configuration files.
 
         cuckoo createcwd
 
@@ -51,11 +51,11 @@ unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
 ## Configuring
 
-For a full list of configurations, please refer to [Cuckoo3 configuration](../configuration/cuckoo.md){:target=_blank}.
+For a full list of configurations, please refer to [Configuring Cuckoo3](../configuring/cuckoo.md){:target=_blank}.
 
 ### VMs
 
-```console
+```bash
 cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu && \
 cuckoo machine delete qemu example1 &&\
 ```
@@ -74,20 +74,20 @@ All machine configurations can be found in `~/.cuckoocwd/conf/machineries/`.
 All configuration files have comments above the fields if you wish to manually adjust them.
 
 ### Cuckoo3 
-```console
+```bash
 cuckoomigrate database all
 ```
 
-Before you run Cuckoo3, you need to migrate the databases.
+Before you run Cuckoo, you need to migrate the databases.
 
 ---
 
 ## Start Cuckoo3
-```console
+```bash
 cuckoo
 ```
 
-This command starts Cuckoo3 backend. To run in debug mode, use the `--debug` flag.
+This command starts Cuckoo backend. To run in debug mode, use the `--debug` flag.
 
 ---
 
@@ -115,7 +115,7 @@ We start with setting up one or more task running nodes:
 
 **1. Perform the following for each task running node.**
 
-Follow steps 1 to 5 of the [Installing Cuckoo](#installing-cuckoo) steps.
+Follow steps 1 to 5 of the [BROKEN: Installing Cuckoo](#installing-cuckoo\) steps.
 
 **2. Start the node(s) by running the following command**
 
@@ -138,7 +138,7 @@ It should return a list of available analysis machines.
 
 **1. Perform the following steps.**
 
-Follow steps 1 to 3 and 6 and 7 of the [Installing Cuckoo](#installing-cuckoo) steps.
+Follow steps 1 to 3 and 6 and 7 of the [BROKEN: Installing Cuckoo](#installing-cuckoo\) steps.
 
 **2. Adding the task running nodes.**
 

@@ -67,7 +67,7 @@ See the [per-task routing](#automatic-per-task-routing-by-cuckoo-rooter) section
 Communication with rooter occurs over a Unix socket. The user running cuckoo must have read and write access 
 to this socket, so it can query the available routes and request these. Anyone with access to this socket can make route requests.
 
-Only routes configured and enabled in [routing.yaml](../configuration/cuckooconfs/nodeconfs/routingyaml.md) will be
+Only routes configured and enabled in [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} will be
 available routing types. Each Cuckoo task runner node will automatically ask Cuckoo rooter what routes are available
 when the node starts. This means that rooter and the node must be restarted before newly configured routes are available.
 
@@ -108,7 +108,7 @@ apply routes.
 Rooter must run with root permissions and can either be started using the `--sudo` flag or by using the 
 output of `--print-command` on the root user. 
 
-The `--cwd` should be used to supply rooter with the Cuckoo CWD path where the [routing.yaml](../configuration/cuckooconfs/nodeconfs/routingyaml.md) file it should use is located. This file contains the settings for available routes.
+The `--cwd` should be used to supply rooter with the Cuckoo CWD path where the [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} file it should use is located. This file contains the settings for available routes.
 
 !!! Warning "Privilege escalation"
     Ideally, rooter has its own Cuckoo CWD and virtualenv with a Cuckoo installation. This prevents Python files that a non-privileged
@@ -138,9 +138,9 @@ The above command can be run directly by the root user or using `sudo`.
 
 **Configuring the socket path and enabling rooter usage**
 
-The usage of Cuckoo rooter must be enabled and the rooter socket path set in [cuckoo.yaml](../configuration/cuckooconfs/cuckooyaml.md) before Cuckoo nodes will use it.
+The usage of Cuckoo rooter must be enabled and the rooter socket path set in [cuckoo.yaml](../configuring/cuckoo.md#cuckooyaml){:target=_blank} before Cuckoo nodes will use it.
 
-Open [cuckoo.yaml](../configuration/cuckooconfs/cuckooyaml.md) and find the `network_routing` section.
+Open [cuckoo.yaml](../configuring/cuckoo.md#cuckooyaml){:target=_blank} and find the `network_routing` section.
 Enable rooter usage and configure the socket path we used to start rooter.
 
 ```yaml
@@ -152,7 +152,7 @@ network_routing:
   # Cuckoo rooter socket path. Must be writable and readable for the user
   # that runs Cuckoo.
   rooter_socket: /tmp/cuckoo3-rooter.sock
-``` 
+```
 
 ##### Automatic per-task routing by Cuckoo rooter
 
@@ -174,7 +174,7 @@ Rooter currently supports the following types of routing:
 ###### No route
 
 No route is the what happens if no other route is chosen. It means Cuckoo rooter will not receive any request by Cuckoo
-to apply any routing. 'No route' is overridden by the default route configured in [analysissettings.yaml](../configuration/cuckooconfs/analysissettingsyaml.md).
+to apply any routing. 'No route' is overridden by the default route configured in [analysissettings.yaml](../configuring/cuckoo.md#analysissettingsyaml){:target=_blank}.
 
 ###### Drop routing
 
@@ -196,7 +196,7 @@ The name of this routing type in submission is `internet`.
 !!! Warning "Malicious traffic"
     This type of routing routes allows potentially malicious samples to connect to the internet through the configured interface.
 
-To configure this, open [routing.yaml](../configuration/cuckooconfs/nodeconfs/routingyaml.md) and find the `internet` section.
+To configure this, open [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} and find the `internet` section.
 
 Enter an interface to which the malware traffic should be forwarded for internet access. Add a routing table that
 contains routes for this interface. Cuckoo will be adding/removing source routing rules for analysis machine IPs to this table.
@@ -250,7 +250,7 @@ There are two ways of configuring VPN routing:
 
 **Using pre-configured VPNs**
 
-Open [routing.yaml](../configuration/cuckooconfs/nodeconfs/routingyaml.md) and find the `vpn` section.
+Open [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} and find the `vpn` section.
 Under the vpn section, find the `preconfigured` section. Add one or more VPNs and set `enabled` to `True`.
 
 The `vpns` key must contain a YAML dictionary of one or more of the following entries.
@@ -291,7 +291,7 @@ vpn:
 
 **Using VPN pool VPNs**
 
-Open [routing.yaml](../configuration/cuckooconfs/nodeconfs/routingyaml.md) and find the `vpn` section.
+Open [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} and find the `vpn` section.
 Under the vpn section, find the `vpnpool` section. Add one or more providers with VPNs and set `enabled` to `True`.
 
 The `providers` key must contain a YAML dictionary with one or more provider entries.

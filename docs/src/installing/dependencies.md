@@ -1,6 +1,6 @@
 # System dependencies
 
-Here you can find all dependencies Cuckoo3 requires to run.  
+Here you can find all dependencies Cuckoo requires to run.  
 We have an opinionated way of installing Cuckoo and these dependencies reflect that opinion.  
 
 !!! note "Friendly reminder"
@@ -10,7 +10,7 @@ We have an opinionated way of installing Cuckoo and these dependencies reflect t
 ## All-in-one
 
 To install all system dependencies, run the following commands:
-```console
+```bash
 sudo apt-get install -y build-essential \
     software-properties-common \
     curl \
@@ -34,31 +34,31 @@ sudo apt-get install -y build-essential \
 To download and activate the quickstart install script, you need `curl` in your
 machine.  
 
-```console
-sudo apt-get -y install curl
+```bash
+sudo apt-get install -y curl
 ```
 
 ### Git
 Quickstart uses git to download requined repositories.
 
-```console
-sudo apt-get -y install git
+```bash
+sudo apt-get install -y git
 ```
 
 ### Python dev and venv
 
 Python3.10-venv and Python3.10-dev are required to create and activate virtual environments for
-Cuckoo3 and VMCloak.
+Cuckoo and VMCloak.
 
-```console
-sudo apt-get -y install python3.10-venv python3.10-dev
+```bash
+sudo apt-get install -y python3.10-venv python3.10-dev
 ```
 
 ---
 
 ## Cuckoo3 dependencies
 ### All-in-one
-```console
+```bash
 sudo apt-get install -y libhyperscan5 libhyperscan-dev \
     libjpeg8-dev zlib1g-dev p7zip-full rar unace-nonfree cabextract \
     yara \
@@ -69,7 +69,7 @@ sudo apt-get install -y libhyperscan5 libhyperscan-dev \
 ```
 
 ### Hyperscan
-```console
+```bash
 sudo apt-get install -y libhyperscan5 libhyperscan-dev
 ```
 
@@ -83,7 +83,7 @@ The pattern signature engine uses [Hyperscan](https://www.hyperscan.io/about/){t
     - Version: >=5.1, <5.3
 
 ### Sflock
-```console
+```bash
 sudo apt-get install -y libjpeg8-dev zlib1g-dev p7zip-full rar unace-nonfree cabextract
 ```
 
@@ -91,14 +91,14 @@ Sflock is the library used by Cuckoo to perform all file unpacked and identifica
 to be able to unpack and identify a variety of archive and file types.
 
 ### Yara
-```console
+```bash
 sudo apt-get install -y yara
 ```
 
 [Yara](https://virustotal.github.io/yara/){target_blank} is used during static/pre-analysis and post-analysis processing on submitted and collected memory dumps.
 
 ### Tcpdump
-```console
+```bash
 sudo apt-get install -y tcpdump
 ```
 
@@ -107,39 +107,39 @@ sudo apt-get install -y tcpdump
 
 **Configuration steps**
 
-See [tcpdump configuration](../configuration/system.md#tcpdump) page for the steps to perform.
+See [tcpdump configuration](../configuring/system.md#tcpdump) page for the steps to perform.
 
 ### UWSGI
-```console
+```bash
 sudo apt-get install -y tcpdump
 ```
 
-UWSGI is used to help serve Cuckoo3 frontend
+UWSGI is used to help serve Cuckoo frontend
 
 ### Nginx
-```console
+```bash
 sudo apt-get install -y nginx
 ```
 
-Nginx is used to serve Cuckoo3 frontend
+Nginx is used to serve Cuckoo frontend
 
 ---
 
 ## VMCloak dependencies
 ### All-in-one
-```console
+```bash
     sudo apt-get install -y genisoimage qemu-system-common qemu-utils qemu-system-x86
 ```
 
 ### Genisoimage
-```console
+```bash
 sudo apt-get install -y genisoimage
 ```
 
 `genisoimage` contains tools to create platform iso files.
 
 ### QEMU
-```console
+```bash
     sudo apt-get install -y qemu-system-common qemu-utils qemu-system-x86
 ```
 VMCloak uses qemu to create and manage VMs.  
