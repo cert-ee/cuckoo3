@@ -1,0 +1,4147 @@
+{
+   "task_id" : "20210707-6UZJTX_1",
+   "signatures" : [
+      {
+         "score" : 1,
+         "description" : "A process wrote data to an area of memory in another process.",
+         "ttps" : [],
+         "tags" : [],
+         "family" : "",
+         "short_description" : "Wrote to the memory of another process",
+         "name" : "wrote_proc_memory",
+         "iocs" : [
+            {
+               "target_process_id" : 74,
+               "process_id" : 73,
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "target_process_id" : 74,
+               "process_id" : 73,
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe",
+               "target_process_id" : 74,
+               "process_id" : 73
+            },
+            {
+               "process" : "fx13ttg_138028.exe",
+               "target_process" : "fx13ttg_138028.exe",
+               "process_id" : 73,
+               "target_process_id" : 74
+            },
+            {
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe",
+               "target_process_id" : 75,
+               "process_id" : 74
+            },
+            {
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe",
+               "target_process_id" : 75,
+               "process_id" : 74
+            },
+            {
+               "target_process_id" : 75,
+               "process_id" : 74,
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "process" : "fx13ttg_138028.exe",
+               "target_process" : "fx13ttg_138028.exe",
+               "process_id" : 75,
+               "target_process_id" : 76
+            },
+            {
+               "target_process" : "fx13ttg_138028.exe",
+               "process" : "fx13ttg_138028.exe",
+               "target_process_id" : 76,
+               "process_id" : 75
+            },
+            {
+               "process" : "fx13ttg_138028.exe",
+               "target_process" : "fx13ttg_138028.exe",
+               "process_id" : 75,
+               "target_process_id" : 76
+            },
+            {
+               "process_id" : 75,
+               "target_process_id" : 76,
+               "process" : "fx13ttg_138028.exe",
+               "target_process" : "fx13ttg_138028.exe"
+            },
+            {
+               "target_process_id" : 78,
+               "process_id" : 77,
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "target_process_id" : 78,
+               "process_id" : 77,
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "process_id" : 77,
+               "target_process_id" : 78,
+               "process" : "structsreadand.exe",
+               "target_process" : "structsreadand.exe"
+            },
+            {
+               "target_process_id" : 78,
+               "process_id" : 77,
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "process" : "structsreadand.exe",
+               "target_process" : "structsreadand.exe",
+               "process_id" : 78,
+               "target_process_id" : 79
+            },
+            {
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe",
+               "target_process_id" : 79,
+               "process_id" : 78
+            },
+            {
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe",
+               "target_process_id" : 79,
+               "process_id" : 78
+            },
+            {
+               "target_process_id" : 80,
+               "process_id" : 79,
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "target_process_id" : 80,
+               "process_id" : 79,
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "process" : "structsreadand.exe",
+               "target_process" : "structsreadand.exe",
+               "process_id" : 79,
+               "target_process_id" : 80
+            },
+            {
+               "target_process" : "structsreadand.exe",
+               "process" : "structsreadand.exe",
+               "target_process_id" : 80,
+               "process_id" : 79
+            },
+            {
+               "process_id" : 90,
+               "target_process_id" : 91,
+               "process" : "SppExtComObj.exe",
+               "target_process" : "SLUI.exe"
+            },
+            {
+               "target_process_id" : 91,
+               "process_id" : 90,
+               "target_process" : "SLUI.exe",
+               "process" : "SppExtComObj.exe"
+            },
+            {
+               "target_process" : "mpcmdrun.exe",
+               "process" : "svchost.exe",
+               "target_process_id" : 93,
+               "process_id" : 88
+            },
+            {
+               "process_id" : 88,
+               "target_process_id" : 93,
+               "process" : "svchost.exe",
+               "target_process" : "mpcmdrun.exe"
+            }
+         ]
+      },
+      {
+         "name" : "susevent_mapviewofsection",
+         "iocs" : [
+            {
+               "process_id" : 73,
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "process_id" : 75,
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "process" : "structsreadand.exe",
+               "process_id" : 77
+            },
+            {
+               "process" : "structsreadand.exe",
+               "process_id" : 79
+            }
+         ],
+         "score" : 1,
+         "description" : "Suspicious behavior detected: MapViewOfSection",
+         "ttps" : [],
+         "tags" : [],
+         "short_description" : "Suspicious behavior detected: MapViewOfSection",
+         "family" : ""
+      },
+      {
+         "iocs" : [
+            {
+               "process_id" : 73,
+               "process" : "fx13ttg_138028.exe"
+            },
+            {
+               "process" : "fx13ttg_138028.exe",
+               "process_id" : 75
+            },
+            {
+               "process_id" : 77,
+               "process" : "structsreadand.exe"
+            },
+            {
+               "process_id" : 79,
+               "process" : "structsreadand.exe"
+            }
+         ],
+         "name" : "susevent_setthreadcontext",
+         "ttps" : [],
+         "short_description" : "Suspicious behavior detected: SetThreadContext",
+         "family" : "",
+         "tags" : [],
+         "score" : 1,
+         "description" : "Suspicious behavior detected: SetThreadContext"
+      },
+      {
+         "tags" : [],
+         "family" : "",
+         "short_description" : "Drops file in user directory",
+         "ttps" : [],
+         "description" : "Drops file in user directory",
+         "score" : 6,
+         "iocs" : [
+            {
+               "value" : "C:\\Users\\TFzWCExo\\AppData\\Roaming\\Microsoft\\Crypto\\RSA\\S-1-5-21-3663101369-2300368318-3494503742-1000\\79dbd318f6b29c9c2ff49c3fa2bc026c_e7f9f72c-d383-4b92-ac7a-b75d639109eb",
+               "process" : "fx13ttg_138028.exe",
+               "description" : "Opened file for modifying",
+               "process_id" : 73
+            },
+            {
+               "process" : "fx13ttg_138028.exe",
+               "value" : "C:\\Users\\TFzWCExo\\AppData\\Roaming\\Microsoft\\Crypto\\RSA\\S-1-5-21-3663101369-2300368318-3494503742-1000\\79dbd318f6b29c9c2ff49c3fa2bc026c_e7f9f72c-d383-4b92-ac7a-b75d639109eb",
+               "description" : "Opened file for modifying",
+               "process_id" : 75
+            }
+         ],
+         "name" : "files_drops_exe_user"
+      },
+      {
+         "family" : "",
+         "short_description" : "Drops file in Windows directory",
+         "tags" : [],
+         "ttps" : [],
+         "description" : "Drops file in Windows directory",
+         "score" : 4,
+         "iocs" : [
+            {
+               "process_id" : 80,
+               "description" : "Opened file for modifying",
+               "process" : "structsreadand.exe",
+               "value" : "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Local\\Microsoft\\Windows\\INetCache\\counters2.dat"
+            },
+            {
+               "process" : "structsreadand.exe",
+               "value" : "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Local\\Microsoft\\Windows\\INetCache\\Content.IE5",
+               "description" : "Opened file for modifying",
+               "process_id" : 80
+            },
+            {
+               "value" : "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Local\\Microsoft\\Windows\\INetCache\\IE",
+               "process" : "structsreadand.exe",
+               "description" : "Opened file for modifying",
+               "process_id" : 80
+            },
+            {
+               "value" : "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Local\\Microsoft\\Windows\\INetCookies",
+               "process" : "structsreadand.exe",
+               "description" : "Opened file for modifying",
+               "process_id" : 80
+            },
+            {
+               "description" : "Opened file for modifying",
+               "process_id" : 80,
+               "value" : "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Local\\Microsoft\\Windows\\History\\History.IE5",
+               "process" : "structsreadand.exe"
+            },
+            {
+               "description" : "Opened file for modifying",
+               "process_id" : 81,
+               "value" : "C:\\Windows\\Debug\\ESE.TXT",
+               "process" : "svchost.exe"
+            },
+            {
+               "process" : "svchost.exe",
+               "value" : "C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Local\\FontCache\\Fonts\\Download-1.tmp",
+               "description" : "Opened file for modifying",
+               "process_id" : 81
+            },
+            {
+               "value" : "C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Local\\FontCache\\Fonts\\Download-2.tmp",
+               "process" : "svchost.exe",
+               "description" : "Opened file for modifying",
+               "process_id" : 81
+            },
+            {
+               "description" : "Opened file for modifying",
+               "process_id" : 93,
+               "value" : "C:\\Windows\\SERVIC~2\\LOCALS~1\\AppData\\Local\\Temp\\MpCmdRun.log",
+               "process" : "mpcmdrun.exe"
+            }
+         ],
+         "name" : "file_drops_windows"
+      },
+      {
+         "ttps" : [],
+         "family" : "emotet",
+         "short_description" : "Detected known malware family data structure in memory: emotet",
+         "tags" : [],
+         "score" : 10,
+         "description" : "Detected known malware family data structure in memory: emotet",
+         "iocs" : [],
+         "name" : "emotet malware data structure"
+      }
+   ],
+   "misp" : [
+      {
+         "datetime" : "2021-04-19T18:00:11",
+         "description" : "Cuckoo Sandbox task 20210419-XON4K0_1",
+         "id" : "332511",
+         "url" : "https://misp.cert.ee/events/view/332511",
+         "ioc" : "20.190.160.69"
+      },
+      {
+         "ioc" : "23.66.21.99",
+         "url" : "https://misp.cert.ee/events/view/332356",
+         "id" : "332356",
+         "description" : "Cuckoo Sandbox task 20210419-V5Q6LO_1",
+         "datetime" : "2021-04-19T09:53:13"
+      }
+   ],
+   "tags" : [],
+   "processes" : [
+      {
+         "end_ts" : 2688,
+         "state" : "terminated",
+         "start_ts" : 1829,
+         "pid" : 5000,
+         "procid" : 73,
+         "commandline" : "\"C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe\"",
+         "parent_procid" : 64,
+         "image" : "C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe",
+         "ppid" : 3440,
+         "name" : "fx13ttg_138028.exe",
+         "tracked" : true,
+         "injected" : false
+      },
+      {
+         "parent_procid" : 73,
+         "commandline" : "\"C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe\"",
+         "procid" : 74,
+         "end_ts" : 2688,
+         "start_ts" : 2485,
+         "state" : "terminated",
+         "pid" : 5040,
+         "injected" : false,
+         "tracked" : true,
+         "name" : "fx13ttg_138028.exe",
+         "ppid" : 5000,
+         "image" : "C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe"
+      },
+      {
+         "name" : "fx13ttg_138028.exe",
+         "tracked" : true,
+         "injected" : false,
+         "image" : "C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe",
+         "ppid" : 5040,
+         "parent_procid" : 74,
+         "commandline" : "--22af7e3b",
+         "pid" : 5052,
+         "end_ts" : 3110,
+         "start_ts" : 2672,
+         "state" : "terminated",
+         "procid" : 75
+      },
+      {
+         "pid" : 5080,
+         "end_ts" : 15110,
+         "start_ts" : 2969,
+         "state" : "terminated",
+         "procid" : 76,
+         "commandline" : "--22af7e3b",
+         "parent_procid" : 75,
+         "image" : "C:\\Users\\TFzWCExo\\AppData\\Local\\Temp\\fx13ttg_138028.exe",
+         "ppid" : 5052,
+         "name" : "fx13ttg_138028.exe",
+         "tracked" : true,
+         "injected" : false
+      },
+      {
+         "ppid" : 624,
+         "image" : "C:\\Windows\\SysWOW64\\structsreadand.exe",
+         "injected" : false,
+         "tracked" : true,
+         "name" : "structsreadand.exe",
+         "procid" : 77,
+         "pid" : 2516,
+         "end_ts" : 15094,
+         "start_ts" : 14579,
+         "state" : "terminated",
+         "parent_procid" : 6,
+         "commandline" : "\"C:\\Windows\\SysWOW64\\structsreadand.exe\""
+      },
+      {
+         "commandline" : "\"C:\\Windows\\SysWOW64\\structsreadand.exe\"",
+         "parent_procid" : 77,
+         "start_ts" : 14938,
+         "end_ts" : 15079,
+         "pid" : 1892,
+         "state" : "terminated",
+         "procid" : 78,
+         "name" : "structsreadand.exe",
+         "tracked" : true,
+         "injected" : false,
+         "image" : "C:\\Windows\\SysWOW64\\structsreadand.exe",
+         "ppid" : 2516
+      },
+      {
+         "tracked" : true,
+         "name" : "structsreadand.exe",
+         "injected" : false,
+         "image" : "C:\\Windows\\SysWOW64\\structsreadand.exe",
+         "ppid" : 1892,
+         "commandline" : "--fc9e9115",
+         "parent_procid" : 78,
+         "state" : "terminated",
+         "end_ts" : 15313,
+         "start_ts" : 15079,
+         "pid" : 1668,
+         "procid" : 79
+      },
+      {
+         "injected" : false,
+         "name" : "structsreadand.exe",
+         "tracked" : true,
+         "ppid" : 1668,
+         "image" : "C:\\Windows\\SysWOW64\\structsreadand.exe",
+         "parent_procid" : 79,
+         "commandline" : "--fc9e9115",
+         "procid" : 80,
+         "end_ts" : null,
+         "start_ts" : 15157,
+         "state" : "running",
+         "pid" : 976
+      },
+      {
+         "commandline" : "c:\\windows\\system32\\svchost.exe -k netsvcs -s BITS",
+         "parent_procid" : 6,
+         "procid" : 81,
+         "end_ts" : 226750,
+         "start_ts" : 85735,
+         "pid" : 4592,
+         "state" : "terminated",
+         "injected" : false,
+         "name" : "svchost.exe",
+         "tracked" : true,
+         "ppid" : 624,
+         "image" : "\\??\\c:\\windows\\system32\\svchost.exe"
+      },
+      {
+         "parent_procid" : 6,
+         "commandline" : "c:\\windows\\system32\\svchost.exe -k localserviceandnoimpersonation -s SSDPSRV",
+         "procid" : 82,
+         "end_ts" : null,
+         "start_ts" : 86016,
+         "state" : "running",
+         "pid" : 4636,
+         "injected" : false,
+         "name" : "svchost.exe",
+         "tracked" : true,
+         "ppid" : 624,
+         "image" : "\\??\\c:\\windows\\system32\\svchost.exe"
+      },
+      {
+         "procid" : 84,
+         "end_ts" : null,
+         "start_ts" : 93204,
+         "state" : "running",
+         "pid" : 728,
+         "commandline" : "c:\\windows\\system32\\svchost.exe -k netsvcs -s DoSvc",
+         "parent_procid" : 6,
+         "ppid" : 624,
+         "image" : "\\??\\c:\\windows\\system32\\svchost.exe",
+         "injected" : false,
+         "tracked" : true,
+         "name" : "svchost.exe"
+      },
+      {
+         "ppid" : 624,
+         "image" : "\\??\\c:\\windows\\system32\\svchost.exe",
+         "injected" : false,
+         "tracked" : true,
+         "name" : "svchost.exe",
+         "procid" : 88,
+         "start_ts" : 94047,
+         "end_ts" : null,
+         "state" : "running",
+         "pid" : 4340,
+         "parent_procid" : 6,
+         "commandline" : "c:\\windows\\system32\\svchost.exe -k localservicenetworkrestricted -s wscsvc"
+      },
+      {
+         "parent_procid" : 6,
+         "commandline" : "c:\\windows\\system32\\svchost.exe -k unistacksvcgroup",
+         "procid" : 89,
+         "end_ts" : null,
+         "pid" : 5040,
+         "start_ts" : 94375,
+         "state" : "running",
+         "injected" : false,
+         "name" : "svchost.exe",
+         "tracked" : true,
+         "ppid" : 624,
+         "image" : "\\??\\c:\\windows\\system32\\svchost.exe"
+      },
+      {
+         "injected" : false,
+         "tracked" : true,
+         "name" : "SppExtComObj.exe",
+         "ppid" : 764,
+         "image" : "C:\\Windows\\system32\\SppExtComObj.exe",
+         "parent_procid" : 11,
+         "commandline" : "C:\\Windows\\system32\\SppExtComObj.exe -Embedding",
+         "procid" : 90,
+         "end_ts" : null,
+         "start_ts" : 94907,
+         "state" : "running",
+         "pid" : 2920
+      },
+      {
+         "procid" : 93,
+         "end_ts" : 154672,
+         "start_ts" : 154485,
+         "state" : "terminated",
+         "pid" : 1628,
+         "commandline" : "\"C:\\Program Files\\Windows Defender\\mpcmdrun.exe\" -wdenable",
+         "parent_procid" : 88,
+         "ppid" : 4340,
+         "image" : "C:\\Program Files\\Windows Defender\\mpcmdrun.exe",
+         "injected" : false,
+         "tracked" : true,
+         "name" : "mpcmdrun.exe"
+      }
+   ],
+   "ttps" : [],
+   "families" : [
+      "emotet"
+   ],
+   "network" : {
+      "http" : [
+         {
+            "request" : {
+               "url" : "http://ctldl.windowsupdate.com/msdownload/update/v3/static/trustedr/en/disallowedcertstl.cab?cc5e54e14f43e487",
+               "length" : 0,
+               "version" : "1.1",
+               "headers" : [
+                  {
+                     "key" : "cache-control",
+                     "value" : "no-cache"
+                  },
+                  {
+                     "value" : "Keep-Alive",
+                     "key" : "connection"
+                  },
+                  {
+                     "value" : "no-cache",
+                     "key" : "pragma"
+                  },
+                  {
+                     "key" : "accept",
+                     "value" : "*/*"
+                  },
+                  {
+                     "value" : "Tue, 13 Aug 2019 16:20:54 GMT",
+                     "key" : "if-modified-since"
+                  },
+                  {
+                     "key" : "if-none-match",
+                     "value" : "\"0f77d14f351d51:0\""
+                  },
+                  {
+                     "value" : "Microsoft-CryptoAPI/10.0",
+                     "key" : "user-agent"
+                  },
+                  {
+                     "value" : "ctldl.windowsupdate.com",
+                     "key" : "host"
+                  }
+               ],
+               "protocol" : "http",
+               "method" : "GET"
+            },
+            "dstport" : 80,
+            "dstip" : "205.185.216.10",
+            "srcip" : "192.168.122.101",
+            "response" : {
+               "protocol" : "http",
+               "status" : 200,
+               "headers" : [
+                  {
+                     "key" : "date",
+                     "value" : "Wed, 07 Jul 2021 16:01:46 GMT"
+                  },
+                  {
+                     "key" : "connection",
+                     "value" : "Keep-Alive"
+                  },
+                  {
+                     "key" : "cache-control",
+                     "value" : "public, max-age=900"
+                  },
+                  {
+                     "key" : "content-length",
+                     "value" : "4817"
+                  },
+                  {
+                     "key" : "content-type",
+                     "value" : "application/vnd.ms-cab-compressed"
+                  },
+                  {
+                     "key" : "last-modified",
+                     "value" : "Tue, 16 Mar 2021 07:33:42 GMT"
+                  },
+                  {
+                     "value" : "bytes",
+                     "key" : "accept-ranges"
+                  },
+                  {
+                     "key" : "etag",
+                     "value" : "\"08f5ab0361ad71:0\""
+                  },
+                  {
+                     "key" : "x-hw",
+                     "value" : "1625673706.dop129.am5.t,1625673706.cds264.am5.c"
+                  },
+                  {
+                     "value" : "NL",
+                     "key" : "x-ccc"
+                  },
+                  {
+                     "value" : "9",
+                     "key" : "x-cid"
+                  }
+               ],
+               "version" : "1.1",
+               "length" : 4817
+            },
+            "srcport" : 49681,
+            "ts" : 1625673706.55356
+         },
+         {
+            "request" : {
+               "version" : "1.1",
+               "length" : 0,
+               "url" : "http://ocsp.digicert.com/MFEwTzBNMEswSTAJBgUrDgMCGgUABBSAUQYBMq2awn1Rh6Doh%2FsBYgFV7gQUA95QNVbRTLtm8KPiGxvDl7I90VUCEAJ0LqoXyo4hxxe7H%2Fz9DKA%3D",
+               "method" : "GET",
+               "protocol" : "http",
+               "headers" : [
+                  {
+                     "key" : "connection",
+                     "value" : "Keep-Alive"
+                  },
+                  {
+                     "key" : "accept",
+                     "value" : "*/*"
+                  },
+                  {
+                     "value" : "Microsoft-CryptoAPI/10.0",
+                     "key" : "user-agent"
+                  },
+                  {
+                     "key" : "host",
+                     "value" : "ocsp.digicert.com"
+                  }
+               ]
+            },
+            "dstport" : 80,
+            "dstip" : "93.184.220.29",
+            "srcip" : "192.168.122.101",
+            "response" : {
+               "version" : "1.1",
+               "length" : 471,
+               "headers" : [
+                  {
+                     "value" : "bytes",
+                     "key" : "accept-ranges"
+                  },
+                  {
+                     "key" : "age",
+                     "value" : "6545"
+                  },
+                  {
+                     "value" : "max-age=151578",
+                     "key" : "cache-control"
+                  },
+                  {
+                     "value" : "application/ocsp-response",
+                     "key" : "content-type"
+                  },
+                  {
+                     "key" : "date",
+                     "value" : "Wed, 07 Jul 2021 16:01:46 GMT"
+                  },
+                  {
+                     "value" : "\"60e56373-1d7\"",
+                     "key" : "etag"
+                  },
+                  {
+                     "key" : "expires",
+                     "value" : "Fri, 09 Jul 2021 10:08:04 GMT"
+                  },
+                  {
+                     "value" : "Wed, 07 Jul 2021 08:18:59 GMT",
+                     "key" : "last-modified"
+                  },
+                  {
+                     "value" : "ECS (amb/6BC6)",
+                     "key" : "server"
+                  },
+                  {
+                     "key" : "x-cache",
+                     "value" : "HIT"
+                  },
+                  {
+                     "key" : "content-length",
+                     "value" : "471"
+                  }
+               ],
+               "status" : 200,
+               "protocol" : "http"
+            },
+            "srcport" : 49682,
+            "ts" : 1625673706.81067
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "13.107.4.50",
+            "request" : {
+               "method" : "GET",
+               "protocol" : "http",
+               "headers" : [
+                  {
+                     "key" : "connection",
+                     "value" : "Keep-Alive"
+                  },
+                  {
+                     "key" : "accept",
+                     "value" : "*/*"
+                  },
+                  {
+                     "key" : "user-agent",
+                     "value" : "Microsoft-CryptoAPI/10.0"
+                  },
+                  {
+                     "value" : "ctldl.windowsupdate.com",
+                     "key" : "host"
+                  }
+               ],
+               "version" : "1.1",
+               "length" : 0,
+               "url" : "http://ctldl.windowsupdate.com/msdownload/update/v3/static/trustedr/en/pinrulesstl.cab?62c70588b00c291e"
+            },
+            "dstport" : 80,
+            "ts" : 1625673807.66079,
+            "srcport" : 49706,
+            "response" : {
+               "version" : "1.1",
+               "length" : 7796,
+               "protocol" : "http",
+               "headers" : [
+                  {
+                     "value" : "public,max-age=900",
+                     "key" : "cache-control"
+                  },
+                  {
+                     "value" : "7796",
+                     "key" : "content-length"
+                  },
+                  {
+                     "key" : "content-type",
+                     "value" : "application/vnd.ms-cab-compressed"
+                  },
+                  {
+                     "value" : "Fri, 02 Jun 2017 17:39:05 GMT",
+                     "key" : "last-modified"
+                  },
+                  {
+                     "value" : "bytes",
+                     "key" : "accept-ranges"
+                  },
+                  {
+                     "key" : "etag",
+                     "value" : "\"80424021c7dbd21:0\""
+                  },
+                  {
+                     "key" : "server",
+                     "value" : "Microsoft-IIS/10.0"
+                  },
+                  {
+                     "key" : "x-cache",
+                     "value" : "TCP_HIT"
+                  },
+                  {
+                     "key" : "x-powered-by",
+                     "value" : "ASP.NET"
+                  },
+                  {
+                     "value" : "7",
+                     "key" : "x-cid"
+                  },
+                  {
+                     "value" : "7",
+                     "key" : "x-cid"
+                  },
+                  {
+                     "key" : "x-ccc",
+                     "value" : "NL"
+                  },
+                  {
+                     "value" : "US",
+                     "key" : "x-ccc"
+                  },
+                  {
+                     "value" : "Ref A: B425192386324944B7BEF337B3ACE118 Ref B: AMS04EDGE0707 Ref C: 2021-07-07T15:57:11Z",
+                     "key" : "x-azure-ref-originshield"
+                  },
+                  {
+                     "key" : "x-msedge-ref",
+                     "value" : "Ref A: EE81DA2BD62E4D1BB711C66254DF8D83 Ref B: AMBEDGE0816 Ref C: 2021-07-07T16:03:27Z"
+                  },
+                  {
+                     "key" : "date",
+                     "value" : "Wed, 07 Jul 2021 16:03:26 GMT"
+                  }
+               ],
+               "status" : 200
+            }
+         },
+         {
+            "request" : {
+               "url" : "http://41.220.119.246/enable/codec/",
+               "length" : 504,
+               "version" : "1.1",
+               "headers" : [
+                  {
+                     "key" : "referer",
+                     "value" : "http://41.220.119.246/enable/codec/"
+                  },
+                  {
+                     "key" : "content-type",
+                     "value" : "application/x-www-form-urlencoded"
+                  },
+                  {
+                     "key" : "dnt",
+                     "value" : "1"
+                  },
+                  {
+                     "key" : "user-agent",
+                     "value" : "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; InfoPath.2)"
+                  },
+                  {
+                     "value" : "41.220.119.246",
+                     "key" : "host"
+                  },
+                  {
+                     "value" : "504",
+                     "key" : "content-length"
+                  },
+                  {
+                     "value" : "Keep-Alive",
+                     "key" : "connection"
+                  },
+                  {
+                     "key" : "cache-control",
+                     "value" : "no-cache"
+                  }
+               ],
+               "protocol" : "http",
+               "method" : "POST"
+            },
+            "dstport" : 80,
+            "dstip" : "41.220.119.246",
+            "srcip" : "192.168.122.101",
+            "response" : {
+               "headers" : [
+                  {
+                     "key" : "connection",
+                     "value" : "Keep-Alive"
+                  },
+                  {
+                     "key" : "content-length",
+                     "value" : "121"
+                  },
+                  {
+                     "key" : "date",
+                     "value" : "Wed, 07 Jul 2021 16:05:27 GMT"
+                  },
+                  {
+                     "value" : "0",
+                     "key" : "expires"
+                  }
+               ],
+               "status" : 501,
+               "protocol" : "http",
+               "length" : 121,
+               "version" : "1.1"
+            },
+            "srcport" : 49715,
+            "ts" : 1625673928.44398
+         },
+         {
+            "response" : {
+               "protocol" : "http",
+               "status" : 400,
+               "headers" : [
+                  {
+                     "key" : "date",
+                     "value" : "Wed, 07 Jul 2021 16:05:58 GMT"
+                  },
+                  {
+                     "key" : "server",
+                     "value" : "Apache/2.4.25 (Debian)"
+                  },
+                  {
+                     "value" : "442",
+                     "key" : "content-length"
+                  },
+                  {
+                     "value" : "close",
+                     "key" : "connection"
+                  },
+                  {
+                     "key" : "content-type",
+                     "value" : "text/html; charset=iso-8859-1"
+                  }
+               ],
+               "length" : 442,
+               "version" : "1.1"
+            },
+            "ts" : 1625673958.17686,
+            "srcport" : 49717,
+            "dstip" : "37.157.194.134",
+            "dstport" : 443,
+            "request" : {
+               "method" : "POST",
+               "protocol" : "http",
+               "headers" : [
+                  {
+                     "value" : "http://37.157.194.134/window/window/sess/merge/",
+                     "key" : "referer"
+                  },
+                  {
+                     "value" : "application/x-www-form-urlencoded",
+                     "key" : "content-type"
+                  },
+                  {
+                     "value" : "1",
+                     "key" : "dnt"
+                  },
+                  {
+                     "value" : "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; InfoPath.2)",
+                     "key" : "user-agent"
+                  },
+                  {
+                     "key" : "host",
+                     "value" : "37.157.194.134:443"
+                  },
+                  {
+                     "value" : "518",
+                     "key" : "content-length"
+                  },
+                  {
+                     "key" : "connection",
+                     "value" : "Keep-Alive"
+                  },
+                  {
+                     "key" : "cache-control",
+                     "value" : "no-cache"
+                  }
+               ],
+               "version" : "1.1",
+               "length" : 518,
+               "url" : "http://37.157.194.134:443/window/window/sess/merge/"
+            },
+            "srcip" : "192.168.122.101"
+         }
+      ],
+      "dns" : {
+         "query" : [
+            {
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "name" : "login.live.com",
+               "ts" : 1625673706.31542,
+               "srcport" : 54465
+            },
+            {
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "name" : "ctldl.windowsupdate.com",
+               "srcport" : 65188,
+               "ts" : 1625673706.54557
+            },
+            {
+               "name" : "ocsp.digicert.com",
+               "srcport" : 64505,
+               "ts" : 1625673706.80728,
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 49871,
+               "ts" : 1625673708.40586,
+               "name" : "go.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "name" : "clientconfig.passport.net",
+               "srcport" : 54207,
+               "ts" : 1625673708.63574,
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "name" : "client.wns.windows.com",
+               "ts" : 1625673709.07366,
+               "srcport" : 61399
+            },
+            {
+               "ts" : 1625673747.54359,
+               "srcport" : 59308,
+               "name" : "settings-win.data.microsoft.com",
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "srcport" : 54056,
+               "ts" : 1625673795.76044,
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101"
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673795.92132,
+               "srcport" : 62554,
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A"
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673795.95508,
+               "srcport" : 63726,
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A"
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673795.99541,
+               "srcport" : 63943,
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A"
+            },
+            {
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "name" : "fs.microsoft.com",
+               "srcport" : 56408,
+               "ts" : 1625673796.01587
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "srcport" : 65120,
+               "ts" : 1625673796.77208,
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673796.8571,
+               "srcport" : 51593
+            },
+            {
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "ts" : 1625673796.87174,
+               "srcport" : 50676,
+               "name" : "fs.microsoft.com"
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "srcport" : 57177,
+               "ts" : 1625673797.87322,
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 50703,
+               "ts" : 1625673797.89302,
+               "name" : "fs.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "ts" : 1625673798.90342,
+               "srcport" : 49732,
+               "name" : "fs.microsoft.com"
+            },
+            {
+               "srcport" : 58102,
+               "ts" : 1625673798.91608,
+               "name" : "fs.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "srcport" : 54237,
+               "ts" : 1625673799.90749,
+               "name" : "fs.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "ts" : 1625673799.93512,
+               "srcport" : 53094,
+               "name" : "fs.microsoft.com"
+            },
+            {
+               "ts" : 1625673800.10896,
+               "srcport" : 51215,
+               "name" : "fs.microsoft.com",
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53
+            },
+            {
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673800.13435,
+               "srcport" : 60401
+            },
+            {
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "srcport" : 54428,
+               "ts" : 1625673801.14215,
+               "name" : "fs.microsoft.com"
+            },
+            {
+               "srcport" : 58573,
+               "ts" : 1625673801.17528,
+               "name" : "fs.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673802.17207,
+               "srcport" : 62211,
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A"
+            },
+            {
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "name" : "fs.microsoft.com",
+               "srcport" : 54619,
+               "ts" : 1625673802.20039
+            },
+            {
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "srcport" : 52209,
+               "ts" : 1625673803.20343,
+               "name" : "fs.microsoft.com"
+            },
+            {
+               "srcport" : 64149,
+               "ts" : 1625673804.28518,
+               "name" : "fs.microsoft.com",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "dstport" : 53,
+               "dstip" : "8.8.8.8"
+            },
+            {
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "name" : "fs.microsoft.com",
+               "ts" : 1625673806.40435,
+               "srcport" : 63667
+            },
+            {
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53,
+               "ts" : 1625673807.65479,
+               "srcport" : 57962,
+               "name" : "ctldl.windowsupdate.com"
+            },
+            {
+               "dstport" : 53,
+               "dstip" : "8.8.8.8",
+               "type" : "A",
+               "srcip" : "192.168.122.101",
+               "name" : "dns.msftncsi.com",
+               "srcport" : 64334,
+               "ts" : 1625673859.40004
+            },
+            {
+               "ts" : 1625673868.26079,
+               "srcport" : 53570,
+               "name" : "v10.vortex-win.data.microsoft.com",
+               "srcip" : "192.168.122.101",
+               "type" : "A",
+               "dstip" : "8.8.8.8",
+               "dstport" : 53
+            }
+         ],
+         "response" : [
+            {
+               "ts" : 1625673706.34047,
+               "srcport" : 53,
+               "data" : "login.msa.msidentity.com",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465
+            },
+            {
+               "data" : "www.tm.lg.prod.aadmsa.trafficmanager.net",
+               "srcport" : 53,
+               "ts" : 1625673706.34047,
+               "dstport" : 54465,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54465,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673706.34047,
+               "data" : "prda.aadg.msidentity.com"
+            },
+            {
+               "data" : "www.tm.a.prd.aadg.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673706.34047,
+               "dstport" : 54465,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "data" : "20.190.160.69",
+               "ts" : 1625673706.34047,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673706.34047,
+               "data" : "20.190.160.75",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54465,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673706.34047,
+               "srcport" : 53,
+               "data" : "20.190.160.134",
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465,
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "data" : "20.190.160.71",
+               "ts" : 1625673706.34047,
+               "srcport" : 53
+            },
+            {
+               "dstport" : 54465,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "20.190.160.129",
+               "srcport" : 53,
+               "ts" : 1625673706.34047
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465,
+               "ts" : 1625673706.34047,
+               "srcport" : 53,
+               "data" : "20.190.160.2"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465,
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "data" : "20.190.160.6",
+               "ts" : 1625673706.34047,
+               "srcport" : 53
+            },
+            {
+               "ts" : 1625673706.34047,
+               "srcport" : 53,
+               "data" : "20.190.160.132",
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54465
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673706.55211,
+               "data" : "au-bg-shim.trafficmanager.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 65188,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 65188,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "audownload.windowsupdate.nsatc.net",
+               "ts" : 1625673706.55211,
+               "srcport" : 53
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 65188,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673706.55211,
+               "data" : "au.download.windowsupdate.com.hwcdn.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673706.55211,
+               "data" : "cds.d2s7q6s2.hwcdn.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 65188,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673706.55211,
+               "srcport" : 53,
+               "data" : "205.185.216.10",
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 65188
+            },
+            {
+               "dstport" : 65188,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "205.185.216.42",
+               "srcport" : 53,
+               "ts" : 1625673706.55211
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 64505,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673706.80903,
+               "data" : "cs9.wac.phicdn.net"
+            },
+            {
+               "dstport" : 64505,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "93.184.220.29",
+               "srcport" : 53,
+               "ts" : 1625673706.80903
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 49871,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "go.microsoft.com.edgekey.net",
+               "ts" : 1625673708.42279,
+               "srcport" : 53
+            },
+            {
+               "data" : "e11290.dspg.akamaiedge.net",
+               "ts" : 1625673708.42279,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 49871,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 49871,
+               "ts" : 1625673708.42279,
+               "srcport" : 53,
+               "data" : "23.66.21.99"
+            },
+            {
+               "ts" : 1625673708.65846,
+               "srcport" : 53,
+               "data" : "authgfx.msa.akadns6.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54207
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673708.65846,
+               "data" : "msagfx.live.com-6.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54207,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54207,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e13551.dscg.akamaiedge.net",
+               "ts" : 1625673708.65846,
+               "srcport" : 53
+            },
+            {
+               "dstport" : 54207,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "104.123.104.251",
+               "srcport" : 53,
+               "ts" : 1625673708.65846
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 61399,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673709.08427,
+               "data" : "wns.notify.trafficmanager.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673709.08427,
+               "data" : "20.54.37.64",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 61399,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673747.5453,
+               "srcport" : 53,
+               "data" : "settingsfd-geo.trafficmanager.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 59308
+            },
+            {
+               "data" : "51.124.78.146",
+               "ts" : 1625673747.5453,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 59308,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54056,
+               "ts" : 1625673795.77139,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673795.77139,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54056,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673795.77139,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54056,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54056,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673795.77139,
+               "srcport" : 53
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54056,
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "data" : "104.81.140.70",
+               "ts" : 1625673795.77139,
+               "srcport" : 53
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673795.93763,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 62554,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673795.93763,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 62554,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 62554,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673795.93763,
+               "srcport" : 53
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 62554,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673795.93763,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673795.93763,
+               "dstport" : 62554,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63726,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673795.95994,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63726,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673795.95994,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673795.95994,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63726,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 63726,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673795.95994,
+               "srcport" : 53
+            },
+            {
+               "dstport" : 63726,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673795.95994
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673796.00135,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63943,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673796.00135,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63943,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673796.00135,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 63943
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673796.00135,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 63943,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 63943,
+               "ts" : 1625673796.00135,
+               "srcport" : 53,
+               "data" : "104.81.140.70"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673796.0553,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 56408,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 56408,
+               "ts" : 1625673796.0553,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 56408,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673796.0553,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "ts" : 1625673796.0553,
+               "srcport" : 53,
+               "data" : "e1723.g.akamaiedge.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 56408
+            },
+            {
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673796.0553,
+               "dstport" : 56408,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 65120,
+               "ts" : 1625673796.77788,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673796.77788,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 65120,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673796.77788,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 65120,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673796.77788,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 65120,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "data" : "104.81.140.70",
+               "ts" : 1625673796.77788,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 65120,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 51593,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "ts" : 1625673796.86266,
+               "srcport" : 53
+            },
+            {
+               "dstport" : 51593,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673796.86266
+            },
+            {
+               "ts" : 1625673796.86266,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 51593
+            },
+            {
+               "ts" : 1625673796.86266,
+               "srcport" : 53,
+               "data" : "e1723.g.akamaiedge.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 51593
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 51593,
+               "ts" : 1625673796.86266,
+               "srcport" : 53,
+               "data" : "104.81.140.70"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 50676,
+               "ts" : 1625673796.877,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673796.877,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 50676,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673796.877,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 50676
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 50676,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673796.877,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 50676,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673796.877,
+               "data" : "104.81.140.70"
+            },
+            {
+               "ts" : 1625673797.88415,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57177
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673797.88415,
+               "dstport" : 57177,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57177,
+               "ts" : 1625673797.88415,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 57177,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673797.88415,
+               "srcport" : 53
+            },
+            {
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 57177,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673797.88415,
+               "data" : "104.81.140.70"
+            },
+            {
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673797.89833,
+               "dstport" : 50703,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673797.89833,
+               "dstport" : 50703,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673797.89833,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 50703,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 50703,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673797.89833,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673797.89833,
+               "dstport" : 50703,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673798.90874,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 49732,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 49732,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673798.90874,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net"
+            },
+            {
+               "ts" : 1625673798.90874,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 49732
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 49732,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673798.90874,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 49732,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673798.90874,
+               "data" : "104.81.140.70"
+            },
+            {
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "ts" : 1625673798.92123,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 58102,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "dstport" : 58102,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673798.92123
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 58102,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673798.92123,
+               "srcport" : 53
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673798.92123,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 58102,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "data" : "104.81.140.70",
+               "ts" : 1625673798.92123,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 58102,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54237,
+               "ts" : 1625673799.92362,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "ts" : 1625673799.92362,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 54237,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54237,
+               "ts" : 1625673799.92362,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54237,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673799.92362,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "data" : "104.81.140.70",
+               "ts" : 1625673799.92362,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 54237,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673799.94843,
+               "dstport" : 53094,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673799.94843,
+               "dstport" : 53094,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673799.94843,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 53094,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673799.94843,
+               "data" : "e1723.g.akamaiedge.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 53094,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673799.94843,
+               "data" : "104.81.140.70",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 53094,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 51215,
+               "ts" : 1625673800.11394,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "ts" : 1625673800.11394,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 51215
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673800.11394,
+               "dstport" : 51215,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "dstport" : 51215,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "e1723.g.akamaiedge.net",
+               "srcport" : 53,
+               "ts" : 1625673800.11394
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673800.11394,
+               "data" : "104.81.140.70",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 51215,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673800.13972,
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 60401,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "ts" : 1625673800.13972,
+               "srcport" : 53,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 60401
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 60401,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673800.13972,
+               "srcport" : 53
+            },
+            {
+               "ts" : 1625673800.13972,
+               "srcport" : 53,
+               "data" : "e1723.g.akamaiedge.net",
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 60401
+            },
+            {
+               "dstport" : 60401,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673800.13972
+            },
+            {
+               "dstport" : 54428,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673801.16572
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673801.16572,
+               "dstport" : 54428,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54428,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673801.16572,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54428,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673801.16572,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "dstport" : 54428,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673801.16572
+            },
+            {
+               "dstport" : 58573,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673801.18071
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "srcport" : 53,
+               "ts" : 1625673801.18071,
+               "dstport" : 58573,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 58573,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673801.18071,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 58573,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673801.18071,
+               "srcport" : 53
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 58573,
+               "ts" : 1625673801.18071,
+               "srcport" : 53,
+               "data" : "104.81.140.70"
+            },
+            {
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673802.18895,
+               "dstport" : 62211,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 62211,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "ts" : 1625673802.18895,
+               "srcport" : 53
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673802.18895,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 62211,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 62211,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673802.18895,
+               "srcport" : 53
+            },
+            {
+               "data" : "104.81.140.70",
+               "ts" : 1625673802.18895,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 62211,
+               "srcip" : "8.8.8.8",
+               "type" : "A"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 54619,
+               "ts" : 1625673802.21203,
+               "srcport" : 53,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "ts" : 1625673802.21203,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 54619,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 54619,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673802.21203,
+               "srcport" : 53
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 54619,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673802.21203,
+               "data" : "e1723.g.akamaiedge.net"
+            },
+            {
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673802.21203,
+               "dstport" : 54619,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673803.20901,
+               "dstport" : 52209,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 52209,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673803.20901,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 52209,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "ts" : 1625673803.20901,
+               "srcport" : 53
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673803.20901,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 52209,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "dstport" : 52209,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "104.81.140.70",
+               "srcport" : 53,
+               "ts" : 1625673803.20901
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 64149,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673804.29036,
+               "data" : "prod.fs.microsoft.com.akadns.net"
+            },
+            {
+               "dstip" : "192.168.122.101",
+               "dstport" : 64149,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "ts" : 1625673804.29036,
+               "srcport" : 53
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673804.29036,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 64149,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673804.29036,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 64149,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "A",
+               "dstip" : "192.168.122.101",
+               "dstport" : 64149,
+               "ts" : 1625673804.29036,
+               "srcport" : 53,
+               "data" : "104.81.140.70"
+            },
+            {
+               "dstport" : 63667,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "data" : "prod.fs.microsoft.com.akadns.net",
+               "srcport" : 53,
+               "ts" : 1625673806.40966
+            },
+            {
+               "data" : "fs-wildcard.microsoft.com.edgekey.net",
+               "ts" : 1625673806.40966,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 63667,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63667,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673806.40966,
+               "data" : "fs-wildcard.microsoft.com.edgekey.net.globalredir.akadns.net"
+            },
+            {
+               "data" : "e1723.g.akamaiedge.net",
+               "ts" : 1625673806.40966,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 63667,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673806.40966,
+               "data" : "104.81.140.70",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "dstport" : 63667,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57962,
+               "ts" : 1625673807.65657,
+               "srcport" : 53,
+               "data" : "au-bg-shim.trafficmanager.net"
+            },
+            {
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 57962,
+               "dstip" : "192.168.122.101",
+               "srcport" : 53,
+               "ts" : 1625673807.65657,
+               "data" : "audownload.windowsupdate.nsatc.net"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57962,
+               "ts" : 1625673807.65657,
+               "srcport" : 53,
+               "data" : "au.au-msedge.net"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57962,
+               "ts" : 1625673807.65657,
+               "srcport" : 53,
+               "data" : "elasticShed.au.au-msedge.net"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 57962,
+               "ts" : 1625673807.65657,
+               "srcport" : 53,
+               "data" : "afdap.au.au-msedge.net"
+            },
+            {
+               "data" : "au.c-0001.c-msedge.net",
+               "srcport" : 53,
+               "ts" : 1625673807.65657,
+               "dstport" : 57962,
+               "dstip" : "192.168.122.101",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8"
+            },
+            {
+               "srcport" : 53,
+               "ts" : 1625673807.65657,
+               "data" : "c-0001.c-msedge.net",
+               "type" : "CNAME",
+               "srcip" : "8.8.8.8",
+               "dstport" : 57962,
+               "dstip" : "192.168.122.101"
+            },
+            {
+               "dstport" : 57962,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "13.107.4.50",
+               "srcport" : 53,
+               "ts" : 1625673807.65657
+            },
+            {
+               "dstport" : 64334,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8",
+               "data" : "131.107.255.255",
+               "srcport" : 53,
+               "ts" : 1625673859.40159
+            },
+            {
+               "data" : "v10-win.vortex.data.trafficmanager.net",
+               "ts" : 1625673868.26626,
+               "srcport" : 53,
+               "dstip" : "192.168.122.101",
+               "dstport" : 53570,
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME"
+            },
+            {
+               "srcip" : "8.8.8.8",
+               "type" : "CNAME",
+               "dstip" : "192.168.122.101",
+               "dstport" : 53570,
+               "ts" : 1625673868.26626,
+               "srcport" : 53,
+               "data" : "skypedataprdcoleus06.cloudapp.net"
+            },
+            {
+               "data" : "52.114.133.60",
+               "srcport" : 53,
+               "ts" : 1625673868.26626,
+               "dstport" : 53570,
+               "dstip" : "192.168.122.101",
+               "type" : "A",
+               "srcip" : "8.8.8.8"
+            }
+         ]
+      },
+      "udp" : [
+         {
+            "dstip" : "192.168.122.255",
+            "dstport" : 137,
+            "size" : 68,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673701.89845,
+            "srcport" : 137
+         },
+         {
+            "dstip" : "192.168.122.255",
+            "dstport" : 137,
+            "size" : 68,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673702.66422,
+            "srcport" : 137
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "size" : 68,
+            "dstport" : 137,
+            "ts" : 1625673703.42981,
+            "srcport" : 137
+         },
+         {
+            "dstport" : 138,
+            "size" : 179,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 138,
+            "ts" : 1625673704.18199
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstport" : 138,
+            "size" : 201,
+            "dstip" : "192.168.122.255",
+            "srcport" : 138,
+            "ts" : 1625673704.1988
+         },
+         {
+            "srcport" : 138,
+            "ts" : 1625673705.69558,
+            "size" : 179,
+            "dstport" : 138,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstport" : 53,
+            "size" : 32,
+            "dstip" : "8.8.8.8",
+            "srcport" : 54465,
+            "ts" : 1625673706.31542
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673706.34047,
+            "size" : 312,
+            "dstport" : 54465,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "ts" : 1625673706.54557,
+            "srcport" : 65188,
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "size" : 41,
+            "dstport" : 53
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 65188,
+            "size" : 238,
+            "ts" : 1625673706.55211,
+            "srcport" : 53
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 35,
+            "ts" : 1625673706.80728,
+            "srcport" : 64505
+         },
+         {
+            "ts" : 1625673706.80903,
+            "srcport" : 53,
+            "dstip" : "192.168.122.101",
+            "size" : 83,
+            "dstport" : 64505,
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "ts" : 1625673707.19962,
+            "srcport" : 138,
+            "dstip" : "192.168.122.255",
+            "size" : 179,
+            "dstport" : 138,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101",
+            "srcport" : 49871,
+            "ts" : 1625673708.40586
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673708.42279,
+            "srcip" : "8.8.8.8",
+            "size" : 129,
+            "dstport" : 49871,
+            "dstip" : "192.168.122.101"
+         },
+         {
+            "dstip" : "8.8.8.8",
+            "size" : 43,
+            "dstport" : 53,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673708.63574,
+            "srcport" : 54207
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "size" : 170,
+            "dstport" : 54207,
+            "dstip" : "192.168.122.101",
+            "srcport" : 53,
+            "ts" : 1625673708.65846
+         },
+         {
+            "ts" : 1625673708.71283,
+            "srcport" : 138,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 179
+         },
+         {
+            "size" : 40,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101",
+            "srcport" : 61399,
+            "ts" : 1625673709.07366
+         },
+         {
+            "size" : 99,
+            "dstport" : 61399,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673709.08427
+         },
+         {
+            "ts" : 1625673725.22913,
+            "srcport" : 138,
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 191,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "size" : 191,
+            "dstport" : 138,
+            "ts" : 1625673726.24419,
+            "srcport" : 138
+         },
+         {
+            "ts" : 1625673727.25978,
+            "srcport" : 138,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 191
+         },
+         {
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 191,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673728.25996,
+            "srcport" : 138
+         },
+         {
+            "srcport" : 137,
+            "ts" : 1625673729.27641,
+            "srcip" : "192.168.122.101",
+            "size" : 68,
+            "dstport" : 137,
+            "dstip" : "192.168.122.255"
+         },
+         {
+            "ts" : 1625673730.04094,
+            "srcport" : 137,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 137,
+            "size" : 68
+         },
+         {
+            "ts" : 1625673730.80669,
+            "srcport" : 137,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 137,
+            "size" : 68
+         },
+         {
+            "srcport" : 137,
+            "ts" : 1625673731.58797,
+            "srcip" : "192.168.122.101",
+            "dstport" : 137,
+            "size" : 68,
+            "dstip" : "192.168.122.255"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 137,
+            "size" : 68,
+            "ts" : 1625673732.38492,
+            "srcport" : 137
+         },
+         {
+            "size" : 68,
+            "dstport" : 137,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 137,
+            "ts" : 1625673733.18185
+         },
+         {
+            "ts" : 1625673733.94726,
+            "srcport" : 137,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "size" : 68,
+            "dstport" : 137
+         },
+         {
+            "srcport" : 137,
+            "ts" : 1625673734.74409,
+            "dstport" : 137,
+            "size" : 68,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "ts" : 1625673735.5416,
+            "srcport" : 138,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 179
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "size" : 179,
+            "dstport" : 138,
+            "ts" : 1625673735.54191,
+            "srcport" : 138
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "size" : 209,
+            "dstport" : 138,
+            "dstip" : "192.168.122.255",
+            "srcport" : 138,
+            "ts" : 1625673735.54461
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstport" : 53,
+            "size" : 49,
+            "dstip" : "8.8.8.8",
+            "srcport" : 59308,
+            "ts" : 1625673747.54359
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "size" : 112,
+            "dstport" : 59308,
+            "dstip" : "192.168.122.101",
+            "srcport" : 53,
+            "ts" : 1625673747.5453
+         },
+         {
+            "ts" : 1625673765.43534,
+            "srcport" : 138,
+            "dstip" : "192.168.122.255",
+            "size" : 201,
+            "dstport" : 138,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "ts" : 1625673793.14639,
+            "srcport" : 59311,
+            "dstip" : "239.255.255.250",
+            "dstport" : 1900,
+            "size" : 137,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "239.255.255.250",
+            "dstport" : 1900,
+            "size" : 137,
+            "ts" : 1625673793.15545,
+            "srcport" : 59311
+         },
+         {
+            "size" : 137,
+            "dstport" : 1900,
+            "dstip" : "239.255.255.250",
+            "srcip" : "192.168.122.101",
+            "srcport" : 59311,
+            "ts" : 1625673793.35908
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 209,
+            "ts" : 1625673795.5574,
+            "srcport" : 138
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53,
+            "ts" : 1625673795.76044,
+            "srcport" : 54056
+         },
+         {
+            "ts" : 1625673795.77139,
+            "srcport" : 53,
+            "dstip" : "192.168.122.101",
+            "dstport" : 54056,
+            "size" : 241,
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "srcport" : 62554,
+            "ts" : 1625673795.92132,
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673795.93763,
+            "srcip" : "8.8.8.8",
+            "dstport" : 62554,
+            "size" : 241,
+            "dstip" : "192.168.122.101"
+         },
+         {
+            "srcport" : 63726,
+            "ts" : 1625673795.95508,
+            "dstport" : 53,
+            "size" : 34,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "size" : 241,
+            "dstport" : 63726,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673795.95994
+         },
+         {
+            "ts" : 1625673795.99541,
+            "srcport" : 63943,
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53
+         },
+         {
+            "ts" : 1625673796.00135,
+            "srcport" : 53,
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 63943,
+            "size" : 241
+         },
+         {
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673796.01587,
+            "srcport" : 56408
+         },
+         {
+            "ts" : 1625673796.0553,
+            "srcport" : 53,
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "size" : 241,
+            "dstport" : 56408
+         },
+         {
+            "ts" : 1625673796.13494,
+            "srcport" : 59311,
+            "dstip" : "239.255.255.250",
+            "dstport" : 1900,
+            "size" : 137,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "239.255.255.250",
+            "dstport" : 1900,
+            "size" : 137,
+            "ts" : 1625673796.15043,
+            "srcport" : 59311
+         },
+         {
+            "srcport" : 59311,
+            "ts" : 1625673796.3773,
+            "dstport" : 1900,
+            "size" : 137,
+            "dstip" : "239.255.255.250",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673796.77208,
+            "srcport" : 65120
+         },
+         {
+            "ts" : 1625673796.77788,
+            "srcport" : 53,
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 65120,
+            "size" : 241
+         },
+         {
+            "ts" : 1625673796.8571,
+            "srcport" : 51593,
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53
+         },
+         {
+            "ts" : 1625673796.86266,
+            "srcport" : 53,
+            "dstip" : "192.168.122.101",
+            "dstport" : 51593,
+            "size" : 241,
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "ts" : 1625673796.87174,
+            "srcport" : 50676,
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "dstport" : 50676,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673796.877
+         },
+         {
+            "srcport" : 57177,
+            "ts" : 1625673797.87322,
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "dstport" : 57177,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673797.88415
+         },
+         {
+            "dstport" : 53,
+            "size" : 34,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101",
+            "srcport" : 50703,
+            "ts" : 1625673797.89302
+         },
+         {
+            "dstport" : 50703,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673797.89833
+         },
+         {
+            "ts" : 1625673798.90342,
+            "srcport" : 49732,
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "size" : 241,
+            "dstport" : 49732,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673798.90874
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "ts" : 1625673798.91608,
+            "srcport" : 58102
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673798.92123,
+            "dstport" : 58102,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "size" : 137,
+            "dstport" : 1900,
+            "dstip" : "239.255.255.250",
+            "srcip" : "192.168.122.101",
+            "srcport" : 59311,
+            "ts" : 1625673799.1505
+         },
+         {
+            "ts" : 1625673799.16603,
+            "srcport" : 59311,
+            "srcip" : "192.168.122.101",
+            "dstip" : "239.255.255.250",
+            "dstport" : 1900,
+            "size" : 137
+         },
+         {
+            "ts" : 1625673799.90749,
+            "srcport" : 54237,
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673799.92362,
+            "srcip" : "8.8.8.8",
+            "size" : 241,
+            "dstport" : 54237,
+            "dstip" : "192.168.122.101"
+         },
+         {
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673799.93512,
+            "srcport" : 53094
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstport" : 53094,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcport" : 53,
+            "ts" : 1625673799.94843
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcport" : 51215,
+            "ts" : 1625673800.10896
+         },
+         {
+            "dstip" : "192.168.122.101",
+            "size" : 241,
+            "dstport" : 51215,
+            "srcip" : "8.8.8.8",
+            "ts" : 1625673800.11394,
+            "srcport" : 53
+         },
+         {
+            "dstip" : "8.8.8.8",
+            "size" : 34,
+            "dstport" : 53,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673800.13435,
+            "srcport" : 60401
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "size" : 241,
+            "dstport" : 60401,
+            "ts" : 1625673800.13972,
+            "srcport" : 53
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcport" : 54428,
+            "ts" : 1625673801.14215
+         },
+         {
+            "ts" : 1625673801.16572,
+            "srcport" : 53,
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "size" : 241,
+            "dstport" : 54428
+         },
+         {
+            "srcport" : 58573,
+            "ts" : 1625673801.17528,
+            "dstport" : 53,
+            "size" : 34,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "ts" : 1625673801.18071,
+            "srcport" : 53,
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "size" : 241,
+            "dstport" : 58573
+         },
+         {
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101",
+            "srcport" : 62211,
+            "ts" : 1625673802.17207
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 62211,
+            "size" : 241,
+            "ts" : 1625673802.18895,
+            "srcport" : 53
+         },
+         {
+            "srcport" : 54619,
+            "ts" : 1625673802.20039,
+            "srcip" : "192.168.122.101",
+            "size" : 34,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8"
+         },
+         {
+            "srcport" : 53,
+            "ts" : 1625673802.21203,
+            "dstport" : 54619,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "ts" : 1625673803.20343,
+            "srcport" : 52209
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "size" : 241,
+            "dstport" : 52209,
+            "dstip" : "192.168.122.101",
+            "srcport" : 53,
+            "ts" : 1625673803.20901
+         },
+         {
+            "dstport" : 137,
+            "size" : 50,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 137,
+            "ts" : 1625673803.26954
+         },
+         {
+            "dstport" : 137,
+            "size" : 50,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 137,
+            "ts" : 1625673804.05666
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "ts" : 1625673804.28518,
+            "srcport" : 64149
+         },
+         {
+            "dstip" : "192.168.122.101",
+            "dstport" : 64149,
+            "size" : 241,
+            "srcip" : "8.8.8.8",
+            "ts" : 1625673804.29036,
+            "srcport" : 53
+         },
+         {
+            "srcport" : 137,
+            "ts" : 1625673804.85366,
+            "srcip" : "192.168.122.101",
+            "size" : 50,
+            "dstport" : 137,
+            "dstip" : "192.168.122.255"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "size" : 50,
+            "dstport" : 137,
+            "dstip" : "192.168.122.255",
+            "srcport" : 137,
+            "ts" : 1625673806.1905
+         },
+         {
+            "srcport" : 63667,
+            "ts" : 1625673806.40435,
+            "dstport" : 53,
+            "size" : 34,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "dstport" : 63667,
+            "size" : 241,
+            "dstip" : "192.168.122.101",
+            "srcip" : "8.8.8.8",
+            "srcport" : 53,
+            "ts" : 1625673806.40966
+         },
+         {
+            "dstip" : "192.168.122.255",
+            "size" : 50,
+            "dstport" : 137,
+            "srcip" : "192.168.122.101",
+            "ts" : 1625673806.97853,
+            "srcport" : 137
+         },
+         {
+            "size" : 41,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcip" : "192.168.122.101",
+            "srcport" : 57962,
+            "ts" : 1625673807.65479
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 57962,
+            "size" : 265,
+            "ts" : 1625673807.65657,
+            "srcport" : 53
+         },
+         {
+            "size" : 50,
+            "dstport" : 137,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 137,
+            "ts" : 1625673807.74412
+         },
+         {
+            "size" : 209,
+            "dstport" : 138,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 138,
+            "ts" : 1625673855.5748
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "dstip" : "8.8.8.8",
+            "dstport" : 53,
+            "size" : 34,
+            "ts" : 1625673859.40004,
+            "srcport" : 64334
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstport" : 64334,
+            "size" : 50,
+            "dstip" : "192.168.122.101",
+            "srcport" : 53,
+            "ts" : 1625673859.40159
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "size" : 51,
+            "dstport" : 53,
+            "dstip" : "8.8.8.8",
+            "srcport" : 53570,
+            "ts" : 1625673868.26079
+         },
+         {
+            "srcip" : "8.8.8.8",
+            "dstip" : "192.168.122.101",
+            "dstport" : 53570,
+            "size" : 163,
+            "ts" : 1625673868.26626,
+            "srcport" : 53
+         },
+         {
+            "size" : 201,
+            "dstport" : 138,
+            "dstip" : "192.168.122.255",
+            "srcip" : "192.168.122.101",
+            "srcport" : 138,
+            "ts" : 1625673884.12109
+         },
+         {
+            "ts" : 1625674006.38533,
+            "srcport" : 138,
+            "srcip" : "192.168.122.101",
+            "dstip" : "192.168.122.255",
+            "dstport" : 138,
+            "size" : 201
+         }
+      ],
+      "tcp" : [
+         {
+            "rx_size" : 6134,
+            "srcport" : 49680,
+            "ts" : 1625673706.34271,
+            "dstport" : 443,
+            "dstip" : "20.190.160.69",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 211
+         },
+         {
+            "srcport" : 49680,
+            "ts" : 1625673706.81787,
+            "rx_size" : 51,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 158,
+            "dstport" : 443,
+            "dstip" : "20.190.160.69"
+         },
+         {
+            "ts" : 1625673708.42368,
+            "srcport" : 49684,
+            "rx_size" : 5675,
+            "tx_size" : 181,
+            "srcip" : "192.168.122.101",
+            "dstip" : "23.66.21.99",
+            "dstport" : 443
+         },
+         {
+            "rx_size" : 258,
+            "ts" : 1625673708.53662,
+            "srcport" : 49684,
+            "dstip" : "23.66.21.99",
+            "dstport" : 443,
+            "tx_size" : 126,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "rx_size" : 515,
+            "ts" : 1625673708.54143,
+            "srcport" : 49684,
+            "dstip" : "23.66.21.99",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 341
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "20.190.160.69",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 3894,
+            "rx_size" : 11855,
+            "srcport" : 49680,
+            "ts" : 1625673706.82438
+         },
+         {
+            "srcport" : 49685,
+            "ts" : 1625673708.66227,
+            "rx_size" : 6660,
+            "tx_size" : 190,
+            "srcip" : "192.168.122.101",
+            "dstport" : 443,
+            "dstip" : "104.123.104.251"
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "104.123.104.251",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 126,
+            "rx_size" : 258,
+            "srcport" : 49685,
+            "ts" : 1625673708.68283
+         },
+         {
+            "rx_size" : 27443,
+            "ts" : 1625673708.68824,
+            "srcport" : 49685,
+            "dstip" : "104.123.104.251",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 347
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 182,
+            "dstip" : "20.54.37.64",
+            "dstport" : 443,
+            "ts" : 1625673709.08549,
+            "srcport" : 49687,
+            "rx_size" : 3786
+         },
+         {
+            "ts" : 1625673709.14316,
+            "srcport" : 49687,
+            "rx_size" : 51,
+            "tx_size" : 158,
+            "srcip" : "192.168.122.101",
+            "dstip" : "20.54.37.64",
+            "dstport" : 443
+         },
+         {
+            "rx_size" : 380,
+            "ts" : 1625673709.18127,
+            "srcport" : 49687,
+            "dstip" : "20.54.37.64",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 312
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "20.190.160.69",
+            "tx_size" : 4917,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 11394,
+            "srcport" : 49680,
+            "ts" : 1625673708.64983
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 196,
+            "dstport" : 443,
+            "dstip" : "51.124.78.146",
+            "srcport" : 49698,
+            "ts" : 1625673747.54948,
+            "rx_size" : 3684
+         },
+         {
+            "tx_size" : 93,
+            "srcip" : "192.168.122.101",
+            "dstport" : 443,
+            "dstip" : "51.124.78.146",
+            "srcport" : 49698,
+            "ts" : 1625673747.56217,
+            "rx_size" : 51
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 871,
+            "dstport" : 443,
+            "dstip" : "51.124.78.146",
+            "srcport" : 49698,
+            "ts" : 1625673747.57504,
+            "rx_size" : 88027
+         },
+         {
+            "dstip" : "51.124.78.146",
+            "dstport" : 443,
+            "tx_size" : 826,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 164,
+            "ts" : 1625673747.69934,
+            "srcport" : 49698
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 1100,
+            "dstip" : "51.124.78.146",
+            "dstport" : 443,
+            "ts" : 1625673747.70851,
+            "srcport" : 49698,
+            "rx_size" : 380073
+         },
+         {
+            "dstip" : "51.124.78.146",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 813,
+            "rx_size" : 2975,
+            "ts" : 1625673747.82277,
+            "srcport" : 49698
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "51.124.78.146",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 888,
+            "rx_size" : 158,
+            "srcport" : 49698,
+            "ts" : 1625673747.83306
+         },
+         {
+            "srcport" : 49702,
+            "ts" : 1625673795.77237,
+            "rx_size" : 5898,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 181,
+            "dstport" : 443,
+            "dstip" : "104.81.140.70"
+         },
+         {
+            "tx_size" : 126,
+            "srcip" : "192.168.122.101",
+            "dstip" : "104.81.140.70",
+            "dstport" : 443,
+            "ts" : 1625673795.78678,
+            "srcport" : 49702,
+            "rx_size" : 258
+         },
+         {
+            "dstip" : "104.81.140.70",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 190,
+            "rx_size" : 419,
+            "ts" : 1625673795.87585,
+            "srcport" : 49702
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "104.81.140.70",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 241,
+            "rx_size" : 475,
+            "srcport" : 49702,
+            "ts" : 1625673795.96737
+         },
+         {
+            "ts" : 1625673796.83058,
+            "srcport" : 49702,
+            "rx_size" : 432,
+            "tx_size" : 199,
+            "srcip" : "192.168.122.101",
+            "dstip" : "104.81.140.70",
+            "dstport" : 443
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 373,
+            "dstport" : 443,
+            "dstip" : "104.81.140.70",
+            "srcport" : 49704,
+            "ts" : 1625673804.22511,
+            "rx_size" : 105
+         },
+         {
+            "rx_size" : 105,
+            "ts" : 1625673806.34347,
+            "srcport" : 49705,
+            "dstip" : "104.81.140.70",
+            "dstport" : 443,
+            "tx_size" : 373,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "tx_size" : 373,
+            "srcip" : "192.168.122.101",
+            "dstport" : 443,
+            "dstip" : "104.81.140.70",
+            "srcport" : 49707,
+            "ts" : 1625673808.43727,
+            "rx_size" : 105
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 211,
+            "dstport" : 443,
+            "dstip" : "20.190.160.69",
+            "srcport" : 49711,
+            "ts" : 1625673868.00426,
+            "rx_size" : 6134
+         },
+         {
+            "rx_size" : 51,
+            "srcport" : 49711,
+            "ts" : 1625673868.0304,
+            "dstport" : 443,
+            "dstip" : "20.190.160.69",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 158
+         },
+         {
+            "rx_size" : 4066,
+            "ts" : 1625673868.27048,
+            "srcport" : 49712,
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "tx_size" : 198,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "tx_size" : 158,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 51,
+            "ts" : 1625673868.46286,
+            "srcport" : 49712
+         },
+         {
+            "rx_size" : 379,
+            "ts" : 1625673868.68831,
+            "srcport" : 49712,
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "tx_size" : 1839,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "ts" : 1625673869.23806,
+            "srcport" : 49712,
+            "rx_size" : 379,
+            "tx_size" : 1838,
+            "srcip" : "192.168.122.101",
+            "dstip" : "52.114.133.60",
+            "dstport" : 443
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "52.114.133.60",
+            "tx_size" : 1835,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 378,
+            "srcport" : 49712,
+            "ts" : 1625673870.71545
+         },
+         {
+            "tx_size" : 1650,
+            "srcip" : "192.168.122.101",
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "ts" : 1625673873.89597,
+            "srcport" : 49712,
+            "rx_size" : 379
+         },
+         {
+            "ts" : 1625673876.04523,
+            "srcport" : 49712,
+            "rx_size" : 379,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 1717,
+            "dstip" : "52.114.133.60",
+            "dstport" : 443
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "52.114.133.60",
+            "tx_size" : 4636,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 380,
+            "srcport" : 49712,
+            "ts" : 1625673879.76933
+         },
+         {
+            "ts" : 1625673882.20362,
+            "srcport" : 49712,
+            "rx_size" : 378,
+            "tx_size" : 1836,
+            "srcip" : "192.168.122.101",
+            "dstip" : "52.114.133.60",
+            "dstport" : 443
+         },
+         {
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 1837,
+            "rx_size" : 379,
+            "ts" : 1625673883.43639,
+            "srcport" : 49712
+         },
+         {
+            "rx_size" : 379,
+            "ts" : 1625673886.87213,
+            "srcport" : 49712,
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "tx_size" : 1835,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 4968,
+            "dstip" : "20.190.160.69",
+            "dstport" : 443,
+            "ts" : 1625673747.05898,
+            "srcport" : 49680,
+            "rx_size" : 10734
+         },
+         {
+            "dstport" : 80,
+            "dstip" : "205.185.216.10",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 330,
+            "rx_size" : 2992,
+            "srcport" : 49681,
+            "ts" : 1625673706.55356
+         },
+         {
+            "ts" : 1625673706.81067,
+            "srcport" : 49682,
+            "rx_size" : 610,
+            "tx_size" : 236,
+            "srcip" : "192.168.122.101",
+            "dstip" : "93.184.220.29",
+            "dstport" : 80
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "23.66.21.99",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 31,
+            "rx_size" : 0,
+            "srcport" : 49684,
+            "ts" : 1625673708.54506
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 31,
+            "dstip" : "104.123.104.251",
+            "dstport" : 443,
+            "ts" : 1625673708.69875,
+            "srcport" : 49685,
+            "rx_size" : 0
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "20.54.37.64",
+            "srcip" : "192.168.122.101",
+            "tx_size" : 72,
+            "rx_size" : 124,
+            "srcport" : 49687,
+            "ts" : 1625673709.20569
+         },
+         {
+            "ts" : 1625673747.84394,
+            "srcport" : 49698,
+            "rx_size" : 158,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 888,
+            "dstip" : "51.124.78.146",
+            "dstport" : 443
+         },
+         {
+            "ts" : 1625673799.95665,
+            "srcport" : 49702,
+            "rx_size" : 56940,
+            "tx_size" : 271,
+            "srcip" : "192.168.122.101",
+            "dstip" : "104.81.140.70",
+            "dstport" : 443
+         },
+         {
+            "tx_size" : 322,
+            "srcip" : "192.168.122.101",
+            "dstip" : "104.81.140.70",
+            "dstport" : 443,
+            "ts" : 1625673804.23116,
+            "srcport" : 49704,
+            "rx_size" : 148176
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 322,
+            "dstip" : "104.81.140.70",
+            "dstport" : 443,
+            "ts" : 1625673806.34894,
+            "srcport" : 49705,
+            "rx_size" : 165197
+         },
+         {
+            "dstip" : "13.107.4.50",
+            "dstport" : 80,
+            "srcip" : "192.168.122.101",
+            "tx_size" : 196,
+            "rx_size" : 4806,
+            "ts" : 1625673807.66079,
+            "srcport" : 49706
+         },
+         {
+            "rx_size" : 63133,
+            "srcport" : 49707,
+            "ts" : 1625673808.4431,
+            "dstport" : 443,
+            "dstip" : "104.81.140.70",
+            "tx_size" : 322,
+            "srcip" : "192.168.122.101"
+         },
+         {
+            "ts" : 1625673868.03605,
+            "srcport" : 49711,
+            "rx_size" : 10710,
+            "tx_size" : 4951,
+            "srcip" : "192.168.122.101",
+            "dstip" : "20.190.160.69",
+            "dstport" : 443
+         },
+         {
+            "srcip" : "192.168.122.101",
+            "tx_size" : 1942,
+            "dstip" : "52.114.133.60",
+            "dstport" : 443,
+            "ts" : 1625673891.08252,
+            "srcport" : 49712,
+            "rx_size" : 379
+         },
+         {
+            "dstport" : 80,
+            "dstip" : "41.220.119.246",
+            "tx_size" : 847,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 247,
+            "srcport" : 49715,
+            "ts" : 1625673928.44398
+         },
+         {
+            "dstport" : 443,
+            "dstip" : "37.157.194.134",
+            "tx_size" : 889,
+            "srcip" : "192.168.122.101",
+            "rx_size" : 624,
+            "srcport" : 49717,
+            "ts" : 1625673958.17686
+         }
+      ],
+      "domain" : [
+         "login.live.com",
+         "ctldl.windowsupdate.com",
+         "ocsp.digicert.com",
+         "go.microsoft.com",
+         "clientconfig.passport.net",
+         "client.wns.windows.com",
+         "settings-win.data.microsoft.com",
+         "fs.microsoft.com",
+         "dns.msftncsi.com",
+         "v10.vortex-win.data.microsoft.com"
+      ],
+      "host" : [
+         "192.168.122.255",
+         "8.8.8.8",
+         "20.190.160.69",
+         "23.66.21.99",
+         "104.123.104.251",
+         "20.54.37.64",
+         "51.124.78.146",
+         "239.255.255.250",
+         "104.81.140.70",
+         "52.114.133.60",
+         "205.185.216.10",
+         "93.184.220.29",
+         "13.107.4.50",
+         "41.220.119.246",
+         "37.157.194.134"
+      ]
+   },
+   "screenshot": [
+      {
+         "name":"44997.jpg",
+         "percentage":97.71184631803628
+      },
+      {
+         "name":"45778.jpg",
+         "percentage":2.288153681963714
+      },
+      {
+         "name":"46850.jpg",
+         "percentage":0.0
+      }
+   ],
+   "score" : 10
+}

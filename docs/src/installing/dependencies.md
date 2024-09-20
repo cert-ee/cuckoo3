@@ -149,3 +149,15 @@ VMCloak uses qemu to create and manage VMs.
 |`qemu-system-common`|common files for target-specific full system emulation (qemu-system-*) packages|
 |`qemu-utils`|QEMU related utilities|
 |`qemu-system-x86`|full system emulation binaries to emulate the following x86 hardware: i386 x86_64|
+
+### Serving API and web
+```bash 
+sudo apt-get install -y uwsgi uwsgi-plugin-python3 nginx
+```
+
+| Package |  Description |
+|---|---|
+|`uwsgi`|WSGI(WebServer Gateway Interface) server|
+|`uwsgi-plugin-python3`|Python plugin for uWSGI|
+|`nginx`|Webserver|
+
