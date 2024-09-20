@@ -41,14 +41,13 @@ markdown_extensions:
 - pymdownx.inlinehilite
 - pymdownx.snippets
 - pymdownx.superfences
+- pymdownx.details
 - toc:
     permalink: true
 
 plugins:
 - include-markdown
-- search:
-    min_search_length: 2
-    indexing: 'full'
+- search
 
 docs_dir: src
 
@@ -69,22 +68,18 @@ nav:
   - System dependencies: configuring/system.md
   - VMCloak: configuring/vmcloak.md
   - Cuckoo3: configuring/cuckoo.md
-  # NOTE(raidar): See if anything in Machineries modules is still relevant. If not, delete
-  # - Machinery modules : configuring/machineries.md
-  - Network routing: configuring/routing.md
   - Web UI: configuring/web-ui.md
   - Web API: configuring/web-api.md
+  - Network routing: configuring/routing.md
 
 - Creating:
   - Virtual machines: creating/vms.md
   - Machinery modules: creating/machinery.md
 
 - Using:
-  - CLI API: using/submission/index.md
-  - Web API:
-    - Setup: using/webapi/setup.md
-    - Endpoints: using/webapi/endpoints.md
-  - Web UI: using/webui/setup.md
+  - CLI API: using/cli-api.md
+  - Web API: using/web-api-endpoints.md
+  - Web UI: using/web-ui.md
   - Commands: using/commands.md
 
 - Troubleshooting:
