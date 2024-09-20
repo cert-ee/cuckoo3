@@ -69,28 +69,23 @@ nav:
   - System dependencies: configuring/system.md
   - VMCloak: configuring/vmcloak.md
   - Cuckoo3: configuring/cuckoo.md
-    # - Web configuring (needs work):
-    #   - Web.yaml: configuring/cuckooconfs/webconfs/webyaml.md
-    # - Node configuring (needs work):
-    #   - Routing.yaml (needs work): configuring/cuckooconfs/nodeconfs/routingyaml.md
   # NOTE(raidar): See if anything in Machineries modules is still relevant. If not, delete
   # - Machinery modules : configuring/machineries.md
   - Network routing: configuring/routing.md
+  - Web UI: configuring/web-ui.md
+  - Web API: configuring/web-api.md
 
 - Creating:
   - Virtual machines: creating/vms.md
   - Machinery modules: creating/machinery.md
 
-- Using the web frontend:
-  - WebUI (needs  work): web/ui.md
-
-- Usage (needs work):
-  - Submission: usage/submission/index.md
+- Using:
+  - CLI API: using/submission/index.md
   - Web API:
-    - Setup: usage/webapi/setup.md
-    - Endpoints: usage/webapi/endpoints.md
-  - Web UI: usage/webui/setup.md
-  - Commands: usage/commands.md
+    - Setup: using/webapi/setup.md
+    - Endpoints: using/webapi/endpoints.md
+  - Web UI: using/webui/setup.md
+  - Commands: using/commands.md
 
 - Troubleshooting:
   - Common errors: faq/common.md
