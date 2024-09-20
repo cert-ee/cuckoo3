@@ -13,7 +13,7 @@
 
 Make sure that `qemu-bridge-helper` has setuid bit set
 
-    sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper
+    sudo chmod u+s /usr/lib/qemu/qemu-bridge-helpeR
 
 ---
 
@@ -27,7 +27,7 @@ Make sure that `qemu-bridge-helper` has setuid bit set
 
 **Solution**
 
-Delete the image and run `vagrant init` again
+Delete the image and run `vmcloak init` again
 
     rm /home/cuckoo/.vmcloak/image/win10base.qcow2
     vmcloak --debug init ...
