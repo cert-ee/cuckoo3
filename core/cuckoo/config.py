@@ -34,13 +34,13 @@ typeloaders = {
     "cuckoo.yaml": {
         "machineries": config.List(Machinery, value=["qemu"]),
         "resultserver": {
-            "listen_ip": config.String(default_val="192.168.30.101"),
+            "listen_ip": config.String(default_val="192.168.30.1"),
             "listen_port": config.Int(default_val=2042, min_value=1024)
         },
         "tcpdump": {
             "enabled": config.Boolean(default_val=True),
             "path": config.FilePath(
-                default_val="/usr/sbin/tcpdump", must_exist=True
+                default_val="/usr/bin/tcpdump", must_exist=True
             )
         },
         "network_routing": {
