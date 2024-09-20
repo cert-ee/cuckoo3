@@ -517,7 +517,7 @@ web:
 
 ## Distributed
 
-!!! error "Unverified"
+!!! warning "Unverified"
 
     This is from the old documentation.  
     We are currently reviewing and updating distributed configurations.

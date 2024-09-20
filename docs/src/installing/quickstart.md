@@ -41,7 +41,7 @@ If `y` is selected, then:
 - The script creates a new non-privileged user to run Cuckoo.
 - It asks for a username and password to create it.
 
-    !!! note "Remember!"
+    !!! tip "Don't forget"
         Please don't forget the credentials. You need them later to use Cuckoo.
 
 If `n` is selected, then:

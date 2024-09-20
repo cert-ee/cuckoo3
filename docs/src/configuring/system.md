@@ -1,6 +1,6 @@
 # System dependencies
 
-!!! info "Environment and requirements"
+!!! note "Environment and requirements"
     - All commands on this page assume you are running Cuckoo under the `cuckoo` user.
     - The assumed operating system is Ubuntu 22.04 or higher.
 

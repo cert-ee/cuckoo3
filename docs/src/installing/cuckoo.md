@@ -93,7 +93,7 @@ This command starts Cuckoo backend. To run in debug mode, use the `--debug` flag
 
 ## Installing distributed mode
 
-!!! error "Unverified"
+!!! warning "Unverified"
 
     This is from the old documentation.  
     We are currently reviewing and updating distributed installation.

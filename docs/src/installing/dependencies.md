@@ -3,7 +3,7 @@
 Here you can find all dependencies Cuckoo requires to run.  
 We have an opinionated way of installing Cuckoo and these dependencies reflect that opinion.  
 
-!!! note "Friendly reminder"
+!!! tip "Friendly reminder"
     For new systems or VM-s, don't forget to `sudo apt-get update` before 
     continuing.
 

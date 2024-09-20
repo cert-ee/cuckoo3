@@ -1,6 +1,6 @@
 # Network routing
 
-!!! error "Unverified"
+!!! warning "Unverified"
 
     This is from the old documentation.  
     We are currently reviewing and updating distributed configurations.
@@ -110,7 +110,7 @@ output of `--print-command` on the root user.
 
 The `--cwd` should be used to supply rooter with the Cuckoo CWD path where the [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} file it should use is located. This file contains the settings for available routes.
 
-!!! Warning "Privilege escalation"
+!!! tip "Privilege escalation"
     Ideally, rooter has its own Cuckoo CWD and virtualenv with a Cuckoo installation. This prevents Python files that a non-privileged
     user can write to from being run with root permissions. This can prevent an accidental privilege escalation.
 
@@ -193,7 +193,7 @@ from and to this machine to the configured 'internet' interface.
 The name of this routing type in submission is `internet`.
 
 
-!!! Warning "Malicious traffic"
+!!! danger "Malicious traffic"
     This type of routing routes allows potentially malicious samples to connect to the internet through the configured interface.
 
 To configure this, open [routing.yaml](../configuring/cuckoo.md#routingyaml){:target=_blank} and find the `internet` section.
