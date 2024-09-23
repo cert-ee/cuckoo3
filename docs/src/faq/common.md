@@ -7,13 +7,13 @@
 **Error message:**
 
     failed to create tun device: Operation not permitted
-    qemu-system-x86_64: -netdev type=bridge,br=qemubr0,id=net0: bridge helper failed
+    qemu-system-x86_64: -netdev type=bridge,br=br0,id=net0: bridge helper failed
 
 **Solution**
 
 Make sure that `qemu-bridge-helper` has setuid bit set
 
-    sudo chmod u+s /usr/lib/qemu/qemu-bridge-helpeR
+    sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper
 
 ---
 
