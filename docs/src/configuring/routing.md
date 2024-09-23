@@ -2,8 +2,8 @@
 
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating distributed configurations.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 Internet access for the analysis machines can be important for results. There are two ways of setting up
 network routing that we will discuss here: 
@@ -17,7 +17,7 @@ network routing that we will discuss here:
 Instead of having Cuckoo rooter apply per-task routing, it is of course also possible
 to simply provide internet access to the entire subnet of all your analysis machines.
 
-In the following setup we arere assuming that the interface assigned to our
+In the following setup we are assuming that the interface assigned to our
 KVM VM is ``virbr0``, the IP address of our VM is ``192.168.122.100``
 (in a ``/24`` subnet), and that the outgoing interface connected to the
 internet is ``eth0``. With such a setup, the following ``iptables`` rules will

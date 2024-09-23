@@ -1,8 +1,9 @@
 # Web API endpoints
+
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating web API documentation.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 This page lists all API endpoints and their functions. An API key is required to use the API. See [API key creation](setup.md#api-key-creation) for information
 on how to do that.

@@ -2,9 +2,8 @@
 
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating creating machinery modules
-
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 This page describes how to create new module
 for not yet supported machineries.

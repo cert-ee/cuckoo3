@@ -1,8 +1,9 @@
 # Submitting files/URLs
+
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating documentation regarding submitting files and URL-s via commandline.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 Submitting files/urls can be done in multiple ways: over command line, the web API, or the web UI.
 

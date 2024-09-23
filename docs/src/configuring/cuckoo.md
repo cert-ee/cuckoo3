@@ -6,22 +6,22 @@
     We are reviewing all configurations and adding more as we go.
 
 Cuckoo configurations can be found in `~/.cuckoocwd/` directory by default.  
-It holds all Cuckoo related configuration files and these are the broad categories:
+It holds all Cuckoo-related configuration files, and these are the broad categories:
 
 
 - **conf**: holds Cuckoo and Cuckoo module configurations
-    - **machineries**: VM configurations
+    - **machineries**: virtual machines configurations
     - **node**: distributed configurations
-    - **processing**: all analysis configurations
+    - **processing**: all analysis configurations(Virustotal, MISP, etc.)
     - **web**: Django configurations
 - **elasticsearch**: Elasticsearch configurations
 - **log**: Cuckoo logs
 - **monitor**: monitor, stager and other tools for analyses
-- **operational**: information about nodes, taskque database and UNIX sockets
+- **operational**: information about nodes, taskque database, and UNIX sockets
 - **rooter**: scripts such as openvpn routes
 - **safelist**: safelist database
 - **signatures**: Cuckoo signatures
-- **storage**: all generated assets related to analyses such as images, pcap files etc.
+- **storage**: all generated assets related to analyses, such as images, pcap files, etc.
 - **web**: API and web related configurations
 
 ---
@@ -33,9 +33,9 @@ Location: `conf/cuckoo.yaml`
 
 Here we will point out the main ones that might require your attention.
 
-- `machineries` -  this is a list of all machinery modules that Cuckoo will be using. By default this should be `qemu`
+- `machineries` -  this is a list of all machinery modules that Cuckoo will be using. By default, this should be `qemu`
     
-- `resultserver` - resultserver must be in the same network as analyses machines for them to communicate. In the case of our VMs we created that are in subnet `192.168.30.1/24`, the configuration would look like this:
+- `resultserver` - resultserver must be in the same network as the analysis machines for them to communicate. In the case of our virtual machines we created that are in subnet `192.168.30.1/24`, the configuration would look like this:
 
 - `tcpdump` - make sure this is enabled and pointing to `tcpdump` binary.
 
@@ -177,7 +177,7 @@ platform:
 ### qemu.yaml
 Location: `conf/machineries/qemu.yaml`
 
-This configuration handles QEMU VMs for Cuckoo.
+This configuration handles QEMU virtual machines for Cuckoo.
 
 - `interface` - this needs to match the interface that was created using `vmcloak-qemubridge` in [Configuring VMCloak](../installing/vmcloak.md#configuring-vmcloak){:target=_blank}
 
@@ -519,8 +519,8 @@ web:
 
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating distributed configurations.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 The distributed.yaml config file is used to tell the main node what task running nodes are available. It also contains
 the api key that is used if a node is a task running node.

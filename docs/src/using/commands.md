@@ -1,8 +1,9 @@
 # Cuckoo commands and tools
+
 !!! warning "Unverified"
 
-    This is from the old documentation.  
-    We are currently reviewing and updating commands and tools.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 This page lists available tools and commands.
 

@@ -1,8 +1,9 @@
 # Configuring Web API
+
 !!! warning "Unverified"
 
-    This is from the old documentation.
-    We are currently reviewing and updating web API documentation.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 Before the web API can be used, it must first be set up. The web API cannot be used without API authentication. 
 This means one of the steps is API key generation.

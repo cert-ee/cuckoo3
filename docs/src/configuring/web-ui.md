@@ -1,16 +1,15 @@
 # Setting up web UI
 
-Cuckoo3 frontend is built with [Django](https://www.djangoproject.com/).  
-
-Default settings can be overwritten in `~/.cuckoocwd/web/web_local_settings.py`.
-
-You can use the frontend in two ways - commandline or [Nginx](https://nginx.org/en/) and [UWSGI](https://uwsgi-docs.readthedocs.io/en/latest/).
+Cuckoo3 frontend is built with [Django](https://www.djangoproject.com/){:target=_blank}.   
+Default settings can be overwritten in `~/.cuckoocwd/web/web_local_settings.py`.  
+You can use the frontend in two ways - commandline or [Nginx](https://nginx.org/en/){:target=_blank} and [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/){:target=_blank}.
 
 ## Commandline 
 
 !!! warning "Unverified"
 
-    Currently the commandline option has not been tested and cannot verify if the information is accurate.
+    This is from the old documentation and needs verification.  
+    It may contain errors, bugs or outdated information.
 
 This is a development server.  
 You can start Cuckoo frontend from the commandline with the following command:
@@ -25,10 +24,10 @@ cuckoo web --host <listen ip> --port <listen port>
 
     Please make sure that you have:
 
-    - installed all dependencies for [serving API and web](../installing/dependencies.md#serving-api-and-web)
+    - installed all dependencies for [serving API and web](../installing/dependencies.md#serving-api-and-web){:target=_blank}  
 
-If you want to serve Cuckoo in an enviroment such as develpment, testing, staging or production, you need to use uWSGI and Nginx.  
-uWSGI is used as application server and Nginx as a webserver.
+If you want to serve Cuckoo in an environment such as development, testing, staging or production, you need to use uWSGI and Nginx.  
+uWSGI is used as an application server and Nginx as a webserver.
 
 **Steps**
 
@@ -45,31 +44,31 @@ uWSGI is used as application server and Nginx as a webserver.
 
         cuckoo web djangocammond collectstatic
 
-4. Generate uWSGI configuration
+4. Generate uWSGI configuration.
 
         cuckoo web generateconfig --uwsgi > /home/$username/cuckoo3/cuckoo-web.ini
 
-5. Copy uWSGI  configuration to `/etc/uwsgi/apps-available`
+5. Copy uWSGI  configuration to `/etc/uwsgi/apps-available`.
 
         sudo mv /home/$username/cuckoo3/cuckoo-web.ini /etc/uwsgi/apps-available/
 
-6. Create symlink to enable the configuration
+6. Create symlink to enable uWSGI configuration.
 
         sudo ln -s /etc/uwsgi/apps-available/cuckoo-web.ini /etc/uwsgi/apps-enabled/cuckoo-web.ini
 
-7. Copy Nginx  configuration to `/etc/nginx/sites-available`
+7. Copy Nginx configuration to `/etc/nginx/sites-available`.
 
         sudo mv /home/$username/cuckoo3/cuckoo-web.ini /etc/uwsgi/apps-available/
 
-8. Create symlink to enable the configuration
+8. Create symlink to enable Nginx configuration.
 
         sudo ln -s /etc/nginx/sites-available/cuckoo-web.conf /etc/nginx/sites-enabled/cuckoo-web.conf
 
-9. Delete Nginx default enabled configuration
+9. Delete Nginx default enabled configuration.
 
         sudo rm /etc/nginx/sites-enabled/default 2&>/dev/null
 
-10. Reload the new nginx configuration
+10. Reload the new Nginx configuration.
 
         sudo systemctl reload nginx
 
