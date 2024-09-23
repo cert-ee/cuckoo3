@@ -1,7 +1,6 @@
 # System dependencies
 
-Here you can find all dependencies Cuckoo requires to run.  
-We have an opinionated way of installing Cuckoo and these dependencies reflect that opinion.  
+Here you will find all the dependencies Cuckoo and VMCloak requires to run.  
 
 !!! tip "Friendly reminder"
     For new systems or VM-s, don't forget to `sudo apt-get update` before 
@@ -13,8 +12,9 @@ To install all system dependencies, run the following commands:
 ```bash
 sudo apt-get install -y build-essential \
     software-properties-common \
-    curl \
     unzip \
+    curl \
+    git \
     python3.10 python3.10-dev python3.10-venv \
     libhyperscan5 libhyperscan-dev \
     libjpeg8-dev zlib1g-dev p7zip-full rar unace-nonfree cabextract \
@@ -39,19 +39,19 @@ sudo apt-get install -y curl
 ```
 
 ### Git
-Quickstart uses git to download requined repositories.
+Quickstart uses git to download required repositories.
 
 ```bash
 sudo apt-get install -y git
 ```
 
-### Python dev and venv
+### Python, dev and venv
 
-Python3.10-venv and Python3.10-dev are required to create and activate virtual environments for
+Python3.10, Python3.10-venv and Python3.10-dev are required to create and activate virtual environments for
 Cuckoo and VMCloak.
 
 ```bash
-sudo apt-get install -y python3.10-venv python3.10-dev
+sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
 ```
 
 ---
@@ -73,7 +73,7 @@ sudo apt-get install -y libhyperscan5 libhyperscan-dev \
 sudo apt-get install -y libhyperscan5 libhyperscan-dev
 ```
 
-The pattern signature engine uses [Hyperscan](https://www.hyperscan.io/about/){target=_blank} to perform high performance pattern matching.
+The pattern signature engine uses [Hyperscan](https://www.hyperscan.io/about/){:target=_blank} to perform high performance pattern matching.
 
 **System packages**
 
@@ -87,41 +87,23 @@ The pattern signature engine uses [Hyperscan](https://www.hyperscan.io/about/){t
 sudo apt-get install -y libjpeg8-dev zlib1g-dev p7zip-full rar unace-nonfree cabextract
 ```
 
-Sflock is the library used by Cuckoo to perform all file unpacked and identification. It has multiple dependencies that it needs
-to be able to unpack and identify a variety of archive and file types.
+Sflock is the library used by Cuckoo to perform all file unpacking and identification. 
 
 ### Yara
 ```bash
 sudo apt-get install -y yara
 ```
 
-[Yara](https://virustotal.github.io/yara/){target_blank} is used during static/pre-analysis and post-analysis processing on submitted and collected memory dumps.
+[Yara](https://virustotal.github.io/yara/){:target=_blank} is used during static/pre-analysis and post-analysis processing on submitted and collected memory dumps.
 
 ### Tcpdump
 ```bash
 sudo apt-get install -y tcpdump
 ```
 
-[Tcpdump](https://www.tcpdump.org/){target_blank} is the network capture tool that Cuckoo uses to create network capture files (PCAPs). A few steps need to be taken before Cuckoo can use Tcpdump. 
+[Tcpdump](https://www.tcpdump.org/){:target=_blank} is the network capture tool that Cuckoo uses to create network capture files (PCAPs). A few steps need to be taken before Cuckoo can use Tcpdump. 
 
-
-**Configuration steps**
-
-See [tcpdump configuration](../configuring/system.md#tcpdump) page for the steps to perform.
-
-### UWSGI
-```bash
-sudo apt-get install -y tcpdump
-```
-
-UWSGI is used to help serve Cuckoo frontend
-
-### Nginx
-```bash
-sudo apt-get install -y nginx
-```
-
-Nginx is used to serve Cuckoo frontend
+For configuration, please see [Configuring Tcpdump](../configuring/system.md#tcpdump){:target=_blank}.
 
 ---
 
@@ -136,19 +118,19 @@ Nginx is used to serve Cuckoo frontend
 sudo apt-get install -y genisoimage
 ```
 
-`genisoimage` contains tools to create platform iso files.
+VMCloak uses `genisoimage` to produce ISO 9660 filesystem images.
 
 ### QEMU
 ```bash
     sudo apt-get install -y qemu-system-common qemu-utils qemu-system-x86
 ```
-VMCloak uses qemu to create and manage VMs.  
+VMCloak uses QEMU to create and manage virtual machines.
 
 | Package |  Description |
 |---|---|
-|`qemu-system-common`|common files for target-specific full system emulation (qemu-system-*) packages|
-|`qemu-utils`|QEMU related utilities|
-|`qemu-system-x86`|full system emulation binaries to emulate the following x86 hardware: i386 x86_64|
+|`qemu-system-common`|common files for target-specific full system emulation (qemu-system-*)|
+|`qemu-utils`|QEMU related image utilities|
+|`qemu-system-x86`|full system emulation binaries to emulate the following x86 hardware: x86_64|
 
 ### Serving API and web
 ```bash 

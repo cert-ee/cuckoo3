@@ -6,18 +6,18 @@
 
     - installed all system dependencies from the [Cuckoo3 dependencies section](dependencies.md#cuckoo3-dependencies){:target=_blank}
     - meet the requirements to [run Cuckoo3](../about/cuckoo.md#cuckoo3-requirements)
-    - have VMs made by VMCloak by following [Creating VMs with VMCloak](../creating/vms.md){:target=_blank}
+    - virtual machines made by VMCloak by following [Creating VMs with VMCloak](../creating/vms.md){:target=_blank}
 
 ## All-in-one install
 
 ```bash
-git clone https://github.com/cert-ee/cuckoo3.git && \
-cd vmcloak && \
-python3.10 -m venv venv && \
-source venv/bin/activate && \
-./install.sh && \
-cuckoo createcwd &&\
-cuckoo getmonitor monitor.zip && \
+git clone https://github.com/cert-ee/cuckoo3.git
+cd cuckoo3
+python3.10 -m venv venv
+source venv/bin/activate
+./install.sh
+cuckoo createcwd
+cuckoo getmonitor monitor.zip
 unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 ```
 
@@ -31,19 +31,19 @@ unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
         
         python3.10 -m venv venv && source venv/bin/activate
 
-3. Install Python dependencies using the install script.
+3. Install Cuckoo Python dependencies using the install script.
 
-        python3.10 -m pip install .
+        ./install.sh
 
-4. Create Cuckoo configuration directory with all configuration files.
+4. Create Cuckoo configuration directory.
 
         cuckoo createcwd
 
-5. Unpack monitor and stager, which are needed to gather behavioral data
+5. Unpack monitor and stager, which are needed to gather behavioral data.
 
         cuckoo getmonitor monitor.zip
 
-6. Unpack signatures
+6. Unpack signatures.
 
         unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
@@ -51,24 +51,24 @@ unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
 ## Configuring
 
-For a full list of configurations, please refer to [Configuring Cuckoo3](../configuring/cuckoo.md){:target=_blank}.
+For a full list of configurations, please see [Configuring Cuckoo3](../configuring/cuckoo.md){:target=_blank}.
 
-### VMs
+### Importing virtual machines
 
 ```bash
-cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu && \
-cuckoo machine delete qemu example1 &&\
+cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu
+cuckoo machine delete qemu example1
 ```
 
 **Steps**
 
-1. Imports VMs and snapshots you have made with VMCloak
+1. Imports VMs and snapshots you have made with VMCloak.
         
-        cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu && \
+        cuckoo machine import qemu /home/cuckoo/.vmcloak/vms/qemu
 
-2. Delete the default `example1` configuration in `~/.cuckoocwd/conf/machineries/qemu.yaml`
+2. Delete the default `example1` configuration in `~/.cuckoocwd/conf/machineries/qemu.yaml`.
         
-        cuckoo machine delete qemu example1 &&\
+        cuckoo machine delete qemu example
 
 All machine configurations can be found in `~/.cuckoocwd/conf/machineries/`.  
 All configuration files have comments above the fields if you wish to manually adjust them.
@@ -166,44 +166,50 @@ If the startup is successful, the setup is ready for submission.
 
 ### cuckoo
 
-    $ cuckoo --help
+```bash
+cuckoo --help
+```
 
-    Usage: cuckoo [OPTIONS] COMMAND [ARGS]...
+``` { .bash .no-copy }
+Usage: cuckoo [OPTIONS] COMMAND [ARGS]...
 
-    Options:
-      --cwd TEXT          Cuckoo Working Directory
-      --distributed       Start Cuckoo in distributed mode
-      -v, --verbose       Enable debug logging, including for non-Cuckoo modules
-      -d, --debug         Enable debug logging
-      -q, --quiet         Only log warnings and critical messages
-      --cancel-abandoned  Do not recover and cancel tasks that are abandoned and
-                          still 'running'
+Options:
+  --cwd TEXT          Cuckoo Working Directory
+  --distributed       Start Cuckoo in distributed mode
+  -v, --verbose       Enable debug logging, including for non-Cuckoo modules
+  -d, --debug         Enable debug logging
+  -q, --quiet         Only log warnings and critical messages
+  --cancel-abandoned  Do not recover and cancel tasks that are abandoned and
+                      still 'running'
 
-    Commands:
-      api         Start the Cuckoo web API (development server)
-      createcwd   Create the specified Cuckoo CWD
-      getmonitor  Use the monitor and stager binaries from the given Cuckoo...
-      importmode  Start the Cuckoo import controller.
-      machine     Add machines to machinery configuration files.
-      submit      Create a new file/url analysis.
-      web         Start the Cuckoo web interface (development server)
+Commands:
+  api         Start the Cuckoo web API (development server)
+  createcwd   Create the specified Cuckoo CWD
+  getmonitor  Use the monitor and stager binaries from the given Cuckoo...
+  importmode  Start the Cuckoo import controller.
+  machine     Add machines to machinery configuration files.
+  submit      Create a new file/url analysis.
+  web         Start the Cuckoo web interface (development server)
+```
 
 ### Machine adding command
 
-    $ cuckoo machine add --help
-    Usage: cuckoo machine add [OPTIONS] MACHINERY_NAME MACHINE_NAME
-                              [CONFIG_FIELDS]...
+```bash
+cuckoo machine add --help
+```
 
-      Add a machine to the configuration of the specified machinery. config_fields
-      be all non-optional configuration entries in key=value format.
+``` { .bash .no-copy }
+Usage: cuckoo machine add [OPTIONS] MACHINERY_NAME MACHINE_NAME
+                          [CONFIG_FIELDS]...
 
-    Options:
-      --tags TEXT  A comma separated list of tags that identify what
-                   dependencies/software is installed on the machine.
+  Add a machine to the configuration of the specified machinery. config_fields
+  be all non-optional configuration entries in key=value format.
 
+Options:
+  --tags TEXT  A comma separated list of tags that identify what
+               dependencies/software is installed on the machine.
+```
 
-
-Adding machines to the machinery config using a helper tool: `cuckoo machine add`.
 The tool will write a new entry to the `machines` dictionary of the specific machinery module.
 
 **Example:**
@@ -214,11 +220,11 @@ We can add this machine using the following command:
 
 ```bash
 cuckoo machine add qemu --tags dotnet,adobepdf win10x64_1 ip=192.168.30.101 qcow2_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/disk.qcow2 snapshot_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/memory.snapshot machineinfo_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/machineinfo.json platform=windows os_version=10 architecture=amd64 interface=br0
-
 ```
+
 This creates an entry into `~/.cuckoocwd/conf/machineries/qemu.yaml` config file with the following information:
 
-```yaml
+``` { .yaml .no-copy }
 # Specify the name of the network interface/bridge that is the default gateway
 # for the QEMU machines.
 # Example: br0
@@ -285,25 +291,27 @@ machines:
 
 ### Machine importing command
 
-    $ cuckoo machine import --help
-    Usage: cuckoo machine import [OPTIONS] MACHINERY_NAME VMS_PATH
-                                 [MACHINE_NAMES]...
+```bash
+cuckoo machine import --help
+```
 
-      Import all or 'machine names' from the specified VMCloak vms path to the
-      specified machinery module.
+``` { .yaml .no-copy }
+Usage: cuckoo machine import [OPTIONS] MACHINERY_NAME VMS_PATH
+                             [MACHINE_NAMES]...
 
-    Options:
-      --help  Show this message and exit.
+  Import all or 'machine names' from the specified VMCloak vms path to the
+  specified machinery module.
 
+Options:
+  --help  Show this message and exit.
+```
 
 Cuckoo can also import machines created by VMCloak. To do this, we first need to know the 'VMs path' of VMCloak.
-This is located at `VMCLOAK_CWD/vms/`. If we make the machines for qemu, they will be located in the `qemu` subdirectory (`VMCLOAK_CWD/vms/qemu).
+This is located at `~/.vmcloak/vms/`. If we make the machines with QEMU, they will be located in the `qemu` subdirectory (`~/.vmcloak/vms/qemu`).
 
 The helper tool we can use to import machines is: `cuckoo machine import`.
 The tool will write a new entry to the machines dictionary of the specific machinery module for each
 discovered machine in the VMCloak vms machinery directory.
-
-The help output looks as follows:
 
 **Example:**  
 

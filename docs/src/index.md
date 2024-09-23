@@ -11,16 +11,14 @@
 Welcome to Cuckoo3!
 Here you can find a brief overview of different parts of the documentation.
 
-- [About](about/cuckoo.md) - A gentle introduction to Cuckoo.
+- [About](about/cuckoo.md) - A gentle introduction to Cuckoo3.
 - [Installing overview](installing/overview.md) - Guides you through how to install various parts and dependencies.
-- [Configuring](configuring/index.md) - Covers all related configurations and vm creation topics.
-- [Creating](creating/index.md) - Explains how you can build and create virtual machines and other things.
-- [Web](web/ui.md) - Covers how to set up Cuckoo3 Django frontend.
-- [Using](usage/index.md) - Describes how to use various Cuckoo commands and API endpoints.
-- [Troubleshooting](faq/common.md) - List known problems and solutions to 
-those problems.
+- Configuring - Covers all configurations to get you up and running.
+- Creating - Explains how you can build and create virtual machines and other things.
+- Using - Describes how to use various Cuckoo commands and API endpoints.
+- [Troubleshooting](faq/common.md) - List of known problems and solutions to those problems.
 
 ## Links
 
-You can Cuckoo3 it in action at our [online Cuckoo3 Sandbox](https://cuckoo-hatch.cert.ee/).  
+You can see Cuckoo3 in action at our [online Cuckoo3 Sandbox](https://cuckoo-hatch.cert.ee/).  
 For more insight into our plans, [check out our roadmap here](https://github.com/orgs/cert-ee/projects/1/views/1).
