@@ -1,0 +1,20 @@
+@font-face {
+    font-family: 'Merriweather Sans', sans-serif;
+    src: local("assets/fonts/Merriweather-Regular.ttf");
+}
+
+:root {
+    --md-text-font: "Merriweather Sans";
+}
+
+[data-md-color-scheme="cert-ee-light"] {
+    --md-primary-fg-color: #0173BA;
+    @extend %root;
+    color-scheme: light
+}
+
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #0173BA;
+    @extend %root;
+    color-scheme: dark
+}

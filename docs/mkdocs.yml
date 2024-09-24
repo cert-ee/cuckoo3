@@ -1,46 +1,86 @@
-site_name: Cuckoo 3 docs
+site_name: Cuckoo3 docs
 site_url: https://cuckoo-hatch.cert.ee/static/docs/
 theme:
-  name: readthedocs
-  highlightjs: true
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: cert-ee-light
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  logo: assets/images/cuckoo3-docs-round.png
+  favicon: assets/images/favicon.png
+  font: false
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - search.share
+
+extra_css:
+  - extra.css
+#   - style.css
+
 markdown_extensions:
 - admonition
 - attr_list
+- pymdownx.highlight:
+    anchor_linenums: true
+    line_spans: __span
+    pygments_lang_class: true
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.superfences
+- pymdownx.details
+- toc:
+    permalink: true
 
 plugins:
 - include-markdown
+- search
 
 docs_dir: src
+
 nav:
-- Introduction:
-  - Cuckoo 3: introduction/cuckoo.md
-  - Sandboxing: introduction/sandboxing.md
+- About:
+  - Cuckoo3: about/cuckoo.md
+  - Sandboxing: about/sandboxing.md
+  - Terminology: about/terminology.md
 
-- Installation:
-  - Cuckoo 3 installation: installation/cuckoo.md
-  - System dependencies: installation/deps.md
-  - Machinery modules: installation/machineries.md
-  - VM Creation: installation/vmcreation.md
-  - Network routing: installation/routing.md
+- Installing:
+  - Overview: installing/overview.md
+  - System dependencies: installing/dependencies.md
+  - Quickstart: installing/quickstart.md
+  - VMCloak: installing/vmcloak.md
+  - Cuckoo3: installing/cuckoo.md
 
-- Configuration:
-  - System settings: configuration/system.md
-  - Cuckoo 3 configuration:
-    - Cuckoo.yaml: configuration/cuckooconfs/cuckooyaml.md
-    - Distributed.yaml: configuration/cuckooconfs/distributedyaml.md
-    - Web configuration:
-      - Web.yaml: configuration/cuckooconfs/webconfs/webyaml.md
-    - Node configuration:
-      - Routing.yaml: configuration/cuckooconfs/nodeconfs/routingyaml.md
+- Configuring:
+  - System dependencies: configuring/system.md
+  - VMCloak: configuring/vmcloak.md
+  - Cuckoo3: configuring/cuckoo.md
+  - Web UI: configuring/web-ui.md
+  - Web API: configuring/web-api.md
+  - Network routing: configuring/routing.md
 
+- Creating:
+  - Virtual machines: creating/vms.md
+  - Machinery modules: creating/machinery.md
 
-- Usage:
-  - Submission: usage/submission/index.md
-  - Web API:
-    - Setup: usage/webapi/setup.md
-    - Endpoints: usage/webapi/endpoints.md
-  - Web UI: usage/webui/setup.md
-  - Commands: usage/commands.md
+- Using:
+  - CLI API: using/cli-api.md
+  - Web API: using/web-api-endpoints.md
+  - Web UI: using/web-ui.md
+  - Commands: using/commands.md
 
-- Development:
-  - Creating new machinery modules: development/creating_machinery.md
+- Troubleshooting:
+  - Common errors: faq/common.md
