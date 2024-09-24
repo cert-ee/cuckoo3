@@ -5,7 +5,7 @@
     Make sure you are logged in as your Cuckoo user (`cuckoo` in our context) and that you have:  
 
     - installed all system dependencies from the [Cuckoo3 dependencies section](dependencies.md#cuckoo3-dependencies){:target=_blank}
-    - meet the requirements to [run Cuckoo3](../about/cuckoo.md#cuckoo3-requirements)
+    - meet the requirements to [run Cuckoo3](../about/cuckoo.md#cuckoo3-requirements){:target=_blank}
     - virtual machines made by VMCloak by following [Creating VMs with VMCloak](../creating/vms.md){:target=_blank}
 
 ## All-in-one install
@@ -23,13 +23,13 @@ unzip -o -d ~/.cuckoocwd/signatures/cuckoo signatures.zip
 
 **Steps**
 
-1. Clone the repository (replace the `<destination>` with the desired location).
+1. Clone the repository to Cuckoo user home directory.
         
-        git clone https://github.com/cert-ee/cuckoo3.git <destination>
+        cd ~ && git clone https://github.com/cert-ee/cuckoo3.git
 
 2. Create and activate Python virtual environment.
         
-        python3.10 -m venv venv && source venv/bin/activate
+        cd cuckoo3 && python3.10 -m venv venv && source venv/bin/activate
 
 3. Install Cuckoo Python dependencies using the install script.
 
@@ -68,7 +68,7 @@ cuckoo machine delete qemu example1
 
 2. Delete the default `example1` configuration in `~/.cuckoocwd/conf/machineries/qemu.yaml`.
         
-        cuckoo machine delete qemu example
+        cuckoo machine delete qemu example1
 
 All machine configurations can be found in `~/.cuckoocwd/conf/machineries/`.  
 All configuration files have comments above the fields if you wish to manually adjust them.
@@ -218,7 +218,7 @@ We will also assume it has .NET and Adobe pdf reader installed and add the tags 
 We can add this machine using the following command:
 
 ```bash
-cuckoo machine add qemu --tags dotnet,adobepdf win10x64_1 ip=192.168.30.101 qcow2_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/disk.qcow2 snapshot_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/memory.snapshot machineinfo_path=/home/cuckoo/.vmcloak/vms/qemu/win10_1/machineinfo.json platform=windows os_version=10 architecture=amd64 interface=br0
+cuckoo machine add qemu --tags dotnet,adobepdf win10x64_1 ip=192.168.30.101 qcow2_path=/home/cuckoo/.vmcloak/vms/qemu/win10vm_/disk.qcow2 snapshot_path=/home/cuckoo/.vmcloak/vms/qemu/win10vm_/memory.snapshot machineinfo_path=/home/cuckoo/.vmcloak/vms/qemu/win10vm_/machineinfo.json platform=windows os_version=10 architecture=amd64 interface=br0
 ```
 
 This creates an entry into `~/.cuckoocwd/conf/machineries/qemu.yaml` config file with the following information:

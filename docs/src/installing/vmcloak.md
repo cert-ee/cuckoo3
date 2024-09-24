@@ -20,7 +20,7 @@ python3.10 -m pip install .
 
 **Steps**
 
-1. Clone the repository to your home directory.
+1. Clone the repository to Cuckoo user home directory.
         
         cd ~ && git clone https://github.com/cert-ee/vmcloak.git
 
