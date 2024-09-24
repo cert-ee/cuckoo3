@@ -12,10 +12,14 @@ For more in-depth information on what Quickstart installer does, please see our 
 
 ## Manual
 
-Manual installation allows you to be more flexible about how you set up your Cuckoo3.
+Manual installation allows you to be more flexible about how you set up your Cuckoo3 and VMCloak.  
 You can choose which virtualization solution you want to use, which network bridge, how many nodes to run, and much more.
 
-For more in-depth information, please see [Installing Cuckoo3](cuckoo.md){:target="_blank"} 
+We recommend you install everything in this order:
+
+1. [System dependencies](dependencies.md){:target=_blank}
+2. [VMCloak](vmcloak.md){:target=_blank}
+2. [Cuckoo3](cuckoo.md){:target=_blank}
 
 ## Nodes
 
