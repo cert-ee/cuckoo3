@@ -42,33 +42,37 @@ uWSGI is used as an application server and Nginx as a webserver.
 
 3. Run Django `collectstatic` command. 
 
-        cuckoo web djangocammond collectstatic
+        cuckoo web djangocommand collectstatic
 
 4. Generate uWSGI configuration.
 
-        cuckoo web generateconfig --uwsgi > /home/$username/cuckoo3/cuckoo-web.ini
+        cuckoo web generateconfig --uwsgi > /home/cuckoo/cuckoo3/cuckoo-web.ini
 
-5. Copy uWSGI  configuration to `/etc/uwsgi/apps-available`.
+5. Generate Nginx configuration.
 
-        sudo mv /home/$username/cuckoo3/cuckoo-web.ini /etc/uwsgi/apps-available/
+        cuckoo web generateconfig --nginx > /home/cuckoo/cuckoo3/cuckoo-web.conf
 
-6. Create symlink to enable uWSGI configuration.
+6. Copy uWSGI  configuration to `/etc/uwsgi/apps-available`.
+
+        sudo mv /home/cuckoo/cuckoo3/cuckoo-web.ini /etc/uwsgi/apps-available/
+
+7. Create symlink to enable uWSGI configuration.
 
         sudo ln -s /etc/uwsgi/apps-available/cuckoo-web.ini /etc/uwsgi/apps-enabled/cuckoo-web.ini
 
-7. Copy Nginx configuration to `/etc/nginx/sites-available`.
+8. Copy Nginx configuration to `/etc/nginx/sites-available`.
 
-        sudo mv /home/$username/cuckoo3/cuckoo-web.ini /etc/uwsgi/apps-available/
+        sudo mv /home/cuckoo/cuckoo3/cuckoo-web.conf /etc/nginx/sites-available/
 
-8. Create symlink to enable Nginx configuration.
+9. Create symlink to enable Nginx configuration.
 
         sudo ln -s /etc/nginx/sites-available/cuckoo-web.conf /etc/nginx/sites-enabled/cuckoo-web.conf
 
-9. Delete Nginx default enabled configuration.
+10. Delete Nginx default enabled configuration.
 
-        sudo rm /etc/nginx/sites-enabled/default 2&>/dev/null
+        sudo rm /etc/nginx/sites-enabled/default
 
-10. Reload the new Nginx configuration.
+11. Reload the new Nginx configuration.
 
         sudo systemctl reload nginx
 
