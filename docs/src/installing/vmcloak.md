@@ -11,22 +11,22 @@ Cuckoo uses virtual machines to execute for its analyses. VMCloak is a great too
 ## All-in-one install
 
 ```console
-git clone https://github.com/cert-ee/vmcloak.git && \
-cd vmcloak && \
-python3.10 -m venv venv && \
-source venv/bin/activate && \
+cd ~ && git clone https://github.com/cert-ee/vmcloak.git
+cd vmcloak
+python3.10 -m venv venv
+source venv/bin/activate
 python3.10 -m pip install .
 ```
 
 **Steps**
 
-1. Clone the repository (replace the `<destination>` with the desired location).
+1. Clone the repository to your home directory.
         
-        git clone https://github.com/cert-ee/vmcloak.git <destination>
+        cd ~ && git clone https://github.com/cert-ee/vmcloak.git
 
 2. Create and activate Python virtual environment.
         
-        python3.10 -m venv venv && source venv/bin/activate
+        cd vmcloak && python3.10 -m venv venv && source venv/bin/activate
 
 3. Install Python dependencies.
 
@@ -36,9 +36,8 @@ python3.10 -m pip install .
 
 ## Downloading an image
 
-CERT-EE hosts images for VMCloak to download.  
-Replace the `--win10x64` with the appropriate option from [Supported sandbox environments](../about/cuckoo.md#supported-sandbox-environments).  
-
+You can download iso files for VMCloak CERT-EE repository with `vmcloak isodownload` command.  
+Replace the `--win10x64` with the appropriate option from [Supported sandbox environments](../about/cuckoo.md#supported-sandbox-environments){:target=_blank}.
 
 You can download the desired image by running:
             
@@ -48,6 +47,7 @@ You can download the desired image by running:
 
 ## Configuring VMCloak
 !!! note "Environment"
+
     This step requires you to switch to a privileged user to run the commands below.
 
 ### All-in-one configuration
@@ -84,14 +84,23 @@ sudo adduser cuckoo kvm && sudo chmod 666 /dev/kvm
 ---
 
 ## VM creation
+!!! note "Environment"
+
+    Switch back to your cuckoo user for the rest of this section.
+
 To create virtual machines, run:
 ```bash
-vmcloak --debug init --win10x64 --hddsize 128 --cpus 2 --ramsize 4096 --network 192.168.30.0/24 --vm qemu --vrde --vrde-port 1 --ip 192.168.30.2 --iso-mount /mnt/win10x64 win10base qemubr0 && \
-vmcloak --debug install win10base --recommended && \
+vmcloak --debug init --win10x64 --hddsize 128 --cpus 2 --ramsize 4096 --network 192.168.30.0/24 --vm qemu --vrde --vrde-port 1 --ip 192.168.30.2 --iso-mount /mnt/win10x64 win10base br0
+vmcloak --debug install win10base --recommended
 vmcloak --debug snapshot --count 1 win10base win10vm_ 192.168.30.10
 ```
 
 For more detailed documentation, please see [Creating virtual machines](../creating/vms.md){:target=_blank}.
+
+## Next Steps
+
+1. If you don't have Cuckoo3 installed, proceed with [Installing Cuckoo3](cuckoo.md){:target=_blank}.  
+2. If you have Cuckoo3 installed and need to import the virtual machines, please see [Importing virtual machines](cuckoo.md#importing-virtual-machines){:target=_blank}.
 
 ---
 
