@@ -83,7 +83,7 @@ sudo adduser cuckoo kvm && sudo chmod 666 /dev/kvm
 
 ---
 
-## VM creation
+## Create virtual machines
 !!! note "Environment"
 
     Switch back to your cuckoo user for the rest of this section.
