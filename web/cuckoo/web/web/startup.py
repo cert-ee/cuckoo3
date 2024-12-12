@@ -130,6 +130,19 @@ def djangocommands(*args):
 
 
 def init_and_get_asgi():
+    """Initializes and returns ASGI server application
+
+    Args:
+        None
+
+    Returns:
+        ASGI 3 callable
+
+    Raises:
+        ValueError: When log level is invalid
+        custom error: When Cuckoo CWD is not set
+    """
+
     import logging
     from cuckoo.common.log import disable_console_colors
 
