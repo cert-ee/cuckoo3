@@ -9,8 +9,13 @@ https://docs.djangoproject.com/en/3.0/howto/deployment/asgi/
 
 import os
 
-from django.core.asgi import get_asgi_application
+if os.environ.get("CUCKOO_APP", "").lower() == "web":
+    from cuckoo.web.web.startup import init_and_get_asgi
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'web.settings')
+    application = init_and_get_asgi()
 
-application = get_asgi_application()
+else:
+    from django.core.asgi import get_asgi_application
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web.settings")
+    application = get_asgi_application()

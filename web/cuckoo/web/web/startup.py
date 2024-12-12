@@ -9,8 +9,11 @@ from django.core.management import execute_from_command_line
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error, name_to_level
 from cuckoo.common.startup import (
-    init_global_logging, load_configuration, init_database,
-    init_elasticsearch, StartupError
+    init_global_logging,
+    load_configuration,
+    init_database,
+    init_elasticsearch,
+    StartupError,
 )
 from cuckoo.common.storage import cuckoocwd, Paths, CWD_ENVVAR, CWDError
 from cuckoo.common.submit import settings_maker
@@ -31,38 +34,32 @@ def set_path_settings():
 def _init_remote_storage():
     api = APIClient(
         cfg("web.yaml", "remote_storage", "api_url", subpkg="web"),
-        cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
+        cfg("web.yaml", "remote_storage", "api_key", subpkg="web"),
     )
     retriever.set_api_client(api)
 
 
 def _init_elasticsearch_web():
     hosts = cfg("web.yaml", "elasticsearch", "hosts", subpkg="web")
-    indices = cfg(
-        "web.yaml", "elasticsearch", "indices", "names", subpkg="web"
-    )
-    max_window = cfg(
-        "web.yaml", "elasticsearch", "max_result_window", subpkg="web"
-    )
-    user = cfg(
-        "web.yaml", "elasticsearch", "user", subpkg="web"
-    )
-    password = cfg(
-        "web.yaml", "elasticsearch", "password", subpkg="web"
-    )
-    ca_certs = cfg(
-        "web.yaml", "elasticsearch", "ca_certs", subpkg="web"
-    )
+    indices = cfg("web.yaml", "elasticsearch", "indices", "names", subpkg="web")
+    max_window = cfg("web.yaml", "elasticsearch", "max_result_window", subpkg="web")
+    user = cfg("web.yaml", "elasticsearch", "user", subpkg="web")
+    password = cfg("web.yaml", "elasticsearch", "password", subpkg="web")
+    ca_certs = cfg("web.yaml", "elasticsearch", "ca_certs", subpkg="web")
 
-    init_elasticsearch(hosts, indices, max_result_window=max_window,
-                       create_missing_indices=False,
-                       user=user, password=password, ca_certs=ca_certs)
+    init_elasticsearch(
+        hosts,
+        indices,
+        max_result_window=max_window,
+        create_missing_indices=False,
+        user=user,
+        password=password,
+        ca_certs=ca_certs,
+    )
 
 
 def _init_statistics_web():
-    charts = cfg(
-        "web.yaml", "elasticsearch", "statistics", "charts", subpkg="web"
-    )
+    charts = cfg("web.yaml", "elasticsearch", "statistics", "charts", subpkg="web")
 
     try:
         for chart in charts:
@@ -103,12 +100,8 @@ def init_web(cuckoo_cwd, loglevel, logfile=""):
         if cfg("web.yaml", "remote_storage", "enabled", subpkg="web"):
             _init_remote_storage()
 
-        search = cfg(
-            "web.yaml", "elasticsearch", "web_search", "enabled", subpkg="web"
-        )
-        stats = cfg(
-            "web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web"
-        )
+        search = cfg("web.yaml", "elasticsearch", "web_search", "enabled", subpkg="web")
+        stats = cfg("web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web")
         if search or stats:
             _init_elasticsearch_web()
 
@@ -136,9 +129,10 @@ def djangocommands(*args):
     execute_from_command_line(("cuckoo",) + args)
 
 
-def init_and_get_wsgi():
+def init_and_get_asgi():
     import logging
     from cuckoo.common.log import disable_console_colors
+
     levelname = os.environ.get("CUCKOO_LOGLEVEL")
     if not levelname:
         loglevel = logging.DEBUG
@@ -161,6 +155,39 @@ def init_and_get_wsgi():
     disable_console_colors()
     init_web(cwd_path, loglevel)
 
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cuckoo.web.web.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.web.settings")
+    from django.core.asgi import get_asgi_application
+
+    return get_asgi_application()
+
+
+def init_and_get_wsgi():
+    import logging
+    from cuckoo.common.log import disable_console_colors
+
+    levelname = os.environ.get("CUCKOO_LOGLEVEL")
+    if not levelname:
+        loglevel = logging.DEBUG
+    else:
+        try:
+            loglevel = name_to_level(levelname)
+        except ValueError as e:
+            exit_error(f"Invalid log level name. {e}")
+
+    cwd_path = os.environ.get(CWD_ENVVAR)
+    if not cwd_path:
+        exit_error(
+            f"Cannot start. Environment variable '{CWD_ENVVAR}' must "
+            f"contain path to Cuckoo CWD."
+        )
+
+    # Disable console colors, because log files for services such as uWSGI
+    # capture console logs. Color formatting characters can make the log file
+    # unreadable.
+    disable_console_colors()
+    init_web(cwd_path, loglevel)
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.web.settings")
     from django.core.wsgi import get_wsgi_application
+
     return get_wsgi_application()
