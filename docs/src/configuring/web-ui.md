@@ -47,7 +47,7 @@ Daphne is used as an ASGI application server and Nginx as a webserver.
         [Service]
         User=cuckoo
         Group=cuckoo
-        WorkingDirectory=/home/cuckoo/cuckoo4/web/cuckoo/web
+        WorkingDirectory=/home/cuckoo/cuckoo3/web/cuckoo/web
         ExecStart=/home/cuckoo/cuckoo4/venv/bin/daphne -p 9090 cuckoo.web.web.asgi:application
         Environment=CUCKOO_APP=web
         Environment=CUCKOO_CWD=/home/cuckoo/.cuckoocwd
