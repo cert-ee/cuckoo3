@@ -133,6 +133,7 @@ VMCloak uses QEMU to create and manage virtual machines.
 |`qemu-system-x86`|full system emulation binaries to emulate the following x86 hardware: x86_64|
 
 ### Serving API and web
+#### WSGI
 ```bash 
 sudo apt-get install -y uwsgi uwsgi-plugin-python3 nginx
 ```
@@ -142,4 +143,17 @@ sudo apt-get install -y uwsgi uwsgi-plugin-python3 nginx
 |`uwsgi`|WSGI(WebServer Gateway Interface) server|
 |`uwsgi-plugin-python3`|Python plugin for uWSGI|
 |`nginx`|Webserver|
+
+#### ASGI
+Install Python dependencies inside Cuckoo virtual environment
+```bash 
+python3.10 -m pip install daphne
+sudo apt-get install -y nginx
+```
+
+| Package |  Description |
+|---|---|
+|`daphne`|Django ASGI server|
+|`nginx`|Webserver|
+
 
