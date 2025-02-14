@@ -1,8 +1,8 @@
 ---
 name: 'Documentation'
 about: Help us enhance documentation
-title: ''
-labels: documentation
+title: '[DOC]: '
+labels: ['documentation']
 assignees: ''
 
 ---
