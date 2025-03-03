@@ -39,15 +39,15 @@ setuptools.setup(
         "jinja2",
         "requests",
         "python-dateutil",
-        "sflock>=1.0, <1.1",
-        "sqlalchemy>=1.4, <1.5",
-        "elasticsearch>=7.17.3, <8.0",
-        "elasticsearch-dsl>=7.4.0, <7.5",
-        "vt-py>=0.6, <0.7",
-        "pymisp>=2.4.159, <2.5",
-        "aiohttp>=3.8.1, <3.9",
+        "sflock>=1.1.0",
+        "sqlalchemy==2.0.37",
+        "elasticsearch>=8.15.0, <9.0",
+        "elasticsearch-dsl>=8.15.0, <9.0",
+        "vt-py==0.19.0",
+        "pymisp==2.5.4",
+        "aiohttp>=3.10.2",
         "aiohttp-sse-client>=0.2.1, <0.3",
-        "psutil>=5.9.0, <5.10",
+        "psutil>=6.1.1",
         "alembic[tz]"
     ]
 )

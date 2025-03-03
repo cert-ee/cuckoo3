@@ -9,7 +9,7 @@ import elasticsearch_dsl
 import requests
 
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ElasticsearchException
+from elasticsearch import TransportError, ApiError, Elasticsearch
 
 from .log import set_logger_level
 
@@ -216,7 +216,7 @@ class IntelMQElastic:
         q = q.sort({ElasticFields.TIME_SOURCE: {"order": "desc"}})
         try:
             response = q.execute()
-        except ElasticsearchException as e:
+        except (ApiError, TransportError) as e:
             raise IntelMQElasticError(f"Error while performing query: {e}")
 
         if not response.hits:
