@@ -10,7 +10,7 @@ from pathlib import Path
 
 import elasticsearch_dsl
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ElasticsearchException, TransportError
+from elasticsearch import TransportError, ApiError, Elasticsearch
 
 from .log import set_logger_level, CuckooGlobalLogger
 
@@ -136,7 +136,7 @@ class _ESManager:
             try:
                 if self.client.indices.exists(realname):
                     existing.append(name)
-            except ElasticsearchException as e:
+            except (ApiError, TransportError) as e:
                 raise ElasticSearchError(
                     f"Failure while determining existing indices. {e}"
                 )
@@ -148,7 +148,7 @@ class _ESManager:
             log.debug("Creating index", index_name=name)
             self.client.indices.create(name, body=index_mapping)
             log.debug("Created index", index_name=name)
-        except ElasticsearchException as e:
+        except (ApiError, TransportError) as e:
             if isinstance(e, TransportError):
                 # If the index already exists, ignore the error. This case
                 # can happen if we have multiple processes that try to create
@@ -207,7 +207,7 @@ def index_events(analysis_id, eventtype, values, subtype=None, task_id=None):
         manager.client.index(
             index=manager.index_realname(_Indices.EVENTS), id=doc_id, body=body
         )
-    except ElasticsearchException as e:
+    except (ApiError, TransportError) as e:
         raise ElasticSearchError(
             f"Failed to create event entry in Elasticsearch. {e}"
         )
@@ -262,7 +262,7 @@ def index_analysis(analysis, target, signatures, tags, families, ttps):
                 index=manager.index_realname(_Indices.ANALYSES),
                 id=analysis.id, body=body
             )
-        except ElasticsearchException as e:
+        except (ApiError, TransportError) as e:
             raise ElasticSearchError(
                 f"Failed to create analysis entry in Elasticsearch. {e}"
             )
@@ -292,7 +292,7 @@ def index_task(task, score, machine, signatures, tags, families,
         manager.client.index(
             index=manager.index_realname(_Indices.TASKS), id=task.id, body=body
         )
-    except ElasticsearchException as e:
+    except (ApiError, TransportError) as e:
         raise ElasticSearchError(
             f"Failed to create task entry in Elasticsearch. {e}"
         )
@@ -331,7 +331,7 @@ def update_analysis(analysis_id, tags=[], families=[], ttps=[], score=0):
                 }
             }
         )
-    except ElasticsearchException as e:
+    except (ApiError, TransportError) as e:
         raise ElasticSearchError(
             f"Failed to update analysis entry in Elasticsearch. {e}"
         )
@@ -350,7 +350,7 @@ def _unique_values_field(index, field, start, end):
     query.aggs.bucket("valcount", elasticsearch_dsl.A("terms", field=field))
     try:
         response = query.execute()
-    except ElasticsearchException as e:
+    except (ApiError, TransportError) as e:
         raise ElasticSearchError(
             f"Failed to read unique values of field: {field} on index {index} "
             f"from {start} to {end}. {e}"
@@ -382,7 +382,7 @@ def _count_index_fieldvals(index, field, value, start, end):
     )
     try:
        return query.count()
-    except ElasticsearchException as e:
+    except (ApiError, TransportError) as e:
         raise ElasticSearchError(
             f"Failed to count values of field: {field} on index {index} "
             f"from {start} to {end}. {e}"
@@ -757,7 +757,7 @@ class _SearchQueryRunner:
         log.debug("Generated query.", query=query.to_dict())
         try:
             response = query.execute()
-        except ElasticsearchException as e:
+        except (ApiError, TransportError) as e:
             raise ElasticSearchError(f"Error during query execution: {e}")
 
         return response.hits, response.hits.total.value

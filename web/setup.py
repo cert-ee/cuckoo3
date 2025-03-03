@@ -40,6 +40,6 @@ setuptools.setup(
         "django-rest-framework",
         "django-ipware",
         "ipaddress",
-        "tabulate>=0.8, <0.9"
+        "tabulate>=0.8, <0.10"
     ],
 )
