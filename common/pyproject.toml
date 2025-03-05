@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "Cuckoo-common"
 dynamic = ["version"]
 description = "Cuckoo common and utility code"
-authors = [{ name = "", email = "" }]
 license = "EUPL-1.2"
 readme = "README.md"
 requires-python = ">=3.8"

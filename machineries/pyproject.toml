@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "Cuckoo-machineries"
 dynamic = ["version"]
 description = "Automated Malware Analysis System"
-authors = [{ name = "", email = "" }]
 license = "EUPL-1.2"
 readme = "README.md"
 requires-python = ">=3.8"
