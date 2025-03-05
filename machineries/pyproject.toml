@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Cuckoo-machineries"
+dynamic = ["version"]
+description = "Automated Malware Analysis System"
+authors = [{ name = "", email = "" }]
+license = "EUPL-1.2"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "Cuckoo-common>=0.1.1",
+]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://cuckoo-hatch.cert.ee"
+Documentation = "https://cuckoo-hatch.cert.ee/static/docs/"
+Repository = "https://github.com/cert-ee/cuckoo3"
+
+[tool.hatch.version]
+path = "cuckoo/machineries/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/cuckoo"]
+exclude = [
+    "*.pyc",
+    "*.pyo"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["cuckoo"]
