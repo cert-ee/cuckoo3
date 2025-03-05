@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "Cuckoo-node"
 dynamic = ["version"]
 description = "Cuckoo sample detonation node"
-authors = [{ name = "", email = "" }]
 license = "EUPL-1.2"
 readme = "README.md"
 requires-python = ">=3.8"

@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "Cuckoo-web"
 dynamic = ["version"]
 description = "Cuckoo web api and interface"
-authors = [{ name = "", email = "" }]
 license = "EUPL-1.2"
 readme = "README.md"
 requires-python = ">=3.8"

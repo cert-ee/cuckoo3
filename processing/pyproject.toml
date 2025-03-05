@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "Cuckoo-processing"
 dynamic = ["version"]
 description = "Cuckoo data processing helpers and modules"
-authors = [{ name = "", email = "" }]
 license = "EUPL-1.2"
 readme = "README.md"
 requires-python = ">=3.8"
