@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Cuckoo-processing"
+dynamic = ["version"]
+description = "Cuckoo data processing helpers and modules"
+authors = [{ name = "", email = "" }]
+license = "EUPL-1.2"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+     "Cuckoo-common>=0.1.0",
+     "sflock>=1.1.0",
+     "protobuf==3.20.3",
+     "httpreplay>=1.0, <1.1",
+     "pefile==2024.8.26",
+     "oletools>=0.60.1, <0.61",
+     "cryptography>=43.0.1",
+     "hyperscan>=0.2.0, <0.8",
+     "yara-python>=4.2.0, <4.6",
+     "roach>=1.1",
+     "suricatactl==0.0.1.dev3",
+     "dpkt>=1.9.7.2, <1.10"
+]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://cuckoo-hatch.cert.ee"
+Documentation = "https://cuckoo-hatch.cert.ee/static/docs/"
+Repository = "https://github.com/cert-ee/cuckoo3"
+
+[tool.hatch.version]
+path = "cuckoo/processing/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/cuckoo"]
+exclude = [
+    "*.pyc",
+    "*.pyo"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["cuckoo"]
