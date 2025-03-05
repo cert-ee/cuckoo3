@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Cuckoo-common"
+dynamic = ["version"]
+description = "Cuckoo common and utility code"
+authors = [{ name = "", email = "" }]
+license = "EUPL-1.2"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pyyaml",
+    "jinja2",
+    "requests",
+    "python-dateutil",
+    "sflock>=1.1.0",
+    "sqlalchemy==2.0.37",
+    "elasticsearch>=8.15.0, <9.0",
+    "elasticsearch-dsl>=8.15.0, <9.0",
+    "vt-py==0.19.0",
+    "pymisp==2.5.4",
+    "aiohttp>=3.10.2",
+    "aiohttp-sse-client>=0.2.1, <0.3",
+    "psutil>=6.1.1",
+    "alembic[tz]"
+]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Security"
+]
+
+[tool.hatch.version]
+path = "cuckoo/common/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/cuckoo"]
+exclude = [
+    "*.pyc",
+    "*.pyo"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["cuckoo"]
+
+[project.urls]
+Homepage = "https://cuckoo-hatch.cert.ee"
+Documentation = "https://cuckoo-hatch.cert.ee/static/docs/"
+Repository = "https://github.com/cert-ee/cuckoo3"
