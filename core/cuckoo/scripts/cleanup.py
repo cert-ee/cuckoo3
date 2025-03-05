@@ -124,7 +124,7 @@ def main(ctx, cwd, debug):
         return
 
 @main.command()
-@click.argument("days", type=int)
+@click.argument("hours", type=int)
 @click.option("--yes", is_flag=True, help="Skip confirmation screen")
 @click.pass_context
 def remotestorage(ctx, days, yes):
@@ -147,7 +147,7 @@ def remotestorage(ctx, days, yes):
 
 
 @main.command("delete")
-@click.argument("state", type=string)
+@click.argument("state", type=str)
 @click.argument("hours", type=int)
 @click.option("--yes", is_flag=True, help="Skip confirmation screen")
 @click.pass_context
