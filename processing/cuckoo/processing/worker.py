@@ -220,8 +220,8 @@ def _handle_processing(processing_classes, ctx):
         processing_instances = make_plugin_instances(processing_classes, ctx)
     except PluginError as e:
         ctx.set_failed()
-        ctx.errtracker.fatal_exception(e)
-        ctx.log.exception(
+        ctx.errtracker.add_error(e)
+        ctx.log.error(
             "Processing cancelled. Failure during processing plugin "
             "initialization", error=e
         )
@@ -232,7 +232,7 @@ def _handle_processing(processing_classes, ctx):
     except CancelProcessing as e:
         ctx.set_failed()
         ctx.log.error("Processing cancelled", error=e)
-        ctx.errtracker.fatal_exception(e)
+        ctx.errtracker.fatal_error(e)
         return False
     except Exception as e:
         ctx.set_failed()
