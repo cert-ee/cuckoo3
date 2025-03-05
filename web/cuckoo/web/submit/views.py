@@ -20,7 +20,6 @@ from cuckoo.common.result import (
 )
 from cuckoo.common.storage import AnalysisPaths
 
-
 def _validate_website_url(website):
     """Validate website into valid URL"""
     msg = f"Cannot validate this URL: {website}"
@@ -30,18 +29,6 @@ def _validate_website_url(website):
     except:
         raise ValidationError(message=msg)
     return website
-
-
-def _validate_analysis_id(analysis_id):
-    """Validate analysis id"""
-    ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
-
-    msg = f"Cannot validate this analysis_id: {analysis_id}"
-    complied_regex = re.compile(ANALYSIS_ID_REGEX)
-    match = complied_regex.fullmatch(analysis_id)
-    if not match:
-        raise ValidationError(message=msg)
-    return analysis_id
 
 
 def _make_web_platforms(available_platforms):
@@ -138,56 +125,6 @@ class Submit(View):
 
         return redirect("Submit/waitidentify", analysis_id=analysis_id)
 
-class Resubmit(View):
-
-    def get(self, request, *args, **kwargs):
-        analysis_id = kwargs.get("analysis_id")
-
-        if analysis_id:
-            try:
-                analysis_id = _validate_analysis_id(analysis_id)
-            except ValidationError as e:
-                return render(
-                    request, template_name="submit/index.html.jinja2",
-                    status=400, context={"error": str(e)}
-                )
-        else:
-            return HttpResponseBadRequest()
-
-        analysis = retriever.get_analysis(analysis_id).analysis
-
-
-        try:
-            s_maker = submit.settings_maker.new_settings()
-            s_maker.set_manual(True)
-
-            password = analysis.settings.password
-            if password:
-                s_maker.set_password(password)
-
-            settings = s_maker.make_settings()
-            if analysis.category == "file":
-                submit_path = AnalysisPaths.submitted_file(analysis_id, resolve=True)
-                analysis_id = submit.file(
-                    submit_path, settings, file_name=analysis.target.target
-                )
-            else:
-                analysis_id = submit.url(analysis.target.target, settings)
-        except submit.SubmissionError as e:
-            return render(
-                request, template_name="submit/index.html.jinja2",
-                status=400, context={"error": str(e)}
-            )
-
-        try:
-            submit.notify()
-        except submit.SubmissionError as e:
-            return HttpResponseServerError(
-                f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
-            )
-
-        return redirect("Submit/waitidentify", analysis_id=analysis_id)
-
 
 class WaitIdentify(View):
 
@@ -241,3 +178,68 @@ class Settings(View):
             request, template_name="submit/settings.html.jinja2",
             context=context
         )
+
+
+
+def _validate_analysis_id(analysis_id):
+    """Validate analysis id"""
+    ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
+
+    #msg = "Cannot validate analysis_id": %s" % analysis_id
+    msg = f"Cannot validate this analysis_id: {analysis_id}"
+    complied_regex = re.compile(ANALYSIS_ID_REGEX)
+    match = complied_regex.fullmatch(analysis_id)
+    if not match:
+        raise ValidationError(message=msg)
+    return analysis_id
+
+class Resubmit(View):
+
+    def get(self, request, *args, **kwargs):
+        analysis_id = kwargs.get("analysis_id")
+        #analysis_id = request.GET.get("analysis_id")
+
+        if analysis_id:
+            try:
+                analysis_id = _validate_analysis_id(analysis_id)
+            except ValidationError as e:
+                return render(
+                    request, template_name="submit/index.html.jinja2",
+                    status=400, context={"error": str(e)}
+                )
+        else:
+            return HttpResponseBadRequest()
+
+        analysis = retriever.get_analysis(analysis_id).analysis
+
+
+        try:
+            s_maker = submit.settings_maker.new_settings()
+            s_maker.set_manual(True)
+
+            password = analysis.settings.password
+            if password:
+                s_maker.set_password(password)
+
+            settings = s_maker.make_settings()
+            if analysis.category == "file":
+                submit_path = AnalysisPaths.submitted_file(analysis_id, resolve=True)
+                analysis_id = submit.file(
+                    submit_path, settings, file_name=analysis.target.target
+                )
+            else:
+                analysis_id = submit.url(analysis.target.target, settings)
+        except submit.SubmissionError as e:
+            return render(
+                request, template_name="submit/index.html.jinja2",
+                status=400, context={"error": str(e)}
+            )
+
+        try:
+            submit.notify()
+        except submit.SubmissionError as e:
+            return HttpResponseServerError(
+                f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
+            )
+
+        return redirect("Submit/waitidentify", analysis_id=analysis_id)      
