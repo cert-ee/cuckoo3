@@ -204,7 +204,6 @@ class ElasticSearch(Reporter):
         try:
             update_analysis(
                 analysis_id=self.ctx.analysis.id,
-                score=self.ctx.analysis.score,
                 tags=self.ctx.tag_tracker.tags,
                 families=self.ctx.family_tracker.families,
                 ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
