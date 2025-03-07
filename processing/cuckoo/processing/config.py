@@ -77,12 +77,12 @@ typeloaders = {
     "mhr.yaml": {
         "enabled": config.Boolean(default_val=False),
         "timeout": config.Int(default_val=60, min_value=0),
-        "url": config.HTTPUrl(default_val="https://hash.cymru.com/v2/"),
+        "url": config.HTTPUrl(),
         "user": config.String(allow_empty=True),
         "password": config.String(allow_empty=True),
         "min_suspicious": config.Int(default_val=10, min_value=1),
-        "min_malicious": config.Int(default_val=17, min_value=1),
-    },
+        "min_malicious": config.Int(default_val=30, min_value=1),               
+    },    
     "misp.yaml": {
         "processing": {
             "enabled": config.Boolean(default_val=False),

@@ -135,7 +135,7 @@
 
         {# tab: static.mhr #}
         {% if pre.mhr is defined %}
-          {% if pre.mhr.antivirus_detection_rate %}
+          {% if pre.mhr %}
             <div role="region" id="mhr" hidden>
               {% include "analysis/components/mhr.html.jinja2" %}
             </div>

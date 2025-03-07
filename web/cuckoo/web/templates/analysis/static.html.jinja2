@@ -96,8 +96,8 @@
         {% endif %}
         {# tab: static.irma #}
         {% if pre.irma %}
-        <div id="tab-irma">
-            {% call ui_box(title="IRMA Antivirus Engines", has_padding=False, collapsed=True) %}
+        <div id="tab-irma" >
+            {% call ui_box(title="IRMA Antivirus Engines", has_padding=False, hidden=True) %}
               {{ render_table(
                   data=pre.irma.probe_results.antivirus,
                   cols=["engine_name","result"],

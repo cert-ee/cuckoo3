@@ -186,7 +186,9 @@ class MispClient:
                 for attribute in attributes['Attribute']
             ]
         except (ValueError, TypeError) as e:
-            return []
+            raise MispError(
+                f"Failure while reading MISP response JSON. Error: {e}"
+            )
 
     def find_file_md5(self, md5, limit=1, to_ids=1, publish_timestamp="365d"):
         return self.find_events(

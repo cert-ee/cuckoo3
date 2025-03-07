@@ -48,7 +48,7 @@ class _PEx509Cert:
 
     @property
     def sha512(self):
-        return self._cert_fingerprint_str(hashes.SHA256())
+        return self._cert_fingerprint_str(hashes.SHA512())   
 
     @property
     def serial_number(self):

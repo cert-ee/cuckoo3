@@ -54,7 +54,7 @@ class MHRInfoGather(Processor):
         """Wrapper around doing a request and parsing its JSON output."""
         try:
             r = requests.get(url, auth=HTTPBasicAuth(self.user, self.password),
-                                timeout=self.timeout, **kwargs)
+                                timeout=self.timeout, verify=False, **kwargs)
             return r.json() if r.status_code == 200 else {}
         except (requests.ConnectionError, ValueError) as e:
             self.ctx.log.error(
@@ -78,7 +78,6 @@ class MHRInfoGather(Processor):
 
 
     def start(self):
-        info = None
         antivirus_detection_rate = None
         if self.ctx.analysis.category == "file":
             info = self._handle_file_target()
@@ -96,7 +95,6 @@ class MHRInfoGather(Processor):
                 score = Scores.SUSPICIOUS
         else:
             return {}
-
         if score:
             iocs = [
                 IOC(antivirus="MHR", result=info["antivirus_detection_rate"])
@@ -108,7 +106,7 @@ class MHRInfoGather(Processor):
                 short_description="MHR sources report this target as "
                                   "malicious",
                 description=f"{info['antivirus_detection_rate']} percentage of tested MHR antivirus engines"
-                            f" detect this target as malicious",
+                            f"detect this target as malicious",
                 iocs=iocs
             )
 

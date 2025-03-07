@@ -74,7 +74,7 @@
           </div>
         {% endif %}
         {% if (("submittedfiledownload" | feature_enabled) and (filedownload_allowed is sameas true) and (analysis.category == "file")) %}
-          <a href="{{ url('Analysis/submittedfile', args=[analysis.id]) }}" class="button is-small has-margin-y">Download submitted file</a>
+          <a href="{{ url('Analysis/submittedfile', args=[analysis.id]) }}" class="button is-small has-margin-y">Download submitted file {{filedownload_allowed}}</a>
         {% endif %}
         <a onclick="deleteSubmission('{{ analysis.id}}')" class="button is-small has-margin-y">Delete analysis</a>
         <a onclick="reSubmission('{{ analysis.id}}')" class="button is-small has-margin-y">Resubmit</a>

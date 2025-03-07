@@ -64,3 +64,6 @@ bower_components/
 .sass-cache/
 cuckoo/web/src/package-lock.json
 *.map
+
+# Vagrant
+.vagrant
