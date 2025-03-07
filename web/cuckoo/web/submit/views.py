@@ -12,6 +12,7 @@ from django.http import (
 from django.shortcuts import render, redirect
 from django.views import View
 import re
+import logging
 
 from cuckoo.common import submit, analyses
 from cuckoo.common.config import cfg
@@ -238,8 +239,9 @@ class Resubmit(View):
         try:
             submit.notify()
         except submit.SubmissionError as e:
+            logging.error(f"Failed to notify Cuckoo of new analysis {analysis_id}. Exception: {e}")
             return HttpResponseServerError(
-                f"Failed to notify Cuckoo of new analysis {analysis_id}. {e}."
+                "Failed to notify Cuckoo of new analysis. Please try again later."
             )
 
         return redirect("Submit/waitidentify", analysis_id=analysis_id)      
