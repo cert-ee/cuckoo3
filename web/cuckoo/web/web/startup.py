@@ -47,15 +47,25 @@ def _init_elasticsearch_web():
     password = cfg("web.yaml", "elasticsearch", "password", subpkg="web")
     ca_certs = cfg("web.yaml", "elasticsearch", "ca_certs", subpkg="web")
 
-    init_elasticsearch(
-        hosts,
-        indices,
-        max_result_window=max_window,
-        create_missing_indices=False,
-        user=user,
-        password=password,
-        ca_certs=ca_certs,
-    )
+    if "https://" in hosts[0]:
+        init_elasticsearch(
+            hosts,
+            indices,
+            max_result_window=max_window,
+            create_missing_indices=False,
+            user=user,
+            password=password,
+            ca_certs=ca_certs,
+        )
+    else:
+        init_elasticsearch(
+            hosts,
+            indices,
+            max_result_window=max_window,
+            create_missing_indices=False,
+            user=user,
+            password=password,
+        )
 
 
 def _init_statistics_web():
