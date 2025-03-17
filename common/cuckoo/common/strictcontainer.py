@@ -8,6 +8,7 @@ import dateutil.parser
 
 from .storage import safe_json_dump, split_analysis_id
 from .log import CuckooGlobalLogger
+from vt.object import WhistleBlowerDict
 
 log = CuckooGlobalLogger(__name__)
 
@@ -32,6 +33,9 @@ def serialize_disk_json(obj):
 
     if isinstance(obj, StrictContainer):
         return obj.to_dict()
+
+    if isinstance(obj, WhistleBlowerDict):
+        return dict(obj)
 
     log.warning(
         "Unhandled object type in JSON disk serialization", object=repr(obj),
