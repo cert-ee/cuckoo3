@@ -95,10 +95,29 @@ class _ESManager:
         self._initialized = True
 
     def verify(self):
-        if not self.client.ping():
+        log.debug("Connecting to Elasticsearch.")
+        if self.client.ping():
+            verified = True
+            failures = 0
+        else:
+            verified = False
+            failures = 1
+
+        while not verified and failures < 6:
+            time.sleep(10)
+            if not self.client.ping():
+                failures += 1
+            else:
+                verified = True
+
+        if not verified:
             raise ElasticSearchError(
                 "Could not connect to Elasticsearch host(s)"
             )
+        elif failures > 0:
+           log.warn(f"Connected to Elasticsearch host after {failures} attempts.")
+        else:
+            log.debug("Connected to Elasticsearch host.")
 
     def all_indices_exist(self):
         self.verify()
