@@ -1,8 +1,8 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: '[FEATURE]: '
-labels: ['feature']
+title: '[IMPROVEMENT]: '
+labels: ['improvement']
 assignees: ''
 
 ---
@@ -19,7 +19,7 @@ _Describe the solution you'd like.
 Propose a clear and concise description of what you want to happen._
 
 _Describe alternatives you've considered
-Describe a﻿ clear and concise description of any alternative solutions or features you've considered._
+Describe a clear and concise description of any alternative solutions or features you've considered._
 
 ## Additional context
 _Additional context
