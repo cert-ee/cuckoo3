@@ -15,6 +15,7 @@ urlpatterns = [
     path("<task_id:task_id>/machine", views.Machine.as_view()),
     path("<task_id:task_id>/composite", views.CompositeTask.as_view()),
     path("<task_id:task_id>/pcap", views.Pcap.as_view()),
+    path("<task_id:task_id>/tlsmaster", views.TLSMaster.as_view()),
     path(
         "<task_id:task_id>/screenshot/<screenshot:screenshot>",
         views.Screenshot.as_view()

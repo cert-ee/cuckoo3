@@ -190,6 +190,9 @@ class TaskResult(Result):
     def _get_screenshot_fp(self, name):
         raise NotImplementedError
 
+    def _get_tlsmaster_fp(self):
+        raise NotImplementedError
+
     def load_requested(self, missing_report_default=None):
         if Results.ANALYSIS in self._include:
             self._load_analysis()
@@ -227,6 +230,10 @@ class TaskResult(Result):
 
     def screenshot(self, name):
         return self._get_screenshot_fp(name)
+
+    @property
+    def tlsmaster(self):
+        return self._get_tlsmaster_fp()
 
     def to_dict(self):
         d = {}
@@ -289,6 +296,13 @@ class LocalTaskResult(TaskResult):
             raise ResultDoesNotExistError("No PCAP found for task")
 
         return open(pcap_path, "rb")
+
+    def _get_tlsmaster_fp(self):
+        tlsmaster_path = TaskPaths.tlsmaster(self.task_id)
+        if not tlsmaster_path.is_file():
+            raise ResultDoesNotExistError("No TLS keys found for task")
+
+        return open(tlsmaster_path, "rb")
 
     def _get_screenshot_fp(self, name):
         screenshot_path = TaskPaths.screenshot(self.task_id, name)
@@ -373,6 +387,14 @@ class RemoteTask(TaskResult):
             raise ResultDoesNotExistError("No PCAP found for task")
         except ClientError as e:
             raise ResultError(f"Failed to retrieve PCAP: {e}")
+
+    def _get_tlsmaster_fp(self, name):
+        try:
+            return self._api.task_tlsmaster(self.analysis_id, self.task_id)
+        except APIDoesNotExistError:
+            raise ResultDoesNotExistError("No TLS keys found for task")
+        except ClientError as e:
+            raise ResultError(f"Failed to retrieve TLS keys: {e}")
 
     def _get_screenshot_fp(self, name):
         try:

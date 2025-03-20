@@ -19,6 +19,19 @@ class Pcap(View):
             pcap_fp, as_attachment=True, filename=f"{task_id}.pcap"
         )
 
+class TLSMaster(View):
+
+    def get(self, request, analysis_id, task_id):
+        try:
+            task = retriever.get_task(analysis_id, task_id)
+            tlsmaster_fp = task.tlsmaster
+        except ResultDoesNotExistError as e:
+            return HttpResponseNotFound(str(e))
+
+        return FileResponse(
+            tlsmaster_fp, as_attachment=True, filename=f"{task_id}_tlsmaster.txt"
+        )
+
 class Screenshot(View):
 
     def get(self, request, analysis_id, task_id, screenshot):

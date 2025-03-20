@@ -410,6 +410,11 @@ class APIClient:
             f"/analysis/{analysis_id}/task/{task_id}/pcap"
         )
 
+    def task_tlsmaster(self, analysis_id, task_id):
+        return self._do_streamdownload(
+            f"/analysis/{analysis_id}/task/{task_id}/tlsmaster"
+        )
+
     def task_screenshot(self, analysis_id, task_id, screenshot_name):
         return self._do_streamdownload(
             f"/analysis/{analysis_id}/task/"

@@ -11,6 +11,7 @@ register_converter(converters.ScreenshotName, "screenshot")
 
 urlpatterns = [
     path("<task_id:task_id>/pcap", views.Pcap.as_view(), name="Task/pcap"),
+    path("<task_id:task_id>/tlsmaster", views.TLSMaster.as_view(), name="Task/tlsmaster"),
     path(
         "<task_id:task_id>/screenshot/<screenshot:screenshot>",
         views.Screenshot.as_view(), name="Task/screenshot"
