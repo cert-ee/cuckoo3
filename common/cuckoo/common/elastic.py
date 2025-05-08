@@ -90,15 +90,38 @@ class _ESManager:
 
         self._max_result_window = max_result_window
         self._hosts = hosts
-        self._client = Elasticsearch(hosts, timeout=timeout,
-                                     http_auth=(user, password), ca_certs=ca_certs)
+        if ca_certs:
+            self._client = Elasticsearch(hosts, timeout=timeout,
+                                         http_auth=(user, password), ca_certs=ca_certs)
+        else:
+            self._client = Elasticsearch(hosts, timeout=timeout,
+                                         http_auth=(user, password))
         self._initialized = True
 
     def verify(self):
-        if not self.client.ping():
+        log.debug("Connecting to Elasticsearch.")
+        if self.client.ping():
+            verified = True
+            failures = 0
+        else:
+            verified = False
+            failures = 1
+
+        while not verified and failures < 6:
+            time.sleep(10)
+            if not self.client.ping():
+                failures += 1
+            else:
+                verified = True
+
+        if not verified:
             raise ElasticSearchError(
                 "Could not connect to Elasticsearch host(s)"
             )
+        elif failures > 0:
+           log.warn(f"Connected to Elasticsearch host after {failures} attempts.")
+        else:
+            log.debug("Connected to Elasticsearch host.")
 
     def all_indices_exist(self):
         self.verify()
@@ -134,7 +157,7 @@ class _ESManager:
         existing = []
         for name, realname in self._names_realnames.items():
             try:
-                if self.client.indices.exists(realname):
+                if self.client.indices.exists(index=realname):
                     existing.append(name)
             except (ApiError, TransportError) as e:
                 raise ElasticSearchError(
