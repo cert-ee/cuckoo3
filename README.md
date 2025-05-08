@@ -49,3 +49,7 @@ For the full list of things this script does, check out our [Quickstart walkthro
 ## IMPORTANT!
 **This is not a production ready solution just yet.  
 We highly advise you not to use it in production environment!**
+
+> ⚠️ Please avoid going to old Cuckoo related sites such as cuckoosandbox.org and others that have been neglected and/or compromised.
+
+We only serve Cuckoo3 content out of cert.ee domain and and not affiliated with other domains that contain Cuckoo content. 
