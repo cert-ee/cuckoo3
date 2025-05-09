@@ -1,6 +1,7 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+
 def normalize_winregistry(path):
     if not path or path[0] != "\\":
         return path
@@ -35,15 +36,14 @@ def normalize_winregistry(path):
             # No slash after the user part.
             user_part = path[15:]
 
-
         if path[userendslash:].startswith("\\wow6432node\\"):
-            path = f"{path[:userendslash]}{path[userendslash + 12:]}"
+            path = f"{path[:userendslash]}{path[userendslash + 12 :]}"
 
         if user_part.startswith("s-") and user_part.count("-") == 7:
             if user_part.endswith("_classes"):
-                return f"hkcu\\software\\classes{path[15 + len(user_part):]}"
+                return f"hkcu\\software\\classes{path[15 + len(user_part) :]}"
 
-            return f"hkcu{path[15 + len(user_part):]}"
+            return f"hkcu{path[15 + len(user_part) :]}"
 
         return f"hku{path[14:]}"
 

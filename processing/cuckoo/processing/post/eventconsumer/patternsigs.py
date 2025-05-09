@@ -10,16 +10,19 @@ from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.errors import PluginError
 from cuckoo.processing.event.events import Kinds
 from cuckoo.processing.signatures.signature import IOC
-from cuckoo.processing.signatures.pattern import (
-    PatternScanner, PatternSignatureError
-)
+from cuckoo.processing.signatures.pattern import PatternScanner, PatternSignatureError
 
 log = CuckooGlobalLogger(__name__)
 
-class PatternFinder(EventConsumer):
 
-    event_types = (Kinds.FILE, Kinds.REGISTRY, Kinds.PROCESS,
-                   Kinds.MUTANT, Kinds.SUSPICIOUS_EVENT)
+class PatternFinder(EventConsumer):
+    event_types = (
+        Kinds.FILE,
+        Kinds.REGISTRY,
+        Kinds.PROCESS,
+        Kinds.MUTANT,
+        Kinds.SUSPICIOUS_EVENT,
+    )
 
     platform_scanner = {}
 
@@ -27,19 +30,16 @@ class PatternFinder(EventConsumer):
     def init_once(cls):
         def add_sigfile_platform(sigfile_path, platform):
             log.debug(
-                "Loading signature file", filepath=sigfile_path,
-                platform=platform
+                "Loading signature file", filepath=sigfile_path, platform=platform
             )
             if platform not in cls.platform_scanner:
                 cls.platform_scanner[platform] = PatternScanner()
 
             try:
                 cls.platform_scanner[platform].load_sigfile(sigfile_path)
-            except (ValueError, TypeError, KeyError,
-                    PatternSignatureError) as e:
+            except (ValueError, TypeError, KeyError, PatternSignatureError) as e:
                 raise PluginError(
-                    f"Failed to load signature file: {sigfile_path}. "
-                    f"Error: {e}"
+                    f"Failed to load signature file: {sigfile_path}. Error: {e}"
                 ).with_traceback(e.__traceback__)
 
         # Read all pattern signature yml files and make a separate scanner
@@ -57,9 +57,7 @@ class PatternFinder(EventConsumer):
                 if not sigfile.endswith((".yml", ".yaml")):
                     continue
 
-                add_sigfile_platform(
-                    os.path.join(platform_path, sigfile), platform
-                )
+                add_sigfile_platform(os.path.join(platform_path, sigfile), platform)
 
         # Ask each created scanner to compile patterns of each signature
         # into a hyperscan database.
@@ -78,8 +76,7 @@ class PatternFinder(EventConsumer):
         self.scanner = self.platform_scanner.get(platform)
         if not self.scanner:
             self.taskctx.log.warning(
-                "No event pattern scanner for platform available",
-                platform=platform
+                "No event pattern scanner for platform available", platform=platform
             )
             return
 
@@ -97,24 +94,30 @@ class PatternFinder(EventConsumer):
 
         matched_patternsigs = self.match_tracker.get_matches()
         for match in matched_patternsigs:
-
             iocs = []
             for matchctx in match.get_iocs():
                 process = self.taskctx.process_tracker.lookup_process(
                     matchctx.event.procid
                 )
 
-                iocs.append(IOC(
-                    description=matchctx.event.description,
-                    value=matchctx.orig_str,
-                    process="" if process is None else process.process_name,
-                    process_id=matchctx.event.procid
-                ))
+                iocs.append(
+                    IOC(
+                        description=matchctx.event.description,
+                        value=matchctx.orig_str,
+                        process="" if process is None else process.process_name,
+                        process_id=matchctx.event.procid,
+                    )
+                )
 
             self.taskctx.signature_tracker.add_signature(
-                name=match.name, short_description=match.short_description,
-                description=match.description, score=match.score, iocs=iocs,
-                family=match.family, tags=match.tags, ttps=match.ttps
+                name=match.name,
+                short_description=match.short_description,
+                description=match.description,
+                score=match.score,
+                iocs=iocs,
+                family=match.family,
+                tags=match.tags,
+                ttps=match.ttps,
             )
 
     def cleanup(self):

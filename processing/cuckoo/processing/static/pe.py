@@ -12,7 +12,7 @@ import pefile
 import peutils
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization.pkcs7 import (
-    load_der_pkcs7_certificates
+    load_der_pkcs7_certificates,
 )
 from cryptography.x509 import extensions as x509extensions, general_name
 from cuckoo.common.storage import Paths
@@ -20,19 +20,17 @@ from sflock import magic as sflockmagic
 
 from ..errors import StaticAnalysisError
 
+
 class PEStaticAnalysisError(StaticAnalysisError):
     pass
 
 
 class _PEx509Cert:
-
     def __init__(self, cryptography_x509cert):
         self._cert = cryptography_x509cert
 
     def _cert_fingerprint_str(self, hashes_algo_instance):
-        return binascii.hexlify(
-            self._cert.fingerprint(hashes_algo_instance)
-        ).decode()
+        return binascii.hexlify(self._cert.fingerprint(hashes_algo_instance)).decode()
 
     @property
     def md5(self):
@@ -48,7 +46,7 @@ class _PEx509Cert:
 
     @property
     def sha512(self):
-        return self._cert_fingerprint_str(hashes.SHA512())   
+        return self._cert_fingerprint_str(hashes.SHA512())
 
     @property
     def serial_number(self):
@@ -150,7 +148,7 @@ class _PEx509Cert:
             "data_encipherment": extension.value.data_encipherment,
             "key_agreement": extension.value.key_agreement,
             "key_cert_sign": extension.value.key_cert_sign,
-            "crl_sign": extension.value.crl_sign
+            "crl_sign": extension.value.crl_sign,
         }
 
         if extension.value.key_agreement:
@@ -161,9 +159,7 @@ class _PEx509Cert:
 
     def _ext_extendedkeyusage(self, extension, extensions):
         # oid 2.5.29.37 - extendedKeyUsage
-        extensions[extension.oid._name] = [
-            usage._name for usage in extension.value
-        ]
+        extensions[extension.oid._name] = [usage._name for usage in extension.value]
 
     @property
     def extensions_dict(self):
@@ -175,7 +171,7 @@ class _PEx509Cert:
             "authorityInfoAccess": self._ext_authorityinfoaccess,
             "subjectAltName": self._ext_subjectaltname,
             "extendedKeyUsage": self._ext_extendedkeyusage,
-            "keyUsage": self._ext_keyusage
+            "keyUsage": self._ext_keyusage,
         }
 
         extensions = {}
@@ -200,12 +196,11 @@ class _PEx509Cert:
             "serial_number": self.serial_number,
             "subject": self.subject_dict,
             "issuer": self.issuer_dict,
-            "extensions": self.extensions_dict
+            "extensions": self.extensions_dict,
         }
 
 
 class PEFile:
-
     _peid_sigdb = None
 
     def __init__(self, filepath):
@@ -237,7 +232,7 @@ class PEFile:
             return []
 
         sec_entry = self._get_sec_dir_entry()
-        certdata = self._pe.write()[sec_entry.VirtualAddress + 8:]
+        certdata = self._pe.write()[sec_entry.VirtualAddress + 8 :]
         try:
             allcerts = load_der_pkcs7_certificates(bytes(certdata))
         except ValueError:
@@ -248,9 +243,7 @@ class PEFile:
         except ValueError as e:
             # Catch unhandled/unknown case value errors here and propagate
             # them as an error of this module.
-            raise StaticAnalysisError(
-                f"Unhandled PE x509 certificate error: {e}"
-            )
+            raise StaticAnalysisError(f"Unhandled PE x509 certificate error: {e}")
 
     def get_imported_symbols(self):
         """Return a list of dictionaries of imported symbols"""
@@ -263,17 +256,18 @@ class PEFile:
             symbols = []
             try:
                 for symbol in entry.imports:
-                    symbols.append({
-                        "address": hex(symbol.address),
-                        "name": "" if not symbol.name else symbol.name.decode(
-                            errors="replace"
-                        )
-                    })
+                    symbols.append(
+                        {
+                            "address": hex(symbol.address),
+                            "name": ""
+                            if not symbol.name
+                            else symbol.name.decode(errors="replace"),
+                        }
+                    )
 
-                imports.append({
-                    "dll": entry.dll.decode(errors="replace"),
-                    "imports": symbols
-                })
+                imports.append(
+                    {"dll": entry.dll.decode(errors="replace"), "imports": symbols}
+                )
             except pefile.PEFormatError:
                 # Do something with a format error? TODO
                 continue
@@ -287,15 +281,15 @@ class PEFile:
 
         exports = []
         for symbol in self._pe.DIRECTORY_ENTRY_EXPORT.symbols:
-            exports.append({
-                "address": hex(
-                    self._pe.OPTIONAL_HEADER.ImageBase + symbol.address
-                ),
-                "ordinal": symbol.ordinal,
-                "name": "" if not symbol.name else symbol.name.decode(
-                    errors="replace"
-                )
-            })
+            exports.append(
+                {
+                    "address": hex(self._pe.OPTIONAL_HEADER.ImageBase + symbol.address),
+                    "ordinal": symbol.ordinal,
+                    "name": ""
+                    if not symbol.name
+                    else symbol.name.decode(errors="replace"),
+                }
+            )
 
         return exports
 
@@ -304,15 +298,15 @@ class PEFile:
         sections = []
         for section in self._pe.sections:
             try:
-                sections.append({
-                    "name": section.Name.strip(b"\x00").decode(
-                        errors="replace"
-                    ),
-                    "virtual_address": f"{section.VirtualAddress:#010x}",
-                    "virtual_size": f"{section.Misc_VirtualSize:#010x}",
-                    "size_of_data": f"{section.SizeOfRawData:#010x}",
-                    "entropy": section.get_entropy()
-                })
+                sections.append(
+                    {
+                        "name": section.Name.strip(b"\x00").decode(errors="replace"),
+                        "virtual_address": f"{section.VirtualAddress:#010x}",
+                        "virtual_size": f"{section.Misc_VirtualSize:#010x}",
+                        "size_of_data": f"{section.SizeOfRawData:#010x}",
+                        "entropy": section.get_entropy(),
+                    }
+                )
             except pefile.PEFormatError:
                 continue
 
@@ -332,9 +326,7 @@ class PEFile:
             if resource_entry.name is not None:
                 name = str(resource_entry.name)
             else:
-                name = str(
-                    pefile.RESOURCE_TYPE.get(resource_entry.struct.Id)
-                )
+                name = str(pefile.RESOURCE_TYPE.get(resource_entry.struct.Id))
 
             for resource_dir in resource_entry.directory.entries:
                 if not hasattr(resource_dir, "directory"):
@@ -351,18 +343,18 @@ class PEFile:
                     except pefile.PEFormatError:
                         filetype = ""
 
-                    resources.append({
-                        "name": name,
-                        "offset": f"{data_offset:#010x}",
-                        "size": f"{data_size:#010x}",
-                        "filetype": filetype,
-                        "language": pefile.LANG.get(
-                            resource_lang.data.lang, None
-                        ),
-                        "sublanguage": pefile.get_sublang_name_for_lang(
-                            resource_lang.data.lang, resource_lang.data.sublang
-                        )
-                    })
+                    resources.append(
+                        {
+                            "name": name,
+                            "offset": f"{data_offset:#010x}",
+                            "size": f"{data_size:#010x}",
+                            "filetype": filetype,
+                            "language": pefile.LANG.get(resource_lang.data.lang, None),
+                            "sublanguage": pefile.get_sublang_name_for_lang(
+                                resource_lang.data.lang, resource_lang.data.sublang
+                            ),
+                        }
+                    )
 
         return resources
 
@@ -374,22 +366,25 @@ class PEFile:
 
         infos = []
         for info_list in self._pe.FileInfo:
-
             for info_entry in info_list:
                 if hasattr(info_entry, "StringTable"):
                     for row in info_entry.StringTable:
                         for col in row.entries.items():
-                            infos.append({
-                                "name": col[0].decode(errors="replace"),
-                                "value": col[1].decode(errors="replace")
-                            })
+                            infos.append(
+                                {
+                                    "name": col[0].decode(errors="replace"),
+                                    "value": col[1].decode(errors="replace"),
+                                }
+                            )
                 elif hasattr(info_entry, "Var"):
                     for entry in info_entry.Var:
                         if hasattr(entry, "entry"):
-                            infos.append({
-                                "name": list(entry.entry.keys())[0],
-                                "value": list(entry.entry.values())[0]
-                            })
+                            infos.append(
+                                {
+                                    "name": list(entry.entry.keys())[0],
+                                    "value": list(entry.entry.values())[0],
+                                }
+                            )
 
         return infos
 
@@ -418,8 +413,8 @@ class PEFile:
             return None
 
         try:
-             pdb_path = self._pe.DIRECTORY_ENTRY_DEBUG[0].entry.PdbFileName
-             return pdb_path.strip(b"\x00").decode(errors="replace")
+            pdb_path = self._pe.DIRECTORY_ENTRY_DEBUG[0].entry.PdbFileName
+            return pdb_path.strip(b"\x00").decode(errors="replace")
         except (pefile.PEFormatError, IndexError):
             return None
 

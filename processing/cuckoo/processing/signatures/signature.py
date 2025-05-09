@@ -1,6 +1,7 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+
 class Scores:
     NOTHING_DETECTED = 0
     INFORMATIONAL = 1
@@ -8,6 +9,7 @@ class Scores:
     LIKELY_MALICIOUS = 8
     MALICIOUS = 9
     KNOWN_BAD = 10
+
 
 class Levels:
     INFORMATIONAL = "informational"
@@ -21,7 +23,7 @@ class Levels:
         SUSPICIOUS: Scores.SUSPICIOUS,
         LIKELY_MALICIOUS: Scores.LIKELY_MALICIOUS,
         MALICIOUS: Scores.MALICIOUS,
-        KNOWN_BAD: Scores.KNOWN_BAD
+        KNOWN_BAD: Scores.KNOWN_BAD,
     }
 
     @classmethod
@@ -32,10 +34,19 @@ class Levels:
 
         return score
 
-class Signature:
 
-    def __init__(self, score, name, short_description, description="", iocs=[],
-                 ttps=[], tags=[], family=""):
+class Signature:
+    def __init__(
+        self,
+        score,
+        name,
+        short_description,
+        description="",
+        iocs=[],
+        ttps=[],
+        tags=[],
+        family="",
+    ):
         self.name = name
         self.short_description = short_description
 
@@ -62,11 +73,14 @@ class Signature:
     @classmethod
     def from_dict(cls, sigdict):
         return cls(
-            score=sigdict["score"], name=sigdict["name"],
+            score=sigdict["score"],
+            name=sigdict["name"],
             short_description=sigdict["short_description"],
-            description=sigdict["description"], iocs=sigdict["iocs"],
-            ttps=sigdict["ttps"], tags=sigdict["tags"],
-            family=sigdict["family"]
+            description=sigdict["description"],
+            iocs=sigdict["iocs"],
+            ttps=sigdict["ttps"],
+            tags=sigdict["tags"],
+            family=sigdict["family"],
         )
 
     def update_score(self, score):
@@ -79,7 +93,7 @@ class Signature:
             else:
                 self.score = score
 
-    def to_dict(self, max_iocs=100, max_ioc_size=20*1024):
+    def to_dict(self, max_iocs=100, max_ioc_size=20 * 1024):
         truncated = False
         iocs = list(self.iocs)[0:max_iocs]
         ioc_count = len(self.iocs)
@@ -96,18 +110,17 @@ class Signature:
             "iocs": {
                 "truncated": truncated,
                 "count": ioc_count,
-                "iocs": [ioc.to_dict(max_size=max_ioc_size) for ioc in iocs]
+                "iocs": [ioc.to_dict(max_size=max_ioc_size) for ioc in iocs],
             },
-            "score": self.score
+            "score": self.score,
         }
 
 
 class IOC:
-
     def __init__(self, **kwargs):
         self.ioc = kwargs
 
-    def to_dict(self, max_size=20*1024):
+    def to_dict(self, max_size=20 * 1024):
         ioc = {}
         truncated = False
         for k, v in self.ioc.items():
@@ -121,23 +134,24 @@ class IOC:
                 v = v[0:max_size] + msg
             ioc[k] = v
 
-        return {
-            "truncated": truncated,
-            "ioc": ioc
-        }
+        return {"truncated": truncated, "ioc": ioc}
 
     def __hash__(self):
-        return hash((
-            tuple(sorted(hash(k) for k in self.ioc.keys())),
-            tuple(sorted(
-                hash(v) for v in self.ioc.values()
-                if not isinstance(v, (dict, list))
-            )),
-        ))
+        return hash(
+            (
+                tuple(sorted(hash(k) for k in self.ioc.keys())),
+                tuple(
+                    sorted(
+                        hash(v)
+                        for v in self.ioc.values()
+                        if not isinstance(v, (dict, list))
+                    )
+                ),
+            )
+        )
 
 
 class SignatureTracker:
-
     def __init__(self, tagtracker, ttptracker, familytracker):
         self._triggered_signatures = {}
         self._tag_tracker = tagtracker
@@ -157,15 +171,23 @@ class SignatureTracker:
     def signatures(self):
         return [sig for sig in self._triggered_signatures.values()]
 
-    def signatures_to_dict(self, max_iocs=100, max_ioc_size=20*1024):
+    def signatures_to_dict(self, max_iocs=100, max_ioc_size=20 * 1024):
         return [
             sig.to_dict(max_iocs=max_iocs, max_ioc_size=max_ioc_size)
             for sig in self._triggered_signatures.values()
         ]
 
-    def _add_new_signature(self, score, name, short_description,
-                           description="", iocs=[], ttps=[], tags=[],
-                           family=""):
+    def _add_new_signature(
+        self,
+        score,
+        name,
+        short_description,
+        description="",
+        iocs=[],
+        ttps=[],
+        tags=[],
+        family="",
+    ):
         for tag in tags:
             self._tag_tracker.add_tag(tag)
 
@@ -176,13 +198,17 @@ class SignatureTracker:
             self._family_tracker.add_family(family)
 
         self._triggered_signatures[name] = Signature(
-            score=score, name=name, short_description=short_description,
-            description=description, iocs=iocs, ttps=ttps, tags=tags,
-            family=family
+            score=score,
+            name=name,
+            short_description=short_description,
+            description=description,
+            iocs=iocs,
+            ttps=ttps,
+            tags=tags,
+            family=family,
         )
 
-    def _update_signature(self, signature, score, iocs=[], ttps=[], tags=[],
-                          family=""):
+    def _update_signature(self, signature, score, iocs=[], ttps=[], tags=[], family=""):
         for tag in tags:
             self._tag_tracker.add_tag(tag)
             if tag not in signature.tags:
@@ -199,18 +225,30 @@ class SignatureTracker:
         signature.add_iocs(iocs)
         signature.update_score(score)
 
-    def add_signature(self, score, name, short_description, description="",
-                      iocs=[], ttps=[], tags=[], family=""):
-
+    def add_signature(
+        self,
+        score,
+        name,
+        short_description,
+        description="",
+        iocs=[],
+        ttps=[],
+        tags=[],
+        family="",
+    ):
         signature = self._triggered_signatures.get(name)
         if not signature:
             self._add_new_signature(
-                score=score, name=name, short_description=short_description,
-                description=description, iocs=iocs, ttps=ttps, tags=tags,
-                family=family
+                score=score,
+                name=name,
+                short_description=short_description,
+                description=description,
+                iocs=iocs,
+                ttps=ttps,
+                tags=tags,
+                family=family,
             )
         else:
             self._update_signature(
-                signature, score=score, iocs=iocs, ttps=ttps, tags=tags,
-                family=family
+                signature, score=score, iocs=iocs, ttps=ttps, tags=tags, family=family
             )

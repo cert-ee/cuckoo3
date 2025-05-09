@@ -6,16 +6,32 @@ from binascii import a2b_hex
 from cuckoo.processing import abtracts
 from cuckoo.processing.event import registrytools, processtools, filetools
 from cuckoo.processing.event.events import (
-    File, FileActions, Process, ProcessStatuses, Registry, RegistryActions,
-    RegistryValueTypes, REGISTRY_ACTION_EFFECT, ProcessInjection,
-    ProcessInjectActions, NetworkFlow, Mutant, MutantActions, SuspiciousEvent,
-    SuspiciousEvents
+    File,
+    FileActions,
+    Process,
+    ProcessStatuses,
+    Registry,
+    RegistryActions,
+    RegistryValueTypes,
+    REGISTRY_ACTION_EFFECT,
+    ProcessInjection,
+    ProcessInjectActions,
+    NetworkFlow,
+    Mutant,
+    MutantActions,
+    SuspiciousEvent,
+    SuspiciousEvents,
 )
 from google.protobuf import message
 
 from . import (
-    file_pb2, inject_pb2, mutant_pb2, network_pb2, process_pb2, registry_pb2,
-    suspicious_pb2
+    file_pb2,
+    inject_pb2,
+    mutant_pb2,
+    network_pb2,
+    process_pb2,
+    registry_pb2,
+    suspicious_pb2,
 )
 
 _FILE_ACTION_TRANSLATE = {
@@ -25,8 +41,9 @@ _FILE_ACTION_TRANSLATE = {
     file_pb2.CreateModify: FileActions.CREATE_MODIFY,
     file_pb2.Delete: FileActions.DELETE,
     file_pb2.Rename: FileActions.RENAME,
-    file_pb2.Truncate: FileActions.TRUNCATE
+    file_pb2.Truncate: FileActions.TRUNCATE,
 }
+
 
 def _translate_file_event(threemon_file, ctx):
     normalized_action = _FILE_ACTION_TRANSLATE.get(threemon_file.kind)
@@ -40,13 +57,15 @@ def _translate_file_event(threemon_file, ctx):
         ctx.file_ids.add_path(threemon_file.id, threemon_file.srcpath)
 
     return File(
-        ts=threemon_file.ts, action=normalized_action,
+        ts=threemon_file.ts,
+        action=normalized_action,
         pid=threemon_file.pid,
         procid=ctx.processes.lookup_procid(threemon_file.pid),
-        srcpath=threemon_file.srcpath, dstpath=threemon_file.dstpath,
+        srcpath=threemon_file.srcpath,
+        dstpath=threemon_file.dstpath,
         status=threemon_file.status,
         srcpath_normalized=filetools.normalize_winpath(threemon_file.srcpath),
-        dstpath_normalized=filetools.normalize_winpath(threemon_file.dstpath)
+        dstpath_normalized=filetools.normalize_winpath(threemon_file.dstpath),
     )
 
 
@@ -54,8 +73,9 @@ _PROCESS_STATUS_TRANSLATE = {
     process_pb2.Existing: ProcessStatuses.EXISTING,
     process_pb2.Ignore: ProcessStatuses.IGNORED,
     process_pb2.Create: ProcessStatuses.CREATED,
-    process_pb2.Terminate: ProcessStatuses.TERMINATED
+    process_pb2.Terminate: ProcessStatuses.TERMINATED,
 }
+
 
 def _translate_process_event(threemon_process, ctx):
     normalized_status = _PROCESS_STATUS_TRANSLATE.get(threemon_process.status)
@@ -66,27 +86,37 @@ def _translate_process_event(threemon_process, ctx):
         procid, parent_procid = ctx.processes.terminated_process(
             threemon_process.ts, threemon_process.pid
         )
-    elif normalized_status in (ProcessStatuses.EXISTING,
-                               ProcessStatuses.IGNORED,
-                               ProcessStatuses.CREATED):
+    elif normalized_status in (
+        ProcessStatuses.EXISTING,
+        ProcessStatuses.IGNORED,
+        ProcessStatuses.CREATED,
+    ):
         procid, parent_procid = ctx.processes.new_process(
-            threemon_process.ts, threemon_process.pid, threemon_process.ppid,
-            threemon_process.image, threemon_process.command,
-            tracked=normalized_status==ProcessStatuses.CREATED
+            threemon_process.ts,
+            threemon_process.pid,
+            threemon_process.ppid,
+            threemon_process.image,
+            threemon_process.command,
+            tracked=normalized_status == ProcessStatuses.CREATED,
         )
     else:
         raise ValueError(f"Unexpected process state: {normalized_status}")
 
     return Process(
-        ts=threemon_process.ts, status=normalized_status,
-        pid=threemon_process.pid, ppid=threemon_process.ppid,
-        procid=procid, parentprocid=parent_procid,
-        image=threemon_process.image, commandline=threemon_process.command,
+        ts=threemon_process.ts,
+        status=normalized_status,
+        pid=threemon_process.pid,
+        ppid=threemon_process.ppid,
+        procid=procid,
+        parentprocid=parent_procid,
+        image=threemon_process.image,
+        commandline=threemon_process.command,
         exit_code=threemon_process.exit_status,
         commandline_normalized=processtools.normalize_wincommandline(
             threemon_process.command, threemon_process.image
-        )
+        ),
     )
+
 
 _REGISTRY_ACTION_TRANSLATE = {
     registry_pb2.CreateKey: RegistryActions.CREATE_KEY,
@@ -108,7 +138,7 @@ _REGISTRY_ACTION_TRANSLATE = {
     registry_pb2.DeleteValueKey: RegistryActions.DELETE_VALUE_KEY,
     registry_pb2.SetValueKeyInt: RegistryActions.SET_VALUE,
     registry_pb2.SetValueKeyStr: RegistryActions.SET_VALUE,
-    registry_pb2.SetValueKeyDat: RegistryActions.SET_VALUE
+    registry_pb2.SetValueKeyDat: RegistryActions.SET_VALUE,
 }
 
 reg_read_ignore = (
@@ -127,14 +157,12 @@ reg_read_ignore = (
     "\\software\\classes\\internetshortcut\\",
 )
 
-hives = (
-    "\\registry\\machine",
-    "\\registry\\user"
-)
+hives = ("\\registry\\machine", "\\registry\\user")
 
 reg_read_ignorellist = tuple(
     [f"{hive}{key}" for hive in hives for key in reg_read_ignore]
 )
+
 
 def remove_user_id(k):
     k = k.lower()
@@ -149,8 +177,10 @@ def remove_user_id(k):
 
     return f"{k[:14]}{k[offset:]}"
 
+
 def ignoredlisted_key(k):
     return remove_user_id(k).startswith(reg_read_ignorellist)
+
 
 def _translate_registry_event(threemon_registry, ctx):
     normalized_action = _REGISTRY_ACTION_TRANSLATE.get(threemon_registry.kind)
@@ -158,9 +188,7 @@ def _translate_registry_event(threemon_registry, ctx):
     # If event is not normalized, fall back to the name of the file access
     # event declared in the pb event format file.
     if not normalized_action:
-        normalized_action = registry_pb2.RegistryKind.Name(
-            threemon_registry.kind
-        )
+        normalized_action = registry_pb2.RegistryKind.Name(threemon_registry.kind)
 
     if threemon_registry.kind == registry_pb2.SetValueKeyInt:
         valuetype = RegistryValueTypes.INTEGER
@@ -179,61 +207,66 @@ def _translate_registry_event(threemon_registry, ctx):
             if ignoredlisted_key(threemon_registry.path):
                 return None
 
-
     return Registry(
-        ts=threemon_registry.ts, action=normalized_action,
-        status=threemon_registry.status, pid=threemon_registry.pid,
+        ts=threemon_registry.ts,
+        action=normalized_action,
+        status=threemon_registry.status,
+        pid=threemon_registry.pid,
         procid=ctx.processes.lookup_procid(threemon_registry.pid),
-        path=threemon_registry.path, value=val, valuetype=valuetype,
-        path_normalized=registrytools.normalize_winregistry(
-            threemon_registry.path
-        )
+        path=threemon_registry.path,
+        value=val,
+        valuetype=valuetype,
+        path_normalized=registrytools.normalize_winregistry(threemon_registry.path),
     )
+
 
 _INJECTION_ACTION_TRANSLATE = {
     inject_pb2.CreateRemoteThread: ProcessInjectActions.CREATE_REMOTE_THREAD,
     inject_pb2.ShellTrayWindow: ProcessInjectActions.SHELL_TRAYWINDOW,
-    inject_pb2.QueueUserAPC: ProcessInjectActions.QUEUE_USER_APC
+    inject_pb2.QueueUserAPC: ProcessInjectActions.QUEUE_USER_APC,
 }
 
+
 def _translate_injection_event(threemon_injection, ctx):
-    normalized_action = _INJECTION_ACTION_TRANSLATE.get(
-        threemon_injection.technique
-    )
+    normalized_action = _INJECTION_ACTION_TRANSLATE.get(threemon_injection.technique)
 
     # If event is not normalized, fall back to the name of the injection
     # event declared in the pb event format file.
     if not normalized_action:
-        normalized_action = inject_pb2.Technique.Name(
-            threemon_injection.technique
-        )
+        normalized_action = inject_pb2.Technique.Name(threemon_injection.technique)
 
     # Mark the injected process as tracked, since it is now under control
     # of whatever injected it.
     ctx.processes.set_tracked(threemon_injection.dstpid, injected=True)
 
     return ProcessInjection(
-        ts=threemon_injection.ts, action=normalized_action,
+        ts=threemon_injection.ts,
+        action=normalized_action,
         pid=threemon_injection.srcpid,
         procid=ctx.processes.lookup_procid(threemon_injection.srcpid),
         dstpid=threemon_injection.dstpid,
-        dstprocid=ctx.processes.lookup_procid(threemon_injection.dstpid)
+        dstprocid=ctx.processes.lookup_procid(threemon_injection.dstpid),
     )
+
 
 def _translate_networkflow_event(threemon_netflow, ctx):
     return NetworkFlow(
-        ts=threemon_netflow.ts, pid=threemon_netflow.pid,
+        ts=threemon_netflow.ts,
+        pid=threemon_netflow.pid,
         proto_number=threemon_netflow.proto,
         procid=ctx.processes.lookup_procid(threemon_netflow.pid),
-        srcip=threemon_netflow.srcip, srcport=threemon_netflow.srcport,
-        dstip=threemon_netflow.dstip, dstport=threemon_netflow.dstport
+        srcip=threemon_netflow.srcip,
+        srcport=threemon_netflow.srcport,
+        dstip=threemon_netflow.dstip,
+        dstport=threemon_netflow.dstport,
     )
 
 
 _MUTANT_ACTION_TRANSLATE = {
     mutant_pb2.MutantCreate: MutantActions.CREATE,
-    mutant_pb2.MutantOpen: MutantActions.OPEN
+    mutant_pb2.MutantOpen: MutantActions.OPEN,
 }
+
 
 def _translate_mutant_event(threemon_mutant, ctx):
     normalized_action = _MUTANT_ACTION_TRANSLATE.get(threemon_mutant.action)
@@ -241,11 +274,14 @@ def _translate_mutant_event(threemon_mutant, ctx):
         return
 
     return Mutant(
-        ts=threemon_mutant.ts, action=normalized_action,
-        status=threemon_mutant.status, pid=threemon_mutant.pid,
+        ts=threemon_mutant.ts,
+        action=normalized_action,
+        status=threemon_mutant.status,
+        pid=threemon_mutant.pid,
         procid=ctx.processes.lookup_procid(threemon_mutant.pid),
-        path=threemon_mutant.path
+        path=threemon_mutant.path,
     )
+
 
 _SUSPICIOUS_EVENT_TRANSLATE = {
     suspicious_pb2.UnmapMainImage: SuspiciousEvents.UNMAPMAINIMAGE,
@@ -264,15 +300,14 @@ _SUSPICIOUS_EVENT_TRANSLATE = {
     suspicious_pb2.SetThreadContext: SuspiciousEvents.SETTHREADCONTEXT,
     suspicious_pb2.EnumeratesProcesses: SuspiciousEvents.ENUMERATES_PROCESSES,
     suspicious_pb2.MapViewOfSection: SuspiciousEvents.MAPVIEWOFSECTION,
-    suspicious_pb2.LoadsDriver: SuspiciousEvents.LOADSDRIVER
+    suspicious_pb2.LoadsDriver: SuspiciousEvents.LOADSDRIVER,
 }
+
 
 def _translate_suspicious_event(threemon_suspicious, ctx):
     normalized = _SUSPICIOUS_EVENT_TRANSLATE.get(threemon_suspicious.event)
     if not normalized:
-        normalized = suspicious_pb2.SuspiciousEvent.Name(
-            threemon_suspicious.event
-        )
+        normalized = suspicious_pb2.SuspiciousEvent.Name(threemon_suspicious.event)
 
     args = []
     if threemon_suspicious.arg1:
@@ -280,22 +315,26 @@ def _translate_suspicious_event(threemon_suspicious, ctx):
     if threemon_suspicious.arg2:
         args.append(threemon_suspicious.arg2)
 
-    if normalized in (SuspiciousEvents.EXECUTES_DROPPED_EXE,
-                      SuspiciousEvents.LOADS_DROPPED_DLL):
+    if normalized in (
+        SuspiciousEvents.EXECUTES_DROPPED_EXE,
+        SuspiciousEvents.LOADS_DROPPED_DLL,
+    ):
         args[0] = ctx.file_ids.get_path(threemon_suspicious.arg1)
 
     return SuspiciousEvent(
-        ts=threemon_suspicious.ts, eventname=normalized,
+        ts=threemon_suspicious.ts,
+        eventname=normalized,
         pid=threemon_suspicious.pid,
         procid=ctx.processes.lookup_procid(threemon_suspicious.pid),
-        args=tuple(args)
+        args=tuple(args),
     )
+
 
 def _translate_tls_session(threemon_tlssession, ctx):
     ctx.tlssessions.add_session(
         client_random=a2b_hex(threemon_tlssession.arg0),
         server_random=a2b_hex(threemon_tlssession.arg1),
-        master_secret=a2b_hex(threemon_tlssession.arg2)
+        master_secret=a2b_hex(threemon_tlssession.arg2),
     )
 
 
@@ -312,13 +351,12 @@ _kindmap = {
     # 14: (whois_pb2.Whois,),
     # 15: (vminfo_pb2.Vminfo,),
     # 16: (mutant_pb2.Event,),
-    105: (network_pb2.MasterSecret, _translate_tls_session)
+    105: (network_pb2.MasterSecret, _translate_tls_session),
     # 126: (debug_pb2.Debug,)
 }
 
 
 class _FileIdTracker:
-
     def __init__(self):
         self._files = {}
 
@@ -331,8 +369,8 @@ class _FileIdTracker:
     def clear(self):
         self._files = {}
 
-class _TranslateContext:
 
+class _TranslateContext:
     def __init__(self, taskctx):
         self.processes = taskctx.process_tracker
         self.tlssessions = taskctx.network.tls
@@ -343,7 +381,6 @@ class _TranslateContext:
 
 
 class ThreemonReader(abtracts.LogFileTranslator):
-
     name = "Threemon reader"
     supports = ("threemon.pb",)
 
@@ -381,19 +418,16 @@ class ThreemonReader(abtracts.LogFileTranslator):
             try:
                 kind_instance.ParseFromString(data)
             except message.DecodeError as e:
-                self._taskctx.log.warning(
-                    "Threemon protobuf decoding error", error=e
-                )
+                self._taskctx.log.warning("Threemon protobuf decoding error", error=e)
                 continue
 
             try:
-                normalized = decoder_normalizer[1](
-                    kind_instance, translate_context
-                )
+                normalized = decoder_normalizer[1](kind_instance, translate_context)
             except ValueError as e:
                 self._taskctx.log.warning(
                     "Threemon event translation error in translator handler",
-                    error=e, handler=decoder_normalizer[1]
+                    error=e,
+                    handler=decoder_normalizer[1],
                 )
                 continue
             except processtools.UnknownProcessError:

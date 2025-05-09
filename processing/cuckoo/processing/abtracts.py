@@ -1,6 +1,7 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+
 class Processor:
     """Abstract for a module that performs some kind of processing for an
     analysis or task.
@@ -38,6 +39,7 @@ class Processor:
     def cleanup(self):
         pass
 
+
 class Reporter:
     """Abstract for a module that performs some kind of results storing for an
     analysis or task.
@@ -56,12 +58,12 @@ class Reporter:
 
         # Build a mapping of stage:handlermethod. Only add the method for
         # the stage if the method of our current instance is implemented.
-        for stage, method in (("identification", self.report_identification),
-                              ("pre", self.report_pre_analysis),
-                              ("post", self.report_post_analysis)):
-            if method.__func__ is not getattr(
-                    Reporter, method.__func__.__name__
-            ):
+        for stage, method in (
+            ("identification", self.report_identification),
+            ("pre", self.report_pre_analysis),
+            ("post", self.report_post_analysis),
+        ):
+            if method.__func__ is not getattr(Reporter, method.__func__.__name__):
                 self.handlers[stage] = method
 
     @classmethod
@@ -86,6 +88,7 @@ class Reporter:
 
     def cleanup(self):
         pass
+
 
 class LogFileTranslator:
     """The abstract class each logfile (logs/) reader must implement"""
@@ -122,8 +125,8 @@ class LogFileTranslator:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._close_log()
 
-class EventConsumer:
 
+class EventConsumer:
     ORDER = 999
     event_types = ()
     CATEGORY = []

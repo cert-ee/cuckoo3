@@ -17,6 +17,7 @@ from ..errors import CancelProcessing
 
 set_logger_level("PIL.Image", logging.WARNING)
 
+
 def find_target_in_archive(archive, extraction_paths):
     current = None
     for path in extraction_paths:
@@ -33,8 +34,8 @@ def find_target_in_archive(archive, extraction_paths):
 
     return current
 
-def get_child(f, path):
 
+def get_child(f, path):
     parents = []
     for child in f.children:
         if child.relapath == path:
@@ -45,6 +46,7 @@ def get_child(f, path):
 
     for parent in parents:
         return get_child(parent, path)
+
 
 def _make_ident_relapath(f):
     if not f.extension:
@@ -60,6 +62,7 @@ def _make_ident_relapath(f):
         filename = f"{f.filename}.{f.extension}"
 
     return str(Path(*relaparts[:-1] + (filename,)))
+
 
 def zipify_target(target_f, zip_path, original_filename=False):
     """Turns any type of archive into an equivalent .zip file."""
@@ -84,6 +87,7 @@ def zipify_target(target_f, zip_path, original_filename=False):
 
     return target_relapath
 
+
 def find_child_in_tree(file_dict, extraction_paths):
     current = None
     for path in extraction_paths:
@@ -100,10 +104,10 @@ def find_child_in_tree(file_dict, extraction_paths):
 
     return current
 
+
 def get_child_tree(file_dict, relapath):
     parents = []
     for child in file_dict.get("children", []):
-
         if child.get("relapath") == relapath:
             return child
 
@@ -113,8 +117,8 @@ def get_child_tree(file_dict, relapath):
     for parent in parents:
         return get_child_tree(parent, relapath)
 
-class DetermineTarget(Processor):
 
+class DetermineTarget(Processor):
     ORDER = 1
     KEY = "target"
 
@@ -137,16 +141,12 @@ class DetermineTarget(Processor):
         # Find file info in filetree.json
         treepath = AnalysisPaths.filetree(self.ctx.analysis.id)
         if not os.path.isfile(treepath):
-            raise CancelProcessing(
-                "Filetree.json not found. Cannot continue."
-            )
+            raise CancelProcessing("Filetree.json not found. Cannot continue.")
 
         with open(treepath, "r") as fp:
             target = find_child_in_tree(json.load(fp), extrpath)
             if not target:
-                raise CancelProcessing(
-                    f"Path: {extrpath} not found in file tree."
-                )
+                raise CancelProcessing(f"Path: {extrpath} not found in file tree.")
 
         # Do not use the identified filename/extension for the selected file
         # if the orig_filename setting is set to True.
@@ -159,17 +159,20 @@ class DetermineTarget(Processor):
             filename=filename,
             orig_filename=target["orig_filename"],
             platforms=target["platforms"],
-            machine_tags=target["machine_tags"], size=target["size"],
+            machine_tags=target["machine_tags"],
+            size=target["size"],
             filetype=target["finger"]["magic"],
             media_type=target["finger"]["mime"],
             extrpath=target["extrpath"],
             container=len(target["children"]) > 0,
-            sha512=target["sha512"], sha256=target["sha256"], 
-            sha1=target["sha1"], md5=target["md5"]
+            sha512=target["sha512"],
+            sha256=target["sha256"],
+            sha1=target["sha1"],
+            md5=target["md5"],
         )
 
-class CreateZip(Processor):
 
+class CreateZip(Processor):
     ORDER = 2
     CATEGORY = ["file"]
 
@@ -185,12 +188,10 @@ class CreateZip(Processor):
         try:
             f = sflock.unpack(
                 AnalysisPaths.submitted_file(self.ctx.analysis.id),
-                password=self.ctx.analysis.settings.password
+                password=self.ctx.analysis.settings.password,
             )
         except Exception as e:
-            self.ctx.log.exception(
-                "Unexpected Sflock unpacking failure.", error=e
-            )
+            self.ctx.log.exception("Unexpected Sflock unpacking failure.", error=e)
             raise CancelProcessing(f"Sflock unpacking failure. {e}")
 
         if f.mode:
@@ -201,8 +202,7 @@ class CreateZip(Processor):
         selected_file = find_target_in_archive(f, target.extrpath)
         if not selected_file:
             raise CancelProcessing(
-                f"Path: {target.extrpath} not found in container. No file to "
-                f"unpack"
+                f"Path: {target.extrpath} not found in container. No file to unpack"
             )
 
         # Store the unpacked file in the binaries folder so it can be retrieved
@@ -217,7 +217,10 @@ class CreateZip(Processor):
         # Re-zip file with original filename if this was specific in the
         # submission settings. This causes the identified file extension to
         # be ignored.
-        target.extrpath = [zipify_target(
-            selected_file, AnalysisPaths.zipified_file(self.ctx.analysis.id),
-            original_filename=self.ctx.analysis.settings.orig_filename
-        )]
+        target.extrpath = [
+            zipify_target(
+                selected_file,
+                AnalysisPaths.zipified_file(self.ctx.analysis.id),
+                original_filename=self.ctx.analysis.settings.orig_filename,
+            )
+        ]

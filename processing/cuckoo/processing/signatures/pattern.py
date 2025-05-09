@@ -9,21 +9,26 @@ from cuckoo.common.strictcontainer import StrictContainer
 
 from cuckoo.processing.signatures.signature import Levels
 
+
 class PatternSignatureError(Exception):
     pass
 
+
 # The flags used for each pattern that is added to a hyperscan database.
-_PATTERN_HYPERSCAN_FLAGS = hyperscan.HS_FLAG_CASELESS | \
-                           hyperscan.HS_FLAG_DOTALL | \
-                           hyperscan.HS_FLAG_SINGLEMATCH
+_PATTERN_HYPERSCAN_FLAGS = (
+    hyperscan.HS_FLAG_CASELESS
+    | hyperscan.HS_FLAG_DOTALL
+    | hyperscan.HS_FLAG_SINGLEMATCH
+)
 # The flags used for regexes that make up a safelist entry. Python re is
 # used for this.
 _SAFELIST_PYREGEX_FLAGS = re.IGNORECASE | re.DOTALL
 
-class _LoadedPatternTypes:
 
+class _LoadedPatternTypes:
     REGEX = "regex"
     INDICATOR = "indicator"
+
 
 class LoadedPattern:
     """A LoadedPattern represents one regex from a trigger of a signature.
@@ -40,11 +45,11 @@ class LoadedPattern:
         self.subtype = subtype
 
     def __str__(self):
-        return f"<id={self.id}, eventkind={self.eventkind}, " \
-               f"regex={self.regex}>"
+        return f"<id={self.id}, eventkind={self.eventkind}, regex={self.regex}>"
 
     def __repr__(self):
         return str(self)
+
 
 class LoadedIndicatorPattern:
     """A LoadedIndicatorPattern represents the definition or usage of the
@@ -65,8 +70,8 @@ class LoadedIndicatorPattern:
     def __repr__(self):
         return str(self)
 
-class TriggerSafelist:
 
+class TriggerSafelist:
     def __init__(self):
         self._images = set()
         self._eventkind_regex = {}
@@ -187,8 +192,8 @@ def _check_trigger(pattern_dict):
             f"type: {type(vals)}"
         )
 
-class LoadedSignature(StrictContainer):
 
+class LoadedSignature(StrictContainer):
     FIELDS = {
         "name": str,
         "short_description": str,
@@ -198,7 +203,7 @@ class LoadedSignature(StrictContainer):
         "score": int,
         "tags": list,
         "ttps": list,
-        "triggers": list
+        "triggers": list,
     }
     ALLOW_EMPTY = ("tags", "ttps", "family", "level", "description")
 
@@ -214,11 +219,10 @@ class LoadedSignature(StrictContainer):
         for trigger in self.triggers:
             _check_trigger(trigger)
 
+
 def _check_indicatorsdict(indicatorsdict):
     if not isinstance(indicatorsdict, dict):
-        raise TypeError(
-            "Indicators must be a dictionary of name keys"
-        )
+        raise TypeError("Indicators must be a dictionary of name keys")
 
     for key, indicatordict in indicatorsdict.items():
         if not isinstance(indicatordict, dict):
@@ -234,9 +238,7 @@ def _check_indicatorsdict(indicatorsdict):
 
         triggers = indicatordict.get("triggers")
         if not triggers:
-            raise KeyError(
-                f"Missing 'triggers' dictionary list for indicator {key!r}"
-            )
+            raise KeyError(f"Missing 'triggers' dictionary list for indicator {key!r}")
 
         if not isinstance(triggers, list):
             raise TypeError(
@@ -276,7 +278,6 @@ class LoadedSignatures:
     indicators."""
 
     def __init__(self):
-
         # Used to find out what signatures a specific pattern belongs to
         self.pattern_id_sigids = {}
         # Used to find what patterns a specific trigger has.
@@ -305,7 +306,7 @@ class LoadedSignatures:
         # if a matched pattern should be ignore for the trigger it is mapped
         # to.
         self.trigger_id_safelist = {}
-        
+
         self.name_indicator = {}
 
         self._pattern_count = 0
@@ -379,9 +380,7 @@ class LoadedSignatures:
         images = safelist_dict.pop("images", [])
         if images:
             if not isinstance(images, (list, str)):
-                raise ValueError(
-                    "Safelist images must be a list of string image paths"
-                )
+                raise ValueError("Safelist images must be a list of string image paths")
 
             if not isinstance(images, list):
                 images = [images]
@@ -422,9 +421,7 @@ class LoadedSignatures:
                     safelist = self._create_safelist(patterns)
                     break
                 else:
-                    p = self._get_pattern(
-                        entry, event_kind, subtype=subtype
-                    )
+                    p = self._get_pattern(entry, event_kind, subtype=subtype)
 
                 pattern_ids.add(p.id)
 
@@ -434,9 +431,7 @@ class LoadedSignatures:
         self.trigger_id_pattern_ids[trigger_id] = pattern_ids
 
         for pattern_id in pattern_ids:
-            self.pattern_id_trigger_id.setdefault(pattern_id, set()).add(
-                trigger_id
-            )
+            self.pattern_id_trigger_id.setdefault(pattern_id, set()).add(trigger_id)
 
         if safelist:
             self.trigger_id_safelist[trigger_id] = safelist
@@ -502,6 +497,7 @@ class LoadedSignatures:
                 )
 
             indicator = self._get_indicator_pattern(name)
+
             def _find_circular_reference(start_id, needle_id, first_run=True):
                 """Search for a path where needle_id is referenced in such
                 a way that it again reaches start_id, causing a circular
@@ -539,8 +535,7 @@ class LoadedSignatures:
                     if found:
                         path.extend(retpath)
                         path.append(
-                            (self.pattern_id_pattern[indicator_id],
-                             start_pattern)
+                            (self.pattern_id_pattern[indicator_id], start_pattern)
                         )
                         return True, path
 
@@ -554,13 +549,11 @@ class LoadedSignatures:
                     # circular reference if it is added to the current
                     # indicator. This can happen as indicators can reference
                     # other indicators.
-                    found, path = _find_circular_reference(
-                        indicator.id, pattern_id
-                    )
+                    found, path = _find_circular_reference(indicator.id, pattern_id)
                     if found:
                         cause = self.pattern_id_pattern[pattern_id]
-                        fmtpath = ', '.join(
-                            [f'{p[0].name} -> {p[1].name}' for p in path]
+                        fmtpath = ", ".join(
+                            [f"{p[0].name} -> {p[1].name}" for p in path]
                         )
                         raise PatternSignatureError(
                             f"Circular reference found. Indicator "
@@ -569,17 +562,17 @@ class LoadedSignatures:
                         )
 
                     # Add the indicator as a referencer of this pattern id.
-                    self.pattern_id_indicator.setdefault(
-                        pattern_id, set()
-                    ).add(indicator.id)
+                    self.pattern_id_indicator.setdefault(pattern_id, set()).add(
+                        indicator.id
+                    )
 
                 # Map all loaded triggers ids to this indicator. This
                 # information is later used to create pattern and signature
                 # objects that keep track of if an indicator fully matched
                 # or not.
-                self.indicator_id_trigger_ids.setdefault(
-                    indicator.id, set()
-                ).add(trigger_id)
+                self.indicator_id_trigger_ids.setdefault(indicator.id, set()).add(
+                    trigger_id
+                )
 
     def _load_sigfile_dict(self, sigfiledict):
         # Load indicators first, if there are any in this dictionary.
@@ -613,8 +606,16 @@ class MatchContext:
     """Holds the matched string, original string, and event object that
     caused a pattern to be matched."""
 
-    def __init__(self, matched_str, orig_str, event, kind, processing_ctx,
-                 subtype=None, extra_safelistdata=[]):
+    def __init__(
+        self,
+        matched_str,
+        orig_str,
+        event,
+        kind,
+        processing_ctx,
+        subtype=None,
+        extra_safelistdata=[],
+    ):
         self.matched_str = matched_str
         self.orig_str = orig_str
         self.event = event
@@ -648,6 +649,7 @@ class PatternMatches:
 
     def add_match(self, matchctx):
         self.matches.append(matchctx)
+
 
 class IndicatorPattern:
     """Similar to a trigger, but acts like a PatternMatches object. Is used
@@ -683,8 +685,8 @@ class IndicatorPattern:
 
 class Trigger:
     """Maps all created PatternMatches/IndicatorPattern objects to a
-     trigger id. Used to see if a specific trigger was matched and to
-     retrieve the matched events/iocs."""
+    trigger id. Used to see if a specific trigger was matched and to
+    retrieve the matched events/iocs."""
 
     def __init__(self, trigger_id, patterns, safelist=None):
         self.trigger_id = trigger_id
@@ -713,7 +715,6 @@ class Trigger:
                 break
 
             if self.safelist:
-
                 # Filter out matches that are safelisted. If any are left,
                 # the pattern was still matched.
                 iocs = self._filter_safelisted_iocs(pattern)
@@ -736,15 +737,24 @@ class Trigger:
 
         return self._pattern_iocs
 
+
 class Signature:
     """Maps all Trigger objects to itself. Should be created with information
     from LoadedSignature objects. There is minimal difference between these,
     except that this object keeps check if its triggers are triggered
     and can retrieve what events triggered them."""
 
-    def __init__(self, triggers, name, short_description, description, score,
-                 family="", tags=[], ttps=[]):
-
+    def __init__(
+        self,
+        triggers,
+        name,
+        short_description,
+        description,
+        score,
+        family="",
+        tags=[],
+        ttps=[],
+    ):
         self.triggers = triggers
         self.name = name
         self.short_description = short_description
@@ -771,11 +781,14 @@ class Signature:
         return iocs
 
     def __str__(self):
-        return f"<name={self.name}, tags={self.tags}, " \
-               f"short_description={self.short_description}>"
+        return (
+            f"<name={self.name}, tags={self.tags}, "
+            f"short_description={self.short_description}>"
+        )
 
     def __repr__(self):
         return str(self)
+
 
 class SigMatchTracker:
     """This is meant as a context object tracks each matched pattern.
@@ -829,8 +842,9 @@ class SigMatchTracker:
 
             triggers.append(
                 Trigger(
-                    trigger_id, patterns,
-                    self.loaded_sigs.trigger_id_safelist.get(trigger_id)
+                    trigger_id,
+                    patterns,
+                    self.loaded_sigs.trigger_id_safelist.get(trigger_id),
                 )
             )
 
@@ -842,21 +856,22 @@ class SigMatchTracker:
 
         loaded_sig = self.loaded_sigs.sigid_siginfo[sigid]
         self.sigid_sig[sigid] = Signature(
-            triggers=self._create_triggers(triggers_ids), name=loaded_sig.name,
+            triggers=self._create_triggers(triggers_ids),
+            name=loaded_sig.name,
             short_description=loaded_sig.short_description,
-            description=loaded_sig.description, score=loaded_sig.score,
-            family=loaded_sig.family, tags=loaded_sig.tags,
-            ttps=loaded_sig.ttps
+            description=loaded_sig.description,
+            score=loaded_sig.score,
+            family=loaded_sig.family,
+            tags=loaded_sig.tags,
+            ttps=loaded_sig.ttps,
         )
 
     def _create_indicator(self, indicator_id):
         """Creates the indicator and all indicators and signatures that
-         use it."""
+        use it."""
         trigger_ids = self.loaded_sigs.indicator_id_trigger_ids[indicator_id]
 
-        indicator = IndicatorPattern(
-            indicator_id, self._create_triggers(trigger_ids)
-        )
+        indicator = IndicatorPattern(indicator_id, self._create_triggers(trigger_ids))
         self.pattern_id_pattern[indicator_id] = indicator
 
         # Create indicators that reference this indicator.
@@ -878,14 +893,10 @@ class SigMatchTracker:
 
     def add_match(self, pattern_id, matchctx):
         # All signatures the matched pattern is a part of.
-        sig_ids = self.loaded_sigs.pattern_id_sigids.get(
-            pattern_id, []
-        )
+        sig_ids = self.loaded_sigs.pattern_id_sigids.get(pattern_id, [])
 
         # All indicators the matched pattern is a part of.
-        indicator_ids = self.loaded_sigs.pattern_id_indicator.get(
-            pattern_id, []
-        )
+        indicator_ids = self.loaded_sigs.pattern_id_indicator.get(pattern_id, [])
 
         # If the signature this pattern is part of does not yet exist, create
         # it so it can later be checked if it was fully matched.
@@ -909,6 +920,7 @@ class SigMatchTracker:
 
         return matched
 
+
 class PatternScanner:
     """The pattern scanner can load YAML signature files that contain
     signature and indicator declarations. The patterns from these signatures
@@ -930,20 +942,22 @@ class PatternScanner:
 
     def _create_scandb(self, eventkind, pattern_list):
         if eventkind in self._eventkind_scandb:
-            raise KeyError(
-                f"Scan db for event kind '{eventkind}' already exists"
-            )
+            raise KeyError(f"Scan db for event kind '{eventkind}' already exists")
 
-        expressions, pattern_ids, flags = zip(*[
-            (pattern.regex.encode(), pattern.id, _PATTERN_HYPERSCAN_FLAGS)
-            for pattern in pattern_list
-        ])
+        expressions, pattern_ids, flags = zip(
+            *[
+                (pattern.regex.encode(), pattern.id, _PATTERN_HYPERSCAN_FLAGS)
+                for pattern in pattern_list
+            ]
+        )
 
         hyperscan_db = hyperscan.Database()
         try:
             hyperscan_db.compile(
-                expressions=expressions, ids=pattern_ids,
-                elements=len(expressions), flags=flags
+                expressions=expressions,
+                ids=pattern_ids,
+                elements=len(expressions),
+                flags=flags,
             )
         except hyperscan.error as e:
             raise PatternSignatureError(
@@ -963,9 +977,9 @@ class PatternScanner:
             if loadedpattern.TYPE != _LoadedPatternTypes.REGEX:
                 continue
 
-            eventkind_patterns.setdefault(
-                loadedpattern.eventkind, []
-            ).append(loadedpattern)
+            eventkind_patterns.setdefault(loadedpattern.eventkind, []).append(
+                loadedpattern
+            )
 
         for eventkind, patterns in eventkind_patterns.items():
             # Map all pattern for a specific event kind to its pattern id
@@ -983,11 +997,16 @@ class PatternScanner:
 
         # Pass the original string and full event obj to match tracker.
         self.matchtracker.add_match(
-            pattern_id, MatchContext(
-                matched_str=ctx[0], orig_str=ctx[1], event=ctx[2],
-                kind=ctx[3], processing_ctx=ctx[4], subtype=ctx[5],
-                extra_safelistdata=ctx[6]
-            )
+            pattern_id,
+            MatchContext(
+                matched_str=ctx[0],
+                orig_str=ctx[1],
+                event=ctx[2],
+                kind=ctx[3],
+                processing_ctx=ctx[4],
+                subtype=ctx[5],
+                extra_safelistdata=ctx[6],
+            ),
         )
 
     def new_tracker(self):
@@ -1000,8 +1019,16 @@ class PatternScanner:
         """Clear out the current SigMatchTracker"""
         self.matchtracker = None
 
-    def scan(self, scan_str, orig_str, event, event_kind, processing_ctx=None,
-             event_subtype=None, extra_safelistdata=None):
+    def scan(
+        self,
+        scan_str,
+        orig_str,
+        event,
+        event_kind,
+        processing_ctx=None,
+        event_subtype=None,
+        extra_safelistdata=None,
+    ):
         """Scan the given 'scan_str' on the 'event_kind' database.
         A subtype of an event can be given to ignore a pattern match that does
         not match the subtype. E.G 'file write', instead of 'file'.
@@ -1010,9 +1037,7 @@ class PatternScanner:
         SigMatchTracker and added to the IOCs of matched patterns.
         """
         if not self.matchtracker:
-            raise ValueError(
-                "No scan can be performed if no tracker was created"
-            )
+            raise ValueError("No scan can be performed if no tracker was created")
 
         scandb = self._eventkind_scandb.get(event_kind)
         if not scandb:
@@ -1022,7 +1047,15 @@ class PatternScanner:
             scan_str = scan_str.encode("utf-8")
 
         scandb.scan(
-            scan_str, self._on_match,
-            context=(scan_str, orig_str, event, event_kind, processing_ctx,
-                     event_subtype, extra_safelistdata)
+            scan_str,
+            self._on_match,
+            context=(
+                scan_str,
+                orig_str,
+                event,
+                event_kind,
+                processing_ctx,
+                event_subtype,
+                extra_safelistdata,
+            ),
         )

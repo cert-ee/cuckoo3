@@ -11,8 +11,10 @@ import oletools.olevba
 from cuckoo.common.log import set_logger_level
 from ..errors import StaticAnalysisError
 
+
 def _nono_lets_not():
     pass
+
 
 # The enable logging method is called when using the VBA parser. It
 # overrides existing logger levels. We want to use debug logging for Cuckoo
@@ -22,15 +24,17 @@ oletools.olevba.enable_logging = _nono_lets_not
 
 set_logger_level("olevba", logging.ERROR)
 
+
 class OfficeStaticAnalysisError(StaticAnalysisError):
     pass
+
 
 def _deobfuscate(code):
     """Bruteforce approach of regex-based deobfuscation."""
     deobf = [
         [
             # "A" & "B" -> "AB"
-            "\\\"(?P<a>.*?)\\\"\\s+\\&\\s+\\\"(?P<b>.*?)\\\"",
+            '\\"(?P<a>.*?)\\"\\s+\\&\\s+\\"(?P<b>.*?)\\"',
             lambda x: f'f"{x.group("a")}{x.group("b")}"',
             0,
         ],
@@ -48,8 +52,8 @@ def _deobfuscate(code):
 
     return code
 
-class OfficeDocument:
 
+class OfficeDocument:
     def __init__(self, filepath):
         self._filepath = filepath
 
@@ -96,7 +100,4 @@ class OfficeDocument:
             pass
 
     def to_dict(self):
-        return {
-            "macros": list(self.get_macros()),
-            "eps": self.extract_eps()
-        }
+        return {"macros": list(self.get_macros()), "eps": self.extract_eps()}

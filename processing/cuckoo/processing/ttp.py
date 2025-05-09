@@ -7,19 +7,21 @@ log = CuckooGlobalLogger(__name__)
 
 import json
 
+
 class TTPError(Exception):
     pass
+
 
 class TTPFileError(TTPError):
     pass
 
+
 class TTPNotFound(TTPError):
     pass
 
-class MitreAttackTTP:
 
-    def __init__(self, ttp_id, name, tactics, reference_link,
-                 subtechniques=[]):
+class MitreAttackTTP:
+    def __init__(self, ttp_id, name, tactics, reference_link, subtechniques=[]):
         self.id = ttp_id
         self.name = name
         self.tactics = tactics
@@ -32,11 +34,11 @@ class MitreAttackTTP:
             "name": self.name,
             "tactics": self.tactics,
             "reference": self.reference,
-            "subtechniques": self.subtechniques
+            "subtechniques": self.subtechniques,
         }
 
-class _MitreAttackTTPLookup:
 
+class _MitreAttackTTPLookup:
     def __init__(self, attack_json_path):
         self._mapping = {}
         try:
@@ -53,10 +55,11 @@ class _MitreAttackTTPLookup:
 
         for ttp_id, technique in ttp_file.items():
             self._mapping[ttp_id] = MitreAttackTTP(
-                ttp_id=ttp_id, name=technique["name"],
+                ttp_id=ttp_id,
+                name=technique["name"],
                 tactics=technique["tactics"],
                 reference_link=technique["reference"],
-                subtechniques=technique.get("subtechniques", [])
+                subtechniques=technique.get("subtechniques", []),
             )
 
     def find(self, ttp_id):
@@ -66,8 +69,8 @@ class _MitreAttackTTPLookup:
 
         return ttp
 
-class TTPTracker:
 
+class TTPTracker:
     lookup = None
 
     def __init__(self):

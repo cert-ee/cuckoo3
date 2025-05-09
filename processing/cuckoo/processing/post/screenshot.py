@@ -6,8 +6,8 @@ from cuckoo.common.storage import TaskPaths
 
 from ..abtracts import Processor
 
-class ScreenshotTiming(Processor):
 
+class ScreenshotTiming(Processor):
     CATEGORY = ["file", "url"]
     KEY = "screenshot"
 
@@ -53,9 +53,6 @@ class ScreenshotTiming(Processor):
                 else:
                     percentage = (allshots[next_idx][0] - cur[0]) / one
 
-            ordered_shots.append({
-                "name": cur[1],
-                "percentage": percentage
-            })
+            ordered_shots.append({"name": cur[1], "percentage": percentage})
 
         return ordered_shots

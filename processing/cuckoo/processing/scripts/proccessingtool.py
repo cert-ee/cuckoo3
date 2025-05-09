@@ -20,6 +20,7 @@ import logging
 
 if __name__ == "__main__":
     import pprint
+
     cuckoocwd.set(cuckoocwd.DEFAULT)
 
     init_global_logging(logging.DEBUG, filepath="/tmp/cuckoo.log", use_logqueue=False)
@@ -28,17 +29,21 @@ if __name__ == "__main__":
     PatternFinder.init_once()
     # patternsigs.PatternFinder.init_once()
     # injection.ProcessInjection.init_once()
-    #network.Pcapreader.init_once()
+    # network.Pcapreader.init_once()
     # misp.MispInfoGather.init_once()
-    #mispreporting.MISP.init_once()
-    #PatternFinder.init_once()
+    # mispreporting.MISP.init_once()
+    # PatternFinder.init_once()
 
     analysis_id = "20210607-8YDUC8"
     task_id = "20210607-8YDUC8_1"
     taskctx = TaskContext(analysis_id, task_id)
 
-    runner = PostProcessingRunner(taskctx, event_consumer_classes=[PatternFinder], reporting_classes=[disk.JSONDump], processing_classes=[])
+    runner = PostProcessingRunner(
+        taskctx,
+        event_consumer_classes=[PatternFinder],
+        reporting_classes=[disk.JSONDump],
+        processing_classes=[],
+    )
     runner.start()
 
     pprint.pprint(taskctx.signature_tracker.signatures_to_dict())
-

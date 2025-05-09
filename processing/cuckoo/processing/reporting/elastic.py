@@ -6,8 +6,11 @@ import os.path
 
 from cuckoo.common.config import cfg
 from cuckoo.common.elastic import (
-    index_analysis, index_events, index_task, ElasticSearchError,
-    update_analysis
+    index_analysis,
+    index_events,
+    index_task,
+    ElasticSearchError,
+    update_analysis,
 )
 from cuckoo.common.startup import init_elasticsearch
 from cuckoo.common.storage import TaskPaths
@@ -17,7 +20,6 @@ from cuckoo.processing.event.events import Kinds
 
 
 class ElasticSearch(Reporter):
-
     @classmethod
     def enabled(cls):
         return cfg("elasticsearch.yaml", "enabled", subpkg="processing")
@@ -25,26 +27,21 @@ class ElasticSearch(Reporter):
     @classmethod
     def init_once(cls):
         hosts = cfg("elasticsearch.yaml", "hosts", subpkg="processing")
-        indices = cfg(
-            "elasticsearch.yaml", "indices", "names", subpkg="processing"
-        )
+        indices = cfg("elasticsearch.yaml", "indices", "names", subpkg="processing")
         timeout = cfg("elasticsearch.yaml", "timeout", subpkg="processing")
-        max_result = cfg(
-            "elasticsearch.yaml", "max_result_window", subpkg="processing"
-        )
-        user = cfg(
-            "elasticsearch.yaml", "user", subpkg="processing"
-        )
-        password = cfg(
-            "elasticsearch.yaml", "password", subpkg="processing"
-        )
-        ca_certs = cfg(
-            "elasticsearch.yaml",  "ca_certs", subpkg="processing"
-        )
+        max_result = cfg("elasticsearch.yaml", "max_result_window", subpkg="processing")
+        user = cfg("elasticsearch.yaml", "user", subpkg="processing")
+        password = cfg("elasticsearch.yaml", "password", subpkg="processing")
+        ca_certs = cfg("elasticsearch.yaml", "ca_certs", subpkg="processing")
         init_elasticsearch(
-            hosts, indices, timeout=timeout, max_result_window=max_result,
+            hosts,
+            indices,
+            timeout=timeout,
+            max_result_window=max_result,
             create_missing_indices=False,
-            user=user, password=password, ca_certs=ca_certs
+            user=user,
+            password=password,
+            ca_certs=ca_certs,
         )
 
     def report_pre_analysis(self):
@@ -55,7 +52,7 @@ class ElasticSearch(Reporter):
                 signatures=self.ctx.signature_tracker.signatures,
                 tags=self.ctx.tag_tracker.tags,
                 families=self.ctx.family_tracker.families,
-                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps],
             )
         except ElasticSearchError as e:
             self.ctx.log.warning("Failed to index analysis.", error=e)
@@ -90,13 +87,11 @@ class ElasticSearch(Reporter):
         eventype_key_checkfunc = {
             Kinds.FILE: ("srcpath", None),
             Kinds.REGISTRY: ("path", None),
-            Kinds.PROCESS: ("commandline", None)
+            Kinds.PROCESS: ("commandline", None),
         }
 
         for eventtype, key_checkfunc in eventype_key_checkfunc.items():
-            eventfile_path = TaskPaths.eventlog(
-                self.ctx.task.id, f"{eventtype}.json"
-            )
+            eventfile_path = TaskPaths.eventlog(self.ctx.task.id, f"{eventtype}.json")
             if not os.path.isfile(eventfile_path):
                 continue
 
@@ -110,14 +105,18 @@ class ElasticSearch(Reporter):
             for subtype, values in subtypes_values.items():
                 try:
                     index_events(
-                        analysis_id=self.ctx.analysis.id, eventtype=eventtype,
-                        subtype=subtype, values=values,
-                        task_id=self.ctx.task.id
+                        analysis_id=self.ctx.analysis.id,
+                        eventtype=eventtype,
+                        subtype=subtype,
+                        values=values,
+                        task_id=self.ctx.task.id,
                     )
                 except ElasticSearchError as e:
                     self.ctx.log.warning(
-                        "Failed to index events.", error=e, type=eventtype,
-                        subtype=subtype
+                        "Failed to index events.",
+                        error=e,
+                        type=eventtype,
+                        subtype=subtype,
                     )
 
     def _make_hosts(self, network):
@@ -139,9 +138,7 @@ class ElasticSearch(Reporter):
         for q in network.get("dns", {}).get("query", []):
             queries.add(f"{q['type']} {q['name']}")
 
-        return [
-            (list(queries), "dns_query"), (list(responses), "dns_response")
-        ]
+        return [(list(queries), "dns_query"), (list(responses), "dns_response")]
 
     def _make_http_request(self, network):
         requests = set()
@@ -152,10 +149,8 @@ class ElasticSearch(Reporter):
             if not request:
                 continue
 
-            urls.add(request.get('url', ''))
-            requests.add(
-                f"{request.get('method', '')} {request.get('url', '')}"
-            )
+            urls.add(request.get("url", ""))
+            requests.add(f"{request.get('method', '')} {request.get('url', '')}")
 
         return [(list(requests), "http_request"), (list(urls), "url")]
 
@@ -178,8 +173,11 @@ class ElasticSearch(Reporter):
             return
 
         formatters = [
-            self._make_hosts, self._make_domain, self._make_dns,
-            self._make_http_request, self._make_smtp
+            self._make_hosts,
+            self._make_domain,
+            self._make_dns,
+            self._make_http_request,
+            self._make_smtp,
         ]
 
         for formatter in formatters:
@@ -190,14 +188,18 @@ class ElasticSearch(Reporter):
 
                 try:
                     index_events(
-                        analysis_id=self.ctx.analysis.id, eventtype="network",
-                        subtype=subtype, values=data,
-                        task_id=self.ctx.task.id
+                        analysis_id=self.ctx.analysis.id,
+                        eventtype="network",
+                        subtype=subtype,
+                        values=data,
+                        task_id=self.ctx.task.id,
                     )
                 except ElasticSearchError as e:
                     self.ctx.log.warning(
-                        "Failed to index events.", error=e, type="network",
-                        subtype=subtype
+                        "Failed to index events.",
+                        error=e,
+                        type="network",
+                        subtype=subtype,
                     )
 
     def _update_analysis(self):
@@ -206,7 +208,7 @@ class ElasticSearch(Reporter):
                 analysis_id=self.ctx.analysis.id,
                 tags=self.ctx.tag_tracker.tags,
                 families=self.ctx.family_tracker.families,
-                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps],
             )
         except ElasticSearchError as e:
             self.ctx.log.warning("Failed to update analysis.", error=e)
@@ -217,12 +219,13 @@ class ElasticSearch(Reporter):
         self._update_analysis()
         try:
             index_task(
-                task=self.ctx.task, score=self.ctx.signature_tracker.score,
+                task=self.ctx.task,
+                score=self.ctx.signature_tracker.score,
                 machine=self.ctx.machine,
                 signatures=self.ctx.signature_tracker.signatures,
                 tags=self.ctx.tag_tracker.tags,
                 families=self.ctx.family_tracker.families,
-                ttps=[t.id for t in self.ctx.ttp_tracker.ttps]
+                ttps=[t.id for t in self.ctx.ttp_tracker.ttps],
             )
         except ElasticSearchError as e:
             self.ctx.log.warning("Failed to index analysis.", error=e)

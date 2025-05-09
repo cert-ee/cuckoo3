@@ -5,8 +5,8 @@ from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.event.events import Kinds
 from cuckoo.processing.signatures.signature import Scores, IOC
 
-class ProcessInjection(EventConsumer):
 
+class ProcessInjection(EventConsumer):
     event_types = (Kinds.PROCESS_INJECTION,)
 
     def use_event(self, event):
@@ -14,15 +14,20 @@ class ProcessInjection(EventConsumer):
         dstproc = self.taskctx.process_tracker.lookup_process(event.dstprocid)
 
         self.taskctx.signature_tracker.add_signature(
-            name="process_injection", short_description="Process injection",
+            name="process_injection",
+            short_description="Process injection",
             description="Process injection is a method of executing arbitrary "
-                        "code in the address space a separate live process.",
-            ttps=["T1055"], tags=["evasion"], score=Scores.KNOWN_BAD,
-            iocs=[IOC(
-                technique=event.description,
-                source_process=srcproc.process_name,
-                source_procid=srcproc.procid,
-                destination_process=dstproc.process_name,
-                destination_procid=dstproc.procid
-            )]
+            "code in the address space a separate live process.",
+            ttps=["T1055"],
+            tags=["evasion"],
+            score=Scores.KNOWN_BAD,
+            iocs=[
+                IOC(
+                    technique=event.description,
+                    source_process=srcproc.process_name,
+                    source_procid=srcproc.procid,
+                    destination_process=dstproc.process_name,
+                    destination_procid=dstproc.procid,
+                )
+            ],
         )

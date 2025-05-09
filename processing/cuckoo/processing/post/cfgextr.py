@@ -8,13 +8,17 @@ from cuckoo.common.storage import TaskPaths
 
 from ..abtracts import Processor
 from ..cfgextr.cfgextr import (
-    ConfigMemdump, ConfigExtractionError, ExtractedConfigTracker,
-    ExtractedConfig, ConfigExtractor, UnexpectedDataError
+    ConfigMemdump,
+    ConfigExtractionError,
+    ExtractedConfigTracker,
+    ExtractedConfig,
+    ConfigExtractor,
+    UnexpectedDataError,
 )
 from ..signatures.signature import Scores, IOC
 
-class ProcMemCfgExtract(Processor):
 
+class ProcMemCfgExtract(Processor):
     KEY = "cfgextr"
 
     @classmethod
@@ -25,15 +29,15 @@ class ProcMemCfgExtract(Processor):
 
     def _run_extractors(self, confdump, tracker):
         for extractor in self.extractors:
-            extracted = ExtractedConfig(
-                extractor.FAMILY, confdump.name
-            )
+            extracted = ExtractedConfig(extractor.FAMILY, confdump.name)
             try:
                 extractor.search(confdump, extracted)
             except UnexpectedDataError as e:
                 self.ctx.log.warning(
-                    "Unexpected data during extraction", extractor=extractor,
-                    dump=confdump.name, error=e
+                    "Unexpected data during extraction",
+                    extractor=extractor,
+                    dump=confdump.name,
+                    error=e,
                 )
 
             if not extracted.detected:
@@ -52,15 +56,15 @@ class ProcMemCfgExtract(Processor):
                 continue
 
             with ConfigMemdump(
-                    TaskPaths.procmem_dump(self.ctx.task.id, dump)
+                TaskPaths.procmem_dump(self.ctx.task.id, dump)
             ) as confdump:
-
                 try:
                     self._run_extractors(confdump, tracker)
                 except ConfigExtractionError as e:
                     self.ctx.log.warning(
                         "Failure during config extraction",
-                        dumpname=confdump.name, error=e
+                        dumpname=confdump.name,
+                        error=e,
                     )
 
         if not tracker.configs:
@@ -72,7 +76,7 @@ class ProcMemCfgExtract(Processor):
                     Scores.KNOWN_BAD,
                     name=f"{config.family} malware data structure",
                     short_description=f"Detected known malware family data "
-                                      f"structure in memory: {config.family}",
+                    f"structure in memory: {config.family}",
                     family=config.family,
                 )
 
@@ -81,15 +85,12 @@ class ProcMemCfgExtract(Processor):
                     Scores.KNOWN_BAD,
                     name=f"Malware configuration {config.family}",
                     short_description=f"Extracted malware configuration of "
-                                      f"known family: {config.family}",
+                    f"known family: {config.family}",
                     family=config.family,
-                    iocs=[IOC(**{"dump": dump}) for dump in config.sources]
+                    iocs=[IOC(**{"dump": dump}) for dump in config.sources],
                 )
 
-        configs = [
-            config.to_dict()
-            for config in tracker.configs if config.values
-        ]
+        configs = [config.to_dict() for config in tracker.configs if config.values]
 
         if configs:
             return configs

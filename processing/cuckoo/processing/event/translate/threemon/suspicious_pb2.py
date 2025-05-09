@@ -2,7 +2,8 @@
 # source: suspicious.proto
 
 import sys
-_b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
+
+_b = sys.version_info[0] < 3 and (lambda x: x) or (lambda x: x.encode("latin1"))
 from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -13,99 +14,141 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-
-
 DESCRIPTOR = _descriptor.FileDescriptor(
-  name='suspicious.proto',
-  package='threemon',
-  syntax='proto3',
-  serialized_options=_b('H\002'),
-  serialized_pb=_b('\n\x10suspicious.proto\x12\x08threemon\"{\n\nSuspicious\x12\n\n\x02ts\x18\x05 \x01(\r\x12\x0b\n\x03pid\x18\x01 \x01(\x04\x12\x0e\n\x06procid\x18\x06 \x01(\x05\x12(\n\x05\x65vent\x18\x02 \x01(\x0e\x32\x19.threemon.SuspiciousEvent\x12\x0c\n\x04\x61rg1\x18\x03 \x01(\x04\x12\x0c\n\x04\x61rg2\x18\x04 \x01(\x04*\x88\x04\n\x0fSuspiciousEvent\x12\x12\n\x0eUnmapMainImage\x10\x00\x12$\n NtCreateThreadExHideFromDebugger\x10\x01\x12*\n&NtSetInformationThreadHideFromDebugger\x10\x02\x12%\n!NtCreateProcessOtherParentProcess\x10\x03\x12\'\n#NtCreateProcessExOtherParentProcess\x10\x04\x12)\n%NtCreateUserProcessOtherParentProcess\x10\x05\x12\x14\n\x10SetWindowsHookAW\x10\x07\x12\x14\n\x10SetWindowsHookEx\x10\x08\x12\x18\n\x14\x41\x64justPrivilegeToken\x10\x0b\x12\x11\n\rDeletesItself\x10\x0c\x12\x13\n\x0fLoadsDroppedDLL\x10\r\x12\x16\n\x12\x45xecutesDroppedEXE\x10\x0e\x12\x16\n\x12WriteProcessMemory\x10\x11\x12\x14\n\x10SetThreadContext\x10\x12\x12\x17\n\x13\x45numeratesProcesses\x10\x13\x12\x14\n\x10MapViewOfSection\x10\x15\x12\x0f\n\x0bLoadsDriver\x10\x16\x12 \n\x1c\x43mdExeWriteProcessMemorySpam\x10\x17\x42\x02H\x02\x62\x06proto3')
+    name="suspicious.proto",
+    package="threemon",
+    syntax="proto3",
+    serialized_options=_b("H\002"),
+    serialized_pb=_b(
+        "\n\x10suspicious.proto\x12\x08threemon\"{\n\nSuspicious\x12\n\n\x02ts\x18\x05 \x01(\r\x12\x0b\n\x03pid\x18\x01 \x01(\x04\x12\x0e\n\x06procid\x18\x06 \x01(\x05\x12(\n\x05\x65vent\x18\x02 \x01(\x0e\x32\x19.threemon.SuspiciousEvent\x12\x0c\n\x04\x61rg1\x18\x03 \x01(\x04\x12\x0c\n\x04\x61rg2\x18\x04 \x01(\x04*\x88\x04\n\x0fSuspiciousEvent\x12\x12\n\x0eUnmapMainImage\x10\x00\x12$\n NtCreateThreadExHideFromDebugger\x10\x01\x12*\n&NtSetInformationThreadHideFromDebugger\x10\x02\x12%\n!NtCreateProcessOtherParentProcess\x10\x03\x12'\n#NtCreateProcessExOtherParentProcess\x10\x04\x12)\n%NtCreateUserProcessOtherParentProcess\x10\x05\x12\x14\n\x10SetWindowsHookAW\x10\x07\x12\x14\n\x10SetWindowsHookEx\x10\x08\x12\x18\n\x14\x41\x64justPrivilegeToken\x10\x0b\x12\x11\n\rDeletesItself\x10\x0c\x12\x13\n\x0fLoadsDroppedDLL\x10\r\x12\x16\n\x12\x45xecutesDroppedEXE\x10\x0e\x12\x16\n\x12WriteProcessMemory\x10\x11\x12\x14\n\x10SetThreadContext\x10\x12\x12\x17\n\x13\x45numeratesProcesses\x10\x13\x12\x14\n\x10MapViewOfSection\x10\x15\x12\x0f\n\x0bLoadsDriver\x10\x16\x12 \n\x1c\x43mdExeWriteProcessMemorySpam\x10\x17\x42\x02H\x02\x62\x06proto3"
+    ),
 )
 
 _SUSPICIOUSEVENT = _descriptor.EnumDescriptor(
-  name='SuspiciousEvent',
-  full_name='threemon.SuspiciousEvent',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='UnmapMainImage', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='NtCreateThreadExHideFromDebugger', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='NtSetInformationThreadHideFromDebugger', index=2, number=2,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='NtCreateProcessOtherParentProcess', index=3, number=3,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='NtCreateProcessExOtherParentProcess', index=4, number=4,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='NtCreateUserProcessOtherParentProcess', index=5, number=5,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SetWindowsHookAW', index=6, number=7,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SetWindowsHookEx', index=7, number=8,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='AdjustPrivilegeToken', index=8, number=11,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='DeletesItself', index=9, number=12,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='LoadsDroppedDLL', index=10, number=13,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='ExecutesDroppedEXE', index=11, number=14,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='WriteProcessMemory', index=12, number=17,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SetThreadContext', index=13, number=18,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='EnumeratesProcesses', index=14, number=19,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='MapViewOfSection', index=15, number=21,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='LoadsDriver', index=16, number=22,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='CmdExeWriteProcessMemorySpam', index=17, number=23,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=156,
-  serialized_end=676,
+    name="SuspiciousEvent",
+    full_name="threemon.SuspiciousEvent",
+    filename=None,
+    file=DESCRIPTOR,
+    values=[
+        _descriptor.EnumValueDescriptor(
+            name="UnmapMainImage", index=0, number=0, serialized_options=None, type=None
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="NtCreateThreadExHideFromDebugger",
+            index=1,
+            number=1,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="NtSetInformationThreadHideFromDebugger",
+            index=2,
+            number=2,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="NtCreateProcessOtherParentProcess",
+            index=3,
+            number=3,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="NtCreateProcessExOtherParentProcess",
+            index=4,
+            number=4,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="NtCreateUserProcessOtherParentProcess",
+            index=5,
+            number=5,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="SetWindowsHookAW",
+            index=6,
+            number=7,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="SetWindowsHookEx",
+            index=7,
+            number=8,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="AdjustPrivilegeToken",
+            index=8,
+            number=11,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="DeletesItself", index=9, number=12, serialized_options=None, type=None
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="LoadsDroppedDLL",
+            index=10,
+            number=13,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="ExecutesDroppedEXE",
+            index=11,
+            number=14,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="WriteProcessMemory",
+            index=12,
+            number=17,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="SetThreadContext",
+            index=13,
+            number=18,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="EnumeratesProcesses",
+            index=14,
+            number=19,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="MapViewOfSection",
+            index=15,
+            number=21,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="LoadsDriver", index=16, number=22, serialized_options=None, type=None
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="CmdExeWriteProcessMemorySpam",
+            index=17,
+            number=23,
+            serialized_options=None,
+            type=None,
+        ),
+    ],
+    containing_type=None,
+    serialized_options=None,
+    serialized_start=156,
+    serialized_end=676,
 )
 _sym_db.RegisterEnumDescriptor(_SUSPICIOUSEVENT)
 
@@ -130,82 +173,148 @@ LoadsDriver = 22
 CmdExeWriteProcessMemorySpam = 23
 
 
-
 _SUSPICIOUS = _descriptor.Descriptor(
-  name='Suspicious',
-  full_name='threemon.Suspicious',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='ts', full_name='threemon.Suspicious.ts', index=0,
-      number=5, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='pid', full_name='threemon.Suspicious.pid', index=1,
-      number=1, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='procid', full_name='threemon.Suspicious.procid', index=2,
-      number=6, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='event', full_name='threemon.Suspicious.event', index=3,
-      number=2, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='arg1', full_name='threemon.Suspicious.arg1', index=4,
-      number=3, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='arg2', full_name='threemon.Suspicious.arg2', index=5,
-      number=4, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=30,
-  serialized_end=153,
+    name="Suspicious",
+    full_name="threemon.Suspicious",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="ts",
+            full_name="threemon.Suspicious.ts",
+            index=0,
+            number=5,
+            type=13,
+            cpp_type=3,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="pid",
+            full_name="threemon.Suspicious.pid",
+            index=1,
+            number=1,
+            type=4,
+            cpp_type=4,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="procid",
+            full_name="threemon.Suspicious.procid",
+            index=2,
+            number=6,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="event",
+            full_name="threemon.Suspicious.event",
+            index=3,
+            number=2,
+            type=14,
+            cpp_type=8,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="arg1",
+            full_name="threemon.Suspicious.arg1",
+            index=4,
+            number=3,
+            type=4,
+            cpp_type=4,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="arg2",
+            full_name="threemon.Suspicious.arg2",
+            index=5,
+            number=4,
+            type=4,
+            cpp_type=4,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=30,
+    serialized_end=153,
 )
 
-_SUSPICIOUS.fields_by_name['event'].enum_type = _SUSPICIOUSEVENT
-DESCRIPTOR.message_types_by_name['Suspicious'] = _SUSPICIOUS
-DESCRIPTOR.enum_types_by_name['SuspiciousEvent'] = _SUSPICIOUSEVENT
+_SUSPICIOUS.fields_by_name["event"].enum_type = _SUSPICIOUSEVENT
+DESCRIPTOR.message_types_by_name["Suspicious"] = _SUSPICIOUS
+DESCRIPTOR.enum_types_by_name["SuspiciousEvent"] = _SUSPICIOUSEVENT
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-Suspicious = _reflection.GeneratedProtocolMessageType('Suspicious', (_message.Message,), dict(
-  DESCRIPTOR = _SUSPICIOUS,
-  __module__ = 'suspicious_pb2'
-  # @@protoc_insertion_point(class_scope:threemon.Suspicious)
-  ))
+Suspicious = _reflection.GeneratedProtocolMessageType(
+    "Suspicious",
+    (_message.Message,),
+    dict(
+        DESCRIPTOR=_SUSPICIOUS,
+        __module__="suspicious_pb2",
+        # @@protoc_insertion_point(class_scope:threemon.Suspicious)
+    ),
+)
 _sym_db.RegisterMessage(Suspicious)
 
 

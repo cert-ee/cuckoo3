@@ -5,8 +5,8 @@ from cuckoo.common.safelist import FileHash
 
 from ..abtracts import Processor
 
-def _make_ignorefile_entry(filename, filetype, md5, sha1, sha256, reason,
-                       description):
+
+def _make_ignorefile_entry(filename, filetype, md5, sha1, sha256, reason, description):
     return {
         "category": "file",
         "filename": filename,
@@ -14,13 +14,13 @@ def _make_ignorefile_entry(filename, filetype, md5, sha1, sha256, reason,
         "md5": md5,
         "sha1": sha1,
         "sha256": sha256,
-        "sha512": sha512,        
+        "sha512": sha512,
         "reason": reason,
-        "description": description
+        "description": description,
     }
 
-class FileSafelist(Processor):
 
+class FileSafelist(Processor):
     KEY = "ignored"
     CATEGORY = ["file"]
 
@@ -40,8 +40,13 @@ class FileSafelist(Processor):
                 f.unselectable()
 
                 return _make_ignorefile_entry(
-                    f.filename, f.magic, f.md5, f.sha1, f.sha256,
-                    "safelisted", safelist_entry.description
+                    f.filename,
+                    f.magic,
+                    f.md5,
+                    f.sha1,
+                    f.sha256,
+                    "safelisted",
+                    safelist_entry.description,
                 )
 
     def start(self):

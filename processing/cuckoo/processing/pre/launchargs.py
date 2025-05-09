@@ -5,22 +5,25 @@ from cuckoo.common.utils import browser_to_tag
 
 from ..abtracts import Processor
 
-class DetermineLaunchArgs(Processor):
 
+class DetermineLaunchArgs(Processor):
     CATEGORY = ["file", "url"]
     KEY = "command"
 
     ext_launchargs = {
         "windows": {
             ".ps1": [
-                "powershell.exe", "-ExecutionPolicy", "bypass", "-File",
-                "%PAYLOAD%"
+                "powershell.exe",
+                "-ExecutionPolicy",
+                "bypass",
+                "-File",
+                "%PAYLOAD%",
             ],
             ".jar": ["java", "-jar", "%PAYLOAD%"],
             ".dll": ["rundll32.exe", "%PAYLOAD%,#1"],
             ".msi": ["msiexec.exe", "/I", "%PAYLOAD%"],
             ".js": ["wscript.exe", "%PAYLOAD%"],
-            ".cpl": ["control.exe", "%PAYLOAD"]
+            ".cpl": ["control.exe", "%PAYLOAD"],
         }
     }
 
@@ -29,7 +32,7 @@ class DetermineLaunchArgs(Processor):
             "browser_internet_explorer": ["iexplore.exe", "%PAYLOAD%"],
             "browser_edge": ["cmd", "/c", "start", "microsoft-edge:%PAYLOAD%"],
             "browser_firefox": ["cmd", "/c", "start", "firefox", "%PAYLOAD%"],
-            "browser_chrome": ["cmd", "/c", "start", "chrome", "%PAYLOAD%"]
+            "browser_chrome": ["cmd", "/c", "start", "chrome", "%PAYLOAD%"],
         }
     }
 

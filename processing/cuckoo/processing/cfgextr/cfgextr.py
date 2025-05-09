@@ -3,14 +3,16 @@
 
 from pathlib import Path
 
+
 class ConfigExtractionError(Exception):
     pass
+
 
 class UnexpectedDataError(ConfigExtractionError):
     pass
 
-class ConfigMemdump:
 
+class ConfigMemdump:
     def __init__(self, filepath):
         self.filepath = Path(filepath)
         self.pid = None
@@ -54,8 +56,7 @@ class ConfigMemdump:
             self.end_address = int(vals[3], 0)
         except ValueError as e:
             raise ConfigExtractionError(
-                "One of pid, index, base or end address is not a valid "
-                f"number. {e}"
+                f"One of pid, index, base or end address is not a valid number. {e}"
             )
 
     def _read_buf(self):
@@ -74,16 +75,16 @@ class ConfigMemdump:
     def __del__(self):
         self.clear()
 
-class ExtractedDataType:
 
+class ExtractedDataType:
     KEY = ""
     TYPE = ""
 
     def to_dict(self):
         raise NotImplementedError
 
-class C2(ExtractedDataType):
 
+class C2(ExtractedDataType):
     KEY = "c2s"
     TYPE = "c2"
 
@@ -94,9 +95,7 @@ class C2(ExtractedDataType):
         self.domain = domain
 
     def to_dict(self):
-        d = {
-            "address": self.address
-        }
+        d = {"address": self.address}
         if self.ip:
             d["ip"] = self.ip
         if self.port:
@@ -113,8 +112,8 @@ class C2(ExtractedDataType):
     def __hash__(self):
         return hash(self.address)
 
-class Key(ExtractedDataType):
 
+class Key(ExtractedDataType):
     KEY = "keys"
     TYPE = "key"
 
@@ -123,10 +122,7 @@ class Key(ExtractedDataType):
         self.value = value
 
     def to_dict(self):
-        return {
-            "keytype": self.keytype,
-            "value": self.value
-        }
+        return {"keytype": self.keytype, "value": self.value}
 
     def __eq__(self, other):
         return self.keytype + self.value == other
@@ -134,8 +130,8 @@ class Key(ExtractedDataType):
     def __hash__(self):
         return hash(self.keytype + self.value)
 
-class ExtractedConfig:
 
+class ExtractedConfig:
     def __init__(self, family, filename):
         self.family = family
         self.values = {}
@@ -169,15 +165,12 @@ class ExtractedConfig:
             key: list(value.to_dict() for value in values)
             for key, values in self.values.items()
         }
-        d.update({
-            "family": self.family,
-            "sources": list(self.sources)
-        })
+        d.update({"family": self.family, "sources": list(self.sources)})
 
         return d
 
-class ExtractedConfigTracker:
 
+class ExtractedConfigTracker:
     def __init__(self):
         self._configs = {}
 
@@ -192,8 +185,8 @@ class ExtractedConfigTracker:
         else:
             self._configs[extracted_config.family] = extracted_config
 
-class ConfigExtractor:
 
+class ConfigExtractor:
     FAMILY = ""
 
     @classmethod
