@@ -19,22 +19,18 @@ logging.addLevelName(logging.WARNING, "WARN")
 # Set the root level to DEBUG so we can easily use per-handler levels
 logging.getLogger().setLevel(logging.DEBUG)
 
-WARNINGSONLY = [
-    "aiohttp_sse_client",
-    "urllib3",
-    "elasticsearch",
-    "asyncio",
-    "pymisp"
-]
+WARNINGSONLY = ["aiohttp_sse_client", "urllib3", "elasticsearch", "asyncio", "pymisp"]
 
 VERBOSE = logging.DEBUG - 1
 _VERBOSE_ENABLED = False
 
 _initialized = False
 
+
 def set_initialized():
     global _initialized
     _initialized = True
+
 
 def name_to_level(name):
     name = name.upper()
@@ -47,9 +43,11 @@ def name_to_level(name):
 
     return level
 
+
 def enable_verbose():
     global _VERBOSE_ENABLED
     _VERBOSE_ENABLED = True
+
 
 class ColorText:
     @staticmethod
@@ -113,15 +111,19 @@ class ColorText:
     def bold(text):
         return ColorText.color(text, 1)
 
+
 _level = logging.INFO
+
 
 def set_level(level):
     global _level
     _level = level
 
+
 def add_rootlogger_handler(handler):
     handler.setLevel(_level)
     logging.getLogger().addHandler(handler)
+
 
 def set_logger_level(loggername, level):
     if _VERBOSE_ENABLED and level > logging.DEBUG:
@@ -129,8 +131,10 @@ def set_logger_level(loggername, level):
 
     logging.getLogger(loggername).setLevel(level)
 
+
 def get_global_loglevel():
     return _level
+
 
 # Infinite log queue size
 _log_queue = Queue(maxsize=0)
@@ -138,6 +142,7 @@ _queue_handler = handlers.QueueHandler(_log_queue)
 
 # Queue listener must be created and started once during startup
 _queue_listener = None
+
 
 def start_queue_listener(*queumsg_handlers):
     global _queue_listener
@@ -155,6 +160,7 @@ def start_queue_listener(*queumsg_handlers):
     _queue_handler.setLevel(_level)
     add_rootlogger_handler(_queue_handler)
 
+
 def stop_queue_listener():
     # Stop the queue listener to ensure queued log messages are logged
     # to their handler before the process exits.
@@ -169,30 +175,28 @@ def stop_queue_listener():
 
 _KV_KEY = "_cuckoo_kv"
 
+
 def _format_cuckoo_kvs(record, key_color_func=None):
     key_vals = record.__dict__.get(_KV_KEY)
     if not key_vals:
         return record
 
     if not key_color_func:
-        kvs = [f'{key}={val}' for key, val in key_vals.items()]
+        kvs = [f"{key}={val}" for key, val in key_vals.items()]
     else:
         # If a color was specified, make the each key that color
-        kvs = [
-            f'{key_color_func(key)}={val}'
-            for key, val in key_vals.items()
-        ]
+        kvs = [f"{key_color_func(key)}={val}" for key, val in key_vals.items()]
 
     # Build the message. Add a dot after the msg end if it does not have one.
     # This is to make it clear where the msg ends and the key values begin.
-    record.msg = f"{record.msg}" \
-                 f"{'.' if not record.msg.endswith('.') else ''} " \
-                 f"{' '.join(kvs)}"
+    record.msg = (
+        f"{record.msg}{'.' if not record.msg.endswith('.') else ''} {' '.join(kvs)}"
+    )
 
     return record
 
-class KeyValueLogFormatter(logging.Formatter):
 
+class KeyValueLogFormatter(logging.Formatter):
     def format(self, record):
         key_vals = record.__dict__.get(_KV_KEY)
         if not key_vals:
@@ -203,8 +207,8 @@ class KeyValueLogFormatter(logging.Formatter):
         console_copy = copy(record)
         return super().format(_format_cuckoo_kvs(console_copy))
 
-class ConsoleFormatter(logging.Formatter):
 
+class ConsoleFormatter(logging.Formatter):
     EXTRA_CHAR_SIZE = len(ColorText.bold(ColorText.green("")))
     COLOR_TERMINAL = ColorText.terminal_supported()
 
@@ -215,9 +219,7 @@ class ConsoleFormatter(logging.Formatter):
 
         # If the terminal does not support ANSI colors, don't add them.
         if not self.COLOR_TERMINAL:
-            return super().format(
-                _format_cuckoo_kvs(console_copy, key_color_func=None)
-            )
+            return super().format(_format_cuckoo_kvs(console_copy, key_color_func=None))
 
         bold_lvlname = ColorText.bold(record.levelname)
         if record.levelno == logging.INFO:
@@ -231,14 +233,15 @@ class ConsoleFormatter(logging.Formatter):
         else:
             console_copy.levelname = ColorText.white(bold_lvlname)
 
-        return super().format(
-            _format_cuckoo_kvs(console_copy, ColorText.magenta)
-        )
+        return super().format(_format_cuckoo_kvs(console_copy, ColorText.magenta))
 
 
-_DEFAULT_LOG_FMT = "%(asctime)#ASCTIME_COLSIZE#s " \
-                   "%(levelname)#LEVELNAME_COLSIZE#s " \
-                   "[%(name)#NAME_COLSIZE#s]: %(message)s"
+_DEFAULT_LOG_FMT = (
+    "%(asctime)#ASCTIME_COLSIZE#s "
+    "%(levelname)#LEVELNAME_COLSIZE#s "
+    "[%(name)#NAME_COLSIZE#s]: %(message)s"
+)
+
 
 def _set_fmt_colsizes(asctime=None, levelname=None, name=None, align="left"):
     def _align_colsize(number):
@@ -247,9 +250,7 @@ def _set_fmt_colsizes(asctime=None, levelname=None, name=None, align="left"):
         return str(number)
 
     fmt = _DEFAULT_LOG_FMT
-    fmt = fmt.replace(
-        "#ASCTIME_COLSIZE#", _align_colsize(asctime) if asctime else ""
-    )
+    fmt = fmt.replace("#ASCTIME_COLSIZE#", _align_colsize(asctime) if asctime else "")
     fmt = fmt.replace(
         "#LEVELNAME_COLSIZE#", _align_colsize(levelname) if levelname else ""
     )
@@ -257,12 +258,11 @@ def _set_fmt_colsizes(asctime=None, levelname=None, name=None, align="left"):
     return fmt
 
 
-
 def _emit_write_once(stream, msg, terminator):
     stream.write(f"{msg}{terminator}")
 
-class CuckooWatchedFileHandler(handlers.WatchedFileHandler):
 
+class CuckooWatchedFileHandler(handlers.WatchedFileHandler):
     def emit(self, record):
         if self.stream is None:
             self.stream = self._open()
@@ -281,7 +281,6 @@ class CuckooWatchedFileHandler(handlers.WatchedFileHandler):
 
 
 class _MappedHandler:
-
     def __init__(self, handler):
         self.handler = handler
         self.count = 1
@@ -301,8 +300,8 @@ class _MappedHandler:
     def __str__(self):
         return f"<Handler={self.handler}, usercount={self.count}>"
 
-class MultiLogfileHandler(logging.Handler):
 
+class MultiLogfileHandler(logging.Handler):
     def __init__(self, mapkey):
         super().__init__()
 
@@ -378,22 +377,21 @@ _DEFAULT_LEVELNAME_COLSIZE = 5
 # to the console.
 logtime_fmt_str = "%Y-%m-%d %H:%M:%S"
 
-file_log_fmt_str = _set_fmt_colsizes(
-    levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
-)
+file_log_fmt_str = _set_fmt_colsizes(levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left")
 
 # Console logger use ConsoleFormatter as a default, which can add ANSI colors
 # if the terminal supports its. This adds extra characters, these need to be
 # taken into account when determining the column size.
 if ColorText.terminal_supported():
     console_log_fmt_str = _set_fmt_colsizes(
-        levelname=ConsoleFormatter.EXTRA_CHAR_SIZE +
-                  _DEFAULT_LEVELNAME_COLSIZE, align="left"
+        levelname=ConsoleFormatter.EXTRA_CHAR_SIZE + _DEFAULT_LEVELNAME_COLSIZE,
+        align="left",
     )
 else:
     console_log_fmt_str = _set_fmt_colsizes(
         levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
     )
+
 
 def disable_console_colors():
     console_formatter.COLOR_TERMINAL = False
@@ -402,8 +400,8 @@ def disable_console_colors():
         levelname=_DEFAULT_LEVELNAME_COLSIZE, align="left"
     )
 
-class CuckooLogger:
 
+class CuckooLogger:
     def __init__(self, logger):
         self._logger = logger
 
@@ -411,9 +409,7 @@ class CuckooLogger:
         self._logger.log(level, msg, extra={_KV_KEY: extra_kvs})
 
     def log_exception(self, m, exc_info, extra_kvs):
-        self._logger.exception(
-            m, exc_info=exc_info, extra={_KV_KEY: extra_kvs}
-        )
+        self._logger.exception(m, exc_info=exc_info, extra={_KV_KEY: extra_kvs})
 
     def debug(self, m, **kwargs):
         self.log_msg(logging.DEBUG, m, kwargs)
@@ -446,20 +442,19 @@ class CuckooLogger:
 
 
 class CuckooGlobalLogger(CuckooLogger):
-
     def __init__(self, name):
         super().__init__(logging.getLogger(name))
 
 
 class _KeyBasedFileLogger(CuckooLogger):
     """Adds a MultiLogfileHandler to the specified logger name if it has not
-     yet been added. Adds a file_handler for the given key afterwards.
+    yet been added. Adds a file_handler for the given key afterwards.
 
-     All messages arriving at the MultiLogfileHandler with _MAP_KEY=self.key
-     will be logged to the given file_handler.
+    All messages arriving at the MultiLogfileHandler with _MAP_KEY=self.key
+    will be logged to the given file_handler.
 
-     This logger must always be closed.
-     """
+    This logger must always be closed.
+    """
 
     _MAP_KEY = ""
 
@@ -483,9 +478,7 @@ class _KeyBasedFileLogger(CuckooLogger):
             if cls._multi_handler:
                 return
 
-            cls._multi_handler = MultiLogfileHandler(
-                cls._MAP_KEY
-            )
+            cls._multi_handler = MultiLogfileHandler(cls._MAP_KEY)
             cls._multi_handler.setLevel(logging.DEBUG)
 
     @classmethod
@@ -537,30 +530,35 @@ class _KeyBasedFileLogger(CuckooLogger):
     def __del__(self):
         self.close()
 
-class TaskLogger(_KeyBasedFileLogger):
 
+class TaskLogger(_KeyBasedFileLogger):
     _MAP_KEY = "task_id"
 
     def make_logfile_path(self):
         return TaskPaths.tasklog(self.key)
 
-class AnalysisLogger(_KeyBasedFileLogger):
 
+class AnalysisLogger(_KeyBasedFileLogger):
     _MAP_KEY = "analysis_id"
 
     def make_logfile_path(self):
         return AnalysisPaths.analysislog(self.key)
 
+
 log = CuckooGlobalLogger(__name__)
+
 
 def print_info(msg):
     print(ColorText.green(force_valid_encoding(msg)))
 
+
 def print_warning(msg):
     print(ColorText.yellow(force_valid_encoding(msg)))
 
+
 def print_error(msg):
     print(ColorText.red(force_valid_encoding(msg)))
+
 
 def exit_error(msg):
     msg = force_valid_encoding(msg)

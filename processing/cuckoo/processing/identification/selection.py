@@ -16,6 +16,7 @@ from ..errors import CancelProcessing
 
 set_logger_level("PIL.Image", logging.WARNING)
 
+
 def find_selected(f, tracklist):
     if f.selected:
         tracklist.append(f)
@@ -23,6 +24,7 @@ def find_selected(f, tracklist):
     if f.children:
         for child in f.children:
             find_selected(child, tracklist)
+
 
 def find_unidentified(f, tracklist):
     if not f.identified:
@@ -32,17 +34,21 @@ def find_unidentified(f, tracklist):
         for child in f.children:
             find_unidentified(child, tracklist)
 
+
 def _bytes_to_str(b):
     if isinstance(b, bytes):
         return b.decode()
+
 
 def _write_filetree(analysis_id, tree):
     with open(AnalysisPaths.filetree(analysis_id), "w") as fp:
         json.dump(tree, fp, default=_bytes_to_str, indent=2)
 
+
 def _write_filemap(analysis_id, filemap):
     with open(AnalysisPaths.filemap(analysis_id), "w") as fp:
         json.dump(filemap, fp)
+
 
 def _make_ident_filename(f):
     if f.extension and not f.filename.lower().endswith(f.extension):
@@ -50,18 +56,16 @@ def _make_ident_filename(f):
 
     return f.filename
 
-class Identify(Processor):
 
+class Identify(Processor):
     ORDER = 1
     KEY = "identify"
     CATEGORY = ["file"]
 
     def start(self):
-
         submitted_file = AnalysisPaths.submitted_file(self.ctx.analysis.id)
         if not submitted_file.is_file():
-            err = f"Submitted file for analysis: {self.ctx.analysis.id} " \
-                  f"does not exist"
+            err = f"Submitted file for analysis: {self.ctx.analysis.id} does not exist"
             raise CancelProcessing(err)
 
         # Retain the original file name. Instead of the hash that
@@ -72,18 +76,15 @@ class Identify(Processor):
         settings_pass = self.ctx.analysis.settings.password
         try:
             f = sflock.unpack(
-                submitted_file, filename=original_filename,
-                password=settings_pass
+                submitted_file, filename=original_filename, password=settings_pass
             )
         except Exception as e:
-            self.ctx.log.exception(
-                "Unexpected Sflock unpacking failure", error=e
-            )
+            self.ctx.log.exception("Unexpected Sflock unpacking failure", error=e)
             raise CancelProcessing(f"Unexpected Sflock unpacking failure. {e}")
 
         if f.mode:
-            #Continue if unpack fails for pdf
-            if not f.unpacker=="pdffile":
+            # Continue if unpack fails for pdf
+            if not f.unpacker == "pdffile":
                 raise CancelProcessing(
                     f"Failed to unpack file: {f.error}. Unpacker: {f.unpacker}"
                 )
@@ -107,12 +108,12 @@ class Identify(Processor):
                 "sha256": f.sha256,
                 "extrpath": f.extrpath,
                 "password": f.password,
-                "container": len(f.children) > 0
-            }
+                "container": len(f.children) > 0,
+            },
         }
 
-class SelectURL(Processor):
 
+class SelectURL(Processor):
     ORDER = 999
     KEY = "selected"
     CATEGORY = ["url"]
@@ -124,10 +125,10 @@ class SelectURL(Processor):
             "target": {
                 "url": self.ctx.analysis.submitted.url,
                 "platforms": [
-                    {"platform": p, "os_version":""}
+                    {"platform": p, "os_version": ""}
                     for p in sflock.identify.Platform.ANY
                 ],
-            }
+            },
         }
 
 
@@ -149,8 +150,7 @@ class SelectFile(Processor):
         )
 
         prio_exts = cfg(
-            "identification", "selection", "extension_priority",
-            subpkg="processing"
+            "identification", "selection", "extension_priority", subpkg="processing"
         )
         self.ext_priority = [x.strip(".") for x in prio_exts]
 
@@ -208,9 +208,10 @@ class SelectFile(Processor):
         # "manual" selection and in the pre-stage to retrieve information
         # about a manually selected file.
         _write_filetree(
-            self.ctx.analysis.id, unpackedfile.astree(
+            self.ctx.analysis.id,
+            unpackedfile.astree(
                 sanitize=True, finger=True, child_cb=self._sflock_child_cb
-            )
+            ),
         )
 
         _write_filemap(self.ctx.analysis.id, self.file_map)
@@ -226,9 +227,9 @@ class SelectFile(Processor):
         ident_filename = _make_ident_filename(target)
         if ident_filename != target.filename:
             self.ctx.log.debug(
-                "Identify detected a different file type than extension "
-                "indicates.", detected=target.extension,
-                filename=repr(ident_filename)
+                "Identify detected a different file type than extension indicates.",
+                detected=target.extension,
+                filename=repr(ident_filename),
             )
 
         if self.log_unidentified:
@@ -238,7 +239,7 @@ class SelectFile(Processor):
                 self.ctx.log.warning(
                     "Sflock did not identify all files.",
                     count=len(unidentified),
-                    files=", ".join(f.filename for f in unidentified)
+                    files=", ".join(f.filename for f in unidentified),
                 )
 
         return {
@@ -259,5 +260,5 @@ class SelectFile(Processor):
                 "sha256": target.sha256,
                 "sha1": target.sha1,
                 "md5": target.md5,
-            }
+            },
         }

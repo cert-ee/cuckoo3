@@ -8,8 +8,8 @@ import yara
 
 from .cfgextr import C2, Key, UnexpectedDataError, ConfigExtractor
 
-class Emotet(ConfigExtractor):
 
+class Emotet(ConfigExtractor):
     FAMILY = "emotet"
     YARA = """
     rule Emotet {
@@ -68,17 +68,12 @@ class Emotet(ConfigExtractor):
     def _read_rsakey(cls, data, cfg_memdump, extracted):
         try:
             rsakey_addr = struct.unpack("I", data[14:18])[0]
-            rsakey = cfg_memdump.buf[rsakey_addr
-                                     - cfg_memdump.base_address:][:106]
+            rsakey = cfg_memdump.buf[rsakey_addr - cfg_memdump.base_address :][:106]
         except struct.error as e:
-            raise UnexpectedDataError(
-                f"Invalid rsakey address: {e}"
-            )
+            raise UnexpectedDataError(f"Invalid rsakey address: {e}")
 
         except IndexError:
-            raise UnexpectedDataError(
-                "rsakey address causes out of bounds read"
-            )
+            raise UnexpectedDataError("rsakey address causes out of bounds read")
 
         imported_key = roach.rsa.import_key(rsakey)
         if not imported_key:
@@ -92,32 +87,26 @@ class Emotet(ConfigExtractor):
         try:
             addr = struct.unpack("I", data[1:5])[0]
         except struct.error as e:
-            raise UnexpectedDataError(
-                f"Invalid enumips start address bytes: {e}"
-            )
+            raise UnexpectedDataError(f"Invalid enumips start address bytes: {e}")
 
         for _ in range(1024):
             try:
                 ip = socket.inet_ntoa(
-                    cfg_memdump.buf[addr - cfg_memdump.base_address:][:4][::-1]
+                    cfg_memdump.buf[addr - cfg_memdump.base_address :][:4][::-1]
                 )
                 port = struct.unpack(
-                    "H", cfg_memdump.buf[addr-cfg_memdump.base_address+4:][:2]
+                    "H", cfg_memdump.buf[addr - cfg_memdump.base_address + 4 :][:2]
                 )[0]
             except OSError:
                 raise UnexpectedDataError("Invalid IPv4 address bytes")
             except IndexError:
-                raise UnexpectedDataError(
-                    "enumip address causes out of bounds read"
-                )
+                raise UnexpectedDataError("enumip address causes out of bounds read")
             except struct.error as e:
                 raise UnexpectedDataError(f"Invalid C2 port bytes: {e}")
 
             if ip == "0.0.0.0":
                 break
 
-            extracted.add_extracted(
-                C2(address=f"{ip}:{port}", ip=ip, port=port)
-            )
+            extracted.add_extracted(C2(address=f"{ip}:{port}", ip=ip, port=port))
 
             addr += 8

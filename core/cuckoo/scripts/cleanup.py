@@ -9,12 +9,15 @@ from cuckoo.common.startup import StartupError
 from cuckoo.common.storage import cuckoocwd, CWDError
 from cuckoo.common.analyses import States, delete_analysis_disk, delete_analysis_db
 
+
 def start_export(older_than_days, loglevel, without_confirm=False):
     from cuckoo.common.log import set_logger_level
     from cuckoo.common.startup import init_global_logging, init_database
     from cuckoo.common.clients import APIClient
     from cuckoo.common.config import (
-        cfg, MissingConfigurationFileError, ConfigurationError
+        cfg,
+        MissingConfigurationFileError,
+        ConfigurationError,
     )
     from cuckoo.common.storage import Paths
     from ..clean import find_analyses, AnalysisRemoteExporter, CleanerError
@@ -22,21 +25,15 @@ def start_export(older_than_days, loglevel, without_confirm=False):
     init_global_logging(loglevel, Paths.log("export.log"))
     set_logger_level("urllib3.connectionpool", logging.ERROR)
     try:
-        api_url = cfg(
-            "cuckoo.yaml", "remote_storage", "api_url", load_missing=True
-        )
-        api_key = cfg(
-            "cuckoo.yaml", "remote_storage", "api_key", load_missing=True
-        )
+        api_url = cfg("cuckoo.yaml", "remote_storage", "api_url", load_missing=True)
+        api_key = cfg("cuckoo.yaml", "remote_storage", "api_key", load_missing=True)
     except MissingConfigurationFileError as e:
         raise StartupError(f"Missing configuration file: {e}")
     except ConfigurationError as e:
         raise StartupError(e)
 
     if not api_url or not api_key:
-        raise StartupError(
-            "Remote storage API url or API key not set in cuckoo.conf"
-        )
+        raise StartupError("Remote storage API url or API key not set in cuckoo.conf")
 
     init_database()
     analyses, date = find_analyses(older_than_days, States.FINISHED)
@@ -46,10 +43,9 @@ def start_export(older_than_days, loglevel, without_confirm=False):
 
     print_info(f"Found {len(analyses)} older than {date}")
     if not without_confirm and not click.confirm(
-            f"Export and delete {len(analyses)} analyses? "
-            f"This cannot be undone."
-        ):
-            return
+        f"Export and delete {len(analyses)} analyses? This cannot be undone."
+    ):
+        return
 
     api_client = APIClient(api_url, api_key)
     with AnalysisRemoteExporter([a.id for a in analyses], api_client) as ex:
@@ -58,12 +54,15 @@ def start_export(older_than_days, loglevel, without_confirm=False):
         except CleanerError as e:
             raise StartupError(e)
 
+
 def delete_analyses(state, older_than_hours, loglevel, without_confirm=False):
     from cuckoo.common.log import set_logger_level
     from cuckoo.common.startup import init_global_logging, init_database
     from cuckoo.common.clients import APIClient
     from cuckoo.common.config import (
-        cfg, MissingConfigurationFileError, ConfigurationError
+        cfg,
+        MissingConfigurationFileError,
+        ConfigurationError,
     )
     from cuckoo.common.storage import Paths
     from ..clean import find_analyses_hours, AnalysisRemoteExporter, CleanerError
@@ -81,16 +80,15 @@ def delete_analyses(state, older_than_hours, loglevel, without_confirm=False):
 
     print_info(f"Found {len(analyses)} older than {date}")
     if not without_confirm and not click.confirm(
-            f"Delete {len(analyses)} analyses? "
-            f"This cannot be undone."
-        ):
-            return
+        f"Delete {len(analyses)} analyses? This cannot be undone."
+    ):
+        return
 
     for a in analyses:
         try:
             delete_analysis_db(a.id)
             delete_analysis_disk(a.id)
-        except (ResultDoesNotExistError):
+        except ResultDoesNotExistError:
             print_info(f"Not found {a.id}.")
 
 
@@ -123,6 +121,7 @@ def main(ctx, cwd, debug):
     if ctx.invoked_subcommand:
         return
 
+
 @main.command()
 @click.argument("hours", type=int)
 @click.option("--yes", is_flag=True, help="Skip confirmation screen")
@@ -138,6 +137,7 @@ def remotestorage(ctx, days, yes):
     """
 
     from cuckoo.common.shutdown import call_registered_shutdowns
+
     try:
         start_export(days, loglevel=ctx.parent.loglevel, without_confirm=yes)
     except StartupError as e:

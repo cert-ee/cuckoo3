@@ -7,8 +7,8 @@ from cuckoo.common.config import cfg
 from ..abtracts import Processor
 from ..errors import DisablePluginError
 
-class MISPInfoGather(Processor):
 
+class MISPInfoGather(Processor):
     CATEGORY = ["file", "url"]
     KEY = "misp"
 
@@ -40,13 +40,13 @@ class MISPInfoGather(Processor):
     def init(self):
         try:
             self.misp_client = MispClient(
-                misp_url=self.url, api_key=self.key, timeout=self.conn_timeout,
-                verify_tls=self.verify_tls
+                misp_url=self.url,
+                api_key=self.key,
+                timeout=self.conn_timeout,
+                verify_tls=self.verify_tls,
             )
         except MispError as e:
-            raise DisablePluginError(
-                f"Failed to connect to MISP server. Error: {e}"
-            )
+            raise DisablePluginError(f"Failed to connect to MISP server. Error: {e}")
 
     def _search_events_hashes(self, target):
         hash_lookup = {
@@ -63,8 +63,12 @@ class MISPInfoGather(Processor):
                 continue
 
             events.extend(
-                lookup_handler(target[hashalgo], limit=self.event_limit,
-                to_ids=self.to_ids, publish_timestamp=self.publish_timestamp)
+                lookup_handler(
+                    target[hashalgo],
+                    limit=self.event_limit,
+                    to_ids=self.to_ids,
+                    publish_timestamp=self.publish_timestamp,
+                )
             )
 
         return events
@@ -74,8 +78,12 @@ class MISPInfoGather(Processor):
         events = []
         try:
             if self.ctx.analysis.category == "url":
-                events = self.misp_client.find_url(target.target, limit=self.event_limit,
-                to_ids=self.to_ids, publish_timestamp=self.publish_timestamp)
+                events = self.misp_client.find_url(
+                    target.target,
+                    limit=self.event_limit,
+                    to_ids=self.to_ids,
+                    publish_timestamp=self.publish_timestamp,
+                )
             elif self.ctx.analysis.category == "file":
                 events = self._search_events_hashes(target)
         except MispError as e:

@@ -16,17 +16,15 @@ LANGUAGE_CODE = "en-us"
 secret_path = Path(Paths.web(".apisecret"))
 if not secret_path.exists():
     secret_path.write_text(
-        get_random_string(
-            50, "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
-        )
+        get_random_string(50, "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)")
     )
 
 SECRET_KEY = secret_path.read_text()
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Paths.web("api.db"),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": Paths.web("api.db"),
     }
 }
 

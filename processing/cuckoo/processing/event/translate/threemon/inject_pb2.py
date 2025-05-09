@@ -2,7 +2,8 @@
 # source: inject.proto
 
 import sys
-_b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
+
+_b = sys.version_info[0] < 3 and (lambda x: x) or (lambda x: x.encode("latin1"))
 from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -13,39 +14,44 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-
-
 DESCRIPTOR = _descriptor.FileDescriptor(
-  name='inject.proto',
-  package='threemon',
-  syntax='proto3',
-  serialized_options=_b('H\002'),
-  serialized_pb=_b('\n\x0cinject.proto\x12\x08threemon\"\x82\x01\n\x06Inject\x12\n\n\x02ts\x18\x04 \x01(\r\x12&\n\ttechnique\x18\x01 \x01(\x0e\x32\x13.threemon.Technique\x12\x0e\n\x06srcpid\x18\x02 \x01(\x04\x12\x11\n\tsrcprocid\x18\x05 \x01(\x05\x12\x0e\n\x06\x64stpid\x18\x03 \x01(\x04\x12\x11\n\tdstprocid\x18\x06 \x01(\x05*J\n\tTechnique\x12\x16\n\x12\x43reateRemoteThread\x10\x00\x12\x13\n\x0fShellTrayWindow\x10\x01\x12\x10\n\x0cQueueUserAPC\x10\x02\x42\x02H\x02\x62\x06proto3')
+    name="inject.proto",
+    package="threemon",
+    syntax="proto3",
+    serialized_options=_b("H\002"),
+    serialized_pb=_b(
+        '\n\x0cinject.proto\x12\x08threemon"\x82\x01\n\x06Inject\x12\n\n\x02ts\x18\x04 \x01(\r\x12&\n\ttechnique\x18\x01 \x01(\x0e\x32\x13.threemon.Technique\x12\x0e\n\x06srcpid\x18\x02 \x01(\x04\x12\x11\n\tsrcprocid\x18\x05 \x01(\x05\x12\x0e\n\x06\x64stpid\x18\x03 \x01(\x04\x12\x11\n\tdstprocid\x18\x06 \x01(\x05*J\n\tTechnique\x12\x16\n\x12\x43reateRemoteThread\x10\x00\x12\x13\n\x0fShellTrayWindow\x10\x01\x12\x10\n\x0cQueueUserAPC\x10\x02\x42\x02H\x02\x62\x06proto3'
+    ),
 )
 
 _TECHNIQUE = _descriptor.EnumDescriptor(
-  name='Technique',
-  full_name='threemon.Technique',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='CreateRemoteThread', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='ShellTrayWindow', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='QueueUserAPC', index=2, number=2,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=159,
-  serialized_end=233,
+    name="Technique",
+    full_name="threemon.Technique",
+    filename=None,
+    file=DESCRIPTOR,
+    values=[
+        _descriptor.EnumValueDescriptor(
+            name="CreateRemoteThread",
+            index=0,
+            number=0,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="ShellTrayWindow",
+            index=1,
+            number=1,
+            serialized_options=None,
+            type=None,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="QueueUserAPC", index=2, number=2, serialized_options=None, type=None
+        ),
+    ],
+    containing_type=None,
+    serialized_options=None,
+    serialized_start=159,
+    serialized_end=233,
 )
 _sym_db.RegisterEnumDescriptor(_TECHNIQUE)
 
@@ -55,82 +61,148 @@ ShellTrayWindow = 1
 QueueUserAPC = 2
 
 
-
 _INJECT = _descriptor.Descriptor(
-  name='Inject',
-  full_name='threemon.Inject',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='ts', full_name='threemon.Inject.ts', index=0,
-      number=4, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='technique', full_name='threemon.Inject.technique', index=1,
-      number=1, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='srcpid', full_name='threemon.Inject.srcpid', index=2,
-      number=2, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='srcprocid', full_name='threemon.Inject.srcprocid', index=3,
-      number=5, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='dstpid', full_name='threemon.Inject.dstpid', index=4,
-      number=3, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='dstprocid', full_name='threemon.Inject.dstprocid', index=5,
-      number=6, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=27,
-  serialized_end=157,
+    name="Inject",
+    full_name="threemon.Inject",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="ts",
+            full_name="threemon.Inject.ts",
+            index=0,
+            number=4,
+            type=13,
+            cpp_type=3,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="technique",
+            full_name="threemon.Inject.technique",
+            index=1,
+            number=1,
+            type=14,
+            cpp_type=8,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="srcpid",
+            full_name="threemon.Inject.srcpid",
+            index=2,
+            number=2,
+            type=4,
+            cpp_type=4,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="srcprocid",
+            full_name="threemon.Inject.srcprocid",
+            index=3,
+            number=5,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="dstpid",
+            full_name="threemon.Inject.dstpid",
+            index=4,
+            number=3,
+            type=4,
+            cpp_type=4,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="dstprocid",
+            full_name="threemon.Inject.dstprocid",
+            index=5,
+            number=6,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=27,
+    serialized_end=157,
 )
 
-_INJECT.fields_by_name['technique'].enum_type = _TECHNIQUE
-DESCRIPTOR.message_types_by_name['Inject'] = _INJECT
-DESCRIPTOR.enum_types_by_name['Technique'] = _TECHNIQUE
+_INJECT.fields_by_name["technique"].enum_type = _TECHNIQUE
+DESCRIPTOR.message_types_by_name["Inject"] = _INJECT
+DESCRIPTOR.enum_types_by_name["Technique"] = _TECHNIQUE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-Inject = _reflection.GeneratedProtocolMessageType('Inject', (_message.Message,), dict(
-  DESCRIPTOR = _INJECT,
-  __module__ = 'inject_pb2'
-  # @@protoc_insertion_point(class_scope:threemon.Inject)
-  ))
+Inject = _reflection.GeneratedProtocolMessageType(
+    "Inject",
+    (_message.Message,),
+    dict(
+        DESCRIPTOR=_INJECT,
+        __module__="inject_pb2",
+        # @@protoc_insertion_point(class_scope:threemon.Inject)
+    ),
+)
 _sym_db.RegisterMessage(Inject)
 
 

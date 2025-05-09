@@ -14,23 +14,17 @@ class Undoable:
     """Helper that wraps around a starting method and stopping method.
     These can be stored and their starting method effect 'undone'."""
 
-    def __init__(self, apply_func=None, apply_args=None,
-                 undo_func=None, undo_args=None):
-
-        if apply_args is not None and not isinstance(
-                apply_args, (tuple, list)
-        ):
+    def __init__(
+        self, apply_func=None, apply_args=None, undo_func=None, undo_args=None
+    ):
+        if apply_args is not None and not isinstance(apply_args, (tuple, list)):
             apply_args = (apply_args,)
 
         if apply_func:
-            log.debug(
-                "Applying change", apply_func=apply_func, apply_args=apply_args
-            )
+            log.debug("Applying change", apply_func=apply_func, apply_args=apply_args)
             apply_func(*apply_args)
 
-        if undo_args is not None and not isinstance(
-                undo_args, (tuple, list)
-        ):
+        if undo_args is not None and not isinstance(undo_args, (tuple, list)):
             undo_args = (undo_args,)
 
         self._tracked_by = set()
@@ -52,14 +46,12 @@ class Undoable:
             for tracker in self._tracked_by:
                 tracker.remove(self)
 
-        log.debug(
-            "Undoing change", undo_func=self.undo_func, args=self.undo_args
-        )
+        log.debug("Undoing change", undo_func=self.undo_func, args=self.undo_args)
         self.undo_func(*self.undo_args)
         self._undone = True
 
-class UndoableTracker:
 
+class UndoableTracker:
     def __init__(self):
         self._lock = RLock()
         self._undoables = []

@@ -11,20 +11,33 @@ from threading import RLock
 from . import analyses
 from .clients import ImportControllerClient, ActionFailedError
 from .storage import (
-    AnalysisPaths, TaskPaths, split_analysis_id, create_analysis_folder,
-    Binaries, File, Paths, move_file, delete_file, TASK_PREFIX, taskdir_name,
-    merge_logdata
+    AnalysisPaths,
+    TaskPaths,
+    split_analysis_id,
+    create_analysis_folder,
+    Binaries,
+    File,
+    Paths,
+    move_file,
+    delete_file,
+    TASK_PREFIX,
+    taskdir_name,
+    merge_logdata,
 )
 from .strictcontainer import Analysis, Task
+
 
 class AnalysisImportError(Exception):
     pass
 
+
 class AnalysisExistsError(Exception):
     pass
 
+
 class AnalysisZippingError(AnalysisImportError):
     pass
+
 
 def _read_analysisjson(zipped_analysis, passwordbytes=None):
     zip_file = zipped_analysis.zip_fp
@@ -34,9 +47,7 @@ def _read_analysisjson(zipped_analysis, passwordbytes=None):
     try:
         analysisfile = zip_file.getinfo("analysis.json")
     except KeyError:
-        raise AnalysisImportError(
-            "Invalid analysis zip. Missing file analysis.json"
-        )
+        raise AnalysisImportError("Invalid analysis zip. Missing file analysis.json")
 
     # Ignore analysis.json if larger than 50MB. It should never be
     # that big. It is a relatively small JSON structure. We are not
@@ -49,6 +60,7 @@ def _read_analysisjson(zipped_analysis, passwordbytes=None):
     except (ValueError, KeyError, TypeError) as e:
         raise AnalysisImportError(f"Invalid analysis.json: {e}")
 
+
 def _read_taskjson(zipped_analysis, task_id, passwordbytes=None):
     zip_file = zipped_analysis.zip_fp
     if passwordbytes:
@@ -58,9 +70,7 @@ def _read_taskjson(zipped_analysis, task_id, passwordbytes=None):
     try:
         taskfile = zip_file.getinfo(f"{taskdir}/task.json")
     except KeyError:
-        raise AnalysisImportError(
-            "Invalid analysis zip. Missing file task.json"
-        )
+        raise AnalysisImportError("Invalid analysis zip. Missing file task.json")
 
     # Ignore task.json if larger than 50MB. It should never be
     # that big. It is a relatively small JSON structure. We are not
@@ -73,11 +83,14 @@ def _read_taskjson(zipped_analysis, task_id, passwordbytes=None):
     except (ValueError, KeyError, TypeError) as e:
         raise AnalysisImportError(f"Invalid task.json: {e}")
 
+
 _ILLEGAL_CHARS = ("..", ":", "\x00")
+
 
 def zinfo_has_illegal_chars(zipinfo):
     name = zipinfo.filename
     return any(c in name for c in _ILLEGAL_CHARS) or name.startswith("/")
+
 
 def should_ignore_zinfo(zipinfo):
     info = zipinfo.external_attr >> 16
@@ -95,6 +108,7 @@ def should_ignore_zinfo(zipinfo):
 
     return False
 
+
 def _get_unzippables(zipped_data, passwordbytes=None, ignore_filesnames=[]):
     zip_file = zipped_data.zip_fp
 
@@ -103,7 +117,6 @@ def _get_unzippables(zipped_data, passwordbytes=None, ignore_filesnames=[]):
         zip_file.setpassword(passwordbytes)
 
     for file in zip_file.filelist:
-
         if zinfo_has_illegal_chars(file):
             raise AnalysisImportError(
                 f"Illegal characters in path of file: {file.filename}"
@@ -119,17 +132,13 @@ def _get_unzippables(zipped_data, passwordbytes=None, ignore_filesnames=[]):
 
     return unzippables
 
-def _unzip_zipped_data(zipped_data, unzip_path, unzippables=[],
-                       passwordbytes=None):
+
+def _unzip_zipped_data(zipped_data, unzip_path, unzippables=[], passwordbytes=None):
     if not os.path.isdir(unzip_path):
-        raise AnalysisImportError(
-            f"Unzip path is not a directory: {unzip_path}"
-        )
+        raise AnalysisImportError(f"Unzip path is not a directory: {unzip_path}")
 
     if not unzippables:
-        unzippables = _get_unzippables(
-            zipped_data, passwordbytes=passwordbytes
-        )
+        unzippables = _get_unzippables(zipped_data, passwordbytes=passwordbytes)
 
     if not unzippables:
         raise AnalysisImportError("Nothing to unzip after filtering")
@@ -138,7 +147,6 @@ def _unzip_zipped_data(zipped_data, unzip_path, unzippables=[],
 
 
 class ZippedData:
-
     def __init__(self, zipfile_path):
         self._path = zipfile_path
         self._fp = None
@@ -218,7 +226,6 @@ class ZippedData:
 
 
 class ZippedAnalysis(ZippedData):
-
     def __init__(self, zipfile_path):
         super().__init__(zipfile_path)
         self._analysis = None
@@ -230,8 +237,8 @@ class ZippedAnalysis(ZippedData):
 
         return self._analysis
 
-class ZippedTaskResult(ZippedData):
 
+class ZippedTaskResult(ZippedData):
     def unzip(self, unpack_path):
         # Never overwrite task.json. It should never be edited by a node.
         # Unpack task.log separately and append its contents to the existing
@@ -243,7 +250,6 @@ class ZippedTaskResult(ZippedData):
 
 
 class ZippedNodeWork(ZippedAnalysis):
-
     TASK_ID_FILE = "nodework"
 
     def __init__(self, zipfile_path):
@@ -269,21 +275,15 @@ class ZippedNodeWork(ZippedAnalysis):
     def _find_task_id(self):
         nodework_info = self.zip_fp.getinfo(self.TASK_ID_FILE)
         if not nodework_info:
-            raise AnalysisImportError(
-                f"Missing {self.TASK_ID_FILE} in node work zip"
-            )
+            raise AnalysisImportError(f"Missing {self.TASK_ID_FILE} in node work zip")
 
         if should_ignore_zinfo(nodework_info):
-            raise AnalysisImportError(
-                f"{self.TASK_ID_FILE} is not a regular file"
-            )
+            raise AnalysisImportError(f"{self.TASK_ID_FILE} is not a regular file")
 
         # This file only contains a task ID, and should therefore never be
         # larger than date + analysis id length + _XXX
         if nodework_info.file_size > 30:
-            raise AnalysisImportError(
-                f"{self.TASK_ID_FILE} file exceeds maximum size"
-            )
+            raise AnalysisImportError(f"{self.TASK_ID_FILE} file exceeds maximum size")
 
         task_id = self.zip_fp.read(nodework_info).decode()
         try:
@@ -324,8 +324,8 @@ class ZippedNodeWork(ZippedAnalysis):
 
         self.zip_fp.extractall(path=unpack_path, members=all_unzippables)
 
-class Zipper:
 
+class Zipper:
     WRAPPER_CLASS = ZippedData
 
     @property
@@ -348,12 +348,13 @@ class Zipper:
         return (None, info, None)
 
     def _make_zippable_file(self, filepath):
-        return (filepath,
-                zipfile.ZipInfo.from_file(
-                    filename=filepath,
-                    arcname=os.path.relpath(filepath, self.archive_root)
-                ),
-                None)
+        return (
+            filepath,
+            zipfile.ZipInfo.from_file(
+                filename=filepath, arcname=os.path.relpath(filepath, self.archive_root)
+            ),
+            None,
+        )
 
     def _make_zippable_data(self, archive_path, data):
         info = zipfile.ZipInfo(filename=archive_path)
@@ -364,8 +365,9 @@ class Zipper:
         if os.path.exists(zip_path):
             raise AnalysisZippingError(f"Path already exists: {zip_path}")
 
-        with zipfile.ZipFile(zip_path, "x", compression=zipfile.ZIP_STORED,
-                             allowZip64=True) as zipf:
+        with zipfile.ZipFile(
+            zip_path, "x", compression=zipfile.ZIP_STORED, allowZip64=True
+        ) as zipf:
             for fullpath, zipinfo, data in self._get_all_zippables():
                 if zipinfo.is_dir():
                     zipf.writestr(zipinfo, "")
@@ -378,7 +380,6 @@ class Zipper:
 
 
 class TaskZipper(Zipper):
-
     def __init__(self, analysis_id, task_id):
         self.analysis_id = analysis_id
         self.task_id = task_id
@@ -406,17 +407,15 @@ class TaskZipper(Zipper):
                 if name in ignore_filenames:
                     continue
 
-                zippables.append(
-                    self._make_zippable_file(os.path.join(curpath, name))
-                )
+                zippables.append(self._make_zippable_file(os.path.join(curpath, name)))
 
         return zippables
 
     def _get_all_zippables(self):
         return self._get_task_zippables()
 
-class TaskResultZipper(TaskZipper):
 
+class TaskResultZipper(TaskZipper):
     WRAPPER_CLASS = ZippedTaskResult
 
     def __init__(self, task_id):
@@ -434,25 +433,20 @@ class TaskResultZipper(TaskZipper):
 
 
 class NodeWorkZipper(TaskZipper):
-
     WRAPPER_CLASS = ZippedNodeWork
 
     def _get_all_zippables(self):
         zippables = []
         zippables.extend(self._get_task_zippables())
         zippables.append(
-            self._make_zippable_file(
-                AnalysisPaths.analysisjson(self.analysis_id)
-            )
+            self._make_zippable_file(AnalysisPaths.analysisjson(self.analysis_id))
         )
 
         targetzip = AnalysisPaths.zipified_file(self.analysis_id)
         # Set resolve to False, because the binary path is a symlink
         # and we want a relative path to the actual symlink in the
         # analysis directory, not its value.
-        submitted_file = AnalysisPaths.submitted_file(
-            self.analysis_id, resolve=False
-        )
+        submitted_file = AnalysisPaths.submitted_file(self.analysis_id, resolve=False)
         if targetzip.is_file():
             zippables.append(self._make_zippable_file(targetzip))
         elif submitted_file.is_file():
@@ -466,7 +460,6 @@ class NodeWorkZipper(TaskZipper):
 
 
 class AnalysisZipper(Zipper):
-
     WRAPPER_CLASS = ZippedAnalysis
 
     def __init__(self, analysis_id, ignore_dirs=[], ignore_files=[]):
@@ -507,9 +500,7 @@ class AnalysisZipper(Zipper):
 
                 # Only add the file if its relative path does not appear
                 # in the ignored file or directory list.
-                if not relpath.startswith(
-                        self.ignore_dirs + self.ignore_files
-                ):
+                if not relpath.startswith(self.ignore_dirs + self.ignore_files):
                     zippables.append(self._make_zippable_file(fullpath))
 
         return zippables
@@ -555,11 +546,10 @@ def _import_targetfile(analysis):
     binary_helper.symlink(binary)
     delete_file(tmpbin)
 
+
 def import_analysis(analysis_zip_path, delete_after_import=False):
     if not analysis_zip_path.endswith(".zip"):
-        raise AnalysisImportError(
-            "File name must be in YYYYMMDD-identifier.zip"
-        )
+        raise AnalysisImportError("File name must be in YYYYMMDD-identifier.zip")
 
     zipped_analysis = ZippedAnalysis(analysis_zip_path)
     analysis = zipped_analysis.analysis
@@ -571,9 +561,7 @@ def import_analysis(analysis_zip_path, delete_after_import=False):
     try:
         analysis_id, path = create_analysis_folder(day, identifier)
     except FileExistsError:
-        raise AnalysisImportError(
-            f"Analysis with id {analysis.id!r} already exists"
-        )
+        raise AnalysisImportError(f"Analysis with id {analysis.id!r} already exists")
 
     with zipped_analysis:
         zipped_analysis.unzip(path)
@@ -592,6 +580,7 @@ def import_analysis(analysis_zip_path, delete_after_import=False):
 
     return analysis
 
+
 def store_importable(zip_path):
     if not zip_path.endswith(".zip"):
         raise AnalysisImportError("File must have a .zip extension")
@@ -607,27 +596,26 @@ def store_importable(zip_path):
     try:
         move_file(zip_path, importable_path)
     except OSError as e:
-        raise AnalysisImportError(
-            f"Failed to write importable zip to Cuckoo cwd: {e}"
-        )
+        raise AnalysisImportError(f"Failed to write importable zip to Cuckoo cwd: {e}")
+
 
 def list_importables():
     """Return a list of names of importables that are not processed yet."""
     return os.listdir(Paths.importables())
+
 
 def notify():
     """Send a ping to the state controller to ask it to track all untracked
     analyses. Newly submitted analyses will not be tracked until the state
     controller receives a notify message."""
     try:
-        ImportControllerClient.notify(
-            Paths.unix_socket("importcontroller.sock")
-        )
+        ImportControllerClient.notify(Paths.unix_socket("importcontroller.sock"))
     except ActionFailedError as e:
         raise AnalysisImportError(
             f"Failed to notify import controller of new analyses. "
             f"Is import mode running? {e}"
         )
+
 
 def unpack_noderesult(zip_path, task_id):
     task_path = TaskPaths.path(task_id)

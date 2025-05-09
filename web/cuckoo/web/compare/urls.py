@@ -12,7 +12,6 @@ register_converter(converters.TaskId, "task_id")
 urlpatterns = [
     path("", views.index, name="Compare/index"),
     path(
-        "<task_id:task_id1>/<task_id:task_id2>", views.compare,
-        name="Compare/compare"
-    )
+        "<task_id:task_id1>/<task_id:task_id2>", views.compare, name="Compare/compare"
+    ),
 ]

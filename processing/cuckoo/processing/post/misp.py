@@ -7,8 +7,8 @@ from cuckoo.common.config import cfg
 from ..abtracts import Processor
 from ..errors import DisablePluginError
 
-class MispInfoGather(Processor):
 
+class MispInfoGather(Processor):
     CATEGORY = ["file", "url"]
     KEY = "misp"
 
@@ -38,15 +38,17 @@ class MispInfoGather(Processor):
     def init(self):
         try:
             self.misp_client = MispClient(
-                misp_url=self.url, api_key=self.key, timeout=self.conn_timeout,
-                verify_tls=self.verify_tls
+                misp_url=self.url,
+                api_key=self.key,
+                timeout=self.conn_timeout,
+                verify_tls=self.verify_tls,
             )
         except MispError as e:
-            raise DisablePluginError(
-                f"Failed to connect to MISP server. Error: {e}"
-            )
+            raise DisablePluginError(f"Failed to connect to MISP server. Error: {e}")
 
-    def _search_dst_ips(self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"):
+    def _search_dst_ips(
+        self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"
+    ):
         network = self.ctx.result.get("network", {})
 
         queries = 0
@@ -56,13 +58,20 @@ class MispInfoGather(Processor):
                 break
 
             queries += 1
-            events.extend(self.misp_client.find_ip_dst(ip, limit=event_limit,
-                to_ids=to_ids, publish_timestamp=publish_timestamp)
+            events.extend(
+                self.misp_client.find_ip_dst(
+                    ip,
+                    limit=event_limit,
+                    to_ids=to_ids,
+                    publish_timestamp=publish_timestamp,
+                )
             )
 
         return events
 
-    def _search_domains(self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"):
+    def _search_domains(
+        self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"
+    ):
         network = self.ctx.result.get("network", {})
 
         queries = 0
@@ -73,13 +82,19 @@ class MispInfoGather(Processor):
 
             queries += 1
             events.extend(
-                self.misp_client.find_domain(domain, limit=event_limit,
-                    to_ids=to_ids, publish_timestamp=publish_timestamp)
+                self.misp_client.find_domain(
+                    domain,
+                    limit=event_limit,
+                    to_ids=to_ids,
+                    publish_timestamp=publish_timestamp,
+                )
             )
 
         return events
 
-    def _search_urls(self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"):
+    def _search_urls(
+        self, query_limit=None, event_limit=1, to_ids=1, publish_timestamp="365d"
+    ):
         network = self.ctx.result.get("network", {})
 
         queries = 0
@@ -93,8 +108,14 @@ class MispInfoGather(Processor):
                 continue
 
             queries += 1
-            events.extend(self.misp_client.find_url(url, limit=event_limit,
-                to_ids=to_ids, publish_timestamp=publish_timestamp))
+            events.extend(
+                self.misp_client.find_url(
+                    url,
+                    limit=event_limit,
+                    to_ids=to_ids,
+                    publish_timestamp=publish_timestamp,
+                )
+            )
 
         return events
 
@@ -110,7 +131,7 @@ class MispInfoGather(Processor):
                     query_limit=self.query_limits.get("dst_ip"),
                     event_limit=self.event_limits.get("dst_ip", 1),
                     to_ids=self.query_ids_flags.get("dst_ip", 1),
-                    publish_timestamp=self.publish_timestamps.get("dst_ip", 1)
+                    publish_timestamp=self.publish_timestamps.get("dst_ip", 1),
                 )
             )
             events.extend(
@@ -118,8 +139,7 @@ class MispInfoGather(Processor):
                     query_limit=self.query_limits.get("url"),
                     event_limit=self.event_limits.get("url", 1),
                     to_ids=self.query_ids_flags.get("url", 1),
-                    publish_timestamp=self.publish_timestamps.get("url", 1)
-
+                    publish_timestamp=self.publish_timestamps.get("url", 1),
                 )
             )
             events.extend(
@@ -127,7 +147,7 @@ class MispInfoGather(Processor):
                     query_limit=self.query_limits.get("domain"),
                     event_limit=self.event_limits.get("domain", 1),
                     to_ids=self.query_ids_flags.get("domain", 1),
-                    publish_timestamp=self.publish_timestamps.get("domain", 1)
+                    publish_timestamp=self.publish_timestamps.get("domain", 1),
                 )
             )
         except MispError as e:

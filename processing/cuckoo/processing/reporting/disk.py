@@ -7,17 +7,15 @@ from cuckoo.common.config import cfg
 from cuckoo.common.strictcontainer import Identification, Pre, Post
 from cuckoo.common.storage import AnalysisPaths, TaskPaths
 
-class JSONDump(Reporter):
 
+class JSONDump(Reporter):
     ORDER = 1
 
     def init(self):
         self.max_processes = cfg(
             "post.yaml", "processes", "max_processes", subpkg="processing"
         )
-        self.max_iocs = cfg(
-            "post.yaml", "signatures", "max_iocs", subpkg="processing"
-        )
+        self.max_iocs = cfg("post.yaml", "signatures", "max_iocs", subpkg="processing")
         self.max_ioc_size = cfg(
             "post.yaml", "signatures", "max_ioc_bytes", subpkg="processing"
         )
@@ -29,15 +27,19 @@ class JSONDump(Reporter):
             "selected": selected.get("selected"),
             "identified": selected.get("identified"),
             "target": selected.get("target", {}),
-            "ignored": self.ctx.result.get("ignored", [])
+            "ignored": self.ctx.result.get("ignored", []),
         }
-        Identification(**info).to_file(
-            AnalysisPaths.identjson(self.ctx.analysis.id)
-        )
+        Identification(**info).to_file(AnalysisPaths.identjson(self.ctx.analysis.id))
 
     def report_pre_analysis(self):
         include_result = [
-            "virustotal", "irma", "mhr", "static", "misp", "intelmq", "command"
+            "virustotal",
+            "irma",
+            "mhr",
+            "static",
+            "misp",
+            "intelmq",
+            "command",
         ]
 
         # Pre might change settings such as launch args for specific chosen
@@ -59,7 +61,7 @@ class JSONDump(Reporter):
             "ttps": self.ctx.ttp_tracker.to_dict(),
             "tags": self.ctx.tag_tracker.tags,
             "families": self.ctx.family_tracker.families,
-            "platforms": platforms
+            "platforms": platforms,
         }
 
         for resultkey in include_result:
@@ -70,8 +72,12 @@ class JSONDump(Reporter):
 
     def report_post_analysis(self):
         include_result = [
-            "misp", "network", "cfgextr", "intelmq", "screenshot",
-            "suricata"
+            "misp",
+            "network",
+            "cfgextr",
+            "intelmq",
+            "screenshot",
+            "suricata",
         ]
 
         post_report = {
@@ -85,7 +91,7 @@ class JSONDump(Reporter):
             "families": self.ctx.family_tracker.families,
             "processes": self.ctx.process_tracker.to_dict(
                 max_processes=self.max_processes
-            )
+            ),
         }
 
         for resultkey in include_result:
@@ -96,7 +102,6 @@ class JSONDump(Reporter):
 
 
 class TLSMasterSecrets(Reporter):
-
     def report_post_analysis(self):
         if not self.ctx.network.tls.sessions:
             return

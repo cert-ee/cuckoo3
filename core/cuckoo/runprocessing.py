@@ -10,25 +10,31 @@ import traceback
 
 from cuckoo.common.config import MissingConfigurationFileError
 from cuckoo.common.ipc import (
-    UnixSocketServer, UnixSockClient, ReaderWriter, NotConnectedError
+    UnixSocketServer,
+    UnixSockClient,
+    ReaderWriter,
+    NotConnectedError,
 )
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.packages import enumerate_plugins
-from cuckoo.common.startup import (
-    init_global_logging, load_configurations, StartupError
-)
+from cuckoo.common.startup import init_global_logging, load_configurations, StartupError
 from cuckoo.common.storage import Paths, cuckoocwd
 from cuckoo.common import shutdown
 from cuckoo.processing import abtracts
 from cuckoo.processing.errors import PluginError
 from cuckoo.processing.worker import (
-    PreProcessingRunner, AnalysisContext, TaskContext, PostProcessingRunner
+    PreProcessingRunner,
+    AnalysisContext,
+    TaskContext,
+    PostProcessingRunner,
 )
 
 log = CuckooGlobalLogger(__name__)
 
+
 class PluginWorkerError(Exception):
     pass
+
 
 class States(object):
     SETUP = "setup"
@@ -43,32 +49,29 @@ class States(object):
 
 
 class WorkReceiver(UnixSocketServer):
-
     PLUGIN_BASEPATH = "cuckoo.processing"
     REPORTING_PLUGIN_PATH = f"{PLUGIN_BASEPATH}.reporting"
 
     PLUGINS = {
         "identification": {
-            "processing": (
-                f"{PLUGIN_BASEPATH}.identification", abtracts.Processor
-            ),
-            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
+            "processing": (f"{PLUGIN_BASEPATH}.identification", abtracts.Processor),
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter),
         },
         "pre": {
             "processing": (f"{PLUGIN_BASEPATH}.pre", abtracts.Processor),
-            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter),
         },
         "post": {
             "eventconsuming": (
-                f"{PLUGIN_BASEPATH}.post.eventconsumer", abtracts.EventConsumer
+                f"{PLUGIN_BASEPATH}.post.eventconsumer",
+                abtracts.EventConsumer,
             ),
             "processing": (f"{PLUGIN_BASEPATH}.post", abtracts.Processor),
-            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter)
-        }
+            "reporting": (REPORTING_PLUGIN_PATH, abtracts.Reporter),
+        },
     }
 
-    def __init__(self, sockpath, worktype, name, cuckoocwd,
-                 loglevel=logging.DEBUG):
+    def __init__(self, sockpath, worktype, name, cuckoocwd, loglevel=logging.DEBUG):
         self.name = name
         self.worktype = worktype
         self.cuckoocwd = cuckoocwd
@@ -86,36 +89,29 @@ class WorkReceiver(UnixSocketServer):
     def start(self):
         def _stop_wrapper():
             if self.do_run:
-                log.info(
-                    "Worker stopping..", worker=self.name,
-                    worktype=self.worktype
-                )
+                log.info("Worker stopping..", worker=self.name, worktype=self.worktype)
                 self.stop()
                 self.cleanup()
 
         shutdown.register_shutdown(_stop_wrapper)
 
-        cuckoocwd.set(
-            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
-        )
-        init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
-        )
+        cuckoocwd.set(self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses)
+        init_global_logging(self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False)
 
         log.debug("Loading configuration files", worker=self.name)
         try:
             load_configurations()
         except MissingConfigurationFileError as e:
-            log.fatal_error(
-                "Missing configuration file.", error=e, includetrace=False
-            )
+            log.fatal_error("Missing configuration file.", error=e, includetrace=False)
 
         try:
             self.initialize_workrunners()
         except StartupError as e:
             log.fatal_error(
                 "Error during work runner initialization",
-                worker=self.name, error=e, includetrace=False
+                worker=self.name,
+                error=e,
+                includetrace=False,
             )
 
         self.create_socket(backlog=1)
@@ -141,8 +137,11 @@ class WorkReceiver(UnixSocketServer):
                 plugin_classes = enumerate_plugins(path, globals(), abstract)
             except ImportError as e:
                 log.error(
-                    "Failed to import plugins for worker", worker=self.name,
-                    importpath=path, abstractclass=abstract, error=e
+                    "Failed to import plugins for worker",
+                    worker=self.name,
+                    importpath=path,
+                    abstractclass=abstract,
+                    error=e,
                 )
                 return False
 
@@ -155,13 +154,16 @@ class WorkReceiver(UnixSocketServer):
                     log.error(
                         "Failed to initialize plugin class",
                         plugin_class=plugin_class,
-                        worker=self.name, error=e
+                        worker=self.name,
+                        error=e,
                     )
                     return False
                 except Exception as e:
                     log.exception(
                         "Failed to initialize plugin class",
-                        plugin_class=plugin_class, error=e, worker=self.name
+                        plugin_class=plugin_class,
+                        error=e,
+                        worker=self.name,
                     )
                     return False
 
@@ -197,9 +199,10 @@ class WorkReceiver(UnixSocketServer):
         processing_classes = self.plugin_classes[self.worktype]["processing"]
         reporting_classes = self.plugin_classes[self.worktype]["reporting"]
         runner = PostProcessingRunner(
-            taskctx, event_consumer_classes=event_consumers,
+            taskctx,
+            event_consumer_classes=event_consumers,
             processing_classes=processing_classes,
-            reporting_classes=reporting_classes
+            reporting_classes=reporting_classes,
         )
         return taskctx, runner
 
@@ -209,9 +212,10 @@ class WorkReceiver(UnixSocketServer):
         processing_classes = self.plugin_classes[self.worktype]["processing"]
         reporting_classes = self.plugin_classes[self.worktype]["reporting"]
         runner = PreProcessingRunner(
-            analysisctx, processing_classes=processing_classes,
-            reporting_classes=reporting_classes
-         )
+            analysisctx,
+            processing_classes=processing_classes,
+            reporting_classes=reporting_classes,
+        )
         return analysisctx, runner
 
     def handle_message(self, sock, m):
@@ -226,15 +230,12 @@ class WorkReceiver(UnixSocketServer):
                         m["analysis_id"]
                     )
             else:
-                self.send_msg(
-                    {"error": "Missing key 'analysis_id' or 'task_id'"}
-                )
+                self.send_msg({"error": "Missing key 'analysis_id' or 'task_id'"})
                 self.untrack(sock)
                 return
         except (ValueError, FileNotFoundError, KeyError) as e:
             log.error(
-                "Error while creating processing context",
-                worker=self.name, error=e
+                "Error while creating processing context", worker=self.name, error=e
             )
             self.update_state(States.WORK_FAIL)
             return
@@ -252,18 +253,16 @@ class WorkReceiver(UnixSocketServer):
         except Exception as e:
             log.exception("Worker fail", worker=self.name, error=e)
             self.update_state(
-                States.WORKER_FAIL, {
-                    "traceback": traceback.format_exc(),
-                    "error": str(e)
-                }
+                States.WORKER_FAIL,
+                {"traceback": traceback.format_exc(), "error": str(e)},
             )
         finally:
             processing_ctx.close()
             del runner
             del processing_ctx
 
-class _ProcessingJob:
 
+class _ProcessingJob:
     def __init__(self, worktype, analysis_id, task_id=None):
         self.worktype = worktype
         self.analysis_id = analysis_id
@@ -282,14 +281,12 @@ class _ProcessingJob:
         }
 
         if self.task_id:
-            d.update({
-                "task_id": self.task_id
-            })
+            d.update({"task_id": self.task_id})
 
         return d
 
-class ProcessingWorkerHandler(threading.Thread):
 
+class ProcessingWorkerHandler(threading.Thread):
     def __init__(self, cuckooctx):
         super().__init__()
         self.ctx = cuckooctx
@@ -298,42 +295,26 @@ class ProcessingWorkerHandler(threading.Thread):
         self.connected_workers = {}
 
         # Queues with work
-        self.queues = {
-            "identification": [],
-            "pre": [],
-            "post": []
-        }
+        self.queues = {"identification": [], "pre": [], "post": []}
 
         self._workers_started = False
         self._workers_fail = False
 
-        self._max_workers = {
-            "identification": 1,
-            "pre": 1,
-            "post": 1
-        }
+        self._max_workers = {"identification": 1, "pre": 1, "post": 1}
 
     def identify(self, analysis_id):
-        self.queues["identification"].append(_ProcessingJob(
-            "identification", analysis_id
-        ))
+        self.queues["identification"].append(
+            _ProcessingJob("identification", analysis_id)
+        )
 
     def pre_analysis(self, analysis_id):
-        self.queues["pre"].append(_ProcessingJob(
-            "pre", analysis_id
-        ))
+        self.queues["pre"].append(_ProcessingJob("pre", analysis_id))
 
     def post_analysis(self, analysis_id, task_id):
-        self.queues["post"].append(_ProcessingJob(
-            "post", analysis_id, task_id
-        ))
+        self.queues["post"].append(_ProcessingJob("post", analysis_id, task_id))
 
     def set_worker_amount(self, identification=1, pre=1, post=1):
-        self._max_workers = {
-            "identification": identification,
-            "pre": pre,
-            "post": post
-        }
+        self._max_workers = {"identification": identification, "pre": pre, "post": post}
 
     def run(self):
         log.debug("Starting processing workers")
@@ -393,15 +374,13 @@ class ProcessingWorkerHandler(threading.Thread):
         if os.path.exists(sockpath):
             # TODO use pidfile to determine if a sockpath can be removed
             log.warning(
-                "Unix socket path still exists. Removing it.",
-                sockpath=sockpath
+                "Unix socket path still exists. Removing it.", sockpath=sockpath
             )
             os.unlink(sockpath)
 
         log.info(f"Starting {worktype} worker.", workername=name)
         worker = WorkReceiver(
-            sockpath, worktype, name, cuckoocwd,
-            loglevel=self.ctx.loglevel
+            sockpath, worktype, name, cuckoocwd, loglevel=self.ctx.loglevel
         )
         proc = multiprocessing.Process(target=worker.start)
         proc.daemon = True
@@ -409,28 +388,30 @@ class ProcessingWorkerHandler(threading.Thread):
         proc.start()
         log.debug("Worker process started", workername=name, pid=proc.pid)
 
-        self.unready_workers.append({
-            "name": name,
-            "worktype": worktype,
-            "process": proc,
-            "comm": UnixSockClient(sockpath),
-            "sockpath": sockpath,
-            "state": None,
-            "job": None
-        })
+        self.unready_workers.append(
+            {
+                "name": name,
+                "worktype": worktype,
+                "process": proc,
+                "comm": UnixSockClient(sockpath),
+                "sockpath": sockpath,
+                "state": None,
+                "job": None,
+            }
+        )
 
     def requeue_work(self, worker):
         if worker["state"] != States.WORKING:
-            log.error(
-                "Cannot requeue work for worker without work", worker=worker
-            )
+            log.error("Cannot requeue work for worker without work", worker=worker)
             return
 
         job = worker["job"]
         worktype = worker["worktype"]
         log.warning(
-            "Requeuing job from worker", workername=worker["name"], job=job,
-            worktype=worktype
+            "Requeuing job from worker",
+            workername=worker["name"],
+            job=job,
+            worktype=worktype,
         )
         self.queues[worktype].insert(0, job)
 
@@ -481,7 +462,8 @@ class ProcessingWorkerHandler(threading.Thread):
             # during other states can be ignored.
             log.error(
                 "Invalid message received from worker",
-                workername=worker["name"], error=e
+                workername=worker["name"],
+                error=e,
             )
 
             if worker["state"] in (States.WORKING, States.SETUP):
@@ -493,9 +475,7 @@ class ProcessingWorkerHandler(threading.Thread):
             if not self.do_run:
                 return
 
-            log.error(
-                "Worker disconnected unexpectedly", workername=worker["name"]
-            )
+            log.error("Worker disconnected unexpectedly", workername=worker["name"])
             self.stop_worker(worker)
 
             # Untrack as it is disconnected
@@ -512,9 +492,7 @@ class ProcessingWorkerHandler(threading.Thread):
             job = worker["job"]
             worker["job"] = None
             self.set_worker_state(States.IDLE, worker)
-            log.debug(
-                "Worker finished job", workername=worker["name"], job=job
-            )
+            log.debug("Worker finished job", workername=worker["name"], job=job)
 
         # Worker has set up/loaded plugins and is ready to receive a job.
         elif state == States.READY:
@@ -537,31 +515,30 @@ class ProcessingWorkerHandler(threading.Thread):
             # TODO: Depending on what the fail is, we might want to kill and
             # restart the worker?
             log.error(
-                "Unhandled exception in worker", workername=worker["name"],
-                error=msg.get("error", ""), traceback=msg.get("traceback", "")
+                "Unhandled exception in worker",
+                workername=worker["name"],
+                error=msg.get("error", ""),
+                traceback=msg.get("traceback", ""),
             )
 
         elif state == States.SETUP_FAIL:
             self._workers_fail = True
             self.set_worker_state(States.SETUP_FAIL, worker)
             self.stop_worker(worker)
-            log.error(
-                "Worker setup failed. See worker logs",
-                workername=worker["name"]
-            )
+            log.error("Worker setup failed. See worker logs", workername=worker["name"])
 
     def controller_workdone(self, worker):
         self.ctx.state_controller.work_done(
             worktype=worker["worktype"],
             analysis_id=worker["job"].analysis_id,
-            task_id=worker["job"].task_id
+            task_id=worker["job"].task_id,
         )
 
     def controller_workfail(self, worker):
         self.ctx.state_controller.work_failed(
             worktype=worker["worktype"],
             analysis_id=worker["job"].analysis_id,
-            task_id=worker["job"].task_id
+            task_id=worker["job"].task_id,
         )
 
     def available_workers(self):
@@ -582,10 +559,7 @@ class ProcessingWorkerHandler(threading.Thread):
             self.assign_worker(worker, processing_job)
 
     def assign_worker(self, worker, job):
-        log.debug(
-            "Assigning job to worker", workername=worker["name"],
-            job=job
-        )
+        log.debug("Assigning job to worker", workername=worker["name"], job=job)
 
         worker["comm"].send_json_message(job.to_dict())
 
@@ -601,9 +575,7 @@ class ProcessingWorkerHandler(threading.Thread):
                     self.set_worker_state(States.SETUP, worker)
                     self.unready_workers.remove(worker)
 
-            incoming, _o, _ = select.select(
-                self.connected_workers.keys(), [], [], 1
-            )
+            incoming, _o, _ = select.select(self.connected_workers.keys(), [], [], 1)
             for sock in incoming:
                 self.handle_incoming(sock)
 

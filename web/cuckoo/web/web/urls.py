@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.urls import path, include
 
 urlpatterns = [
@@ -22,5 +23,5 @@ urlpatterns = [
     path("submit/", include("cuckoo.web.submit.urls")),
     path("search/", include("cuckoo.web.search.urls")),
     path("api/", include("cuckoo.web.uiapi.urls")),
-    path("compare/", include("cuckoo.web.compare.urls"))
+    path("compare/", include("cuckoo.web.compare.urls")),
 ]

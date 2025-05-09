@@ -11,22 +11,28 @@ from .strictcontainer import Task, Errors
 
 log = CuckooGlobalLogger(__name__)
 
+
 class TaskError(Exception):
     pass
+
 
 class TaskCreationError(TaskError):
     def __init__(self, msg, reasons=[]):
         self.reasons = reasons
         super().__init__(msg)
 
+
 class MissingResourceError(TaskCreationError):
     pass
+
 
 class NoTasksCreatedError(TaskCreationError):
     pass
 
+
 class NotAllTasksCreatedError(TaskCreationError):
     pass
+
 
 class HumanStates:
     PENDING = "Pending"
@@ -35,6 +41,7 @@ class HumanStates:
     PENDING_POST = "Pending post"
     REPORTED = "Reported"
     FATAL_ERROR = "Fatal error"
+
 
 class States:
     PENDING = "pending"
@@ -50,7 +57,7 @@ class States:
         RUN_COMPLETED: HumanStates.RUN_COMPLETED,
         PENDING_POST: HumanStates.PENDING_POST,
         REPORTED: HumanStates.REPORTED,
-        FATAL_ERROR: HumanStates.FATAL_ERROR
+        FATAL_ERROR: HumanStates.FATAL_ERROR,
     }
 
     @classmethod
@@ -58,9 +65,8 @@ class States:
         try:
             return cls._HUMAN[state]
         except KeyError:
-            raise TaskError(
-                f"No human readable version for state {state!r} exists"
-            )
+            raise TaskError(f"No human readable version for state {state!r} exists")
+
 
 def _make_task_dirs(task_id):
     task_path = TaskPaths.path(task_id)
@@ -68,15 +74,17 @@ def _make_task_dirs(task_id):
         os.mkdir(task_path)
     except FileExistsError as e:
         raise TaskCreationError(
-            f"Task directory '{task_path}' creation failed. "
-            f"Already exists: {e}"
+            f"Task directory '{task_path}' creation failed. Already exists: {e}"
         )
 
-    for dirpath in (TaskPaths.logfile(task_id),
-                    TaskPaths.procmem_dump(task_id),
-                    TaskPaths.screenshot(task_id),
-                    TaskPaths.dropped_file(task_id)):
+    for dirpath in (
+        TaskPaths.logfile(task_id),
+        TaskPaths.procmem_dump(task_id),
+        TaskPaths.screenshot(task_id),
+        TaskPaths.dropped_file(task_id),
+    ):
         os.mkdir(dirpath)
+
 
 def _create_task(nodes_tracker, analysis, task_number, platform_obj):
     route = platform_obj.settings.route or analysis.settings.route
@@ -85,9 +93,7 @@ def _create_task(nodes_tracker, analysis, task_number, platform_obj):
     )
 
     if not has_platform:
-        raise MissingResourceError(
-            f"No node has machine with: {platform_obj}"
-        )
+        raise MissingResourceError(f"No node has machine with: {platform_obj}")
 
     if has_platform and route and not has_route:
         raise MissingResourceError(
@@ -97,8 +103,10 @@ def _create_task(nodes_tracker, analysis, task_number, platform_obj):
 
     task_id = make_task_id(analysis.id, task_number)
     log.debug(
-        "Creating task.", task_id=task_id, platform=platform_obj.platform,
-        os_version=platform_obj.os_version
+        "Creating task.",
+        task_id=task_id,
+        platform=platform_obj.platform,
+        os_version=platform_obj.os_version,
     )
 
     _make_task_dirs(task_id)
@@ -111,24 +119,25 @@ def _create_task(nodes_tracker, analysis, task_number, platform_obj):
         "platform": platform_obj.platform,
         "os_version": platform_obj.os_version,
         "machine_tags": list(platform_obj.tags),
-        "command": platform_obj.settings.command or \
-                   analysis.settings.command,
-        "browser": platform_obj.settings.browser or \
-                   analysis.settings.browser,
-        "route": route
+        "command": platform_obj.settings.command or analysis.settings.command,
+        "browser": platform_obj.settings.browser or analysis.settings.browser,
+        "route": route,
     }
 
     task = Task(**task_values)
     task.to_file(TaskPaths.taskjson(task_id))
-    analysis.tasks.append({
-        "id": task_id,
-        "platform": platform_obj.platform,
-        "os_version": platform_obj.os_version,
-        "state": States.PENDING,
-        "score": 0
-    })
+    analysis.tasks.append(
+        {
+            "id": task_id,
+            "platform": platform_obj.platform,
+            "os_version": platform_obj.os_version,
+            "state": States.PENDING,
+            "score": 0,
+        }
+    )
 
     return task_values
+
 
 def create_all(analysis, nodes_tracker):
     tasks = []
@@ -136,18 +145,17 @@ def create_all(analysis, nodes_tracker):
     resource_errors = []
     for platform in analysis.settings.platforms:
         try:
-            tasks.append(_create_task(
-                nodes_tracker, analysis, task_number=tasknum,
-                platform_obj=platform
-            ))
+            tasks.append(
+                _create_task(
+                    nodes_tracker, analysis, task_number=tasknum, platform_obj=platform
+                )
+            )
             tasknum += 1
         except MissingResourceError as e:
             resource_errors.append(str(e))
 
     if not tasks:
-        raise NoTasksCreatedError(
-            "No tasks were created", reasons=resource_errors
-        )
+        raise NoTasksCreatedError("No tasks were created", reasons=resource_errors)
 
     # Set the default state for each task dict
     for task_dict in tasks:
@@ -170,6 +178,7 @@ def create_all(analysis, nodes_tracker):
 
     return tasks, resource_errors
 
+
 def set_db_state(task_id, state):
     ses = db.dbms.session()
     try:
@@ -178,11 +187,13 @@ def set_db_state(task_id, state):
     finally:
         ses.close()
 
+
 def merge_errors(task, errors_container):
     if task.errors:
         task.errors.merge_errors(errors_container)
     else:
         task.errors = errors_container
+
 
 def merge_run_errors(task):
     errpath = TaskPaths.runerr_json(task.id)
@@ -193,6 +204,7 @@ def merge_run_errors(task):
 
     os.remove(errpath)
 
+
 def merge_processing_errors(task):
     errpath = TaskPaths.processingerr_json(task.id)
     if not os.path.exists(errpath):
@@ -202,21 +214,28 @@ def merge_processing_errors(task):
 
     os.remove(errpath)
 
+
 def exists(task_id):
     return os.path.isfile(TaskPaths.taskjson(task_id))
+
 
 def has_unfinished_tasks(analysis_id):
     ses = db.dbms.session()
     try:
-        count = ses.query(db.Task).filter(
-            db.Task.analysis_id == analysis_id,
-            db.Task.state.in_(
-                [States.PENDING, States.RUNNING, States.PENDING_POST]
+        count = (
+            ses.query(db.Task)
+            .filter(
+                db.Task.analysis_id == analysis_id,
+                db.Task.state.in_(
+                    [States.PENDING, States.RUNNING, States.PENDING_POST]
+                ),
             )
-        ).count()
+            .count()
+        )
         return count > 0
     finally:
         ses.close()
+
 
 def update_db_row(task_id, **kwargs):
     ses = db.dbms.session()
@@ -226,17 +245,17 @@ def update_db_row(task_id, **kwargs):
     finally:
         ses.close()
 
+
 def count_created(start=None, end=None):
     ses = db.dbms.session()
     try:
         q = ses.query(db.Task)
         if start and end:
-            q = q.filter(
-                db.Task.created_on >= start, db.Task.created_on <= end
-            )
+            q = q.filter(db.Task.created_on >= start, db.Task.created_on <= end)
         return q.count()
     finally:
         ses.close()
+
 
 def write_changes(task):
     if not task.was_updated:

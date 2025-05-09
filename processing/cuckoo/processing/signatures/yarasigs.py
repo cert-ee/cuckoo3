@@ -5,11 +5,12 @@ import yara
 
 from cuckoo.processing.signatures.signature import IOC
 
+
 class YaraSignatureError(Exception):
     pass
 
-class MatchedRule:
 
+class MatchedRule:
     def __init__(self, yaramatch):
         self.match = yaramatch
 
@@ -20,8 +21,7 @@ class MatchedRule:
                 f"for Yara signature: {self.match.rule}"
             )
 
-        for k in ("tags", "ttps", "family", "short_description",
-                  "description"):
+        for k in ("tags", "ttps", "family", "short_description", "description"):
             if not isinstance(self.match.meta.get(k, ""), str):
                 raise YaraSignatureError(
                     f"Yara metadata field '{k}' contents must be a string"
@@ -29,14 +29,12 @@ class MatchedRule:
 
         tags = set(
             filter(
-                None,
-                [t.strip() for t in self.match.meta.get("tags", "").split(",")]
+                None, [t.strip() for t in self.match.meta.get("tags", "").split(",")]
             )
         )
         ttps = set(
             filter(
-                None,
-                [t.strip() for t in self.match.meta.get("ttps", "").split(",")]
+                None, [t.strip() for t in self.match.meta.get("ttps", "").split(",")]
             )
         )
         try:
@@ -45,28 +43,27 @@ class MatchedRule:
                 raise ValueError
         except (ValueError, TypeError):
             raise YaraSignatureError(
-                "Yara metadata field 'score' must be a positive integer "
-                "from 0 to 10"
+                "Yara metadata field 'score' must be a positive integer from 0 to 10"
             )
 
         signature_tracker.add_signature(
-            score=score, name=f"yara_{self.match.rule}",
+            score=score,
+            name=f"yara_{self.match.rule}",
             short_description=self.match.meta["short_description"],
             description=self.match.meta.get("description"),
-            ttps=ttps, tags=tags, family=self.match.meta.get("family"),
-            iocs=[IOC(matched_on=scanned_datatype, yara_rule=self.match.rule)]
+            ttps=ttps,
+            tags=tags,
+            family=self.match.meta.get("family"),
+            iocs=[IOC(matched_on=scanned_datatype, yara_rule=self.match.rule)],
         )
 
 
 class YaraFile:
-
     def __init__(self, path):
         try:
             self._rules = yara.compile(path)
         except yara.Error as e:
-            raise YaraSignatureError(
-                f"Failed to compile signature: {path}. {e}"
-            )
+            raise YaraSignatureError(f"Failed to compile signature: {path}. {e}")
 
     def match_file(self, filepath):
         return [MatchedRule(m) for m in self._rules.match(filepath)]

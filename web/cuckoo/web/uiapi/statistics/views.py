@@ -7,18 +7,16 @@ from django.views import View
 from cuckoo.common.config import cfg
 from cuckoo.common.resultstats import chartdata_maker, StatisticsError
 
-class Charts(View):
 
+class Charts(View):
     def get(self, request):
-        if not cfg(
-            "web.yaml", "elasticsearch", "statistics", "enabled",
-            subpkg="web"
-        ):
+        if not cfg("web.yaml", "elasticsearch", "statistics", "enabled", subpkg="web"):
             return JsonResponse(
                 {
                     "error": "Search feature is not available when "
-                             "Elasticsearch reporting is disabled."
-                }, status=403
+                    "Elasticsearch reporting is disabled."
+                },
+                status=403,
             )
 
         try:

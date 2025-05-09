@@ -9,6 +9,4 @@ from . import views
 
 register_converter(converters.TaskId, "task_id")
 
-urlpatterns = [
-    path("<task_id:task_id>", views.index, name="Task/index")
-]
+urlpatterns = [path("<task_id:task_id>", views.index, name="Task/index")]

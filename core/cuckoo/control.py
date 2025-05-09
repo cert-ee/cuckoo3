@@ -13,17 +13,17 @@ from cuckoo.common.importing import import_analysis, AnalysisImportError
 from cuckoo.common.ipc import UnixSocketServer, ReaderWriter
 from cuckoo.common.log import CuckooGlobalLogger, AnalysisLogger, TaskLogger
 from cuckoo.common.storage import Paths, AnalysisPaths, TaskPaths, delete_file
-from cuckoo.common.strictcontainer import (
-    Analysis, Task, Identification, Pre, Post
-)
+from cuckoo.common.strictcontainer import Analysis, Task, Identification, Pre, Post
 from cuckoo.common.submit import settings_maker, SubmissionError
 
 log = CuckooGlobalLogger(__name__)
 
 _tracking_lock = threading.Lock()
 
+
 class StateControllerError(Exception):
     pass
+
 
 def set_location_remote(worktracker):
     exported_ids = os.listdir(Paths.exported())
@@ -54,6 +54,7 @@ def import_importables(worktracker):
                 log.warning("Import failed", importable=path, error=e)
                 continue
 
+
 def track_untracked(worktracker):
     with _tracking_lock:
         analysis_ids = os.listdir(Paths.untracked())
@@ -71,6 +72,7 @@ def track_untracked(worktracker):
         for analysis_id in analysis_ids:
             delete_file(Paths.untracked(analysis_id))
 
+
 def handle_identification_done(worktracker):
     analysis = worktracker.analysis
 
@@ -83,7 +85,8 @@ def handle_identification_done(worktracker):
     if not os.path.isfile(ident_path):
         worktracker.log.error(
             "Failed to read identification stage file",
-            error="File does not exist", filepath=ident_path
+            error="File does not exist",
+            filepath=ident_path,
         )
         worktracker.errtracker.fatal_error(
             "Failed to read identification stage file. File does not exist"
@@ -102,23 +105,17 @@ def handle_identification_done(worktracker):
             allow_pre_analysis = True
         else:
             newstate = analyses.States.NO_SELECTED
-            worktracker.log.debug(
-                "Updating analysis state.", newstate=newstate
-            )
+            worktracker.log.debug("Updating analysis state.", newstate=newstate)
 
             analysis.state = newstate
             analyses.write_changes(analysis)
 
     if ident.selected or allow_pre_analysis:
         newstate = analyses.States.PENDING_PRE
-        worktracker.log.debug(
-            "Updating analysis state.", newstate=newstate
-        )
+        worktracker.log.debug("Updating analysis state.", newstate=newstate)
         analysis.state = newstate
         analyses.write_changes(analysis)
-        worktracker.ctx.processing_handler.pre_analysis(
-            worktracker.analysis_id
-        )
+        worktracker.ctx.processing_handler.pre_analysis(worktracker.analysis_id)
 
 
 def handle_pre_done(worktracker):
@@ -129,11 +126,9 @@ def handle_pre_done(worktracker):
         worktracker.log.error(
             "Failed to pre processing stage file",
             error="Pre processing stage file does not exist.",
-            filepath=pre_path
+            filepath=pre_path,
         )
-        worktracker.errtracker.fatal_error(
-            "Pre processing stage file does not exist."
-        )
+        worktracker.errtracker.fatal_error("Pre processing stage file does not exist.")
         analysis.state = analyses.States.FATAL_ERROR
         analyses.write_changes(analysis)
         return
@@ -166,12 +161,9 @@ def handle_pre_done(worktracker):
     try:
         tasks, resource_errs = task.create_all(analysis, worktracker.ctx.nodes)
     except task.TaskCreationError as e:
-        worktracker.log.error(
-            "Failed to create tasks for analysis", error=e
-        )
+        worktracker.log.error("Failed to create tasks for analysis", error=e)
         worktracker.errtracker.fatal_error(
-            f"Failed to create tasks for analysis. {e}. "
-            f"Reasons: {', '.join(e.reasons)}"
+            f"Failed to create tasks for analysis. {e}. Reasons: {', '.join(e.reasons)}"
         )
         for err in e.reasons:
             worktracker.errtracker.add_error(err)
@@ -193,10 +185,9 @@ def handle_pre_done(worktracker):
 
     worktracker.ctx.scheduler.queue_many(*tasks)
 
+
 def handle_manual_done(worktracker, settings_dict):
-    s_helper = settings_maker.new_settings(
-        nodeinfos=worktracker.ctx.nodes.nodeinfos
-    )
+    s_helper = settings_maker.new_settings(nodeinfos=worktracker.ctx.nodes.nodeinfos)
     try:
         s_helper.from_dict(settings_dict)
         # We overwrite all settings, but want to retain the 'manual' setting
@@ -206,7 +197,8 @@ def handle_manual_done(worktracker, settings_dict):
     except SubmissionError as e:
         worktracker.log.error(
             "Failed to update settings for manual state analysis",
-            error=e, analysis_id=worktracker.analysis_id
+            error=e,
+            analysis_id=worktracker.analysis_id,
         )
         return
 
@@ -221,16 +213,16 @@ def handle_manual_done(worktracker, settings_dict):
 
     worktracker.ctx.processing_handler.pre_analysis(worktracker.analysis_id)
 
+
 def handle_post_done(worktracker):
     report_path = TaskPaths.report(worktracker.task_id)
     if not os.path.isfile(report_path):
         worktracker.log.error(
             "Failed to read post processing report",
-            error="File does not exist", filepath=report_path
+            error="File does not exist",
+            filepath=report_path,
         )
-        worktracker.errtracker.fatal_error(
-            "Post processing report file does not exist"
-        )
+        worktracker.errtracker.fatal_error("Post processing report file does not exist")
         worktracker.task.state = task.States.FATAL_ERROR
         task.write_changes(worktracker.task)
         return
@@ -241,8 +233,10 @@ def handle_post_done(worktracker):
 
     # Update the score and state of this task in the analysis json.
     worktracker.analysis.update_task(
-        worktracker.task.id, score=post.score, state=worktracker.task.state,
-        stopped_on=datetime.utcnow()
+        worktracker.task.id,
+        score=post.score,
+        state=worktracker.task.state,
+        stopped_on=datetime.utcnow(),
     )
 
     # Update analysis score, tags, and detected families
@@ -253,14 +247,14 @@ def handle_post_done(worktracker):
     update_final_analysis_state(worktracker)
     analyses.write_changes(worktracker.analysis)
 
+
 def update_final_analysis_state(worktracker):
     if not task.has_unfinished_tasks(worktracker.analysis_id):
         worktracker.analysis.state = analyses.States.FINISHED
         # Delete stored analysis files on all nodes that worked on this
         # analysis.
-        worktracker.ctx.nodes.delete_completed_analysis(
-            worktracker.analysis_id
-        )
+        worktracker.ctx.nodes.delete_completed_analysis(worktracker.analysis_id)
+
 
 def set_next_state(worktracker, worktype):
     if worktype == "identification":
@@ -275,12 +269,11 @@ def set_next_state(worktracker, worktype):
         task.merge_processing_errors(worktracker.task)
         handle_post_done(worktracker)
 
-
     else:
         raise ValueError(
-            f"Unknown work type {worktype} for analysis:"
-            f" {worktracker.analysis_id}"
+            f"Unknown work type {worktype} for analysis: {worktracker.analysis_id}"
         )
+
 
 def set_failed(worktracker, worktype):
     if worktype == "identification":
@@ -300,8 +293,9 @@ def set_failed(worktracker, worktype):
         task.merge_processing_errors(worktracker.task)
         worktracker.task.state = task.States.FATAL_ERROR
         worktracker.analysis.update_task(
-            worktracker.task.id, state=worktracker.task.state,
-            stopped_on=datetime.utcnow()
+            worktracker.task.id,
+            state=worktracker.task.state,
+            stopped_on=datetime.utcnow(),
         )
         task.write_changes(worktracker.task)
         update_final_analysis_state(worktracker)
@@ -309,9 +303,9 @@ def set_failed(worktracker, worktype):
 
     else:
         raise ValueError(
-            f"Unknown work type '{worktype}' for analysis:"
-            f" {worktracker.analysis_id}"
+            f"Unknown work type '{worktype}' for analysis: {worktracker.analysis_id}"
         )
+
 
 def handle_task_done(worktracker):
     task.merge_run_errors(worktracker.task)
@@ -323,44 +317,47 @@ def handle_task_done(worktracker):
         worktracker.analysis_id, worktracker.task_id
     )
 
+
 def set_task_failed(worktracker):
     worktracker.log.info("Setting task to state failed")
     task.merge_run_errors(worktracker.task)
     worktracker.task.state = task.States.FATAL_ERROR
     worktracker.analysis.update_task(
-        worktracker.task.id, state=worktracker.task.state,
-        stopped_on=datetime.utcnow()
+        worktracker.task.id, state=worktracker.task.state, stopped_on=datetime.utcnow()
     )
     analyses.write_changes(worktracker.analysis)
     task.write_changes(worktracker.task)
     update_final_analysis_state(worktracker)
     analyses.write_changes(worktracker.analysis)
 
+
 def set_task_running(worktracker, machine, node):
     worktracker.log.info("Setting task to state running")
     worktracker.task.state = task.States.RUNNING
     worktracker.task.node = node.name
     worktracker.analysis.update_task(
-        worktracker.task.id, state=worktracker.task.state,
-        platform=machine.platform, os_version=machine.os_version,
-        started_on=datetime.utcnow()
+        worktracker.task.id,
+        state=worktracker.task.state,
+        platform=machine.platform,
+        os_version=machine.os_version,
+        started_on=datetime.utcnow(),
     )
     task.write_changes(worktracker.task)
     analyses.write_changes(worktracker.analysis)
+
 
 def set_task_pending(worktracker):
     worktracker.log.info("Setting task to pending")
     worktracker.task.state = task.States.PENDING
     worktracker.analysis.update_task(
-        worktracker.task.id, state=worktracker.task.state,
-        clear_started_stopped=True
+        worktracker.task.id, state=worktracker.task.state, clear_started_stopped=True
     )
     task.write_changes(worktracker.task)
     analyses.write_changes(worktracker.analysis)
 
-class _WorkTracker:
 
-    def __init__(self, cuckooctx, func,  analysis_locker, **kwargs):
+class _WorkTracker:
+    def __init__(self, cuckooctx, func, analysis_locker, **kwargs):
         self.ctx = cuckooctx
         self._func = func
         self._locker = analysis_locker
@@ -412,9 +409,7 @@ class _WorkTracker:
             )
         if self.task_id:
             if not task.exists(self.task_id):
-                raise StateControllerError(
-                    f"Task {self.task_id} does not exist."
-                )
+                raise StateControllerError(f"Task {self.task_id} does not exist.")
             self.task = Task.from_file(TaskPaths.taskjson(self.task_id))
 
     def run_work(self):
@@ -428,9 +423,7 @@ class _WorkTracker:
             if self.task_id:
                 task.merge_errors(self.task, errors_container)
             elif self.analysis_id:
-                analyses.merge_errors(
-                    self.analysis, errors_container
-                )
+                analyses.merge_errors(self.analysis, errors_container)
 
         if self.analysis and self.analysis.was_updated:
             analyses.write_changes(self.analysis)
@@ -439,7 +432,6 @@ class _WorkTracker:
 
 
 class StateControllerWorker(threading.Thread):
-
     def __init__(self, work_queue):
         super().__init__()
 
@@ -462,7 +454,7 @@ class StateControllerWorker(threading.Thread):
                         "Failed to run handler function",
                         function=worktracker._func,
                         args=worktracker._func_kwargs,
-                        error=e
+                        error=e,
                     )
                 finally:
                     worktracker.close()
@@ -470,8 +462,8 @@ class StateControllerWorker(threading.Thread):
     def stop(self):
         self.do_run = False
 
-class _AnalysisLock:
 
+class _AnalysisLock:
     def __init__(self):
         self.lock = threading.Lock()
         self.waiters = 0
@@ -484,7 +476,6 @@ class _AnalysisLock:
 
 
 class _AnalysisLocker:
-
     def __init__(self):
         self._trackerlock = threading.Lock()
         self._locks = {}
@@ -506,7 +497,6 @@ class _AnalysisLocker:
 
 
 class StateController(UnixSocketServer):
-
     NUM_STATE_CONTROLLER_WORKERS = 6
 
     def __init__(self, controller_sock_path, cuckooctx):
@@ -523,77 +513,71 @@ class StateController(UnixSocketServer):
             "workfail": self.work_failed,
             "taskrundone": self.task_done,
             "taskrunfailed": self.task_failed,
-            "manualsetsettings": self.manual_set_settings
+            "manualsetsettings": self.manual_set_settings,
         }
 
     def queue_call(self, func, kwargsdict={}):
         if not isinstance(kwargsdict, dict):
-            raise TypeError(
-                f"Kwargs dict must be a dict. Got: {type(kwargsdict)}"
-            )
+            raise TypeError(f"Kwargs dict must be a dict. Got: {type(kwargsdict)}")
 
-        self.work_queue.put(_WorkTracker(
-            self.ctx, func, self._locker, **kwargsdict
-        ))
+        self.work_queue.put(_WorkTracker(self.ctx, func, self._locker, **kwargsdict))
 
     def work_done(self, **kwargs):
         self.queue_call(
-            set_next_state, {
+            set_next_state,
+            {
                 "worktype": kwargs["worktype"],
                 "analysis_id": kwargs["analysis_id"],
-                "task_id": kwargs.get("task_id")
-            }
+                "task_id": kwargs.get("task_id"),
+            },
         )
 
     def work_failed(self, **kwargs):
         self.queue_call(
-            set_failed, {
+            set_failed,
+            {
                 "worktype": kwargs["worktype"],
                 "analysis_id": kwargs["analysis_id"],
-                "task_id": kwargs.get("task_id")
-            }
+                "task_id": kwargs.get("task_id"),
+            },
         )
 
     def task_done(self, **kwargs):
         self.queue_call(
-            handle_task_done, {
-                "analysis_id": kwargs["analysis_id"],
-                "task_id": kwargs["task_id"]
-            }
+            handle_task_done,
+            {"analysis_id": kwargs["analysis_id"], "task_id": kwargs["task_id"]},
         )
 
     def task_running(self, **kwargs):
         self.queue_call(
-            set_task_running, {
+            set_task_running,
+            {
                 "task_id": kwargs["task_id"],
                 "analysis_id": kwargs["analysis_id"],
                 "machine": kwargs["machine"],
-                "node": kwargs["node"]
-            }
+                "node": kwargs["node"],
+            },
         )
 
     def task_pending(self, **kwargs):
         self.queue_call(
-            set_task_pending, {
-                "task_id": kwargs["task_id"],
-                "analysis_id": kwargs["analysis_id"]
-            }
+            set_task_pending,
+            {"task_id": kwargs["task_id"], "analysis_id": kwargs["analysis_id"]},
         )
 
     def task_failed(self, **kwargs):
         self.queue_call(
-            set_task_failed, {
-                "analysis_id": kwargs["analysis_id"],
-                "task_id": kwargs["task_id"]
-            }
+            set_task_failed,
+            {"analysis_id": kwargs["analysis_id"], "task_id": kwargs["task_id"]},
         )
 
     def manual_set_settings(self, **kwargs):
         self.queue_call(
-            handle_manual_done, {
+            handle_manual_done,
+            {
                 "analysis_id": kwargs["analysis_id"],
-                "settings_dict": kwargs["settings_dict"]
-            }
+                "settings_dict": kwargs["settings_dict"],
+            },
         )
 
     def track_new_analyses(self, **kwargs):
@@ -624,8 +608,7 @@ class StateController(UnixSocketServer):
             log.error("Error while handling message", error=e)
         except Exception as e:
             log.exception(
-                "Fatal error while handling message.",
-                error=e, message=repr(msg)
+                "Fatal error while handling message.", error=e, message=repr(msg)
             )
             raise
 
@@ -648,6 +631,7 @@ class StateController(UnixSocketServer):
         self.create_socket()
         self.start_accepting(timeout=1)
 
+
 class ImportController(StateController):
     NUM_STATE_CONTROLLER_WORKERS = 1
 
@@ -655,9 +639,7 @@ class ImportController(StateController):
         super().__init__(controller_sock_path, cuckooctx)
         self.workers = []
         self.work_queue = queue.Queue()
-        self.subject_handler = {
-            "trackimportables": self.import_importables
-        }
+        self.subject_handler = {"trackimportables": self.import_importables}
 
     def import_importables(self, **kwargs):
         self.queue_call(import_importables)

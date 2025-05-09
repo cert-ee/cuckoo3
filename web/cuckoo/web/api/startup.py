@@ -12,7 +12,10 @@ from django.db import connections, DEFAULT_DB_ALIAS
 from cuckoo.common import shutdown
 from cuckoo.common.log import exit_error
 from cuckoo.common.startup import (
-    init_global_logging, load_configuration, init_database, StartupError
+    init_global_logging,
+    load_configuration,
+    init_database,
+    StartupError,
 )
 from cuckoo.common.storage import cuckoocwd, Paths, CWD_ENVVAR, CWDError
 from cuckoo.common.submit import settings_maker
@@ -22,12 +25,14 @@ from cuckoo.common.config import cfg
 
 import cuckoo.web.api
 
+
 def _djangodb_migrations_required():
     connection = connections[DEFAULT_DB_ALIAS]
     connection.prepare_database()
     executor = MigrationExecutor(connection)
     targets = executor.loader.graph.leaf_nodes()
     return executor.migration_plan(targets)
+
 
 def load_app():
     set_path_settings()
@@ -39,17 +44,20 @@ def load_app():
             f"to perform the migration."
         )
 
+
 def set_path_settings():
     os.chdir(cuckoo.web.api.__path__[0])
     sys.path.insert(0, cuckoo.web.api.__path__[0])
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.api.settings")
 
+
 def _init_remote_storage():
     api = APIClient(
         cfg("web.yaml", "remote_storage", "api_url", subpkg="web"),
-        cfg("web.yaml", "remote_storage", "api_key", subpkg="web")
+        cfg("web.yaml", "remote_storage", "api_key", subpkg="web"),
     )
     retriever.set_api_client(api)
+
 
 def init_api(cuckoo_cwd, loglevel, logfile=""):
     if not cuckoocwd.exists(cuckoo_cwd):
@@ -94,12 +102,15 @@ def start_api(host="127.0.0.1", port=8000, autoreload=False):
 
     execute_from_command_line(args)
 
+
 def djangocommands(*args):
     execute_from_command_line(("cuckoo",) + args)
+
 
 def init_and_get_wsgi():
     import logging
     from cuckoo.common.log import disable_console_colors, name_to_level
+
     levelname = os.environ.get("CUCKOO_LOGLEVEL")
     if not levelname:
         loglevel = logging.DEBUG
@@ -122,6 +133,7 @@ def init_and_get_wsgi():
     disable_console_colors()
     init_api(cwd_path, loglevel)
 
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cuckoo.web.api.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cuckoo.web.api.settings")
     from django.core.wsgi import get_wsgi_application
+
     return get_wsgi_application()

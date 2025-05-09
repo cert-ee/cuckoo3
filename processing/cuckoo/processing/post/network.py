@@ -5,17 +5,19 @@ import logging
 import os
 from dpkt import http as dpkthttp
 from httpreplay import (
-    reader, protohandlers, udpprotoparsers, transport, protoparsers,
-    guess
+    reader,
+    protohandlers,
+    udpprotoparsers,
+    transport,
+    protoparsers,
+    guess,
 )
 
 from cuckoo.common import safelist
 from cuckoo.common.log import set_logger_level, CuckooGlobalLogger
 from cuckoo.common.storage import TaskPaths, Paths
 from cuckoo.processing.errors import PluginError, DisablePluginError
-from cuckoo.processing.signatures.pattern import (
-    PatternScanner, PatternSignatureError
-)
+from cuckoo.processing.signatures.pattern import PatternScanner, PatternSignatureError
 from cuckoo.processing.signatures.signature import IOC
 
 from ..abtracts import Processor
@@ -25,8 +27,8 @@ set_logger_level("httpreplay.protoparsers", logging.ERROR)
 
 log = CuckooGlobalLogger(__name__)
 
-class Pcapreader(Processor):
 
+class Pcapreader(Processor):
     KEY = "network"
     ORDER = 1
 
@@ -54,12 +56,12 @@ class Pcapreader(Processor):
             587: protohandlers.smtp_handler,
             8000: protohandlers.http_handler,
             8080: protohandlers.http_handler,
-            "generic": lambda: guess.tcp_guessprotocol(tls_secrets)
+            "generic": lambda: guess.tcp_guessprotocol(tls_secrets),
         }
 
         self.udp_handlers = {
             53: protohandlers.DNS,
-            "generic": protohandlers.forward_handler
+            "generic": protohandlers.forward_handler,
         }
 
     def _make_http_headers(self, httpdata):
@@ -81,16 +83,13 @@ class Pcapreader(Processor):
                 if len(name) > mb1 or len(content) > mb1:
                     continue
 
-                headers.append({
-                    "key": name,
-                    "value": value
-                })
+                headers.append({"key": name, "value": value})
 
         return headers
 
     def _make_http_request(self, dst, protocol, request):
         dstip, dstport = dst
-        hoststr  = request.headers.get("host", dstip)
+        hoststr = request.headers.get("host", dstip)
         portstr = ""
         if dstport not in (80, 443):
             portstr = f":{dstport}"
@@ -103,7 +102,7 @@ class Pcapreader(Processor):
             "protocol": protocol,
             "method": request.method,
             "headers": self._make_http_headers(request),
-            "length": len(request.body)
+            "length": len(request.body),
         }
 
     def _make_http_response(self, protocol, response):
@@ -112,39 +111,34 @@ class Pcapreader(Processor):
             "protocol": protocol,
             "status": int(response.status),
             "headers": self._make_http_headers(response),
-            "length": len(response.body)
+            "length": len(response.body),
         }
 
     def _add_http_entry(self, ts, src, dst, protocol, sent, recv, tracker):
-        data = {
-            "request": {},
-            "response": {}
-        }
+        data = {"request": {}, "response": {}}
         for httpdata in (sent, recv):
             if not httpdata:
                 continue
 
             if isinstance(httpdata, dpkthttp.Request):
-                data["request"] = self._make_http_request(
-                     dst, protocol, httpdata
-                )
+                data["request"] = self._make_http_request(dst, protocol, httpdata)
             elif isinstance(httpdata, dpkthttp.Response):
-                data["response"] = self._make_http_response(
-                    protocol, httpdata
-                )
+                data["response"] = self._make_http_response(protocol, httpdata)
 
         if not data.get("request") and not data.get("response"):
             return
 
         srcip, srcport = src
         dstip, dstport = dst
-        data.update({
-            "ts": ts,
-            "srcip": srcip,
-            "srcport": srcport,
-            "dstip": dstip,
-            "dstport": dstport
-        })
+        data.update(
+            {
+                "ts": ts,
+                "srcip": srcip,
+                "srcport": srcport,
+                "dstip": dstip,
+                "dstport": dstport,
+            }
+        )
         tracker.setdefault("http", []).append(data)
 
     def _add_smtp(self, ts, src, dst, sent, recv, tracker):
@@ -159,25 +153,25 @@ class Pcapreader(Processor):
                     "username": smtpdata.username,
                     "password": smtpdata.password,
                     "headers": smtpdata.headers,
-                    "mail_body": smtpdata.message
+                    "mail_body": smtpdata.message,
                 }
             elif isinstance(smtpdata, protoparsers.SmtpReply):
-                data["response"] = {
-                    "banner": smtpdata.ready_message
-                }
+                data["response"] = {"banner": smtpdata.ready_message}
 
         if not data:
             return
 
         srcip, srcport = src
         dstip, dstport = dst
-        data.update({
-            "ts": ts,
-            "srcip": srcip,
-            "srcport": srcport,
-            "dstip": dstip,
-            "dstport": dstport
-        })
+        data.update(
+            {
+                "ts": ts,
+                "srcip": srcip,
+                "srcport": srcport,
+                "dstip": dstip,
+                "dstport": dstport,
+            }
+        )
         tracker.setdefault("smtp", []).append(data)
 
     def _add_tcp(self, ts, src, dst, proto, sent, recv, tracker):
@@ -190,7 +184,7 @@ class Pcapreader(Processor):
             "srcip": srcip,
             "srcport": srcport,
             "tx_size": 0 if not sent else len(sent),
-            "rx_size": 0 if not recv else len(recv)
+            "rx_size": 0 if not recv else len(recv),
         }
 
         tracker.setdefault("tcp", []).append(tcp)
@@ -214,19 +208,21 @@ class Pcapreader(Processor):
             queries = dns.setdefault("query", [])
             for q in data.queries:
                 if usesafelist and self.domain_sl.is_safelisted(
-                        q.name, self.ctx.machine.platform
+                    q.name, self.ctx.machine.platform
                 ):
                     continue
 
-                queries.append({
-                    "ts": ts,
-                    "dstip": dstip,
-                    "dstport": dstport,
-                    "srcip": srcip,
-                    "srcport": srcport,
-                    "type": q.type,
-                    "name": q.name,
-                })
+                queries.append(
+                    {
+                        "ts": ts,
+                        "dstip": dstip,
+                        "dstport": dstport,
+                        "srcip": srcip,
+                        "srcport": srcport,
+                        "type": q.type,
+                        "name": q.name,
+                    }
+                )
 
         elif isinstance(data, udpprotoparsers.DNSResponses):
             # Only use domain safelist if used DNS server is safelisted.
@@ -254,16 +250,16 @@ class Pcapreader(Processor):
                             self.ip_sl.add_temp_entry(
                                 r.data,
                                 platform=self.ctx.machine.platform,
-                                description="Auto safelist based on "
-                                            "safelisted domain",
+                                description="Auto safelist based on safelisted domain",
                                 source=f"Safelisted domain(s):"
-                                       f" {', '.join(safelisted_domains)}"
+                                f" {', '.join(safelisted_domains)}",
                             )
                         except safelist.SafelistError as e:
                             self.ctx.log.warning(
                                 "Failed to add IP to temporary safelist for "
-                                "safelisted domain", error=e,
-                                domain=safelisted_domains[0]
+                                "safelisted domain",
+                                error=e,
+                                domain=safelisted_domains[0],
                             )
 
                     continue
@@ -275,7 +271,7 @@ class Pcapreader(Processor):
                     "srcip": srcip,
                     "srcport": srcport,
                     "type": r.type,
-                    "data": r.data
+                    "data": r.data,
                 }
                 if r.fields:
                     ans["fields"] = r.fields
@@ -286,14 +282,16 @@ class Pcapreader(Processor):
         srcip, srcport = src
         dstip, dstport = dst
 
-        tracker.setdefault("udp", []).append({
-            "ts": ts,
-            "dstip": dstip,
-            "dstport": dstport,
-            "srcip": srcip,
-            "srcport": srcport,
-            "size": len(data)
-        })
+        tracker.setdefault("udp", []).append(
+            {
+                "ts": ts,
+                "dstip": dstip,
+                "dstport": dstport,
+                "srcip": srcip,
+                "srcport": srcport,
+                "size": len(data),
+            }
+        )
         if proto == "dns":
             self._add_dns(ts, src, dst, proto, data, tracker)
 
@@ -320,9 +318,7 @@ class Pcapreader(Processor):
                     if host == self.ctx.machine.ip:
                         continue
 
-                    if self.ip_sl.is_safelisted(
-                            host, self.ctx.machine.platform
-                    ):
+                    if self.ip_sl.is_safelisted(host, self.ctx.machine.platform):
                         is_safelisted = True
 
                 # Src or dst IP is part of a safelisted network. Skip this
@@ -332,17 +328,20 @@ class Pcapreader(Processor):
 
             if proto in ("tls", "tcp", "http", "https", "smtp"):
                 self._add_tcp(
-                    ts, (flow[0], flow[1]), (flow[2], flow[3]), proto,
-                    sent, recv, results
+                    ts,
+                    (flow[0], flow[1]),
+                    (flow[2], flow[3]),
+                    proto,
+                    sent,
+                    recv,
+                    results,
                 )
             elif proto in ("udp", "dns"):
                 self._add_udp(
-                    ts, (flow[0], flow[1]), (flow[2], flow[3]), proto, sent,
-                    results
+                    ts, (flow[0], flow[1]), (flow[2], flow[3]), proto, sent, results
                 )
 
             for host in (src_host, dst_host):
-
                 # Do not log the machine IP as a contacted host
                 if host == self.ctx.machine.ip:
                     continue
@@ -358,7 +357,6 @@ class Pcapreader(Processor):
 
 
 class NetworkPatternSignatures(Processor):
-
     @classmethod
     def enabled(cls):
         return len(os.listdir(Paths.pattern_signatures("network"))) > 0
@@ -382,11 +380,9 @@ class NetworkPatternSignatures(Processor):
 
             try:
                 cls.scanner.load_sigfile(sigfile_path)
-            except (ValueError, TypeError,
-                    KeyError, PatternSignatureError) as e:
+            except (ValueError, TypeError, KeyError, PatternSignatureError) as e:
                 raise PluginError(
-                    f"Failed to load network signature file: {sigfile_path}. "
-                    f"Error: {e}"
+                    f"Failed to load network signature file: {sigfile_path}. Error: {e}"
                 ).with_traceback(e.__traceback__)
 
         if not cls.scanner:
@@ -418,24 +414,33 @@ class NetworkPatternSignatures(Processor):
             url = request.get("url")
             if url:
                 self.scanner.scan(
-                    scan_str=url, orig_str=url, event=None,
-                    event_kind="http_url", processing_ctx=self.ctx
+                    scan_str=url,
+                    orig_str=url,
+                    event=None,
+                    event_kind="http_url",
+                    processing_ctx=self.ctx,
                 )
 
             for header in request.get("headers", []):
                 combined = f"{header['key']}: {header['value']}"
                 self.scanner.scan(
-                    scan_str=combined, orig_str=combined, event=None,
-                    event_kind="http_header", event_subtype="request",
-                    processing_ctx=self.ctx
+                    scan_str=combined,
+                    orig_str=combined,
+                    event=None,
+                    event_kind="http_header",
+                    event_subtype="request",
+                    processing_ctx=self.ctx,
                 )
 
             for header in response.get("headers", []):
                 combined = f"{header['key']}: {header['value']}"
                 self.scanner.scan(
-                    scan_str=combined, orig_str=combined, event=None,
-                    event_kind="http_header", event_subtype="response",
-                    processing_ctx=self.ctx
+                    scan_str=combined,
+                    orig_str=combined,
+                    event=None,
+                    event_kind="http_header",
+                    event_subtype="response",
+                    processing_ctx=self.ctx,
                 )
 
     def _scan_smtp(self):
@@ -447,34 +452,49 @@ class NetworkPatternSignatures(Processor):
             hostname = request.get("hostname")
             if hostname:
                 self.scanner.scan(
-                    scan_str=hostname, orig_str=hostname, event=None,
-                    event_kind="smtp_hostname", processing_ctx=self.ctx
+                    scan_str=hostname,
+                    orig_str=hostname,
+                    event=None,
+                    event_kind="smtp_hostname",
+                    processing_ctx=self.ctx,
                 )
 
             for mailfrom in request.get("mail_from", []):
                 self.scanner.scan(
-                    scan_str=mailfrom, orig_str=mailfrom, event=None,
-                    event_kind="smtp_mailfrom", processing_ctx=self.ctx
+                    scan_str=mailfrom,
+                    orig_str=mailfrom,
+                    event=None,
+                    event_kind="smtp_mailfrom",
+                    processing_ctx=self.ctx,
                 )
 
             for mailto in request.get("mail_to", []):
                 self.scanner.scan(
-                    scan_str=mailto, orig_str=mailto, event=None,
-                    event_kind="smtp_rcptto", processing_ctx=self.ctx
+                    scan_str=mailto,
+                    orig_str=mailto,
+                    event=None,
+                    event_kind="smtp_rcptto",
+                    processing_ctx=self.ctx,
                 )
 
             for name, value in request.get("headers", {}).items():
                 combined = f"{name}: {value}"
                 self.scanner.scan(
-                    scan_str=combined, orig_str=combined, event=None,
-                    event_kind="smtp_header", processing_ctx=self.ctx
+                    scan_str=combined,
+                    orig_str=combined,
+                    event=None,
+                    event_kind="smtp_header",
+                    processing_ctx=self.ctx,
                 )
 
             message = request.get("message")
             if message:
                 self.scanner.scan(
-                    scan_str=message, orig_str=message, event=None,
-                    event_kind="smtp_message", processing_ctx=self.ctx
+                    scan_str=message,
+                    orig_str=message,
+                    event=None,
+                    event_kind="smtp_message",
+                    processing_ctx=self.ctx,
                 )
 
     def _scan_dns(self):
@@ -482,24 +502,33 @@ class NetworkPatternSignatures(Processor):
 
         for q in dns.get("query", []):
             self.scanner.scan(
-                scan_str=q["name"], orig_str=q["name"], event=None,
-                event_kind="dns_q", event_subtype=q["type"].lower(),
-                processing_ctx=self.ctx
+                scan_str=q["name"],
+                orig_str=q["name"],
+                event=None,
+                event_kind="dns_q",
+                event_subtype=q["type"].lower(),
+                processing_ctx=self.ctx,
             )
 
         for r in dns.get("response", []):
             self.scanner.scan(
-                scan_str=r["data"], orig_str=r["data"], event=None,
-                event_kind="dns_r", event_subtype=r["type"].lower(),
-                processing_ctx=self.ctx
+                scan_str=r["data"],
+                orig_str=r["data"],
+                event=None,
+                event_kind="dns_r",
+                event_subtype=r["type"].lower(),
+                processing_ctx=self.ctx,
             )
 
     def _scan_host(self):
         network = self.ctx.result.get("network", {})
         for host in network.get("host", []):
             self.scanner.scan(
-                scan_str=host, orig_str=host, event=None,
-                event_kind="ip", processing_ctx=self.ctx
+                scan_str=host,
+                orig_str=host,
+                event=None,
+                event_kind="ip",
+                processing_ctx=self.ctx,
             )
 
     def start(self):
@@ -513,11 +542,14 @@ class NetworkPatternSignatures(Processor):
 
         for match in self.match_tracker.get_matches():
             self.ctx.signature_tracker.add_signature(
-                name=match.name, short_description=match.short_description,
-                description=match.description, score=match.score,
-                family=match.family, tags=match.tags, ttps=match.ttps,
-                iocs=[IOC(value=matchctx.orig_str) for matchctx in
-                      match.get_iocs()]
+                name=match.name,
+                short_description=match.short_description,
+                description=match.description,
+                score=match.score,
+                family=match.family,
+                tags=match.tags,
+                ttps=match.ttps,
+                iocs=[IOC(value=matchctx.orig_str) for matchctx in match.get_iocs()],
             )
 
     def cleanup(self):

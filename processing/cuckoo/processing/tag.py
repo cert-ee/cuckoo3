@@ -1,8 +1,8 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
-class TagTracker:
 
+class TagTracker:
     def __init__(self):
         self._tags = set()
 

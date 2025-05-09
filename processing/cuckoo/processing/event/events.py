@@ -3,6 +3,7 @@
 
 import base64
 
+
 class Kinds:
     FILE = "file"
     PROCESS = "process"
@@ -12,8 +13,8 @@ class Kinds:
     MUTANT = "mutant"
     SUSPICIOUS_EVENT = "suspicious_event"
 
-class NormalizedEvent:
 
+class NormalizedEvent:
     __slots__ = ("ts", "description", "effect")
     dictdump = ("ts", "kind", "effect")
     kind = ""
@@ -24,6 +25,7 @@ class NormalizedEvent:
     def pattern_scan(self, pattern_scanner, processing_ctx):
         pass
 
+
 class FileActions:
     OPEN_READ = "open_read"
     OPEN_MODIFY = "open_modify"
@@ -33,6 +35,7 @@ class FileActions:
     RENAME = "rename"
     TRUNCATE = "truncate"
 
+
 FILE_ACTION_DESC = {
     FileActions.OPEN_READ: "Opened file read-only",
     FileActions.OPEN_MODIFY: "Opened file for modifying",
@@ -40,7 +43,7 @@ FILE_ACTION_DESC = {
     FileActions.CREATE_MODIFY: "Created file",
     FileActions.DELETE: "Deleted file",
     FileActions.RENAME: "Renamed file",
-    FileActions.TRUNCATE: "Truncated file"
+    FileActions.TRUNCATE: "Truncated file",
 }
 
 _FILE_ACTION_EFFECT = {
@@ -63,17 +66,39 @@ _FILE_ACTION_SIMPLIFIED = {
     FileActions.RENAME: "rename",
 }
 
-class File(NormalizedEvent):
 
-    __slots__ = ("action", "pid", "procid", "srcpath", "dstpath", "status",
-                 "srcpath_normalized", "dstpath_normalized")
+class File(NormalizedEvent):
+    __slots__ = (
+        "action",
+        "pid",
+        "procid",
+        "srcpath",
+        "dstpath",
+        "status",
+        "srcpath_normalized",
+        "dstpath_normalized",
+    )
     dictdump = NormalizedEvent.dictdump + (
-        "action", "pid", "procid", "srcpath", "dstpath"
+        "action",
+        "pid",
+        "procid",
+        "srcpath",
+        "dstpath",
     )
     kind = Kinds.FILE
 
-    def __init__(self, ts, action, pid, procid, srcpath, dstpath,
-                 status, srcpath_normalized, dstpath_normalized):
+    def __init__(
+        self,
+        ts,
+        action,
+        pid,
+        procid,
+        srcpath,
+        dstpath,
+        status,
+        srcpath_normalized,
+        dstpath_normalized,
+    ):
         self.ts = ts
         self.action = action
         self.pid = pid
@@ -91,21 +116,31 @@ class File(NormalizedEvent):
     def pattern_scan(self, pattern_scanner, processing_ctx):
         if self.action == FileActions.RENAME:
             pattern_scanner.scan(
-                self.dstpath_normalized, self.dstpath, self, self.kind,
+                self.dstpath_normalized,
+                self.dstpath,
+                self,
+                self.kind,
                 processing_ctx=processing_ctx,
-                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} dst"
+                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} dst",
             )
             pattern_scanner.scan(
-                self.dstpath_normalized, self.srcpath, self, self.kind,
+                self.dstpath_normalized,
+                self.srcpath,
+                self,
+                self.kind,
                 processing_ctx=processing_ctx,
-                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} src"
+                event_subtype=f"{_FILE_ACTION_SIMPLIFIED.get(self.action)} src",
             )
         else:
             pattern_scanner.scan(
-                self.srcpath_normalized, self.srcpath, self, self.kind,
+                self.srcpath_normalized,
+                self.srcpath,
+                self,
+                self.kind,
                 processing_ctx=processing_ctx,
-                event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action)
+                event_subtype=_FILE_ACTION_SIMPLIFIED.get(self.action),
             )
+
 
 class ProcessStatuses:
     EXISTING = "existing"
@@ -113,32 +148,57 @@ class ProcessStatuses:
     CREATED = "created"
     TERMINATED = "terminated"
 
+
 PROCESS_STATUS_DESC = {
     ProcessStatuses.EXISTING: "Existing process",
     ProcessStatuses.IGNORED: "Ignored process",
     ProcessStatuses.CREATED: "Created process",
-    ProcessStatuses.TERMINATED: "Terminated process"
+    ProcessStatuses.TERMINATED: "Terminated process",
 }
 
 PROCESS_ACTION_EFFECT = {
     ProcessStatuses.CREATED: "process_created",
-    ProcessStatuses.TERMINATED: "process_terminated"
+    ProcessStatuses.TERMINATED: "process_terminated",
 }
 
-class Process(NormalizedEvent):
 
+class Process(NormalizedEvent):
     __slots__ = (
-        "status", "pid", "ppid", "procid", "parentprocid", "image",
-        "commandline", "exit_code", "commandline_normalized"
+        "status",
+        "pid",
+        "ppid",
+        "procid",
+        "parentprocid",
+        "image",
+        "commandline",
+        "exit_code",
+        "commandline_normalized",
     )
     dictdump = NormalizedEvent.dictdump + (
-        "status", "pid", "ppid", "procid", "parentprocid", "image",
-        "commandline", "exit_code"
+        "status",
+        "pid",
+        "ppid",
+        "procid",
+        "parentprocid",
+        "image",
+        "commandline",
+        "exit_code",
     )
     kind = Kinds.PROCESS
 
-    def __init__(self, ts, status, pid, ppid, procid, parentprocid,
-                 image, commandline, exit_code, commandline_normalized):
+    def __init__(
+        self,
+        ts,
+        status,
+        pid,
+        ppid,
+        procid,
+        parentprocid,
+        image,
+        commandline,
+        exit_code,
+        commandline_normalized,
+    ):
         self.ts = ts
         self.status = status
         self.pid = pid
@@ -158,8 +218,11 @@ class Process(NormalizedEvent):
             return
 
         pattern_scanner.scan(
-            self.commandline_normalized, self.commandline, self, "commandline",
-            processing_ctx=processing_ctx
+            self.commandline_normalized,
+            self.commandline,
+            self,
+            "commandline",
+            processing_ctx=processing_ctx,
         )
 
 
@@ -182,6 +245,7 @@ class RegistryActions:
     UNLOAD_KEY = "unload_key"
     DELETE_VALUE_KEY = "delete_value_key"
     SET_VALUE = "set_value"
+
 
 class RegistryValueTypes:
     INTEGER = "Integer"
@@ -207,7 +271,7 @@ REGISTRY_ACTION_DESC = {
     RegistryActions.SET_KEY_SECURITY: "Set registry key security",
     RegistryActions.UNLOAD_KEY: "Unloaded registry key",
     RegistryActions.DELETE_VALUE_KEY: "Deleted registry key value",
-    RegistryActions.SET_VALUE: "Set registry key value"
+    RegistryActions.SET_VALUE: "Set registry key value",
 }
 
 REGISTRY_ACTION_EFFECT = {
@@ -231,7 +295,7 @@ REGISTRY_ACTION_EFFECT = {
     RegistryActions.DELETE_KEY: "key_deleted",
 }
 
-_REGISTRY_ACTION_SIMPLIFIED= {
+_REGISTRY_ACTION_SIMPLIFIED = {
     RegistryActions.CREATE_KEY: "write",
     RegistryActions.CREATE_KEY_EX: "write",
     RegistryActions.LOADKEY: "write",
@@ -252,19 +316,31 @@ _REGISTRY_ACTION_SIMPLIFIED= {
     RegistryActions.DELETE_KEY: "delete",
 }
 
-class Registry(NormalizedEvent):
 
+class Registry(NormalizedEvent):
     __slots__ = (
-        "action", "status", "pid", "procid", "path", "value", "valuetype",
-        "path_normalized"
+        "action",
+        "status",
+        "pid",
+        "procid",
+        "path",
+        "value",
+        "valuetype",
+        "path_normalized",
     )
     dictdump = NormalizedEvent.dictdump + (
-        "action", "status", "pid", "procid", "path", "valuetype"
+        "action",
+        "status",
+        "pid",
+        "procid",
+        "path",
+        "valuetype",
     )
     kind = Kinds.REGISTRY
 
-    def __init__(self, ts, action, status, pid, procid, path, value,
-                 valuetype, path_normalized):
+    def __init__(
+        self, ts, action, status, pid, procid, path, value, valuetype, path_normalized
+    ):
         self.ts = ts
         self.action = action
         self.status = status
@@ -280,9 +356,12 @@ class Registry(NormalizedEvent):
 
     def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
-            self.path_normalized, self.path, self, self.kind,
+            self.path_normalized,
+            self.path,
+            self,
+            self.kind,
             event_subtype=_REGISTRY_ACTION_SIMPLIFIED.get(self.action),
-            processing_ctx=processing_ctx
+            processing_ctx=processing_ctx,
         )
 
         if self.action == RegistryActions.SET_VALUE:
@@ -302,9 +381,11 @@ class Registry(NormalizedEvent):
             pattern_scanner.scan(
                 value if value is not None else self.value,
                 humanval if humanval is not None else self.value,
-                self, self.kind, event_subtype="value",
+                self,
+                self.kind,
+                event_subtype="value",
                 extra_safelistdata=[(self.path_normalized, ("write",))],
-                processing_ctx=processing_ctx
+                processing_ctx=processing_ctx,
             )
 
 
@@ -313,19 +394,19 @@ class ProcessInjectActions:
     SHELL_TRAYWINDOW = "shell_traywindow"
     QUEUE_USER_APC = "queue_user_apc"
 
+
 INJECTION_ACTION_DESC = {
     ProcessInjectActions.CREATE_REMOTE_THREAD: "Process injection by creating "
-                                               "a remote thread in the "
-                                               "destination process",
-    ProcessInjectActions.SHELL_TRAYWINDOW: "Process injection "
-                                           "(ShellTrayWindow)",
+    "a remote thread in the "
+    "destination process",
+    ProcessInjectActions.SHELL_TRAYWINDOW: "Process injection (ShellTrayWindow)",
     ProcessInjectActions.QUEUE_USER_APC: "Process injection by adding a "
-                                         "user-mode APC to destination "
-                                            "process thread APC queue."
+    "user-mode APC to destination "
+    "process thread APC queue.",
 }
 
-class ProcessInjection(NormalizedEvent):
 
+class ProcessInjection(NormalizedEvent):
     __slots__ = ("action", "pid", "procid", "dstpid", "dstprocid")
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.PROCESS_INJECTION
@@ -341,16 +422,21 @@ class ProcessInjection(NormalizedEvent):
         self.effect = "process_injection"
         self.description = INJECTION_ACTION_DESC.get(action, "")
 
-class NetworkFlow(NormalizedEvent):
 
+class NetworkFlow(NormalizedEvent):
     __slots__ = (
-        "pid", "procid", "proto_number", "srcip", "srcport", "dstip", "dstport"
+        "pid",
+        "procid",
+        "proto_number",
+        "srcip",
+        "srcport",
+        "dstip",
+        "dstport",
     )
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.NETFLOW
 
-    def __init__(self, ts, pid, procid, proto_number, srcip, srcport, dstip,
-                 dstport):
+    def __init__(self, ts, pid, procid, proto_number, srcip, srcport, dstip, dstport):
         self.ts = ts
         self.pid = pid
         self.procid = procid
@@ -363,29 +449,36 @@ class NetworkFlow(NormalizedEvent):
         self.description = ""
         self.effect = "network_flow"
 
+
 class MutantActions:
     CREATE = "create"
     OPEN = "open"
 
+
 MUTANT_ACTION_DESC = {
     MutantActions.CREATE: "Created mutant",
-    MutantActions.OPEN: "Opened mutant"
+    MutantActions.OPEN: "Opened mutant",
 }
 
 _MUTANT_ACTION_EFFECT = {
     MutantActions.CREATE: "mutant_created",
-    MutantActions.OPEN: "mutant_opened"
+    MutantActions.OPEN: "mutant_opened",
 }
 
 _MUTANT_ACTION_SIMPLIFIED = {
     MutantActions.CREATE: "created",
-    MutantActions.OPEN: "open"
+    MutantActions.OPEN: "open",
 }
 
 
 class Mutant(NormalizedEvent):
-
-    __slots__ = ("action", "status", "pid", "procid", "path",)
+    __slots__ = (
+        "action",
+        "status",
+        "pid",
+        "procid",
+        "path",
+    )
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.MUTANT
 
@@ -402,22 +495,22 @@ class Mutant(NormalizedEvent):
 
     def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
-            self.path, self.path, self, "mutant",
+            self.path,
+            self.path,
+            self,
+            "mutant",
             event_subtype=_MUTANT_ACTION_SIMPLIFIED.get(self.action),
-            processing_ctx=processing_ctx
+            processing_ctx=processing_ctx,
         )
 
 
 class SuspiciousEvents:
     UNMAPMAINIMAGE = "UnmapMainImage"
     NTCREATETHREADEX_HIDE_FROM_DEBUGGER = "NtCreateThreadExHideFromDebugger"
-    NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER = \
-        "NtSetInformationThreadHideFromDebugger"
+    NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER = "NtSetInformationThreadHideFromDebugger"
     NTCREATEPROCESS_OTHER_PARENT_PROCESS = "NtCreateProcessOtherParentProcess"
-    NTCREATEPROCESSEX_OTHER_PARENT_PROCESS = \
-        "NtCreateProcessExOtherParentProcess"
-    NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS = \
-        "NtCreateUserProcessOtherParentProcess"
+    NTCREATEPROCESSEX_OTHER_PARENT_PROCESS = "NtCreateProcessExOtherParentProcess"
+    NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS = "NtCreateUserProcessOtherParentProcess"
     SETWINDOWSHOOKAW = "SetWindowsHookAW"
     SETWINDOWSHOOKEX = "SetWindowsHookEx"
     ADJUSTPRIVILEGETOKEN = "AdjustPrivilegeToken"
@@ -429,7 +522,6 @@ class SuspiciousEvents:
     ENUMERATES_PROCESSES = "EnumeratesProcesses"
     MAPVIEWOFSECTION = "MapViewOfSection"
     LOADSDRIVER = "LoadsDriver"
-
 
 
 SUSPICIOUS_EVENT_DESCRIPTION = {
@@ -449,12 +541,11 @@ SUSPICIOUS_EVENT_DESCRIPTION = {
     SuspiciousEvents.SETTHREADCONTEXT: "",
     SuspiciousEvents.ENUMERATES_PROCESSES: "Enumerates processes. Could be anti-VM behavior.",
     SuspiciousEvents.MAPVIEWOFSECTION: "",
-    SuspiciousEvents.LOADSDRIVER: "A driver was loaded."
+    SuspiciousEvents.LOADSDRIVER: "A driver was loaded.",
 }
 
 
 class SuspiciousEvent(NormalizedEvent):
-
     __slots__ = ("name", "pid", "procid", "args")
     dictdump = NormalizedEvent.dictdump + __slots__
     kind = Kinds.SUSPICIOUS_EVENT
@@ -471,6 +562,9 @@ class SuspiciousEvent(NormalizedEvent):
 
     def pattern_scan(self, pattern_scanner, processing_ctx):
         pattern_scanner.scan(
-            self.name.lower(), self.name, self, "suspicious_event",
-            processing_ctx=processing_ctx
+            self.name.lower(),
+            self.name,
+            self,
+            "suspicious_event",
+            processing_ctx=processing_ctx,
         )

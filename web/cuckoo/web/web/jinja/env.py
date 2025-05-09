@@ -12,6 +12,7 @@ _globals = {
     "url": reverse,
 }
 
+
 def environment(**kwargs):
     env = Environment(**kwargs)
     env.filters.update(filters)

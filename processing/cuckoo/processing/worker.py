@@ -10,8 +10,11 @@ from cuckoo.common.log import AnalysisLogger, TaskLogger
 from cuckoo.common.machines import Machine
 
 from .errors import (
-    PluginError, PluginWorkerError, CancelProcessing, CancelReporting,
-    DisablePluginError
+    PluginError,
+    PluginWorkerError,
+    CancelProcessing,
+    CancelReporting,
+    DisablePluginError,
 )
 
 from cuckoo.processing.event.reader import NormalizedEventReader
@@ -22,8 +25,8 @@ from .ttp import TTPTracker
 from .signatures.signature import SignatureTracker
 from .event.processtools import ProcessTracker
 
-class ProcessingResult:
 
+class ProcessingResult:
     def __init__(self):
         self._result = {}
 
@@ -39,24 +42,22 @@ class ProcessingResult:
     def __contains__(self, item):
         return item in self._result
 
+
 class ProcessingContext:
-
     def __init__(self, analysis_id, logger):
-
         self.log = logger
         self.result = ProcessingResult()
         self.errtracker = ErrorTracker()
 
-        self.analysis = Analysis.from_file(
-            AnalysisPaths.analysisjson(analysis_id)
-        )
+        self.analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
 
         self.ttp_tracker = TTPTracker()
         self.tag_tracker = TagTracker()
         self.family_tracker = FamilyTracker()
         self.signature_tracker = SignatureTracker(
-            tagtracker=self.tag_tracker, ttptracker=self.ttp_tracker,
-            familytracker=self.family_tracker
+            tagtracker=self.tag_tracker,
+            ttptracker=self.ttp_tracker,
+            familytracker=self.family_tracker,
         )
         self.completed = False
 
@@ -75,8 +76,8 @@ class ProcessingContext:
 
         self.log.close()
 
-class AnalysisContext(ProcessingContext):
 
+class AnalysisContext(ProcessingContext):
     def __init__(self, stage, analysis_id):
         super().__init__(analysis_id, AnalysisLogger(__name__, analysis_id))
 
@@ -90,12 +91,10 @@ class AnalysisContext(ProcessingContext):
             self.identification = None
 
     def _errtracker_to_file(self):
-        self.errtracker.to_file(
-            AnalysisPaths.processingerr_json(self.analysis.id)
-        )
+        self.errtracker.to_file(AnalysisPaths.processingerr_json(self.analysis.id))
+
 
 class TLSSessionTracker:
-
     def __init__(self):
         self._sessions = {}
 
@@ -120,13 +119,12 @@ class TLSSessionTracker:
 
 
 class NetworkContext:
-
     def __init__(self):
         self.dns = ResolveTracker()
         self.tls = TLSSessionTracker()
 
-class TaskContext(ProcessingContext):
 
+class TaskContext(ProcessingContext):
     def __init__(self, analysis_id, task_id):
         super().__init__(analysis_id, TaskLogger(__name__, task_id))
 
@@ -137,16 +135,12 @@ class TaskContext(ProcessingContext):
         self.network = NetworkContext()
 
     def _errtracker_to_file(self):
-        self.errtracker.to_file(
-            TaskPaths.processingerr_json(self.task.id)
-        )
+        self.errtracker.to_file(TaskPaths.processingerr_json(self.task.id))
 
 
 def make_plugin_instances(plugin_classes, ctx, *args, **kwargs):
-
     instances = []
     for plugin_class in plugin_classes:
-
         if not plugin_class.enabled():
             continue
 
@@ -164,7 +158,8 @@ def make_plugin_instances(plugin_classes, ctx, *args, **kwargs):
         except DisablePluginError as e:
             ctx.log.warning(
                 "Plugin usage disabled during initialization",
-                plugin_class=plugin_class, error=e
+                plugin_class=plugin_class,
+                error=e,
             )
             continue
         except Exception as e:
@@ -176,22 +171,20 @@ def make_plugin_instances(plugin_classes, ctx, *args, **kwargs):
 
     return instances
 
+
 def run_plugin_cleanup(plugin_instances, ctx):
     for instance in plugin_instances:
         try:
             instance.cleanup()
         except Exception as e:
-            ctx.log.exception(
-                "Plugin cleanup failure", plugin=instance, error=e
-            )
+            ctx.log.exception("Plugin cleanup failure", plugin=instance, error=e)
+
 
 def _run_processing_instances(instances, ctx):
     for instance in instances:
         name = instance.__class__.__name__
 
-        ctx.log.debug(
-            "Running processing plugin.",  plugin=name, stage=ctx.stage
-        )
+        ctx.log.debug("Running processing plugin.", plugin=name, stage=ctx.stage)
 
         try:
             data = instance.start()
@@ -202,18 +195,18 @@ def _run_processing_instances(instances, ctx):
             )
 
         except Exception as e:
-            raise PluginError(
-                f"Failed to run plugin {name}. {e}"
-            ).with_traceback(e.__traceback__)
+            raise PluginError(f"Failed to run plugin {name}. {e}").with_traceback(
+                e.__traceback__
+            )
 
         if data is not None and instance.KEY:
             try:
                 ctx.result.store(instance.KEY, data)
             except KeyError:
                 raise PluginWorkerError(
-                    f"Plugin {name} tried to overwrite results. Key "
-                    f"{instance.KEY}"
+                    f"Plugin {name} tried to overwrite results. Key {instance.KEY}"
                 )
+
 
 def _handle_processing(processing_classes, ctx):
     try:
@@ -222,8 +215,8 @@ def _handle_processing(processing_classes, ctx):
         ctx.set_failed()
         ctx.errtracker.add_error(e)
         ctx.log.error(
-            "Processing cancelled. Failure during processing plugin "
-            "initialization", error=e
+            "Processing cancelled. Failure during processing plugin initialization",
+            error=e,
         )
         return False
 
@@ -237,15 +230,14 @@ def _handle_processing(processing_classes, ctx):
     except Exception as e:
         ctx.set_failed()
         ctx.errtracker.fatal_exception(e)
-        ctx.log.exception(
-            "Failure during processing", error=e
-        )
+        ctx.log.exception("Failure during processing", error=e)
         return False
 
     finally:
         run_plugin_cleanup(processing_instances, ctx)
 
     return True
+
 
 def _run_reporting_instances(instances, ctx):
     for instance in instances:
@@ -254,18 +246,16 @@ def _run_reporting_instances(instances, ctx):
         if not stage_handler:
             continue
 
-        ctx.log.debug(
-            "Running reporting plugin.",  plugin=name, stage=ctx.stage
-        )
+        ctx.log.debug("Running reporting plugin.", plugin=name, stage=ctx.stage)
         try:
             stage_handler()
         except CancelReporting:
             raise
         except Exception as e:
             raise PluginError(
-                f"Failed to run reporting plugin: {name} "
-                f"({ctx.stage}). {e}"
+                f"Failed to run reporting plugin: {name} ({ctx.stage}). {e}"
             ).with_traceback(e.__traceback__)
+
 
 def _handle_reporting(reporting_classes, ctx):
     try:
@@ -274,8 +264,8 @@ def _handle_reporting(reporting_classes, ctx):
         ctx.set_failed()
         ctx.errtracker.fatal_exception(e)
         ctx.log.exception(
-            "Reporting cancelled. Failure during processing plugin "
-            "initialization", error=e
+            "Reporting cancelled. Failure during processing plugin initialization",
+            error=e,
         )
         return False
 
@@ -297,10 +287,9 @@ def _handle_reporting(reporting_classes, ctx):
 
     return True
 
-class PreProcessingRunner:
 
-    def __init__(self, analysis_context, processing_classes,
-                 reporting_classes):
+class PreProcessingRunner:
+    def __init__(self, analysis_context, processing_classes, reporting_classes):
         self.analysisctx = analysis_context
         self.processing_classes = processing_classes
         self.reporting_classes = reporting_classes
@@ -321,8 +310,8 @@ class PreProcessingRunner:
 
         self.analysisctx.set_completed()
 
-def make_event_consumper_map(event_user_instances):
 
+def make_event_consumper_map(event_user_instances):
     consumer_map = {}
     for user in event_user_instances:
         for event_type in user.event_types:
@@ -336,9 +325,13 @@ def make_event_consumper_map(event_user_instances):
 
 
 class PostProcessingRunner:
-
-    def __init__(self, task_context, event_consumer_classes,
-                 reporting_classes, processing_classes):
+    def __init__(
+        self,
+        task_context,
+        event_consumer_classes,
+        reporting_classes,
+        processing_classes,
+    ):
         self.taskctx = task_context
         self._consumers = self._init_consumers(event_consumer_classes)
         self._processing_classes = processing_classes
@@ -362,7 +355,8 @@ class PostProcessingRunner:
             except Exception as e:
                 self.taskctx.log.exception(
                     "Failed to initialize event consumer plugin",
-                    plugin=consumer_class, error=e
+                    plugin=consumer_class,
+                    error=e,
                 )
         return instances
 
@@ -376,7 +370,6 @@ class PostProcessingRunner:
 
         # All events from all logs in logs/ will be received here.
         for event in reader.read_events():
-
             # Hand each event to the consumer/user of this event. The
             # map of consumers must already be sorted by event and the
             # consumer instances by their order attribute.
@@ -390,9 +383,7 @@ class PostProcessingRunner:
             for consumer in self._consumers:
                 consumer.finalize()
         except Exception as e:
-            self.taskctx.log.exception(
-                "Fatal error during event usage", error=e
-            )
+            self.taskctx.log.exception("Fatal error during event usage", error=e)
             self.taskctx.errtracker.fatal_exception(e)
             self.taskctx.set_failed()
             return

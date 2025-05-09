@@ -7,8 +7,8 @@ from cuckoo.common import virustotal
 from ..abtracts import Processor
 from ..signatures.signature import Scores, IOC
 
-class Virustotal(Processor):
 
+class Virustotal(Processor):
     CATEGORY = ["file", "url"]
     KEY = "virustotal"
 
@@ -21,34 +21,22 @@ class Virustotal(Processor):
         virustotal.set_api_key(cfg("virustotal", "key", subpkg="processing"))
 
     def init(self):
-        self.min_suspicious = cfg(
-            "virustotal", "min_suspicious", subpkg="processing"
-        )
-        self.min_malicious = cfg(
-            "virustotal", "min_malicious", subpkg="processing"
-        )
+        self.min_suspicious = cfg("virustotal", "min_suspicious", subpkg="processing")
+        self.min_malicious = cfg("virustotal", "min_malicious", subpkg="processing")
 
     def _handle_file_target(self):
         try:
-            return virustotal.fileinfo_request(
-                self.ctx.result.get("target").sha256
-            )
+            return virustotal.fileinfo_request(self.ctx.result.get("target").sha256)
         except virustotal.VirustotalError as e:
-            self.ctx.log.warning(
-                "Error while making Virustotal request", error=e
-            )
+            self.ctx.log.warning("Error while making Virustotal request", error=e)
 
         return None
 
     def _handle_url_target(self):
         try:
-            return virustotal.urlinfo_request(
-                self.ctx.result.get("target").url
-            )
+            return virustotal.urlinfo_request(self.ctx.result.get("target").url)
         except virustotal.VirustotalError as e:
-            self.ctx.log.warning(
-                "Error while making Virustotal request", error=e
-            )
+            self.ctx.log.warning("Error while making Virustotal request", error=e)
 
         return None
 
@@ -81,11 +69,10 @@ class Virustotal(Processor):
             self.ctx.signature_tracker.add_signature(
                 name="virustotal",
                 score=score,
-                short_description="Virustotal sources report this target as "
-                                  "malicious",
+                short_description="Virustotal sources report this target as malicious",
                 description=f"{malicious_count} Virustotal antivirus engines "
-                            f"detect this target as malicious",
-                iocs=iocs
+                f"detect this target as malicious",
+                iocs=iocs,
             )
 
         return info

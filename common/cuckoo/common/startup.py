@@ -5,8 +5,10 @@ import os
 
 from .log import CuckooGlobalLogger
 from .packages import (
-    find_cuckoo_packages, get_conftemplates, get_conf_typeloaders,
-    get_package_version
+    find_cuckoo_packages,
+    get_conftemplates,
+    get_conf_typeloaders,
+    get_package_version,
 )
 from .storage import Paths
 from . import config, shutdown
@@ -19,7 +21,6 @@ class StartupError(Exception):
 
 
 class MigrationNeededError(StartupError):
-
     def __init__(self, migrate_exception, migrate_what=""):
         super().__init__(self._err_str(migrate_exception, migrate_what))
 
@@ -27,36 +28,42 @@ class MigrationNeededError(StartupError):
         from cuckoo.common.db import DatabaseMigrationNeeded
 
         if migrate_what:
-            msg = f"{migrate_what} requires migration(s). " \
-                  f"{migrate_exception}. "
+            msg = f"{migrate_what} requires migration(s). {migrate_exception}. "
         else:
             msg = f"Migration(s) required. {migrate_exception}. "
 
-            return msg + "Use 'cuckoomigrate database all' to migrate " \
-                         "database(s)"
+            return msg + "Use 'cuckoomigrate database all' to migrate database(s)"
 
         return msg
 
 
-def init_elasticsearch(hosts, indice_names, timeout=300,
-                       max_result_window=10000,
-                       create_missing_indices=False,
-                       user="", password="", ca_certs=""):
-
+def init_elasticsearch(
+    hosts,
+    indice_names,
+    timeout=300,
+    max_result_window=10000,
+    create_missing_indices=False,
+    user="",
+    password="",
+    ca_certs="",
+):
     from cuckoo.common.elastic import manager, ElasticSearchError
 
     manager.configure(
-        hosts=hosts, analyses_index=indice_names["analyses"],
-        tasks_index=indice_names["tasks"], events_index=indice_names["events"],
-        timeout=timeout, max_result_window=max_result_window,
-        user=user, password=password, ca_certs=ca_certs
+        hosts=hosts,
+        analyses_index=indice_names["analyses"],
+        tasks_index=indice_names["tasks"],
+        events_index=indice_names["events"],
+        timeout=timeout,
+        max_result_window=max_result_window,
+        user=user,
+        password=password,
+        ca_certs=ca_certs,
     )
     try:
         manager.verify()
     except ElasticSearchError as e:
-        raise StartupError(
-            f"Failed during Elasticsearch connection check: {e}"
-        )
+        raise StartupError(f"Failed during Elasticsearch connection check: {e}")
 
     if not manager.all_indices_exist():
         if create_missing_indices:
@@ -64,22 +71,30 @@ def init_elasticsearch(hosts, indice_names, timeout=300,
             try:
                 manager.create_missing_indices(Paths.elastic_templates())
             except ElasticSearchError as e:
-                raise StartupError(
-                    f"Failure during Elasticsearch index creation. {e}"
-                )
+                raise StartupError(f"Failure during Elasticsearch index creation. {e}")
         else:
             log.warning("One or more Elasticsearch indices missing")
 
 
-def init_global_logging(level, filepath="", use_logqueue=True,
-                        warningsonly=[]):
+def init_global_logging(level, filepath="", use_logqueue=True, warningsonly=[]):
     import logging
     from .log import (
-        start_queue_listener, stop_queue_listener, set_level,
-        add_rootlogger_handler, set_logger_level, logtime_fmt_str,
-        file_handler, file_formatter, file_log_fmt_str, console_formatter,
-        console_handler, console_log_fmt_str, WARNINGSONLY, VERBOSE,
-        enable_verbose, set_initialized
+        start_queue_listener,
+        stop_queue_listener,
+        set_level,
+        add_rootlogger_handler,
+        set_logger_level,
+        logtime_fmt_str,
+        file_handler,
+        file_formatter,
+        file_log_fmt_str,
+        console_formatter,
+        console_handler,
+        console_log_fmt_str,
+        WARNINGSONLY,
+        VERBOSE,
+        enable_verbose,
+        set_initialized,
     )
 
     if not warningsonly:
@@ -134,10 +149,13 @@ def init_global_logging(level, filepath="", use_logqueue=True,
 
 def init_database(migration_check=True, create_tables=True):
     from cuckoo.common.db import dbms, CuckooDBTable, DatabaseMigrationNeeded
+
     try:
         dbms.initialize(
-            f"sqlite:///{Paths.dbfile()}", tablebaseclass=CuckooDBTable,
-            migration_check=migration_check, create_tables=create_tables
+            f"sqlite:///{Paths.dbfile()}",
+            tablebaseclass=CuckooDBTable,
+            migration_check=migration_check,
+            create_tables=create_tables,
         )
     except DatabaseMigrationNeeded as e:
         raise MigrationNeededError(e, "Cuckoo database (cuckoodb)")
@@ -148,10 +166,13 @@ def init_database(migration_check=True, create_tables=True):
 def init_safelist_db(migration_check=True, create_tables=True):
     from cuckoo.common.db import DatabaseMigrationNeeded
     from cuckoo.common.safelist import SafelistTable, safelistdb
+
     try:
         safelistdb.initialize(
-            f"sqlite:///{Paths.safelist_db()}", tablebaseclass=SafelistTable,
-            migration_check=migration_check, create_tables=create_tables
+            f"sqlite:///{Paths.safelist_db()}",
+            tablebaseclass=SafelistTable,
+            migration_check=migration_check,
+            create_tables=create_tables,
         )
     except DatabaseMigrationNeeded as e:
         raise MigrationNeededError(e, "Safelist database (safelistdb)")
@@ -163,6 +184,7 @@ def create_configurations():
     """Create all configurations is the config folder of the cuckoocwd that
     has already been set."""
     from cuckoo.common.storage import ConfigVersions
+
     for pkgname, subpkg, pkg in find_cuckoo_packages():
         conf_typeloaders, _ = get_conf_typeloaders(pkg)
         if not conf_typeloaders:
@@ -195,9 +217,7 @@ def create_configurations():
 
             template_path = templates.get(confname)
             if not template_path:
-                raise StartupError(
-                    f"No configuration template exists for {confname}"
-                )
+                raise StartupError(f"No configuration template exists for {confname}")
 
             config.render_config_from_typeloaders(
                 template_path, typeloaders, config_path
@@ -212,6 +232,7 @@ _confversions = {}
 
 def _raise_for_conf_migration(confname, subpkg):
     from cuckoo.common.storage import ConfigVersions
+
     if subpkg:
         fullpkgname = f"cuckoo.{subpkg}"
     else:
@@ -220,8 +241,7 @@ def _raise_for_conf_migration(confname, subpkg):
     confversions = _confversions.get(fullpkgname)
     if not confversions:
         confversions = _confversions.setdefault(
-            fullpkgname,
-            ConfigVersions(Paths.config_versionfile(subpkg), fullpkgname)
+            fullpkgname, ConfigVersions(Paths.config_versionfile(subpkg), fullpkgname)
         )
         confversions.load()
 
@@ -233,8 +253,7 @@ def _raise_for_conf_migration(confname, subpkg):
             "migrations."
         )
 
-    if not confversions.has_config(confname) or \
-            confversions.is_outdated(confname):
+    if not confversions.has_config(confname) or confversions.is_outdated(confname):
         raise StartupError(
             f"One or more config files need migration "
             f"({confname}).\nRun 'cuckoomigrate configs' "
@@ -258,9 +277,7 @@ def load_configuration(confname, subpkg=None, check_constraints=True):
             config_path, subpkg=subpkg, check_constraints=check_constraints
         )
     except config.ConfigurationError as e:
-        raise StartupError(
-            f"Failed to load config file {config_path}. {e}"
-        )
+        raise StartupError(f"Failed to load config file {config_path}. {e}")
 
 
 def _load_machinery_configs():
@@ -272,9 +289,7 @@ def load_configurations():
     # Load cuckoo all configurations for Cuckoo and all installed Cuckoo
     # subpackages, except for subpackages listed in 'custom_load'.
     # These have custom loading routines.
-    custom_load = {
-        "machineries": _load_machinery_configs
-    }
+    custom_load = {"machineries": _load_machinery_configs}
     for pkgname, subpkg, pkg in find_cuckoo_packages():
         if subpkg in custom_load:
             continue

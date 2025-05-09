@@ -14,8 +14,15 @@ from cuckoo.common.importing import ZippedNodeWork, AnalysisImportError
 from cuckoo.common.machines import serialize_machinelists
 from cuckoo.common.config import cfg
 from cuckoo.common.storage import (
-    random_filename, delete_file, Paths, AnalysisPaths, split_analysis_id,
-    create_analysis_folder, TaskPaths, TASK_ID_REGEX, ANALYSIS_ID_REGEX
+    random_filename,
+    delete_file,
+    Paths,
+    AnalysisPaths,
+    split_analysis_id,
+    create_analysis_folder,
+    TaskPaths,
+    TASK_ID_REGEX,
+    ANALYSIS_ID_REGEX,
 )
 
 from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
@@ -23,6 +30,7 @@ from .node import InfoStreamReceiver, NodeError, NodeMsgTypes
 log = CuckooGlobalLogger(__name__)
 
 MAX_UPLOAD_SIZE = 1024 * 1024 * 1024
+
 
 @web.middleware
 async def check_token(request, handler):
@@ -43,7 +51,7 @@ async def check_token(request, handler):
         return web.HTTPUnauthorized(reason="Incorrect authentication type")
 
     if not hmac.compare_digest(
-            key, cfg("distributed.yaml", "node_settings", "api_key").encode()
+        key, cfg("distributed.yaml", "node_settings", "api_key").encode()
     ):
         return web.HTTPUnauthorized()
 
@@ -51,7 +59,6 @@ async def check_token(request, handler):
 
 
 class StateSSE(InfoStreamReceiver):
-
     BACKLOG_SIZE = 100
 
     def __init__(self, loop):
@@ -101,21 +108,25 @@ class StateSSE(InfoStreamReceiver):
         asyncio.run_coroutine_threadsafe(self.stream_event(data), self.loop)
 
     def task_state(self, task_id, state):
-        self._add_stream_data(json.dumps({
-            "type": NodeMsgTypes.TASK_STATE, "task_id": task_id, "state": state
-        }))
+        self._add_stream_data(
+            json.dumps(
+                {"type": NodeMsgTypes.TASK_STATE, "task_id": task_id, "state": state}
+            )
+        )
 
     def disabled_machine(self, machine_name, reason):
         self._add_stream_data(
-            json.dumps({
-                "type": NodeMsgTypes.MACHINE_DISABLED,
-                "machine_name": machine_name,
-                "reason": reason
-            })
+            json.dumps(
+                {
+                    "type": NodeMsgTypes.MACHINE_DISABLED,
+                    "machine_name": machine_name,
+                    "reason": reason,
+                }
+            )
         )
 
-class _CountedAsyncLock:
 
+class _CountedAsyncLock:
     def __init__(self):
         self.lock = asyncio.Lock()
         self.waiters = 0
@@ -128,7 +139,6 @@ class _CountedAsyncLock:
 
 
 class API:
-
     def __init__(self, nodectx, eventstreamer):
         self.ctx = nodectx
         self.streamer = eventstreamer
@@ -206,9 +216,7 @@ class API:
                 if size > MAX_UPLOAD_SIZE:
                     fp.close()
                     delete_file(zippath)
-                    return web.json_response(
-                        {"error": "File too large"}, status=400
-                    )
+                    return web.json_response({"error": "File too large"}, status=400)
 
                 fp.write(chunk)
 
@@ -223,9 +231,7 @@ class API:
                         # means no other tasks of this analysis have been
                         # unpacked here yet.
                         if not analysis_path.exists():
-                            date, identifier = split_analysis_id(
-                                nodework.analysis.id
-                            )
+                            date, identifier = split_analysis_id(nodework.analysis.id)
                             create_analysis_folder(date, identifier)
                             nodework.unzip(analysis_path, task_only=False)
                         else:
@@ -253,9 +259,7 @@ class API:
         try:
             data = await request.json()
         except json.JSONDecodeError as e:
-            return web.json_response(
-                {"error": f"Invalid JSON data: {e}"}, status=400
-            )
+            return web.json_response({"error": f"Invalid JSON data: {e}"}, status=400)
 
         machine_name = data.get("machine_name")
         if not machine_name or not isinstance(machine_name, str):
@@ -265,9 +269,7 @@ class API:
 
         task_id = request.match_info["task_id"]
         if not TaskPaths.path(task_id).exists():
-            return web.json_response(
-                {"error", "Unknown task"}, status=404
-            )
+            return web.json_response({"error", "Unknown task"}, status=404)
 
         try:
             self.ctx.node.add_work(task_id, machine_name)
@@ -323,8 +325,8 @@ class API:
     async def get_node_state(self, request):
         return web.json_response({"state": self.ctx.node.state})
 
-class APIRunner:
 
+class APIRunner:
     def __init__(self, runner, loop, statesse):
         self.runner = runner
         self.loop = loop
@@ -346,35 +348,36 @@ class APIRunner:
     def create_site(self, host="localhost", port=8080):
         asyncio.set_event_loop(self.loop)
         self.loop.run_until_complete(self.runner.setup())
-        self.site = web.TCPSite(
-            self.runner, host=host, port=port, shutdown_timeout=1
-        )
+        self.site = web.TCPSite(self.runner, host=host, port=port, shutdown_timeout=1)
         self.loop.run_until_complete(self.site.start())
 
     def run_forever(self):
         self.loop.run_forever()
         self.loop.close()
 
+
 def make_api_runner(nodectx):
     loop = asyncio.new_event_loop()
     statesse = StateSSE(loop)
     api = API(nodectx, statesse)
     app = web.Application(middlewares=[check_token])
-    app.add_routes([
-        web.get("/ping", api.ping),
-        web.get("/machines", api.get_machines),
-        web.get("/routes", api.get_routes),
-        web.get("/events", api.get_eventstream),
-        web.post("/uploadwork", api.upload_work),
-        web.post(f"/task/{{task_id:{TASK_ID_REGEX}}}/start", api.start_task),
-        web.get(f"/task/{{task_id:{TASK_ID_REGEX}}}", api.task_result),
-        web.post("/reset", api.cancel_all),
-        web.delete(
-            f"/analysis/{{analysis_id:{ANALYSIS_ID_REGEX}}}",
-            api.delete_analysis_work
-        ),
-        web.get("/state", api.get_node_state)
-    ])
+    app.add_routes(
+        [
+            web.get("/ping", api.ping),
+            web.get("/machines", api.get_machines),
+            web.get("/routes", api.get_routes),
+            web.get("/events", api.get_eventstream),
+            web.post("/uploadwork", api.upload_work),
+            web.post(f"/task/{{task_id:{TASK_ID_REGEX}}}/start", api.start_task),
+            web.get(f"/task/{{task_id:{TASK_ID_REGEX}}}", api.task_result),
+            web.post("/reset", api.cancel_all),
+            web.delete(
+                f"/analysis/{{analysis_id:{ANALYSIS_ID_REGEX}}}",
+                api.delete_analysis_work,
+            ),
+            web.get("/state", api.get_node_state),
+        ]
+    )
 
     runner = web.AppRunner(app)
     return APIRunner(runner, loop, statesse)

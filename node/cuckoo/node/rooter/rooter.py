@@ -17,8 +17,13 @@ from cuckoo.common.strictcontainer import Route
 from cuckoo.common.machines import Machine
 
 from .errors import (
-    RooterError, RouteUnavailableError, InterfaceError, CommandFailedError,
-    RequestFailedError, InvalidRequestError, ExistingRouteError
+    RooterError,
+    RouteUnavailableError,
+    InterfaceError,
+    CommandFailedError,
+    RequestFailedError,
+    InvalidRequestError,
+    ExistingRouteError,
 )
 from .undoable import UndoableTracker, Undoable
 from .vpn import VPNs, OpenVPN
@@ -39,8 +44,7 @@ class NIC:
         # number of interfaces is used by Cuckoo rooter.
         if len(name) > 15:
             raise InterfaceError(
-                f"Interface assembled name is larger than "
-                f"15 characters {name}"
+                f"Interface assembled name is larger than 15 characters {name}"
             )
 
         self.ctx = rooterctx
@@ -90,29 +94,29 @@ class NIC:
     def enable_ipv4_forwarding(self):
         try:
             undoable = Undoable(
-                apply_func=self._write_forwarding, apply_args=("ipv4", "1"),
-                undo_func=self.disable_ipv4_forwarding
+                apply_func=self._write_forwarding,
+                apply_args=("ipv4", "1"),
+                undo_func=self.disable_ipv4_forwarding,
             )
             self.undoables.append(undoable)
             return undoable
         except InterfaceError as e:
             raise InterfaceError(
-                f"Failed to enable ipv4 forwarding on "
-                f"interface: {self.name}. {e}"
+                f"Failed to enable ipv4 forwarding on interface: {self.name}. {e}"
             )
 
     def enable_ipv6_forwarding(self):
         try:
             undoable = Undoable(
-                apply_func=self._write_forwarding, apply_args=("ipv6", "1"),
-                undo_func=self.disable_ipv4_forwarding
+                apply_func=self._write_forwarding,
+                apply_args=("ipv6", "1"),
+                undo_func=self.disable_ipv4_forwarding,
             )
             self.undoables.append(undoable)
             return undoable
         except InterfaceError as e:
             raise InterfaceError(
-                f"Failed to enable ipv6 forwarding on "
-                f"interface: {self.name}. {e}"
+                f"Failed to enable ipv6 forwarding on interface: {self.name}. {e}"
             )
 
     def disable_ipv4_forwarding(self):
@@ -136,7 +140,7 @@ class NIC:
             apply_func=self.ctx.iptables.forward_drop_enable,
             apply_args=self,
             undo_func=self.ctx.iptables.forward_drop_disable,
-            undo_args=self
+            undo_args=self,
         )
         self.undoables.append(undoable)
         return undoable
@@ -150,6 +154,7 @@ class NIC:
     def __str__(self):
         return self.name
 
+
 def _run_process(binary_path, argstuple):
     if argstuple:
         if not isinstance(argstuple, tuple):
@@ -162,14 +167,18 @@ def _run_process(binary_path, argstuple):
     log.debug("Running process", command=command)
     try:
         subprocess.run(
-            command, shell=False, stderr=subprocess.PIPE,
-            stdout=subprocess.DEVNULL, check=True
+            command,
+            shell=False,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            check=True,
         )
     except subprocess.CalledProcessError as e:
         raise CommandFailedError(
             f"Error running command {command}. "
             f"Exit code: {e.returncode}. Stderr: {e.stderr}"
         )
+
 
 class IPRoute2:
     """Wrapper around the ip binary of iproute2."""
@@ -183,17 +192,13 @@ class IPRoute2:
         self.path = ip_path
 
     def add_from_rule(self, ip, table_id):
-        _run_process(
-            self.path, ("rule", "add", "from", ip, "table", str(table_id))
-        )
+        _run_process(self.path, ("rule", "add", "from", ip, "table", str(table_id)))
 
     def delete_from_rule(self, ip, table_id):
-        _run_process(
-            self.path, ("rule", "del", "from", ip, "table", str(table_id))
-        )
+        _run_process(self.path, ("rule", "del", "from", ip, "table", str(table_id)))
+
 
 class RoutingTable:
-
     def __init__(self, rooterctx, table_id):
         self.ctx = rooterctx
         self.id = table_id
@@ -201,8 +206,10 @@ class RoutingTable:
 
     def add_srcroute(self, ip):
         undoable = Undoable(
-            apply_func=self.ctx.ip.add_from_rule, apply_args=(ip, self.id),
-            undo_func=self._delete_srcsource, undo_args=ip
+            apply_func=self.ctx.ip.add_from_rule,
+            apply_args=(ip, self.id),
+            undo_func=self._delete_srcsource,
+            undo_args=ip,
         )
         self.undoables.append(undoable)
 
@@ -217,57 +224,99 @@ class RoutingTable:
     def release(self):
         self.ctx.routing_tables.release_table(self)
 
-class IPTables:
 
+class IPTables:
     ROOTER_COMMENT = "cuckoo3-rooter"
 
     def __init__(self, iptables_path):
         self.path = iptables_path
 
     def _run_iptables(self, *args):
-        full_args = args + (
-            "-m", "comment", "--comment", self.ROOTER_COMMENT
-        )
+        full_args = args + ("-m", "comment", "--comment", self.ROOTER_COMMENT)
         _run_process(self.path, full_args)
 
     def forward_enable(self, src_interface, dst_interface, src_ip):
         # Insert rules as first in the chain so that other routes do not
         # influence it/break auto routing.
         self._run_iptables(
-            "-I", "FORWARD", "1", "-i", src_interface.name,
-            "-o", dst_interface.name,
-             "--source", src_ip, "-j", "ACCEPT"
+            "-I",
+            "FORWARD",
+            "1",
+            "-i",
+            src_interface.name,
+            "-o",
+            dst_interface.name,
+            "--source",
+            src_ip,
+            "-j",
+            "ACCEPT",
         )
         self._run_iptables(
-            "-I", "FORWARD", "1", "-i", dst_interface.name,
-            "-o", src_interface.name,
-            "--destination", src_ip, "-j", "ACCEPT"
+            "-I",
+            "FORWARD",
+            "1",
+            "-i",
+            dst_interface.name,
+            "-o",
+            src_interface.name,
+            "--destination",
+            src_ip,
+            "-j",
+            "ACCEPT",
         )
 
     def forward_disable(self, src_interface, dst_interface, src_ip):
         self._run_iptables(
-            "-D", "FORWARD", "-i", src_interface.name,
-            "-o", dst_interface.name,
-             "--source", src_ip, "-j", "ACCEPT"
+            "-D",
+            "FORWARD",
+            "-i",
+            src_interface.name,
+            "-o",
+            dst_interface.name,
+            "--source",
+            src_ip,
+            "-j",
+            "ACCEPT",
         )
         self._run_iptables(
-            "-D", "FORWARD", "-i", dst_interface.name,
-            "-o", src_interface.name,
-             "--destination", src_ip, "-j", "ACCEPT"
+            "-D",
+            "FORWARD",
+            "-i",
+            dst_interface.name,
+            "-o",
+            src_interface.name,
+            "--destination",
+            src_ip,
+            "-j",
+            "ACCEPT",
         )
 
     def masquerade_enable(self, src_ip, dst_interface):
         self._run_iptables(
-            "-t", "nat",
-            "-A", "POSTROUTING", "-s", src_ip, "-o", dst_interface.name,
-            "-j", "MASQUERADE"
+            "-t",
+            "nat",
+            "-A",
+            "POSTROUTING",
+            "-s",
+            src_ip,
+            "-o",
+            dst_interface.name,
+            "-j",
+            "MASQUERADE",
         )
 
     def masquerade_disable(self, src_ip, dst_interface):
         self._run_iptables(
-            "-t", "nat",
-            "-D", "POSTROUTING", "-s", src_ip, "-o", dst_interface.name,
-            "-j", "MASQUERADE"
+            "-t",
+            "nat",
+            "-D",
+            "POSTROUTING",
+            "-s",
+            src_ip,
+            "-o",
+            dst_interface.name,
+            "-j",
+            "MASQUERADE",
         )
 
     def forward_drop_enable(self, interface):
@@ -278,8 +327,9 @@ class IPTables:
         self._run_iptables("-D", "FORWARD", "-i", interface.name, "-j", "DROP")
         self._run_iptables("-D", "FORWARD", "-o", interface.name, "-j", "DROP")
 
-    def _input_accept_toggle(self, action, src_ip, protocol=None,
-                             dst_ip=None, dst_port=None):
+    def _input_accept_toggle(
+        self, action, src_ip, protocol=None, dst_ip=None, dst_port=None
+    ):
         args = [action, "INPUT", "-s", src_ip]
         if dst_ip:
             args.extend(["-d", dst_ip])
@@ -290,16 +340,15 @@ class IPTables:
         args.extend(["-j", "ACCEPT"])
         self._run_iptables(*args)
 
-    def input_accept_enable(self, src_ip, protocol=None, dst_ip=None,
-                            dst_port=None):
+    def input_accept_enable(self, src_ip, protocol=None, dst_ip=None, dst_port=None):
         self._input_accept_toggle("-A", src_ip, protocol, dst_ip, dst_port)
 
-    def input_accept_disable(self, src_ip, protocol=None, dst_ip=None,
-                             dst_port=None):
+    def input_accept_disable(self, src_ip, protocol=None, dst_ip=None, dst_port=None):
         self._input_accept_toggle("-D", src_ip, protocol, dst_ip, dst_port)
 
-    def _output_accept_toggle(self, action, dst_ip, protocol=None,
-                             src_ip=None, dst_port=None):
+    def _output_accept_toggle(
+        self, action, dst_ip, protocol=None, src_ip=None, dst_port=None
+    ):
         args = [action, "OUTPUT", "-d", dst_ip]
         if src_ip:
             args.extend(["-s", src_ip])
@@ -310,12 +359,10 @@ class IPTables:
         args.extend(["-j", "ACCEPT"])
         self._run_iptables(*args)
 
-    def output_accept_enable(self, dst_ip, protocol=None, src_ip=None,
-                             dst_port=None):
+    def output_accept_enable(self, dst_ip, protocol=None, src_ip=None, dst_port=None):
         self._output_accept_toggle("-A", dst_ip, protocol, src_ip, dst_port)
 
-    def output_accept_disable(self, dst_ip, protocol=None, src_ip=None,
-                             dst_port=None):
+    def output_accept_disable(self, dst_ip, protocol=None, src_ip=None, dst_port=None):
         self._output_accept_toggle("-D", dst_ip, protocol, src_ip, dst_port)
 
     def _toggle_input_drop(self, action, src_ip):
@@ -338,33 +385,62 @@ class IPTables:
 
     def enable_state_tracking(self, src_ip):
         self._run_iptables(
-            "-A", "INPUT", "-s", src_ip,
-            "-m", "state", "--state", "ESTABLISHED,RELATED",
-            "-j", "ACCEPT"
+            "-A",
+            "INPUT",
+            "-s",
+            src_ip,
+            "-m",
+            "state",
+            "--state",
+            "ESTABLISHED,RELATED",
+            "-j",
+            "ACCEPT",
         )
         self._run_iptables(
-            "-A", "OUTPUT", "-d", src_ip,
-            "-m", "state", "--state", "ESTABLISHED,RELATED",
-            "-j", "ACCEPT"
+            "-A",
+            "OUTPUT",
+            "-d",
+            src_ip,
+            "-m",
+            "state",
+            "--state",
+            "ESTABLISHED,RELATED",
+            "-j",
+            "ACCEPT",
         )
 
     def disable_state_tracking(self, src_ip):
         self._run_iptables(
-            "-D", "INPUT", "-s", src_ip,
-            "-m", "state", "--state", "ESTABLISHED,RELATED",
-            "-j", "ACCEPT"
+            "-D",
+            "INPUT",
+            "-s",
+            src_ip,
+            "-m",
+            "state",
+            "--state",
+            "ESTABLISHED,RELATED",
+            "-j",
+            "ACCEPT",
         )
         self._run_iptables(
-            "-D", "OUTPUT", "-d", src_ip,
-            "-m", "state", "--state", "ESTABLISHED,RELATED",
-            "-j", "ACCEPT"
+            "-D",
+            "OUTPUT",
+            "-d",
+            src_ip,
+            "-m",
+            "state",
+            "--state",
+            "ESTABLISHED,RELATED",
+            "-j",
+            "ACCEPT",
         )
 
-class InternetRoute:
 
+class InternetRoute:
     def __init__(self, routing_table, interface):
         self.routing_table = routing_table
         self.interface = interface
+
 
 class _InterfaceTracker:
     """A tracker for all used (existing and generated) network interface names.
@@ -388,9 +464,7 @@ class _InterfaceTracker:
                 self._interfaces[name] = interface
 
             if not interface.is_up():
-                raise RooterError(
-                    f"Interface {name} does not exist or is not up."
-                )
+                raise RooterError(f"Interface {name} does not exist or is not up.")
 
             return interface
 
@@ -438,8 +512,11 @@ class _RoutingTableTracker:
     if they are the aliases of the routing table ids"""
 
     def __init__(self, rooterctx, start_range=None, end_range=None):
-        if start_range is not None and end_range is not None \
-                and start_range > end_range:
+        if (
+            start_range is not None
+            and end_range is not None
+            and start_range > end_range
+        ):
             raise RooterError(
                 f"Routing table start_range ({start_range}) must be "
                 f"smaller than end_range ({end_range})"
@@ -498,8 +575,7 @@ class _RoutingTableTracker:
         create and use these."""
         if not self.range_set():
             raise RooterError(
-                "No routing table id range is set. "
-                "Cannot determine new table id."
+                "No routing table id range is set. Cannot determine new table id."
             )
 
         with self._tables_lock:
@@ -528,12 +604,14 @@ class _RoutingTableTracker:
             for table in list(self._routing_tables.values()):
                 table.undo()
 
+
 def _enable_forwarding_and_drop(interface):
     # Enables forwarding on an interface and applies iptables rules
     # to drop all incoming/outgoing traffic by default, unless a rule
     # explicitly allow this is added.
     interface.enable_ipv4_forwarding()
     interface.drop_forward_default()
+
 
 def enable_drop(requestctx):
     """Accept traffic to the result server from source ip and
@@ -542,50 +620,65 @@ def enable_drop(requestctx):
     undoables = UndoableTracker()
 
     # Accept result server traffic from the source IP
-    undoables.append(Undoable(
-        apply_func=requestctx.ctx.iptables.input_accept_enable,
-        apply_args=(requestctx.src_ip, "tcp",
-                    requestctx.result_server.listen_ip,
-                    requestctx.result_server.listen_port),
-        undo_func=requestctx.ctx.iptables.input_accept_disable,
-        undo_args=(requestctx.src_ip, "tcp",
-                    requestctx.result_server.listen_ip,
-                    requestctx.result_server.listen_port),
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=requestctx.ctx.iptables.input_accept_enable,
+            apply_args=(
+                requestctx.src_ip,
+                "tcp",
+                requestctx.result_server.listen_ip,
+                requestctx.result_server.listen_port,
+            ),
+            undo_func=requestctx.ctx.iptables.input_accept_disable,
+            undo_args=(
+                requestctx.src_ip,
+                "tcp",
+                requestctx.result_server.listen_ip,
+                requestctx.result_server.listen_port,
+            ),
+        )
+    )
 
     # Accept agent traffic going to the source ip.
-    undoables.append(Undoable(
-        apply_func=requestctx.ctx.iptables.output_accept_enable,
-        apply_args=(requestctx.src_ip, "tcp", None,
-                    requestctx.machine.agent_port),
-        undo_func=requestctx.ctx.iptables.output_accept_disable,
-        undo_args=(requestctx.src_ip, "tcp", None,
-                   requestctx.machine.agent_port),
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=requestctx.ctx.iptables.output_accept_enable,
+            apply_args=(requestctx.src_ip, "tcp", None, requestctx.machine.agent_port),
+            undo_func=requestctx.ctx.iptables.output_accept_disable,
+            undo_args=(requestctx.src_ip, "tcp", None, requestctx.machine.agent_port),
+        )
+    )
 
     # Accept connections that are established from any of the allowed inputs
-    undoables.append(Undoable(
-        apply_func=requestctx.ctx.iptables.enable_state_tracking,
-        apply_args=requestctx.src_ip,
-        undo_func=requestctx.ctx.iptables.disable_state_tracking,
-        undo_args=requestctx.src_ip
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=requestctx.ctx.iptables.enable_state_tracking,
+            apply_args=requestctx.src_ip,
+            undo_func=requestctx.ctx.iptables.disable_state_tracking,
+            undo_args=requestctx.src_ip,
+        )
+    )
 
     # Drop all other input/output traffic that is not allowed.
-    undoables.append(Undoable(
-        apply_func=requestctx.ctx.iptables.input_drop_enable,
-        apply_args=requestctx.src_ip,
-        undo_func=requestctx.ctx.iptables.input_drop_disable,
-        undo_args=requestctx.src_ip
-    ))
-    undoables.append(Undoable(
-        apply_func=requestctx.ctx.iptables.output_drop_enable,
-        apply_args=requestctx.src_ip,
-        undo_func=requestctx.ctx.iptables.output_drop_disable,
-        undo_args=requestctx.src_ip
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=requestctx.ctx.iptables.input_drop_enable,
+            apply_args=requestctx.src_ip,
+            undo_func=requestctx.ctx.iptables.input_drop_disable,
+            undo_args=requestctx.src_ip,
+        )
+    )
+    undoables.append(
+        Undoable(
+            apply_func=requestctx.ctx.iptables.output_drop_enable,
+            apply_args=requestctx.src_ip,
+            undo_func=requestctx.ctx.iptables.output_drop_disable,
+            undo_args=requestctx.src_ip,
+        )
+    )
 
     return undoables
+
 
 def enable_vpn(requestctx):
     """Drop all traffic (except to resultserver and agent) as a default. Then
@@ -615,25 +708,28 @@ def enable_vpn(requestctx):
 
     # Enable forwarding from and to the source interface to the VPN interface
     # for the given source IP.
-    undoables.append(Undoable(
-        apply_func=rooterctx.iptables.forward_enable,
-        apply_args=(requestctx.src_interface, vpn.interface,
-                    requestctx.src_ip),
-        undo_func=rooterctx.iptables.forward_disable,
-        undo_args=(requestctx.src_interface, vpn.interface,
-                   requestctx.src_ip)
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=rooterctx.iptables.forward_enable,
+            apply_args=(requestctx.src_interface, vpn.interface, requestctx.src_ip),
+            undo_func=rooterctx.iptables.forward_disable,
+            undo_args=(requestctx.src_interface, vpn.interface, requestctx.src_ip),
+        )
+    )
 
     # Enable masquerading for the source IP on the VPN interface. So that
     # the VPN interface IP is used for packets going over the VPN.
-    undoables.append(Undoable(
-        apply_func=rooterctx.iptables.masquerade_enable,
-        apply_args=(requestctx.src_ip, vpn.interface),
-        undo_func=rooterctx.iptables.masquerade_disable,
-        undo_args=(requestctx.src_ip, vpn.interface)
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=rooterctx.iptables.masquerade_enable,
+            apply_args=(requestctx.src_ip, vpn.interface),
+            undo_func=rooterctx.iptables.masquerade_disable,
+            undo_args=(requestctx.src_ip, vpn.interface),
+        )
+    )
     undoables.append(Undoable(undo_func=vpn.decrement_users))
     return undoables
+
 
 def enable_internet(requestctx):
     """Drop all traffic (except to resultserver and agent) as a default.
@@ -642,9 +738,7 @@ def enable_internet(requestctx):
     and masquerading of the source IP on the 'internet' interface. An IP rule
     is added to the routing table of the configured 'internet' interface."""
     if not requestctx.ctx.internet_route:
-        raise RequestFailedError(
-            "No internet interface and routing table is set"
-        )
+        raise RequestFailedError("No internet interface and routing table is set")
 
     # Apply a drop route before enabling other routes.
     undoables = enable_drop(requestctx)
@@ -666,45 +760,51 @@ def enable_internet(requestctx):
 
     # Enable forwarding from and to the source interface to the
     # internet/dirty line interface for the given source IP.
-    undoables.append(Undoable(
-        apply_func=rooterctx.iptables.forward_enable,
-        apply_args=(requestctx.src_interface,
-                    rooterctx.internet_route.interface,
-                    requestctx.src_ip),
-        undo_func=rooterctx.iptables.forward_disable,
-        undo_args=(requestctx.src_interface,
-                   rooterctx.internet_route.interface,
-                   requestctx.src_ip),
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=rooterctx.iptables.forward_enable,
+            apply_args=(
+                requestctx.src_interface,
+                rooterctx.internet_route.interface,
+                requestctx.src_ip,
+            ),
+            undo_func=rooterctx.iptables.forward_disable,
+            undo_args=(
+                requestctx.src_interface,
+                rooterctx.internet_route.interface,
+                requestctx.src_ip,
+            ),
+        )
+    )
 
     # Enable masquerading for the source IP on the internet interface. So that
     # the internet interface IP is used for packets and replies
     # can be received.
-    undoables.append(Undoable(
-        apply_func=rooterctx.iptables.masquerade_enable,
-        apply_args=(requestctx.src_ip,
-                    rooterctx.internet_route.interface),
-        undo_func=rooterctx.iptables.masquerade_disable,
-        undo_args=(requestctx.src_ip,
-                   rooterctx.internet_route.interface),
-    ))
+    undoables.append(
+        Undoable(
+            apply_func=rooterctx.iptables.masquerade_enable,
+            apply_args=(requestctx.src_ip, rooterctx.internet_route.interface),
+            undo_func=rooterctx.iptables.masquerade_disable,
+            undo_args=(requestctx.src_ip, rooterctx.internet_route.interface),
+        )
+    )
 
     return undoables
+
 
 class RequestContext:
     """A wrapper for a new routing request. Holds all information needed
     so a worker can process the request."""
 
-    def __init__(self, rooterctx, route_dict, machine_dict, result_server_dict,
-                 readerwriter):
+    def __init__(
+        self, rooterctx, route_dict, machine_dict, result_server_dict, readerwriter
+    ):
         self.ctx = rooterctx
 
         try:
             self.machine = Machine.from_dict(machine_dict)
             self.route = Route(**route_dict)
-            self.result_server = ExistingResultServer.from_dict(
-                result_server_dict
-            )
+            self.result_server = ExistingResultServer.from_dict(result_server_dict)
         except (TypeError, KeyError, ValueError) as e:
             raise InvalidRequestError(
                 f"Invalid machine, route or result server dict: {e}"
@@ -743,8 +843,9 @@ class RequestContext:
             # if lots of routes are queued and a requester cancels it.
             if self._undone:
                 log.warning(
-                    "Route undone before it was applied. Not applying "
-                    "route", src_ip=self.src_ip, type=self.route.type
+                    "Route undone before it was applied. Not applying route",
+                    src_ip=self.src_ip,
+                    type=self.route.type,
                 )
                 return
 
@@ -770,11 +871,10 @@ class RooterContext:
     route_handlers = {
         "vpn": enable_vpn,
         "internet": enable_internet,
-        "drop": enable_drop
+        "drop": enable_drop,
     }
 
-    def __init__(self, iptables_path, ip_path, rooterlogs_path,
-                 openvpn_path=None):
+    def __init__(self, iptables_path, ip_path, rooterlogs_path, openvpn_path=None):
         self.iptables = IPTables(iptables_path)
         self.ip = IPRoute2(ip_path)
         self.openvpn = OpenVPN(openvpn_path)
@@ -798,10 +898,8 @@ class RooterContext:
 
     def add_internet_route(self, routing_table, interface):
         self.internet_route = InternetRoute(
-            routing_table=self.routing_tables.get_existing_table(
-                routing_table
-            ),
-            interface=self.interfaces.get_existing_interface(interface)
+            routing_table=self.routing_tables.get_existing_table(routing_table),
+            interface=self.interfaces.get_existing_interface(interface),
         )
         self.add_available_route("internet")
 
@@ -812,15 +910,11 @@ class RooterContext:
 
     def get_route_handler(self, route_type):
         if route_type not in self._available_routes:
-            raise RouteUnavailableError(
-                f"Route type {route_type} not available"
-            )
+            raise RouteUnavailableError(f"Route type {route_type} not available")
 
         handler = self.route_handlers.get(route_type)
         if not handler:
-            raise RouteUnavailableError(
-                f"Route type {route_type} is not supported"
-            )
+            raise RouteUnavailableError(f"Route type {route_type} is not supported")
 
         return handler
 
@@ -828,8 +922,7 @@ class RooterContext:
         with self._enabled_routes_lock:
             if self.srcip_route_exists(requestctx):
                 raise ExistingRouteError(
-                    f"A route already exists for source "
-                    f"ip: {requestctx.src_ip}"
+                    f"A route already exists for source ip: {requestctx.src_ip}"
                 )
             self._enabled_routes[requestctx.readerwriter.sock] = requestctx
 
@@ -839,10 +932,7 @@ class RooterContext:
             if not requestctx:
                 return
 
-            log.info(
-                "Undoing routes", src_ip=requestctx.src_ip,
-                route=requestctx.route
-            )
+            log.info("Undoing routes", src_ip=requestctx.src_ip, route=requestctx.route)
             requestctx.undo()
 
     def srcip_route_exists(self, requestctx):
@@ -861,7 +951,8 @@ class RooterContext:
                 except Exception as e:
                     log.exception(
                         "Fatal error cleaning up routes. It is recommended to "
-                        "check if any remaining iptables rules exist.", error=e
+                        "check if any remaining iptables rules exist.",
+                        error=e,
                     )
 
         self.routing_tables.undo_all()
@@ -870,19 +961,14 @@ class RooterContext:
 
 
 class _RooterResponses:
-
     @staticmethod
     def success(error=""):
-        return {
-            "success": True,
-            "error": error
-        }
+        return {"success": True, "error": error}
 
     @staticmethod
     def fail(error):
-        return {
-            "success": False, "error": error
-        }
+        return {"success": False, "error": error}
+
 
 class RooterWorker(threading.Thread):
     """Worker thread that runs the actual functions stored in RequestContexts
@@ -906,14 +992,14 @@ class RooterWorker(threading.Thread):
             try:
                 requestctcx.apply_route()
                 log.info(
-                    "Route request completed", src_ip=requestctcx.src_ip,
-                    route=requestctcx.route
+                    "Route request completed",
+                    src_ip=requestctcx.src_ip,
+                    route=requestctcx.route,
                 )
             except RouteUnavailableError as e:
                 log.warning("Failed to apply route", error=e)
                 self.rooter.queue_response(
-                    requestctcx.readerwriter,
-                    _RooterResponses.fail(str(e)), close=False
+                    requestctcx.readerwriter, _RooterResponses.fail(str(e)), close=False
                 )
             except RooterError as e:
                 log.error(
@@ -921,18 +1007,19 @@ class RooterWorker(threading.Thread):
                     type=requestctcx.route.type,
                     options=requestctcx.route.options,
                     src_ip=requestctcx.src_ip,
-                    src_interface=requestctcx.src_interface, error=e
+                    src_interface=requestctcx.src_interface,
+                    error=e,
                 )
                 self.rooter.queue_response(
                     requestctcx.readerwriter,
                     _RooterResponses.fail(
                         "Failed to apply route. See rooter logs for details."
-                    ), close=False
+                    ),
+                    close=False,
                 )
             else:
                 self.rooter.queue_response(
-                    requestctcx.readerwriter,
-                    _RooterResponses.success(), close=False
+                    requestctcx.readerwriter, _RooterResponses.success(), close=False
                 )
             finally:
                 if not requestctcx.route_applied():
@@ -940,6 +1027,7 @@ class RooterWorker(threading.Thread):
 
     def stop(self):
         self.do_run = False
+
 
 class Rooter(UnixSocketServer):
     """The rooter unix socket server. Accepts commands and queues the work
@@ -957,47 +1045,42 @@ class Rooter(UnixSocketServer):
         self.subject_handler = {
             "getroutes": self._get_routes,
             "enableroute": self._enable_route,
-            "disableroute": self._disable_route
+            "disableroute": self._disable_route,
         }
         self.workers = []
 
     def _get_routes(self, msg, readerwriter):
-        self._send_response(
-            readerwriter, self.ctx.available_routes_dict(), close=True
-        )
+        self._send_response(readerwriter, self.ctx.available_routes_dict(), close=True)
 
     def _enable_route(self, msg, readerwriter):
         args = msg.get("args", {})
         if not args or not set(args.keys()).issubset(
-                {"machine", "route", "resultserver"}
+            {"machine", "route", "resultserver"}
         ):
             raise KeyError("Missing one or more arguments")
 
         try:
             requestctx = RequestContext(
-                self.ctx, route_dict=args["route"],
+                self.ctx,
+                route_dict=args["route"],
                 machine_dict=args["machine"],
                 result_server_dict=args["resultserver"],
-                readerwriter=readerwriter
+                readerwriter=readerwriter,
             )
         except (RouteUnavailableError, InvalidRequestError) as e:
             log.debug("Cannot complete route request", msg=msg, error=e)
-            self._send_response(
-                readerwriter, _RooterResponses.fail(str(e)), close=True
-            )
+            self._send_response(readerwriter, _RooterResponses.fail(str(e)), close=True)
 
         else:
             log.info(
-                "New route request", src_ip=requestctx.src_ip,
-                route=requestctx.route
+                "New route request", src_ip=requestctx.src_ip, route=requestctx.route
             )
             try:
                 requestctx.map_enabled_route()
                 self.work_queue.put(requestctx)
             except ExistingRouteError as e:
                 log.warning(
-                    "Cannot complete route request", requestctx=requestctx,
-                    error=e
+                    "Cannot complete route request", requestctx=requestctx, error=e
                 )
                 self._send_response(
                     readerwriter, _RooterResponses.fail(str(e)), close=True
@@ -1050,8 +1133,7 @@ class Rooter(UnixSocketServer):
         if not handler:
             log.debug("Unsupported subject", msg=msg)
             self._send_response(
-                readerwriter, _RooterResponses.fail("Unsupported subject"),
-                close=True
+                readerwriter, _RooterResponses.fail("Unsupported subject"), close=True
             )
             return
 
@@ -1059,9 +1141,7 @@ class Rooter(UnixSocketServer):
             handler(msg, readerwriter)
         except (TypeError, KeyError) as e:
             log.warning("Incorrect message received", msg=repr(msg), error=e)
-            self._send_response(
-                readerwriter, _RooterResponses.fail(str(e)), close=True
-            )
+            self._send_response(readerwriter, _RooterResponses.fail(str(e)), close=True)
         except RooterError as e:
             log.error("Error handling message", msg=repr(msg), error=e)
             self._send_response(
@@ -1070,12 +1150,10 @@ class Rooter(UnixSocketServer):
                     "Unexpected rooter error. Cannot complete request. "
                     "See rooter logs for details."
                 ),
-                close=True
+                close=True,
             )
         except Exception as e:
-            log.exception(
-                "Fatal error while handling message", msg=repr(msg), error=e
-            )
+            log.exception("Fatal error while handling message", msg=repr(msg), error=e)
             raise
 
     def stop(self):

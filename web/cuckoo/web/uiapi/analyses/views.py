@@ -2,8 +2,11 @@
 # See the file 'LICENSE' for copying permission.
 
 from django.http import (
-    JsonResponse, HttpResponseNotFound, HttpResponse, FileResponse,
-    HttpResponseForbidden
+    JsonResponse,
+    HttpResponseNotFound,
+    HttpResponse,
+    FileResponse,
+    HttpResponseForbidden,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -31,7 +34,6 @@ class Analysis(View):
 
 
 class Settings(View):
-
     def get(self, request, analysis_id):
         try:
             analysis = analyses.get_analysis(analysis_id)
@@ -94,12 +96,9 @@ class ReadyForManual(View):
             if state == analyses.States.WAITING_MANUAL:
                 # Client can now be redirected to settings page. Tell UI to
                 # redirect to it.
-                resp["location"] = reverse(
-                    "Submit/settings", args=[analysis_id]
-                )
+                resp["location"] = reverse("Submit/settings", args=[analysis_id])
                 return resp
-            if state in (analyses.States.NO_SELECTED,
-                         analyses.States.PENDING_PRE):
+            if state in (analyses.States.NO_SELECTED, analyses.States.PENDING_PRE):
                 # Analysis page cannot (yet) be viewed. Tell UI to redirect
                 # to the overview page
                 resp["location"] = reverse("Analyses/index")
@@ -112,19 +111,14 @@ class ReadyForManual(View):
 
 
 class SubmittedFileDownload(View):
-
     def get(self, request, analysis_id):
-        if not cfg(
-            "web.yaml", "web", "downloads", "submitted_file", subpkg="web"
-        ):
-            return HttpResponseForbidden(
-                "Submitted file downloading is disabled"
-            )
+        if not cfg("web.yaml", "web", "downloads", "submitted_file", subpkg="web"):
+            return HttpResponseForbidden("Submitted file downloading is disabled")
         allowed_subnets = cfg(
             "web.yaml", "web", "downloads", "allowed_subnets", subpkg="web"
         )
         if allowed_subnets:
-            ip, isPrivate = get_client_ip(request, request_header_order=['X-Real-IP'])
+            ip, isPrivate = get_client_ip(request, request_header_order=["X-Real-IP"])
             isAllowed = False
             if ip:
                 for network in allowed_subnets.split(","):
@@ -133,29 +127,27 @@ class SubmittedFileDownload(View):
                         isAllowed = True
 
             if not isAllowed:
-                return HttpResponseForbidden(
-                            "Submitted file downloading is forbidden"
-                        )
+                return HttpResponseForbidden("Submitted file downloading is forbidden")
 
         try:
-            result = retriever.get_analysis(
-                analysis_id, include=[Results.ANALYSIS]
-            )
+            result = retriever.get_analysis(analysis_id, include=[Results.ANALYSIS])
             analysis = result.analysis
             submittedfile_fp = result.submitted_file
         except ResultDoesNotExistError as e:
             return HttpResponseNotFound(str(e))
 
         return FileResponse(
-            submittedfile_fp, as_attachment=True,
-            filename=analysis.submitted.sha256
+            submittedfile_fp, as_attachment=True, filename=analysis.submitted.sha256
         )
+
 
 class DeleteAnalysis(View):
     def get(self, request, analysis_id):
         try:
             delete_analysis_db(analysis_id)
             delete_analysis_disk(analysis_id)
-        except (ResultDoesNotExistError) as e:
-            return JsonResponse({"error": f"Analysis {analysis_id} does not exist."}, status=400)
+        except ResultDoesNotExistError as e:
+            return JsonResponse(
+                {"error": f"Analysis {analysis_id} does not exist."}, status=400
+            )
         return JsonResponse({}, status=200)

@@ -10,19 +10,17 @@ from cuckoo.common.config import cfg
 
 from cuckoo.web.decorators import accepts_json
 
-class Search(View):
 
+class Search(View):
     @method_decorator(accepts_json)
     def post(self, request):
-        if not cfg(
-            "web.yaml", "elasticsearch", "web_search", "enabled",
-            subpkg="web"
-        ):
+        if not cfg("web.yaml", "elasticsearch", "web_search", "enabled", subpkg="web"):
             return JsonResponse(
                 {
                     "error": "Search feature is not available when "
-                             "Elasticsearch reporting is disabled."
-                }, status=403
+                    "Elasticsearch reporting is disabled."
+                },
+                status=403,
             )
 
         limit = request.json.get("limit", 10)

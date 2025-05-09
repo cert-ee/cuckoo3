@@ -5,8 +5,8 @@ from cuckoo.common.clients import ActionFailedError
 from cuckoo.common.guest import find_stager, StagerError, PayloadExecFailed
 from cuckoo.common.taskflow import TaskFlow, TaskFlowError
 
-class StandardTask(TaskFlow):
 
+class StandardTask(TaskFlow):
     name = "standard"
 
     def start_machine(self):

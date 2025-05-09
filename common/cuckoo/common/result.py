@@ -5,22 +5,22 @@ from pathlib import Path
 
 from . import analyses
 from .storage import AnalysisPaths, TaskPaths, Paths, Binaries
-from .strictcontainer import (
-    Analysis, Task, Identification, Pre, Post, StrictContainer
-)
+from .strictcontainer import Analysis, Task, Identification, Pre, Post, StrictContainer
 from .machines import Machine
-from .clients import (
-    APIError, APIServerError, APIDoesNotExistError, ClientError
-)
+from .clients import APIError, APIServerError, APIDoesNotExistError, ClientError
+
 
 class ResultError(Exception):
     pass
 
+
 class ResultDoesNotExistError(ResultError):
     pass
 
+
 class InvalidResultDataError(ResultError):
     pass
+
 
 class Results:
     ANALYSIS = "analysis"
@@ -30,8 +30,8 @@ class Results:
     POST = "post"
     MACHINE = "machine"
 
-class Result:
 
+class Result:
     def __init__(self, analysis_id):
         self.analysis_id = analysis_id
         self._analysis = None
@@ -45,9 +45,7 @@ class Result:
                 AnalysisPaths.analysisjson(self.analysis_id)
             )
         except FileNotFoundError:
-            raise ResultDoesNotExistError(
-                f"Analysis {self.analysis_id} not found"
-            )
+            raise ResultDoesNotExistError(f"Analysis {self.analysis_id} not found")
         except (ValueError, KeyError, TypeError) as e:
             raise InvalidResultDataError(f"Invalid analysis.json: {e}")
 
@@ -61,8 +59,8 @@ class Result:
     def to_dict(self):
         raise NotImplementedError
 
-class AnalysisResult(Result):
 
+class AnalysisResult(Result):
     def __init__(self, analysis_id, include):
         super().__init__(analysis_id)
         self.analysis_id = analysis_id
@@ -112,17 +110,22 @@ class AnalysisResult(Result):
         if self._analysis:
             d["analysis"] = self._analysis.to_dict()
         if self._pre is not None:
-            d["pre"] = self._pre if not isinstance(self._pre, StrictContainer)\
+            d["pre"] = (
+                self._pre
+                if not isinstance(self._pre, StrictContainer)
                 else self._pre.to_dict()
+            )
         if self._identification is not None:
-            d["identification"] = self._identification if not \
-                isinstance(self._identification, StrictContainer) \
+            d["identification"] = (
+                self._identification
+                if not isinstance(self._identification, StrictContainer)
                 else self._identification.to_dict()
+            )
 
         return d
 
-class LocalAnalysisResult(AnalysisResult):
 
+class LocalAnalysisResult(AnalysisResult):
     def _load_pre(self, missing_default=None):
         try:
             self._pre = Pre.from_file(AnalysisPaths.prejson(self.analysis_id))
@@ -143,14 +146,11 @@ class LocalAnalysisResult(AnalysisResult):
         except FileNotFoundError:
             if missing_default is None:
                 raise ResultDoesNotExistError(
-                    "Identification report for analysis "
-                    f"{self.analysis_id} not found"
+                    f"Identification report for analysis {self.analysis_id} not found"
                 )
             self._identification = missing_default
         except (ValueError, KeyError, TypeError) as e:
-            raise InvalidResultDataError(
-                f"Invalid identification.json: {e}"
-            )
+            raise InvalidResultDataError(f"Invalid identification.json: {e}")
 
     def _get_submitted_file_fp(self):
         path = AnalysisPaths.submitted_file(self.analysis_id, resolve=True)
@@ -163,7 +163,6 @@ class LocalAnalysisResult(AnalysisResult):
 
 
 class TaskResult(Result):
-
     def __init__(self, analysis_id, task_id, include):
         super().__init__(analysis_id)
         self.task_id = task_id
@@ -235,18 +234,22 @@ class TaskResult(Result):
         if self._task:
             d["task"] = self._task.to_dict()
         if self._post is not None:
-            d["post"] = self._post if not \
-                isinstance(self._post, StrictContainer)\
+            d["post"] = (
+                self._post
+                if not isinstance(self._post, StrictContainer)
                 else self._post.to_dict()
+            )
         if self._machine is not None:
-            d["machine"] = self._machine if not \
-                isinstance(self._machine, Machine) \
+            d["machine"] = (
+                self._machine
+                if not isinstance(self._machine, Machine)
                 else self._machine.to_dict()
+            )
 
         return d
 
-class LocalTaskResult(TaskResult):
 
+class LocalTaskResult(TaskResult):
     def _load_task(self):
         try:
             self._task = Task.from_file(TaskPaths.taskjson(self.task_id))
@@ -269,9 +272,7 @@ class LocalTaskResult(TaskResult):
 
     def _load_machine(self, missing_default=None):
         try:
-            self._machine = Machine.from_file(
-                TaskPaths.machinejson(self.task_id)
-            )
+            self._machine = Machine.from_file(TaskPaths.machinejson(self.task_id))
         except FileNotFoundError:
             if missing_default is None:
                 raise ResultDoesNotExistError(
@@ -279,9 +280,7 @@ class LocalTaskResult(TaskResult):
                 )
             self._machine = missing_default
         except (ValueError, KeyError, TypeError) as e:
-            raise InvalidResultDataError(
-                f"Invalid machine.json: {e}"
-            )
+            raise InvalidResultDataError(f"Invalid machine.json: {e}")
 
     def _get_pcap_fp(self):
         pcap_path = TaskPaths.pcap(self.task_id)
@@ -297,8 +296,8 @@ class LocalTaskResult(TaskResult):
 
         return open(screenshot_path, "rb")
 
-class RemoteTask(TaskResult):
 
+class RemoteTask(TaskResult):
     def __init__(self, analysis_id, task_id, api_client, data={}, include=[]):
         super().__init__(analysis_id, task_id, include)
         self._data = data
@@ -310,9 +309,7 @@ class RemoteTask(TaskResult):
             if Results.TASK not in self._include:
                 raise ResultError("Task was not added to include list")
 
-            raise ResultDoesNotExistError(
-                f"Task {self.task_id} not found"
-            )
+            raise ResultDoesNotExistError(f"Task {self.task_id} not found")
 
         try:
             self._task = Task(**d)
@@ -325,9 +322,7 @@ class RemoteTask(TaskResult):
             if Results.ANALYSIS not in self._include:
                 raise ResultError("Analysis was not added to include list")
 
-            raise ResultDoesNotExistError(
-                f"Analysis {self.analysis_id} not found"
-            )
+            raise ResultDoesNotExistError(f"Analysis {self.analysis_id} not found")
 
         try:
             self._analysis = Analysis(**d)
@@ -376,16 +371,14 @@ class RemoteTask(TaskResult):
 
     def _get_screenshot_fp(self, name):
         try:
-            return self._api.task_screenshot(
-                self.analysis_id, self.task_id, name
-            )
+            return self._api.task_screenshot(self.analysis_id, self.task_id, name)
         except APIDoesNotExistError:
             raise ResultDoesNotExistError("No such screenshot found for task")
         except ClientError as e:
             raise ResultError(f"Failed to retrieve screenshot: {e}")
 
-class RemoteAnalysis(AnalysisResult):
 
+class RemoteAnalysis(AnalysisResult):
     def __init__(self, analysis_id, api_client, data={}, include=[]):
         super().__init__(analysis_id, include)
         self._data = data
@@ -397,9 +390,7 @@ class RemoteAnalysis(AnalysisResult):
             if Results.ANALYSIS not in self._include:
                 raise ResultError("Analysis was not added to include list")
 
-            raise ResultDoesNotExistError(
-                f"Analysis {self.analysis_id} not found"
-            )
+            raise ResultDoesNotExistError(f"Analysis {self.analysis_id} not found")
 
         try:
             self._analysis = Analysis(**d)
@@ -426,22 +417,17 @@ class RemoteAnalysis(AnalysisResult):
         d = self._data.get("identification")
         if not d:
             if Results.IDENTIFICATION not in self._include:
-                raise ResultError(
-                    "Identification was not added to include list"
-                )
+                raise ResultError("Identification was not added to include list")
 
             if missing_default is None:
                 raise ResultDoesNotExistError(
-                    f"Identification report for analysis {self.analysis_id} "
-                    "not found"
+                    f"Identification report for analysis {self.analysis_id} not found"
                 )
             self._identification = missing_default
         try:
             self._identification = Identification(**d)
         except (ValueError, KeyError, TypeError) as e:
-            raise InvalidResultDataError(
-                f"Invalid identification.json: {e}"
-            )
+            raise InvalidResultDataError(f"Invalid identification.json: {e}")
 
     def _get_submitted_file_fp(self):
         try:
@@ -453,8 +439,8 @@ class RemoteAnalysis(AnalysisResult):
         except ClientError as e:
             raise ResultError(f"Failed to retrieve submitted file: {e}")
 
-class ResultRetriever:
 
+class ResultRetriever:
     def __init__(self):
         self.api_client = None
 
@@ -464,9 +450,7 @@ class ResultRetriever:
     def _search_remote_task(self, analysis_id, task_id, include):
         location = analyses.db_find_location(analysis_id)
         if location != analyses.AnalysisLocation.REMOTE:
-            raise ResultDoesNotExistError(
-                f"Analysis {analysis_id} does not exist."
-            )
+            raise ResultDoesNotExistError(f"Analysis {analysis_id} does not exist.")
 
         if not include:
             return RemoteTask(
@@ -497,8 +481,7 @@ class ResultRetriever:
                 return self._search_remote_task(analysis_id, task_id, include)
 
             raise ResultDoesNotExistError(
-                f"Analysis {analysis_id} with task {task_id} does not "
-                f"exist."
+                f"Analysis {analysis_id} with task {task_id} does not exist."
             )
 
         return LocalTaskResult(analysis_id, task_id, include)
@@ -506,9 +489,7 @@ class ResultRetriever:
     def _search_remote_analysis(self, analysis_id, include):
         location = analyses.db_find_location(analysis_id)
         if location != analyses.AnalysisLocation.REMOTE:
-            raise ResultDoesNotExistError(
-                f"Analysis {analysis_id} does not exist."
-            )
+            raise ResultDoesNotExistError(f"Analysis {analysis_id} does not exist.")
 
         if not include:
             return RemoteAnalysis(
@@ -516,9 +497,7 @@ class ResultRetriever:
             )
 
         try:
-            data = self.api_client.analysis_composite(
-                analysis_id, retrieve=include
-            )
+            data = self.api_client.analysis_composite(analysis_id, retrieve=include)
         except APIDoesNotExistError:
             raise ResultDoesNotExistError(f"Analysis {analysis_id} not found")
         except APIServerError as e:
@@ -526,9 +505,7 @@ class ResultRetriever:
         except APIError as e:
             raise ResultError(e)
 
-        return RemoteAnalysis(
-            analysis_id, self.api_client, data=data, include=include
-        )
+        return RemoteAnalysis(analysis_id, self.api_client, data=data, include=include)
 
     def get_analysis(self, analysis_id, include=[]):
         if not isinstance(include, list):
@@ -538,9 +515,7 @@ class ResultRetriever:
             if self.api_client:
                 return self._search_remote_analysis(analysis_id, include)
 
-            raise ResultDoesNotExistError(
-                f"Analysis {analysis_id} does not exist."
-            )
+            raise ResultDoesNotExistError(f"Analysis {analysis_id} does not exist.")
 
         return LocalAnalysisResult(analysis_id, include)
 

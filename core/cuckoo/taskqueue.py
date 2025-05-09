@@ -15,8 +15,8 @@ from cuckoo.common.strictcontainer import Route
 Base = declarative_base()
 TmpBase = declarative_base()
 
-class Ignore(TmpBase):
 
+class Ignore(TmpBase):
     __tablename__ = "ignoredhashes"
     __table_args__ = {"prefixes": ["TEMPORARY"]}
 
@@ -25,6 +25,7 @@ class Ignore(TmpBase):
 
 class AlembicVersion(Base):
     """Database schema version. Used for automatic database migrations."""
+
     __tablename__ = "alembic_version"
 
     SCHEMA_VERSION = None
@@ -33,8 +34,8 @@ class AlembicVersion(Base):
         sqlalchemy.String(32), nullable=False, primary_key=True
     )
 
-class QueuedTask(Base):
 
+class QueuedTask(Base):
     __tablename__ = "qeueudtasks"
 
     id = sqlalchemy.Column(sqlalchemy.String(32), primary_key=True)
@@ -55,8 +56,10 @@ class QueuedTask(Base):
         self._route_obj = None
 
     def __repr__(self):
-        return f"<Task(id={self.id}," \
-               f" platform={self.platform}, os_version={self.os_version}>"
+        return (
+            f"<Task(id={self.id},"
+            f" platform={self.platform}, os_version={self.os_version}>"
+        )
 
     @reconstructor
     def _init_on_load(self):
@@ -113,19 +116,19 @@ class QueuedTask(Base):
     def update_dephash(self):
         md5 = hashlib.md5()
         md5.update(
-            str((self.platform, self.os_version,
-                 self._machine_tags, self._route_str)).encode(errors="replace")
+            str(
+                (self.platform, self.os_version, self._machine_tags, self._route_str)
+            ).encode(errors="replace")
         )
         self.dephash = int(md5.hexdigest()[:12], 16)
 
-class _Counts:
 
+class _Counts:
     def __init__(self):
         self.unscheduled = 0
 
 
 class TaskQuery:
-
     def __init__(self, session, lock, counts):
         self._ses = session
         self._lock = lock
@@ -163,31 +166,35 @@ class TaskQuery:
         self._pending_scheduled_count += 1
 
     def _query_tasks(self, platform=None, os_version=None, limit=5):
-        q = self._ses.query(QueuedTask).join(
-            Ignore, QueuedTask.dephash == Ignore.dephash, isouter=True
-        ).filter(QueuedTask.scheduled==False, Ignore.dephash==None)
+        q = (
+            self._ses.query(QueuedTask)
+            .join(Ignore, QueuedTask.dephash == Ignore.dephash, isouter=True)
+            .filter(QueuedTask.scheduled == False, Ignore.dephash == None)
+        )
 
         if platform:
-            q = q.filter(QueuedTask.platform==platform)
+            q = q.filter(QueuedTask.platform == platform)
         if os_version:
-            q = q.filter(QueuedTask.os_version==os_version)
+            q = q.filter(QueuedTask.os_version == os_version)
 
-        return q.order_by(
-            QueuedTask.priority.desc(), QueuedTask.created_on.asc()
-        ).limit(limit).all()
+        return (
+            q.order_by(QueuedTask.priority.desc(), QueuedTask.created_on.asc())
+            .limit(limit)
+            .all()
+        )
 
     def count_unscheduled(self):
-        return self._ses.query(
-            sqlalchemy.func.count(QueuedTask.id)
-        ).filter_by(scheduled=False).count()
+        return (
+            self._ses.query(sqlalchemy.func.count(QueuedTask.id))
+            .filter_by(scheduled=False)
+            .count()
+        )
 
     def get_unscheduled_tasks(self, platform=None, os_version=None):
         tasks = []
         while True:
             if not tasks:
-                tasks = self._query_tasks(
-                    platform=platform, os_version=os_version
-                )
+                tasks = self._query_tasks(platform=platform, os_version=os_version)
                 if not tasks:
                     return
             try:
@@ -200,11 +207,10 @@ class TaskQuery:
 
 
 class TaskQueue:
-
     def __init__(self, queue_db):
         self._dbms = DBMS(
             schema_version=AlembicVersion.SCHEMA_VERSION,
-            alembic_version_table=AlembicVersion
+            alembic_version_table=AlembicVersion,
         )
         self._dbms.initialize(f"sqlite:///{queue_db}", tablebaseclass=Base)
         self._lock = RLock()
@@ -221,20 +227,32 @@ class TaskQueue:
     def _init_counts(self):
         with self._lock:
             self._counts = _Counts()
-            with TaskQuery(self._dbms.session(), self._lock,
-                           self._counts) as tq:
+            with TaskQuery(self._dbms.session(), self._lock, self._counts) as tq:
                 self._counts.unscheduled = tq.count_unscheduled()
 
-    def queue_task(self, task_id, kind, created_on, analysis_id, priority,
-                   platform, os_version, machine_tags, route):
-
+    def queue_task(
+        self,
+        task_id,
+        kind,
+        created_on,
+        analysis_id,
+        priority,
+        platform,
+        os_version,
+        machine_tags,
+        route,
+    ):
         with self._lock:
             ses = self._dbms.session()
             try:
                 qt = QueuedTask(
-                    id=task_id, kind=kind, created_on=created_on,
-                    analysis_id=analysis_id, priority=priority,
-                    platform=platform, os_version=os_version
+                    id=task_id,
+                    kind=kind,
+                    created_on=created_on,
+                    analysis_id=analysis_id,
+                    priority=priority,
+                    platform=platform,
+                    os_version=os_version,
                 )
                 qt.machine_tags = machine_tags
                 qt.route = route
@@ -249,12 +267,13 @@ class TaskQueue:
         tasks = []
         for task_dict in task_dicts:
             qt = QueuedTask(
-                id=task_dict["id"], kind=task_dict["kind"],
+                id=task_dict["id"],
+                kind=task_dict["kind"],
                 created_on=task_dict["created_on"],
                 analysis_id=task_dict["analysis_id"],
                 priority=task_dict["priority"],
                 platform=task_dict["platform"],
-                os_version=task_dict["os_version"]
+                os_version=task_dict["os_version"],
             )
             qt.machine_tags = task_dict["machine_tags"]
             qt.route = task_dict["route"]
@@ -276,9 +295,7 @@ class TaskQueue:
             ses = self._dbms.session()
             try:
                 ses.connection().execute(
-                    QueuedTask.__table__.delete().where(
-                        QueuedTask.id.in_(task_ids)
-                    )
+                    QueuedTask.__table__.delete().where(QueuedTask.id.in_(task_ids))
                 )
                 ses.commit()
             finally:
@@ -296,9 +313,9 @@ class TaskQueue:
         with self._lock:
             ses = self._dbms.session()
             try:
-                ses.query(QueuedTask).filter(
-                    QueuedTask.id.in_(task_ids)
-                ).update({"scheduled": False}, synchronize_session=False)
+                ses.query(QueuedTask).filter(QueuedTask.id.in_(task_ids)).update(
+                    {"scheduled": False}, synchronize_session=False
+                )
                 ses.commit()
             finally:
                 ses.close()
@@ -307,6 +324,5 @@ class TaskQueue:
 
     def get_workfinder(self):
         return TaskQuery(
-            self._dbms.session(expire_on_commit=False),
-            self._lock, self._counts
+            self._dbms.session(expire_on_commit=False), self._lock, self._counts
         )

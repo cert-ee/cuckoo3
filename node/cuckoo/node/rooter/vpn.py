@@ -13,7 +13,10 @@ from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import delete_file
 
 from .errors import (
-    RooterError, AutoVPNError, MaxConnectionsError, RouteUnavailableError
+    RooterError,
+    AutoVPNError,
+    MaxConnectionsError,
+    RouteUnavailableError,
 )
 
 log = CuckooGlobalLogger("rooter.vpn")
@@ -25,22 +28,40 @@ class OpenVPN:
     def __init__(self, openvpn_path):
         self.path = openvpn_path
 
-    def start_vpn(self, client_config_path, route_up_script_path, devname,
-                  dropuser="", dropgroup="", envs={}, cwd=None,
-                  stdout=None, stderr=None, iproute_path=None):
+    def start_vpn(
+        self,
+        client_config_path,
+        route_up_script_path,
+        devname,
+        dropuser="",
+        dropgroup="",
+        envs={},
+        cwd=None,
+        stdout=None,
+        stderr=None,
+        iproute_path=None,
+    ):
         command = [
             self.path,
-            "--config", str(client_config_path),
-            "--script-security", "2",
-            "--route-up", str(route_up_script_path),
-            "--dev", devname, "--route-noexec",
-            "--dev-type", "tun",
+            "--config",
+            str(client_config_path),
+            "--script-security",
+            "2",
+            "--route-up",
+            str(route_up_script_path),
+            "--dev",
+            devname,
+            "--route-noexec",
+            "--dev-type",
+            "tun",
             # Set --up/down so up/down commands in ovpn/config files
             # are overridden. Most of these scripts by providers perform
             # unwanted actions etc. If we do need this, add support for these
             # later.
-            "--up", "/bin/true",
-            "--down", "/bin/true"
+            "--up",
+            "/bin/true",
+            "--down",
+            "/bin/true",
         ]
 
         if dropuser:
@@ -58,13 +79,18 @@ class OpenVPN:
         log.debug("Running OpenVPN starting command", command=command)
         try:
             return subprocess.Popen(
-                command, stdout=stdout, stderr=stderr, shell=False,
-                close_fds=True, cwd=cwd
+                command,
+                stdout=stdout,
+                stderr=stderr,
+                shell=False,
+                close_fds=True,
+                cwd=cwd,
             )
         except OSError as e:
             raise AutoVPNError(
                 f"Failed to start OpenVPN process with command: {command}. {e}"
             )
+
 
 class VPNProvider:
     """A tracker of for a 'vpn provider' or group of VPNs with a shared
@@ -88,11 +114,13 @@ class VPNProvider:
         if vpntype != "openvpn":
             raise AutoVPNError(f"Unsupported VPN type: {vpntype}")
 
-        self.available_vpns.setdefault(country.lower(), []).append({
-            "type": vpntype,
-            "config_path": Path(config_path),
-            "up_script": Path(up_script)
-        })
+        self.available_vpns.setdefault(country.lower(), []).append(
+            {
+                "type": vpntype,
+                "config_path": Path(config_path),
+                "up_script": Path(up_script),
+            }
+        )
 
     def release_vpn(self, vpn):
         """Remove the given vpn from enabled vpns. Should be called after
@@ -116,9 +144,7 @@ class VPNProvider:
             log.debug("Looking for unused VPNs to stop")
             for vpn in self._enabled_vpns[:]:
                 if vpn.in_use:
-                    log.debug(
-                        "VPN still in use", vpn=vpn.name, users=vpn.user_count
-                    )
+                    log.debug("VPN still in use", vpn=vpn.name, users=vpn.user_count)
                     continue
 
                 log.info("Stopping unused vpn", vpn=vpn.name)
@@ -133,7 +159,9 @@ class VPNProvider:
             if len(self._enabled_vpns) >= self.max_connections:
                 log.debug(
                     "Cannot start new VPN for country. maximum amount of "
-                    "connections reached", provider=self.name, country=country
+                    "connections reached",
+                    provider=self.name,
+                    country=country,
                 )
                 if not self._stop_unused():
                     raise MaxConnectionsError(
@@ -146,21 +174,22 @@ class VPNProvider:
             name = f"{self.name}-{conf_path.name}"
             logname = f"{name}.log"
             vpn = OpenVPNAutoVPN(
-                self.ctx, provider=self,
+                self.ctx,
+                provider=self,
                 routing_table=self.ctx.routing_tables.get_next_table(),
                 interface=self.ctx.interfaces.new_interface(postfix="vpn"),
-                country=country, name=name,
+                country=country,
+                name=name,
                 config_path=conf_path,
                 up_script=info["up_script"],
-                log_path=self.ctx.logpath.joinpath(logname)
+                log_path=self.ctx.logpath.joinpath(logname),
             )
 
             try:
                 vpn.start()
             except AutoVPNError as e:
                 raise AutoVPNError(
-                    f"Failed to start VPN {conf_path} "
-                    f"of provider {self.name}. {e}"
+                    f"Failed to start VPN {conf_path} of provider {self.name}. {e}"
                 )
             except TimeoutError as e:
                 # Stop VPN process if it was not online within timeout.
@@ -222,6 +251,7 @@ class VPNProvider:
                 except RooterError as e:
                     log.exception("Error stopping VPN", vpn=vpn.name, error=e)
 
+
 class VPN:
     """Wrapper around an preconfigured VPN."""
 
@@ -246,13 +276,25 @@ class VPN:
 def _unique_filepath_string():
     return Path(gettempdir(), f"rooter-{uuid4()}")
 
+
 class OpenVPNAutoVPN(VPN):
     """Wrapper around an OpenVPN configuration file path. Should be part
     of a VPNProvider class instance. The VPNProvider class uses these to
     start/stop specific VPNs."""
 
-    def __init__(self, rooterctx, provider, routing_table, interface, name,
-                 country, config_path, up_script, log_path, up_timeout=60):
+    def __init__(
+        self,
+        rooterctx,
+        provider,
+        routing_table,
+        interface,
+        name,
+        country,
+        config_path,
+        up_script,
+        log_path,
+        up_timeout=60,
+    ):
         super().__init__(rooterctx, routing_table, interface, country, name)
         self._provider = provider
         self.config_path = config_path
@@ -267,8 +309,7 @@ class OpenVPNAutoVPN(VPN):
 
     @property
     def stopped(self):
-        return self._openvpn_proc is None \
-               or self._openvpn_proc.poll() is not None
+        return self._openvpn_proc is None or self._openvpn_proc.poll() is not None
 
     @property
     def user_count(self):
@@ -296,8 +337,7 @@ class OpenVPNAutoVPN(VPN):
 
         if not self.interface.is_up():
             raise AutoVPNError(
-                f"OpenVPN started, but interface "
-                f"{self.interface.name} is not up"
+                f"OpenVPN started, but interface {self.interface.name} is not up"
             )
 
     def stop(self):
@@ -349,8 +389,10 @@ class OpenVPNAutoVPN(VPN):
                 return
 
             log.info(
-                "Starting VPN", country=self.country, name=self.name,
-                vpnlog=self._logpath
+                "Starting VPN",
+                country=self.country,
+                name=self.name,
+                vpnlog=self._logpath,
             )
             self._logfile = open(self._logpath, "ab")
 
@@ -362,13 +404,15 @@ class OpenVPNAutoVPN(VPN):
                 cwd=self.config_path.parent,
                 client_config_path=self.config_path,
                 route_up_script_path=self.up_script,
-                devname=self.interface.name, stderr=self._logfile,
+                devname=self.interface.name,
+                stderr=self._logfile,
                 iproute_path=self.ctx.ip.path,
-                stdout=self._logfile,  envs={
+                stdout=self._logfile,
+                envs={
                     "CUCKOO_IP_PATH": self.ctx.ip.path,
                     "CUCKOO_ROUTING_TABLE": self.routing_table.id,
-                    "CUCKOO_READY_FILE": unique_path
-                }
+                    "CUCKOO_READY_FILE": unique_path,
+                },
             )
 
             waited = 0
@@ -417,17 +461,20 @@ class VPNs:
 
         return list(set(coutries))
 
-    def add_preconfigured_vpn(self, rooterctx, routing_table_id,
-                              interface_name, country, name):
-        self._preconfigured.append(VPN(
-            rooterctx=rooterctx,
-            routing_table=rooterctx.routing_tables.get_existing_table(
-                routing_table_id
-            ),
-            interface=rooterctx.interfaces.get_existing_interface(
-                interface_name
-            ), country=country, name=name
-        ))
+    def add_preconfigured_vpn(
+        self, rooterctx, routing_table_id, interface_name, country, name
+    ):
+        self._preconfigured.append(
+            VPN(
+                rooterctx=rooterctx,
+                routing_table=rooterctx.routing_tables.get_existing_table(
+                    routing_table_id
+                ),
+                interface=rooterctx.interfaces.get_existing_interface(interface_name),
+                country=country,
+                name=name,
+            )
+        )
 
     def add_provider(self, provider):
         self._providers.append(provider)
@@ -445,8 +492,7 @@ class VPNs:
         for provider in self._providers:
             try:
                 log.debug(
-                    "Asking provider for vpn",
-                    provider=provider.name, country=country
+                    "Asking provider for vpn", provider=provider.name, country=country
                 )
                 vpn = provider.get_vpn(country)
                 if vpn:
@@ -454,7 +500,8 @@ class VPNs:
             except MaxConnectionsError as e:
                 log.debug(
                     "Provider reached maximum connections",
-                    provider=provider.name, error=e
+                    provider=provider.name,
+                    error=e,
                 )
                 max_conns_reached = True
                 continue
@@ -469,8 +516,7 @@ class VPNs:
             )
 
         raise RouteUnavailableError(
-            f"No VPN available"
-            f"{'' if not country else f' for country {country}'}"
+            f"No VPN available{'' if not country else f' for country {country}'}"
         )
 
     def stop_all(self):

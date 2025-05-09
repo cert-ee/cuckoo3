@@ -8,16 +8,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cuckoo.common.result import (
-    retriever, ResultDoesNotExistError, InvalidResultDataError, Results
+    retriever,
+    ResultDoesNotExistError,
+    InvalidResultDataError,
+    Results,
 )
 
-class Task(APIView):
 
+class Task(APIView):
     def get(self, request, analysis_id, task_id):
         try:
-            task = retriever.get_task(
-                analysis_id, task_id, include=[Results.TASK]
-            ).task
+            task = retriever.get_task(analysis_id, task_id, include=[Results.TASK]).task
         except ResultDoesNotExistError:
             return Response(status=404)
         except InvalidResultDataError as e:
@@ -25,13 +26,11 @@ class Task(APIView):
 
         return Response(task.to_dict())
 
-class Post(APIView):
 
+class Post(APIView):
     def get(self, request, analysis_id, task_id):
         try:
-            post = retriever.get_task(
-                analysis_id, task_id, include=[Results.POST]
-            ).post
+            post = retriever.get_task(analysis_id, task_id, include=[Results.POST]).post
         except ResultDoesNotExistError:
             return Response(status=404)
         except InvalidResultDataError as e:
@@ -39,8 +38,8 @@ class Post(APIView):
 
         return Response(post.to_dict())
 
-class Machine(APIView):
 
+class Machine(APIView):
     def get(self, request, analysis_id, task_id):
         try:
             machine = retriever.get_task(
@@ -53,15 +52,16 @@ class Machine(APIView):
 
         return Response(machine.to_dict())
 
+
 class CompositeRequest(serializers.Serializer):
     retrieve = serializers.ListField(
-        allow_empty=False, child=serializers.CharField(),
-        help_text="A list of one or more task information types to "
-                  "retrieve",
+        allow_empty=False,
+        child=serializers.CharField(),
+        help_text="A list of one or more task information types to retrieve",
     )
 
-class CompositeTask(APIView):
 
+class CompositeTask(APIView):
     def post(self, request, analysis_id, task_id):
         serializer = CompositeRequest(data=request.data)
         if not serializer.is_valid():
@@ -69,9 +69,7 @@ class CompositeTask(APIView):
 
         retrieve = [r.lower() for r in serializer.data["retrieve"]]
         try:
-            composite = retriever.get_task(
-                analysis_id, task_id, include=retrieve
-            )
+            composite = retriever.get_task(analysis_id, task_id, include=retrieve)
             composite.load_requested(missing_report_default={})
         except ResultDoesNotExistError:
             return Response(status=404)
@@ -80,8 +78,8 @@ class CompositeTask(APIView):
 
         return Response(composite.to_dict())
 
-class Pcap(APIView):
 
+class Pcap(APIView):
     def get(self, request, analysis_id, task_id):
         try:
             task = retriever.get_task(analysis_id, task_id)
@@ -89,12 +87,10 @@ class Pcap(APIView):
         except ResultDoesNotExistError:
             return Response(status=404)
 
-        return FileResponse(
-            pcap_fp, as_attachment=True, filename=f"{task_id}.pcap"
-        )
+        return FileResponse(pcap_fp, as_attachment=True, filename=f"{task_id}.pcap")
+
 
 class Screenshot(APIView):
-
     def get(self, request, analysis_id, task_id, screenshot):
         try:
             task = retriever.get_task(analysis_id, task_id)

@@ -6,17 +6,25 @@ import logging
 import os
 
 from cuckoo.common.log import exit_error, print_info, VERBOSE
-from cuckoo.common.storage import (
-    cuckoocwd, Paths, StorageDirs, CWDError
-)
+from cuckoo.common.storage import cuckoocwd, Paths, StorageDirs, CWDError
+
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
-@click.option("-h", "--host", default="localhost", help="Host to bind the node API server on")
+@click.option(
+    "-h", "--host", default="localhost", help="Host to bind the node API server on"
+)
 @click.option("-p", "--port", default=8090, help="Port to bind the node API server on")
-@click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable debug logging, including for non-Cuckoo modules",
+)
 @click.option("-d", "--debug", is_flag=True, help="Enable verbose logging")
-@click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
+@click.option(
+    "-q", "--quiet", is_flag=True, help="Only log warnings and critical messages"
+)
 @click.pass_context
 def main(ctx, host, port, cwd, debug, quiet, verbose):
     if not cwd:
@@ -58,9 +66,7 @@ def main(ctx, host, port, cwd, debug, quiet, verbose):
         )
 
     from cuckoo.common.startup import StartupError
-    from cuckoo.common.shutdown import (
-        register_shutdown, call_registered_shutdowns
-    )
+    from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
     from .startup import start_remote
 
     def _stopmsg():
@@ -74,6 +80,7 @@ def main(ctx, host, port, cwd, debug, quiet, verbose):
         exit_error(f"Failure during Cuckoo node startup: {e}")
     finally:
         call_registered_shutdowns()
+
 
 @main.command("createcwd")
 @click.option("--regen-configs", is_flag=True)
@@ -126,6 +133,7 @@ def get_monitor(zip_path):
     """Use the monitor and stager binaries from the given
     Cuckoo monitor zip file."""
     from cuckoo.common.guest import unpack_monitor_components
+
     if not os.path.isfile(zip_path):
         exit_error(f"Zip file does not exist: {zip_path}")
 

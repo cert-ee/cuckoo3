@@ -15,23 +15,31 @@ from tempfile import gettempdir
 import sflock
 
 from .packages import (
-    find_cuckoo_packages, get_cwdfiles_dir, get_package_versions,
-    get_package_version
+    find_cuckoo_packages,
+    get_cwdfiles_dir,
+    get_package_versions,
+    get_package_version,
 )
+
 
 class CWDError(Exception):
     pass
 
+
 class CWDNotSetError(CWDError):
     pass
+
 
 class InvalidCWDError(CWDError):
     pass
 
+
 class CWDOutdatedError(CWDError):
     pass
 
+
 _allowed_deletion_dirs = set()
+
 
 def _add_deletion_dir(path):
     realpath = str(os.path.realpath(path))
@@ -40,21 +48,22 @@ def _add_deletion_dir(path):
 
     _allowed_deletion_dirs.add(realpath)
 
+
 def _remove_deletion_dir(path):
     _allowed_deletion_dirs.discard(os.path.realpath(str(path)))
 
+
 def _deletion_allowed(path):
-    return os.path.realpath(str(path)).startswith(
-        tuple(_allowed_deletion_dirs)
-    )
+    return os.path.realpath(str(path)).startswith(tuple(_allowed_deletion_dirs))
+
 
 if not _allowed_deletion_dirs:
     _add_deletion_dir(gettempdir())
 
 DEFAULT_DIRMODE = 0o775
 
-class _CWDDirs:
 
+class _CWDDirs:
     # Child dirs must hold a _CWDDirs class as a value and a key that
     # is a directory name part of the current class.
     CHILD_DIRS = {}
@@ -95,12 +104,16 @@ class StorageDirs(_CWDDirs):
     @classmethod
     def list_names(cls):
         return [
-            cls.ANALYSES, cls.BINARIES, cls.EXPORTED, cls.IMPORTABLES,
-            cls.UNTRACKED, cls.NODE_WORK
+            cls.ANALYSES,
+            cls.BINARIES,
+            cls.EXPORTED,
+            cls.IMPORTABLES,
+            cls.UNTRACKED,
+            cls.NODE_WORK,
         ]
 
-class OperationalDirs(_CWDDirs):
 
+class OperationalDirs(_CWDDirs):
     SOCKETS = "sockets"
     GENERATED = "generated"
 
@@ -108,25 +121,24 @@ class OperationalDirs(_CWDDirs):
     def list_names(cls):
         return [cls.SOCKETS, cls.GENERATED]
 
+
 class RootDirs(_CWDDirs):
     CONF = "conf"
     STORAGE = "storage"
     OPERATIONAL = "operational"
     LOG = "log"
 
-    CHILD_DIRS = {
-        STORAGE: StorageDirs,
-        OPERATIONAL: OperationalDirs
-    }
+    CHILD_DIRS = {STORAGE: StorageDirs, OPERATIONAL: OperationalDirs}
 
     @classmethod
     def list_names(cls):
         return [cls.CONF, cls.STORAGE, cls.OPERATIONAL, cls.LOG]
 
+
 CWD_ENVVAR = "CUCKOO_CWD"
 
-class _CuckooCWD:
 
+class _CuckooCWD:
     _DEFAULT_NAME = ".cuckoocwd"
     _CWD_FILE_NAME = ".cuckoocwd"
     _VERSIONS_FILE = ".versions"
@@ -180,11 +192,13 @@ class _CuckooCWD:
     def write_versions_file(path):
         safe_json_dump(
             path.joinpath(_CuckooCWD._VERSIONS_FILE),
-            get_package_versions(), overwrite=True
+            get_package_versions(),
+            overwrite=True,
         )
 
     def discover_outdated_versions(self):
         from pkg_resources import parse_version
+
         outdated = []
         for pkgname, installed_version in get_package_versions().items():
             cwd_version = self._versions.get(pkgname)
@@ -207,8 +221,7 @@ class _CuckooCWD:
             for pkg, version in d.items():
                 self._versions[pkg] = version
 
-    def set(self, path, analyses_dir=StorageDirs.ANALYSES,
-            skip_migration_check=False):
+    def set(self, path, analyses_dir=StorageDirs.ANALYSES, skip_migration_check=False):
         path = Path(path)
         if not _CuckooCWD.exists(path):
             raise InvalidCWDError(f"Cuckoo CWD {path} does not exist.")
@@ -322,6 +335,7 @@ cuckoocwd = _CuckooCWD()
 ANALYSIS_ID_LEN = 6
 MAX_TASK_ID_LEN = 6
 
+
 def split_analysis_id(analysis_id):
     date_analysis = analysis_id.split("-", 1)
     if len(date_analysis) != 2:
@@ -344,8 +358,7 @@ def split_analysis_id(analysis_id):
 
     if len(date_analysis[0]) != len("YYYYMMDD") and date_analysis[0].isdigit():
         raise ValueError(
-            "Date part must be in YYYYMMDD format. "
-            f"Given: {date_analysis[0]}"
+            f"Date part must be in YYYYMMDD format. Given: {date_analysis[0]}"
         )
 
     if not date_analysis[0].isdigit():
@@ -356,8 +369,8 @@ def split_analysis_id(analysis_id):
 
     return date_analysis
 
-def split_task_id(task_id):
 
+def split_task_id(task_id):
     analysis_id_tasknumber = task_id.split("_", 1)
     if len(analysis_id_tasknumber) != 2:
         raise ValueError(
@@ -380,6 +393,7 @@ def split_task_id(task_id):
     date, analysis = split_analysis_id(analysis_id_tasknumber[0])
     return date, analysis, analysis_id_tasknumber[1]
 
+
 def task_to_analysis_id(task_id):
     date, analysis, _ = split_task_id(task_id)
     return f"{date}-{analysis}"
@@ -393,11 +407,12 @@ TASK_PREFIX = "task_"
 TASK_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}_[0-9]{0,3}"
 ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
 
+
 def taskdir_name(task_id):
     return f"{TASK_PREFIX}{split_task_id(task_id)[2]}"
 
-class AnalysisPaths:
 
+class AnalysisPaths:
     @staticmethod
     def _path(analysis_id, *args):
         date, analysis = split_analysis_id(analysis_id)
@@ -451,22 +466,24 @@ class AnalysisPaths:
 
     @staticmethod
     def analyses(*args):
-        return cuckoocwd.root.joinpath(
-            RootDirs.STORAGE, cuckoocwd.analyses, *args
-        )
+        return cuckoocwd.root.joinpath(RootDirs.STORAGE, cuckoocwd.analyses, *args)
 
     @staticmethod
     def day(day):
         return AnalysisPaths.analyses(day)
 
-class TaskPaths:
 
+class TaskPaths:
     @staticmethod
-    def _path(task_id,  *args):
+    def _path(task_id, *args):
         date, analysis, task_number = split_task_id(task_id)
         return cuckoocwd.root.joinpath(
-            RootDirs.STORAGE, cuckoocwd.analyses, date, analysis,
-            taskdir_name(task_id), *args
+            RootDirs.STORAGE,
+            cuckoocwd.analyses,
+            date,
+            analysis,
+            taskdir_name(task_id),
+            *args,
         )
 
     @staticmethod
@@ -561,8 +578,8 @@ class TaskPaths:
         split_task_id(task_id)
         return Paths.exported(f"{task_id}.zip")
 
-class Paths:
 
+class Paths:
     @staticmethod
     def unix_socket(sockname):
         return cuckoocwd.root.joinpath(
@@ -589,7 +606,7 @@ class Paths:
 
     @staticmethod
     def importables(filename=None):
-       return cuckoocwd.root.joinpath(
+        return cuckoocwd.root.joinpath(
             RootDirs.STORAGE, StorageDirs.IMPORTABLES, filename or ""
         )
 
@@ -606,22 +623,18 @@ class Paths:
     @staticmethod
     def machinestates():
         return cuckoocwd.root.joinpath(
-            RootDirs.OPERATIONAL, OperationalDirs.GENERATED,
-            "machinestates.json"
+            RootDirs.OPERATIONAL, OperationalDirs.GENERATED, "machinestates.json"
         )
 
     @staticmethod
     def nodeinfos_dump():
         return cuckoocwd.root.joinpath(
-            RootDirs.OPERATIONAL, OperationalDirs.GENERATED,
-            "nodeinfos.json"
+            RootDirs.OPERATIONAL, OperationalDirs.GENERATED, "nodeinfos.json"
         )
 
     @staticmethod
     def analyses(*args):
-        return cuckoocwd.root.joinpath(
-            RootDirs.STORAGE, cuckoocwd.analyses, *args
-        )
+        return cuckoocwd.root.joinpath(RootDirs.STORAGE, cuckoocwd.analyses, *args)
 
     @staticmethod
     def config(file=None, subpkg=None):
@@ -684,8 +697,8 @@ class Paths:
     def safelist_db():
         return Paths.safelist("safelist.db")
 
-class UnixSocketPaths:
 
+class UnixSocketPaths:
     @staticmethod
     def task_runner():
         return Paths.unix_socket("taskrunner.sock")
@@ -714,6 +727,7 @@ class UnixSocketPaths:
     def machinery_socket(machinery_name, sockname):
         return Paths.unix_socket(f"{machinery_name}_{sockname}.sock")
 
+
 def create_analysis_folder(day, identifier):
     try:
         AnalysisPaths.day(day).mkdir(mode=DEFAULT_DIRMODE)
@@ -732,6 +746,7 @@ def create_analysis_folder(day, identifier):
 def todays_daydir():
     return datetime.utcnow().date().strftime("%Y%m%d")
 
+
 def make_analysis_folder(tries=0):
     """Generates today's day dir and a unique analysis id and its dir and
     returns the analysis id and path to its directory"""
@@ -740,10 +755,8 @@ def make_analysis_folder(tries=0):
 
     today = todays_daydir()
 
-    identifier = ''.join(
-        random.choices(
-            string.ascii_uppercase + string.digits, k=ANALYSIS_ID_LEN
-        )
+    identifier = "".join(
+        random.choices(string.ascii_uppercase + string.digits, k=ANALYSIS_ID_LEN)
     )
     tries += 1
     try:
@@ -780,6 +793,7 @@ def safe_copyfile(source, destination, overwrite=False):
         os.unlink(tmp_path)
         raise
 
+
 def move_file(source, destination, overwrite=False):
     if not overwrite and os.path.exists(destination):
         raise FileExistsError(f"Destination file exists: {destination}")
@@ -799,6 +813,7 @@ def move_file(source, destination, overwrite=False):
         os.unlink(tmp_path)
         raise
 
+
 def safe_writedata(data, destination):
     if os.path.exists(destination):
         raise FileExistsError(f"Destination file exists: {destination}")
@@ -817,6 +832,7 @@ def safe_writedata(data, destination):
     except (OSError, FileExistsError):
         os.unlink(tmp_path)
         raise
+
 
 def safe_json_dump(destination, data, overwrite=False, **kwargs):
     """json.dump the given data to a temporary file in the same directory as
@@ -839,8 +855,8 @@ def safe_json_dump(destination, data, overwrite=False, **kwargs):
         os.unlink(tmp_path)
         raise
 
-class Binaries:
 
+class Binaries:
     DEPTH = 2
 
     @staticmethod
@@ -875,7 +891,6 @@ class Binaries:
 
 
 class _DataHasher:
-
     def __init__(self, data=None):
         self._md5 = hashlib.md5()
         self._sha1 = hashlib.sha1()
@@ -907,8 +922,8 @@ class _DataHasher:
         self._sha256.update(data_chunk)
         self._sha512.update(data_chunk)
 
-class File:
 
+class File:
     def __init__(self, file_path):
         self._path = Path(file_path)
 
@@ -984,9 +999,7 @@ class File:
         """Get MIME content file type (example: image/jpeg).
         @return: file content type.
         """
-        return str(sflock.magic.from_file(
-            str(self._path.resolve()), mime=True
-        ))
+        return str(sflock.magic.from_file(str(self._path.resolve()), mime=True))
 
     def valid(self):
         return self._path and self._path.is_file()
@@ -1032,11 +1045,11 @@ class File:
             "sha256": self.sha256,
             "sha512": self.sha512,
             "media_type": self.media_type,
-            "type": self.type
+            "type": self.type,
         }
 
-class InMemoryFile:
 
+class InMemoryFile:
     def __init__(self, data, name=""):
         self._data = data
         self.name = name
@@ -1083,8 +1096,9 @@ class InMemoryFile:
             "sha256": self.sha256,
             "sha512": self.sha512,
             "media_type": self.media_type,
-            "type": self.type
+            "type": self.type,
         }
+
 
 def enumerate_files(path):
     """Yields all filepaths from a directory."""
@@ -1099,6 +1113,7 @@ def enumerate_files(path):
                 if os.path.isfile(filepath):
                     yield filepath
 
+
 def delete_dirtree(path):
     if not _deletion_allowed(path):
         raise OSError(
@@ -1107,6 +1122,7 @@ def delete_dirtree(path):
         )
 
     shutil.rmtree(path, ignore_errors=False)
+
 
 def delete_dir(path):
     if not _deletion_allowed(path):
@@ -1117,6 +1133,7 @@ def delete_dir(path):
 
     os.rmdir(path)
 
+
 def delete_file(path):
     if not _deletion_allowed(path):
         raise OSError(
@@ -1126,12 +1143,14 @@ def delete_file(path):
 
     os.unlink(path)
 
+
 def random_filename(extension=""):
     uniquename = uuid.uuid4()
     if extension:
         return f"{uniquename}.{extension}"
 
     return str(uniquename)
+
 
 def merge_logdata(logfile_path, logdata):
     # Use append for existing file and add line by line. We do this
@@ -1141,8 +1160,8 @@ def merge_logdata(logfile_path, logdata):
         for line in logdata.split(b"\n"):
             fp.write(f"{line.decode()}\n")
 
-class ConfigVersions:
 
+class ConfigVersions:
     def __init__(self, path, full_packagename):
         self.path = Path(path)
         self.full_packagename = full_packagename
@@ -1179,6 +1198,7 @@ class ConfigVersions:
             self.load()
 
         from pkg_resources import parse_version
+
         confversion = self.versions[confname]
         return parse_version(confversion) < parse_version(
             get_package_version(self.full_packagename)

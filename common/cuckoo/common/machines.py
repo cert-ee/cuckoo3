@@ -10,8 +10,10 @@ from .storage import safe_json_dump
 
 log = CuckooGlobalLogger(__name__)
 
+
 class MachineListError(Exception):
     pass
+
 
 class States:
     STARTING = "starting"
@@ -23,15 +25,32 @@ class States:
     SUSPENDED = "suspended"
     ERROR = "error"
 
+
 class Machine:
-
-    def __init__(self, name, label, ip, platform, os_version, tags,
-                  snapshot=None, mac_address="", machinery=None,
-                 state="UNKNOWN",  locked=False, locked_by="", reserved=False,
-                 reserved_by="", disabled=False, disabled_reason="",
-                 machinery_name="", errors=[], architecture="",
-                 interface="", agent_port=8000):
-
+    def __init__(
+        self,
+        name,
+        label,
+        ip,
+        platform,
+        os_version,
+        tags,
+        snapshot=None,
+        mac_address="",
+        machinery=None,
+        state="UNKNOWN",
+        locked=False,
+        locked_by="",
+        reserved=False,
+        reserved_by="",
+        disabled=False,
+        disabled_reason="",
+        machinery_name="",
+        errors=[],
+        architecture="",
+        interface="",
+        agent_port=8000,
+    ):
         # Configuration information
         self.name = name
         self.label = label
@@ -145,7 +164,7 @@ class Machine:
             "reserved_by": self.reserved_by,
             "disabled": self.disabled,
             "disabled_reason": self.disable_reason,
-            "errors": self.errors
+            "errors": self.errors,
         }
 
     def copy(self):
@@ -164,22 +183,32 @@ class Machine:
     @classmethod
     def from_dict(cls, d):
         return cls(
-            name=d["name"], label=d["label"], ip=d["ip"],
-            platform=d["platform"], os_version=d["os_version"],
-            tags=set(d["tags"]), snapshot=d["snapshot"],
-            architecture=d["architecture"], interface=d["interface"],
-            machinery=None, state=d["state"], locked=d["locked"],
-            locked_by=d["locked_by"], reserved=d["reserved"],
-            reserved_by=d["reserved_by"], disabled=d["disabled"],
-            disabled_reason=d["disabled_reason"], errors=d["errors"],
+            name=d["name"],
+            label=d["label"],
+            ip=d["ip"],
+            platform=d["platform"],
+            os_version=d["os_version"],
+            tags=set(d["tags"]),
+            snapshot=d["snapshot"],
+            architecture=d["architecture"],
+            interface=d["interface"],
+            machinery=None,
+            state=d["state"],
+            locked=d["locked"],
+            locked_by=d["locked_by"],
+            reserved=d["reserved"],
+            reserved_by=d["reserved_by"],
+            disabled=d["disabled"],
+            disabled_reason=d["disabled_reason"],
+            errors=d["errors"],
             machinery_name=d["machinery_name"],
-            agent_port=d.get("agent_port", 8000)
+            agent_port=d.get("agent_port", 8000),
         )
 
 
 def find_platform(find_in, platform, os_version=""):
     """Find all machines with the specified platform and version in the
-     list of machines given."""
+    list of machines given."""
     matches = []
     for machine in find_in:
         if machine.platform == platform:
@@ -190,6 +219,7 @@ def find_platform(find_in, platform, os_version=""):
 
     return matches
 
+
 def find_tags(find_in, tags):
     """Find all machines that have the specified tags in the list
     of machines given. Tags must be a set."""
@@ -197,8 +227,7 @@ def find_tags(find_in, tags):
         if isinstance(tags, (list, tuple)):
             tags = set(tags)
         else:
-            raise TypeError(
-                f"tags must be a set of strings. Not {type(tags)}")
+            raise TypeError(f"tags must be a set of strings. Not {type(tags)}")
 
     matches = []
     for machine in find_in:
@@ -207,8 +236,8 @@ def find_tags(find_in, tags):
 
     return matches
 
-class MachinesList:
 
+class MachinesList:
     def __init__(self):
         # Machine object instances
         self._machines = []
@@ -355,14 +384,13 @@ class MachinesList:
     def clear_updated(self):
         self._updated = False
 
-    def acquire_available(self, task_id, name="", platform="", os_version="",
-                          tags=set()):
+    def acquire_available(
+        self, task_id, name="", platform="", os_version="", tags=set()
+    ):
         """Find and lock a machine for task_id that matches the given name or
         platform, os_version, and has the given tags."""
         with self._machines_lock:
-            machine = self.find_available(
-                name, platform, os_version, tags
-            )
+            machine = self.find_available(name, platform, os_version, tags)
 
             if not machine:
                 return None
@@ -376,8 +404,7 @@ class MachinesList:
         with self._machines_lock:
             if not machine.locked:
                 raise MachineListError(
-                    f"Cannot unlock machine {machine.name}. Machine is not "
-                    f"locked."
+                    f"Cannot unlock machine {machine.name}. Machine is not locked."
                 )
 
             machine.clear_lock()
@@ -392,6 +419,7 @@ class MachinesList:
 
     def to_dictlist(self):
         return [machine.to_dict() for machine in self._machines]
+
 
 class MachineListDumper:
     """Simple helper to to keep track of when a dump of all added machine
@@ -416,15 +444,14 @@ class MachineListDumper:
             return True
 
         if datetime.utcnow() - self._last_dump >= timedelta(
-                seconds=self._min_dump_wait
+            seconds=self._min_dump_wait
         ):
             return True
 
         return False
 
     def should_dump(self):
-        return self.dump_wait_reached() and self.lists_changed() \
-               or self._lists_changed
+        return self.dump_wait_reached() and self.lists_changed() or self._lists_changed
 
     def make_dump(self, path):
         dump_machine_lists(path, *self.lists)
@@ -443,8 +470,7 @@ class MachineListDumper:
         self._lists_changed = True
 
 
-def find_in_lists(machine_lists, name="", platform="", os_version="",
-                  tags=set()):
+def find_in_lists(machine_lists, name="", platform="", os_version="", tags=set()):
     for machines in machine_lists:
         if name:
             try:
@@ -452,28 +478,24 @@ def find_in_lists(machine_lists, name="", platform="", os_version="",
             except KeyError:
                 continue
 
-        machine = machines.find(
-            platform=platform, os_version=os_version, tags=tags
-        )
+        machine = machines.find(platform=platform, os_version=os_version, tags=tags)
         if machine:
             return machine
 
     return None
 
+
 def serialize_machinelists(*machine_lists):
     machines = []
     for machine_list in machine_lists:
-        machines.extend([
-            machine.to_dict() for machine in machine_list.machines
-        ])
+        machines.extend([machine.to_dict() for machine in machine_list.machines])
     return machines
+
 
 def dump_machine_lists(path, *args):
     machines = []
     for machinelist in args:
-        machines.extend([
-            machine.to_dict() for machine in machinelist.machines
-        ])
+        machines.extend([machine.to_dict() for machine in machinelist.machines])
 
     # This is required to prevent the machine info dump from ever being
     # empty. The function ensures the file is first being dumped and afterwards
@@ -488,10 +510,9 @@ def read_machines_dump_dict(dump):
         try:
             machinelist.add_machine(Machine.from_dict(machine_dict))
         except KeyError as e:
-            raise MachineListError(
-                f"Incomplete machine in dump. Missing key: {e}"
-            )
+            raise MachineListError(f"Incomplete machine in dump. Missing key: {e}")
     return machinelist
+
 
 def read_machines_dump(path):
     with open(path, "r") as fp:

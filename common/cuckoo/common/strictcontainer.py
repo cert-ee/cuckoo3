@@ -11,6 +11,7 @@ from .log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+
 def deserialize_disk_json(obj):
     if "__isodt__" in obj:
         try:
@@ -20,6 +21,7 @@ def deserialize_disk_json(obj):
                 "Failed to decode ISO format datetime: {e}"
             ).with_traceback(e.__traceback__)
     return obj
+
 
 def serialize_disk_json(obj):
     if isinstance(obj, bytes):
@@ -34,23 +36,26 @@ def serialize_disk_json(obj):
         return obj.to_dict()
 
     log.warning(
-        "Unhandled object type in JSON disk serialization", object=repr(obj),
-        type=type(obj)
+        "Unhandled object type in JSON disk serialization",
+        object=repr(obj),
+        type=type(obj),
     )
     return str(obj)
+
 
 def serialize_api_json(obj):
     if isinstance(obj, datetime.datetime):
         return obj.isoformat()
 
     log.warning(
-        "Unhandled object type in api JSON serialization", object=repr(obj),
-        type=type(obj)
+        "Unhandled object type in api JSON serialization",
+        object=repr(obj),
+        type=type(obj),
     )
     return str(obj)
 
-class StrictContainer:
 
+class StrictContainer:
     FIELDS = {}
     ALLOW_EMPTY = ("",)
     PARENT_KEYVAL = ("", "")
@@ -162,9 +167,9 @@ class StrictContainer:
             self._loaded[key] = child_type(**self._loaded[key])
             self._loaded[key].set_parent(self)
         except KeyError as e:
-            raise KeyError(
-                f"Key '{key}' is missing subkeys: {e}"
-            ).with_traceback(e.__traceback__)
+            raise KeyError(f"Key '{key}' is missing subkeys: {e}").with_traceback(
+                e.__traceback__
+            )
         except TypeError as e:
             raise TypeError(
                 f"Key '{key}' has subkeys with invalid values: {e}"
@@ -193,7 +198,6 @@ class StrictContainer:
             if isinstance(expected_type, tuple):
                 for type_entry in expected_type:
                     if issubclass(type_entry, StrictContainer):
-
                         # Find the value of the key specified by this potential
                         # child key type. If it matches, choose this type class
                         parent_key, parent_val = type_entry.PARENT_KEYVAL
@@ -217,9 +221,7 @@ class StrictContainer:
     def from_file(cls, filepath):
         try:
             with open(filepath, "r") as fp:
-                loaded = json.load(
-                    fp, object_hook=deserialize_disk_json
-                )
+                loaded = json.load(fp, object_hook=deserialize_disk_json)
         except ValueError as e:
             raise ValueError(f"JSON decoding error: {e}")
 
@@ -241,8 +243,8 @@ class StrictContainer:
 
     def to_dict(self):
         return {
-            k: v.to_dict() if isinstance(v, StrictContainer) else v for k, v in
-            self._loaded.items()
+            k: v.to_dict() if isinstance(v, StrictContainer) else v
+            for k, v in self._loaded.items()
         }
 
     def to_api_json(self):
@@ -265,9 +267,7 @@ class StrictContainer:
 
     def update(self, values):
         if not isinstance(values, dict):
-            raise TypeError(
-                f"Values must be a dictionary. Got: {type(values)}"
-            )
+            raise TypeError(f"Values must be a dictionary. Got: {type(values)}")
 
         current_copy = self._loaded.copy()
         current_copy.update(values)
@@ -293,10 +293,7 @@ class StrictContainer:
 
 
 class Route(StrictContainer):
-    FIELDS = {
-        "type": str,
-        "options": dict
-    }
+    FIELDS = {"type": str, "options": dict}
 
     ALLOW_EMPTY = ("options",)
     STRING_VALUES = ("country",)
@@ -312,26 +309,21 @@ class Route(StrictContainer):
         if not self.options:
             return f"type={self.type}"
 
-        options = " ".join(f"{k}:{v}, "
-                           for k, v in sorted(self.options.items()))
+        options = " ".join(f"{k}:{v}, " for k, v in sorted(self.options.items()))
         return f"type={self.type} options={options}"
 
-class PlatformSettings(StrictContainer):
 
-    FIELDS = {
-        "browser": str,
-        "command": list,
-        "route": Route
-    }
+class PlatformSettings(StrictContainer):
+    FIELDS = {"browser": str, "command": list, "route": Route}
     ALLOW_EMPTY = ("browser", "command", "route")
 
-class Platform(StrictContainer):
 
+class Platform(StrictContainer):
     FIELDS = {
         "platform": str,
         "os_version": str,
         "tags": list,
-        "settings": PlatformSettings
+        "settings": PlatformSettings,
     }
     ALLOW_EMPTY = ("tags", "os_version", "settings")
 
@@ -368,6 +360,7 @@ class Platform(StrictContainer):
 
         return s
 
+
 def _make_platforms_list(platform_dict_list):
     if not platform_dict_list:
         return []
@@ -382,14 +375,13 @@ def _make_platforms_list(platform_dict_list):
             platform_objs.append(plat)
         else:
             raise TypeError(
-                f"Platform dict must be a dictionary, got: {type(plat)}. "
-                f"Value: {plat}"
+                f"Platform dict must be a dictionary, got: {type(plat)}. Value: {plat}"
             )
 
     return platform_objs
 
-class Settings(StrictContainer):
 
+class Settings(StrictContainer):
     FIELDS = {
         "timeout": int,
         "enforce_timeout": bool,
@@ -403,38 +395,32 @@ class Settings(StrictContainer):
         "command": list,
         "browser": str,
         "password": str,
-        "orig_filename": bool
+        "orig_filename": bool,
     }
     ALLOW_EMPTY = ("extrpath", "route", "command", "browser", "password")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._loaded["platforms"] = _make_platforms_list(
-            kwargs.get("platforms", [])
-        )
+        self._loaded["platforms"] = _make_platforms_list(kwargs.get("platforms", []))
 
     def to_dict(self):
         d = super().to_dict()
         d["platforms"] = [
-            p.to_dict() if isinstance(p, StrictContainer) else p
-            for p in self.platforms
+            p.to_dict() if isinstance(p, StrictContainer) else p for p in self.platforms
         ]
         return d
 
-class Errors(StrictContainer):
 
-    FIELDS = {
-        "errors": list,
-        "fatal": list
-    }
+class Errors(StrictContainer):
+    FIELDS = {"errors": list, "fatal": list}
 
     def merge_errors(self, errors_container):
         self.errors.extend(errors_container.errors)
         self.fatal.extend(errors_container.fatal)
         self.set_updated(["errors", "fatal"])
 
-class SubmittedFile(StrictContainer):
 
+class SubmittedFile(StrictContainer):
     # Look at the parent dict and find the category key. Use this class if
     # the value is 'file'
     PARENT_KEYVAL = ("category", "file")
@@ -447,21 +433,18 @@ class SubmittedFile(StrictContainer):
         "sha512": str,
         "media_type": str,
         "type": str,
-        "category": str
+        "category": str,
     }
 
-class SubmittedURL(StrictContainer):
 
+class SubmittedURL(StrictContainer):
     # Look at the parent dict and find the category key. Use this class if
     # the value is 'url'
     PARENT_KEYVAL = ("category", "url")
-    FIELDS = {
-        "url": str,
-        "category": str
-    }
+    FIELDS = {"url": str, "category": str}
+
 
 class Task(StrictContainer):
-
     FIELDS = {
         "id": str,
         "analysis_id": str,
@@ -477,15 +460,22 @@ class Task(StrictContainer):
         "route": Route,
         "browser": str,
         "node": str,
-        "errors": Errors
+        "errors": Errors,
     }
     ALLOW_EMPTY = (
-        "machine", "machine_tags", "os_version", "errors", "score",
-        "route", "browser", "command", "node"
+        "machine",
+        "machine_tags",
+        "os_version",
+        "errors",
+        "score",
+        "route",
+        "browser",
+        "command",
+        "node",
     )
 
-class TargetFile(StrictContainer):
 
+class TargetFile(StrictContainer):
     PARENT_KEYVAL = ("category", "file")
     FIELDS = {
         "filename": str,
@@ -494,43 +484,41 @@ class TargetFile(StrictContainer):
         "size": int,
         "filetype": str,
         "media_type": str,
-        "sha512": str,    
+        "sha512": str,
         "sha256": str,
         "sha1": str,
         "md5": str,
         "extrpath": list,
-        "container": bool
+        "container": bool,
     }
-    ALLOW_EMPTY = ("extrpath","sha512")
+    ALLOW_EMPTY = ("extrpath", "sha512")
 
     @property
     def target(self):
         return self.filename
 
-class TargetURL(StrictContainer):
 
+class TargetURL(StrictContainer):
     PARENT_KEYVAL = ("category", "url")
-    FIELDS = {
-        "url": str,
-        "platforms": list
-    }
+    FIELDS = {"url": str, "platforms": list}
     ALLOW_EMPTY = ("platforms",)
 
     @property
     def target(self):
         return self.url
 
-class Identification(StrictContainer):
 
+class Identification(StrictContainer):
     FIELDS = {
         "selected": bool,
         "target": (TargetFile, TargetURL),
         "category": str,
         "identified": bool,
         "ignored": list,
-        "errors": Errors
+        "errors": Errors,
     }
     ALLOW_EMPTY = ("ignored", "errors")
+
 
 class Pre(StrictContainer):
     FIELDS = {
@@ -541,37 +529,34 @@ class Pre(StrictContainer):
         "category": str,
         "command": dict,
         "platforms": list,
-        "errors": Errors
+        "errors": Errors,
     }
     ALLOW_EMPTY = ("errors", "signatures", "command", "platforms")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._loaded["platforms"] = _make_platforms_list(
-            kwargs.get("platforms", [])
-        )
+        self._loaded["platforms"] = _make_platforms_list(kwargs.get("platforms", []))
 
     def to_dict(self):
         d = super().to_dict()
         d["platforms"] = [
-            p.to_dict() if isinstance(p, StrictContainer) else p
-            for p in self.platforms
+            p.to_dict() if isinstance(p, StrictContainer) else p for p in self.platforms
         ]
         return d
 
-class Post(StrictContainer):
 
+class Post(StrictContainer):
     FIELDS = {
         "task_id": str,
         "score": int,
         "signatures": list,
         "ttps": list,
         "tags": list,
-        "families": list
+        "families": list,
     }
 
-class Analysis(StrictContainer):
 
+class Analysis(StrictContainer):
     FIELDS = {
         "id": str,
         "kind": str,
@@ -586,18 +571,23 @@ class Analysis(StrictContainer):
         "tasks": list,
         "families": list,
         "tags": list,
-        "ttps": list
+        "ttps": list,
     }
-    ALLOW_EMPTY = (
-        "errors", "target", "score", "tasks", "families", "tags", "ttps"
-    )
+    ALLOW_EMPTY = ("errors", "target", "score", "tasks", "families", "tags", "ttps")
 
-    def update_task(self, task_id, score=None, state="", platform="",
-                    os_version="", started_on=None, stopped_on=None,
-                    clear_started_stopped=False):
+    def update_task(
+        self,
+        task_id,
+        score=None,
+        state="",
+        platform="",
+        os_version="",
+        started_on=None,
+        stopped_on=None,
+        clear_started_stopped=False,
+    ):
         for task in self.tasks:
             if task["id"] == task_id:
-
                 if score is not None:
                     task["score"] = score
 

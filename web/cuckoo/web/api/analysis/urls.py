@@ -10,25 +10,12 @@ register_converter(converters.AnalysisId, "analysis_id")
 
 urlpatterns = [
     path("<analysis_id:analysis_id>", views.Analysis.as_view()),
-    path(
-        "<analysis_id:analysis_id>/identification",
-        views.Identification.as_view()
-    ),
+    path("<analysis_id:analysis_id>/identification", views.Identification.as_view()),
     path("<analysis_id:analysis_id>/pre", views.Pre.as_view()),
+    path("<analysis_id:analysis_id>/composite", views.CompositeAnalysis.as_view()),
+    path("<analysis_id:analysis_id>/submittedfile", views.SubmittedFile.as_view()),
     path(
-        "<analysis_id:analysis_id>/composite",
-        views.CompositeAnalysis.as_view()
+        "<analysis_id:analysis_id>/task/", include("cuckoo.web.api.analysis.task.urls")
     ),
-    path(
-        "<analysis_id:analysis_id>/submittedfile",
-        views.SubmittedFile.as_view()
-    ),
-    path(
-        "<analysis_id:analysis_id>/task/",
-        include("cuckoo.web.api.analysis.task.urls")
-    ),
-    path(
-        "<analysis_id:analysis_id>/deleteanalysis",
-        views.DeleteAnalysis.as_view()
-    )
+    path("<analysis_id:analysis_id>/deleteanalysis", views.DeleteAnalysis.as_view()),
 ]

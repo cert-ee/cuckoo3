@@ -12,8 +12,8 @@ from ..abtracts import Processor
 from ..errors import DisablePluginError, PluginError
 from ..signatures.signature import Levels, IOC
 
-class SuricataPcap(Processor):
 
+class SuricataPcap(Processor):
     ORDER = 999
     KEY = "suricata"
 
@@ -46,8 +46,7 @@ class SuricataPcap(Processor):
                     continue
 
                 entry = line.split(":", 1)
-                if len(entry) != 2 \
-                        or entry[0].strip() != "config classification":
+                if len(entry) != 2 or entry[0].strip() != "config classification":
                     continue
 
                 # Entry of classtype,description,severity. Ignore if it is not
@@ -63,18 +62,12 @@ class SuricataPcap(Processor):
 
     @classmethod
     def init_once(cls):
-        cls.sock = cfg(
-            "suricata.yaml", "unix_sock_path", subpkg="processing"
-        )
-        cls.evelog_name = cfg(
-            "suricata.yaml", "evelog_filename", subpkg="processing"
-        )
+        cls.sock = cfg("suricata.yaml", "unix_sock_path", subpkg="processing")
+        cls.evelog_name = cfg("suricata.yaml", "evelog_filename", subpkg="processing")
         cls.classtype_scores = cfg(
             "suricata.yaml", "classtype_scores", subpkg="processing"
         )
-        cls.ignore_sigids = cfg(
-            "suricata.yaml", "ignore_sigids", subpkg="processing"
-        )
+        cls.ignore_sigids = cfg("suricata.yaml", "ignore_sigids", subpkg="processing")
         cls.process_timeout = cfg(
             "suricata.yaml", "process_timeout", subpkg="processing"
         )
@@ -82,18 +75,13 @@ class SuricataPcap(Processor):
         try:
             cls._make_connected_client(cls.sock)
         except (SuricataException, OSError) as e:
-            raise PluginError(
-                f"Failed to connect to Suricata unix socket: Error: {e}"
-            )
+            raise PluginError(f"Failed to connect to Suricata unix socket: Error: {e}")
 
-        path = cfg(
-            "suricata.yaml", "classification_config", subpkg="processing"
-        )
+        path = cfg("suricata.yaml", "classification_config", subpkg="processing")
         cls._load_classification_mapping(path)
         if not cls.classification_map:
             raise PluginError(
-                f"No signature classifications read from "
-                f"configuration file {path}."
+                f"No signature classifications read from configuration file {path}."
             )
 
     def init(self):
@@ -110,24 +98,25 @@ class SuricataPcap(Processor):
             if msg.get("return", "").lower() != "ok":
                 self.ctx.log.warning(
                     "Unexpected return state from Suricata for command",
-                    command=command, args=argsdict, respone=msg
+                    command=command,
+                    args=argsdict,
+                    respone=msg,
                 )
                 return None, False
 
             return msg, True
         except (SuricataException, OSError) as e:
             self.ctx.log.warning(
-                "Error sending command to Suricata", comand=command,
-                args=argsdict, error=e
+                "Error sending command to Suricata",
+                comand=command,
+                args=argsdict,
+                error=e,
             )
             return None, False
 
     def _send_pcap_command(self, pcap_path, result_dir):
         _, success = self._send_command(
-            "pcap-file", {
-                "filename": str(pcap_path),
-                "output-dir": str(result_dir)
-            }
+            "pcap-file", {"filename": str(pcap_path), "output-dir": str(result_dir)}
         )
         return success
 
@@ -141,7 +130,6 @@ class SuricataPcap(Processor):
             # If our submitted pcap is still in the file list, it is not
             # done and we need to wait.
             if str(pcap_path) not in msg.get("message", {}).get("files", []):
-
                 # Pcap is no longer queued. Check if it is the current pcap
                 # being processed. If not, it should be done.
                 msg, success = self._send_command("pcap-current")
@@ -154,7 +142,8 @@ class SuricataPcap(Processor):
             if waited >= self.process_timeout:
                 self.ctx.log.warning(
                     "Pcap waiting timeout reached",
-                    timeout=self.process_timeout, waited=waited
+                    timeout=self.process_timeout,
+                    waited=waited,
                 )
                 return False
 
@@ -174,12 +163,10 @@ class SuricataPcap(Processor):
             "signature": alert.get("signature"),
             "category": alert["category"],
             "gid": alert.get("gid"),
-            "rev": alert.get("rev")
+            "rev": alert.get("rev"),
         }
 
-        malware_families = alert.get("metadata", {}).get(
-            "malware_family", []
-        )
+        malware_families = alert.get("metadata", {}).get("malware_family", [])
         if malware_families:
             event["malware_families"] = malware_families
 
@@ -192,7 +179,8 @@ class SuricataPcap(Processor):
         if not classtype:
             self.ctx.log.warning(
                 "Could not find class type for signature category",
-                signature_id=sigid, category=alert.get("category")
+                signature_id=sigid,
+                category=alert.get("category"),
             )
             return
 
@@ -205,17 +193,21 @@ class SuricataPcap(Processor):
         score = Levels.to_score(score_level)
         event = self._make_filtered_event(event)
 
-        iocs = [IOC(
-            signature_id=event["signature_id"], signature=event["signature"],
-            category=event["category"], app_proto=event["app_proto"],
-            src=f"{event['srcip']}:{event['srcport']}",
-            dst=f"{event['dstip']}:{event['dstport']}"
-        )]
+        iocs = [
+            IOC(
+                signature_id=event["signature_id"],
+                signature=event["signature"],
+                category=event["category"],
+                app_proto=event["app_proto"],
+                src=f"{event['srcip']}:{event['srcport']}",
+                dst=f"{event['dstip']}:{event['dstport']}",
+            )
+        ]
         self.ctx.signature_tracker.add_signature(
             score=score,
             name="suricata_alert",
             short_description="One or more Suricata signatures matched",
-            iocs=iocs
+            iocs=iocs,
         )
 
         for family in event.get("malware_families", []):
@@ -223,7 +215,7 @@ class SuricataPcap(Processor):
                 score=score,
                 name="suricata_alert",
                 short_description="One or more Suricata signatures matched",
-                family=family
+                family=family,
             )
 
         return event

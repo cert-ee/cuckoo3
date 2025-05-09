@@ -11,8 +11,8 @@ from ..abtracts import Reporter
 from ..errors import DisablePluginError
 from ..signatures.signature import Signature
 
-class MISP(Reporter):
 
+class MISP(Reporter):
     @classmethod
     def enabled(cls):
         return cfg("misp", "reporting", "enabled", subpkg="processing")
@@ -23,15 +23,9 @@ class MISP(Reporter):
         cls.verify_tls = cfg("misp", "reporting", "verify_tls", subpkg="processing")
         cls.key = cfg("misp", "reporting", "key", subpkg="processing")
         cls.conn_timeout = cfg("misp", "reporting", "timeout", subpkg="processing")
-        cls.min_score = cfg(
-            "misp", "reporting", "min_score", subpkg="processing"
-        )
-        cls.web_baseurl = cfg(
-            "misp", "reporting", "web_baseurl", subpkg="processing"
-        )
-        cls.event_settings = cfg(
-            "misp", "reporting", "event", subpkg="processing"
-        )
+        cls.min_score = cfg("misp", "reporting", "min_score", subpkg="processing")
+        cls.web_baseurl = cfg("misp", "reporting", "web_baseurl", subpkg="processing")
+        cls.event_settings = cfg("misp", "reporting", "event", subpkg="processing")
         cls.attributes = cfg(
             "misp", "reporting", "event", "attributes", subpkg="processing"
         )
@@ -46,20 +40,18 @@ class MISP(Reporter):
     def init(self):
         try:
             self.misp_client = MispClient(
-                misp_url=self.url, api_key=self.key, timeout=self.conn_timeout,
-                verify_tls=self.verify_tls
+                misp_url=self.url,
+                api_key=self.key,
+                timeout=self.conn_timeout,
+                verify_tls=self.verify_tls,
             )
         except MispError as e:
-            raise DisablePluginError(
-                f"Failed to connect to MISP server. Error: {e}"
-            )
+            raise DisablePluginError(f"Failed to connect to MISP server. Error: {e}")
 
     def _add_signatures(self, event):
         # Add behavioral signatures
         for signature in self.ctx.signature_tracker.signatures:
-            event.add_signature(
-                name=signature.name, description=signature.description
-            )
+            event.add_signature(name=signature.name, description=signature.description)
 
         # Add signatures from pre phase. Do it here because we want all
         # attributes in one MISP event, without overcomplicating the
@@ -80,9 +72,7 @@ class MISP(Reporter):
             if self.ip_sl.is_safelisted(ip, self.ctx.machine.platform):
                 continue
 
-            event.add_ip(
-                ip, intrusion_detection=self.attributes["ip_addresses"]["ids"]
-            )
+            event.add_ip(ip, intrusion_detection=self.attributes["ip_addresses"]["ids"])
 
     def _add_domains(self, event):
         network = self.ctx.result.get("network", {})
@@ -106,9 +96,7 @@ class MISP(Reporter):
             if self.url_sl.is_safelisted(url, self.ctx.machine.platform):
                 continue
 
-            event.add_url(
-                url, intrusion_detection=self.attributes["urls"]["ids"]
-            )
+            event.add_url(url, intrusion_detection=self.attributes["urls"]["ids"])
 
     def _add_mutexes(self, event):
         pass
@@ -120,11 +108,15 @@ class MISP(Reporter):
             filepath, _ = Binaries.path(Paths.binaries(), target.sha256)
 
         event.add_file(
-            filename=target.filename, md5=target.md5, sha1=target.sha1,
-            sha256=target.sha256, size=target.size,
-            media_type=target.media_type, filepath=filepath,
+            filename=target.filename,
+            md5=target.md5,
+            sha1=target.sha1,
+            sha256=target.sha256,
+            size=target.size,
+            media_type=target.media_type,
+            filepath=filepath,
             intrusion_detection=self.attributes["sample_hashes"]["ids"],
-            comment="Submitted file"
+            comment="Submitted file",
         )
 
     def report_post_analysis(self):
@@ -137,12 +129,13 @@ class MISP(Reporter):
             analysis=self.event_settings["analysis"],
             sharing_group=self.event_settings["sharing_group"],
             threat_level=self.event_settings["threat_level"],
-            tags=self.event_settings["tags"]
+            tags=self.event_settings["tags"],
         )
 
         event.add_task_info(
-            analysis_id=self.ctx.analysis.id, task_id=self.ctx.task.id,
-            webinterface_baseurl=self.web_baseurl
+            analysis_id=self.ctx.analysis.id,
+            task_id=self.ctx.task.id,
+            webinterface_baseurl=self.web_baseurl,
         )
         self._add_signatures(event)
 

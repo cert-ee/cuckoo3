@@ -22,8 +22,10 @@ from ..abstracts import Machinery
 
 log = CuckooGlobalLogger(__name__)
 
+
 class QMPError(Exception):
     pass
+
 
 class QMPClient:
     """A simple QEMU Machine Protocol client to send commands and request
@@ -50,10 +52,9 @@ class QMPClient:
     def execute(self, command, args_dict=None):
         with self._lock:
             try:
-                self._client.send_json_message({
-                    "execute": command,
-                    "arguments": args_dict or {}
-                })
+                self._client.send_json_message(
+                    {"execute": command, "arguments": args_dict or {}}
+                )
             except IPCError as e:
                 raise QMPError(
                     f"Failed to send command to QMP socket. "
@@ -65,9 +66,7 @@ class QMPClient:
             try:
                 return timeout_read_response(self._client, timeout=timeout)
             except IPCError as e:
-                raise QMPError(
-                    f"Failed to read response from QMP socket. {e}"
-                )
+                raise QMPError(f"Failed to read response from QMP socket. {e}")
 
     def wait_read_return(self, timeout=60):
         with self._lock:
@@ -96,19 +95,16 @@ class QMPClient:
             try:
                 res = timeout_read_response(self._client_obj, timeout=60)
             except IPCError as e:
-                raise QMPError(
-                    f"Failure while waiting for QMP connection header. {e}"
-                )
+                raise QMPError(f"Failure while waiting for QMP connection header. {e}")
 
             if not res.get("QMP"):
-                raise QMPError(
-                    f"Unexpected QMP connection header. Header: {res}"
-                )
+                raise QMPError(f"Unexpected QMP connection header. Header: {res}")
 
             self.execute("qmp_capabilities")
 
     def close(self):
         self._client.cleanup()
+
 
 class _QEMUMachine:
     """Helper object that can hold the qemu process, attributes that don't
@@ -191,21 +187,20 @@ class _QEMUMachine:
 
             self.qmp = None
 
-_DECOMPRESS_BINARIES = {
-    "lz4": which("lz4"),
-    "gzip": which("gzip")
-}
+
+_DECOMPRESS_BINARIES = {"lz4": which("lz4"), "gzip": which("gzip")}
 
 _DECOMPRESS_COMMANDS = {
     "lz4": "%BINARY_PATH% -c -d < %SNAPSHOT_PATH%",
-    "gzip": "%BINARY_PATH% -c -d < %SNAPSHOT_PATH%"
+    "gzip": "%BINARY_PATH% -c -d < %SNAPSHOT_PATH%",
 }
+
 
 def _find_command(qemu_version, platform_architecture_dict):
     selected = None
     if qemu_version:
         for version in sorted(
-                platform_architecture_dict["versions"].keys(), reverse=True
+            platform_architecture_dict["versions"].keys(), reverse=True
         ):
             if qemu_version >= version:
                 selected = version
@@ -219,18 +214,15 @@ def _find_command(qemu_version, platform_architecture_dict):
 
     return platform_architecture_dict["versions"][selected]
 
-def _make_command(qemu_machine, emulator_path, disposable_disk_path,
-                  emulator_version):
 
+def _make_command(qemu_machine, emulator_path, disposable_disk_path, emulator_version):
     # Make a copy of the machine startup args so we don't modify the actual
     # attribute of the machine. Then insert the qemu binary before
     # the arguments.
     command = qemu_machine.start_args.copy()
     command.insert(0, emulator_path)
     # Map of placeholders in the command to their value.
-    lookup = {
-        _DISPOSABLE_DISK_PLACEHOLDER: disposable_disk_path
-    }
+    lookup = {_DISPOSABLE_DISK_PLACEHOLDER: disposable_disk_path}
 
     def _do_replace(value):
         if not isinstance(value, str):
@@ -248,8 +240,7 @@ def _make_command(qemu_machine, emulator_path, disposable_disk_path,
     # send commands and request states of a VM. Each qemu vm process has
     # its own socket.
     command.extend(
-        ["-qmp", f"unix:{qemu_machine.qmp_sockpath},server,nowait",
-         "-monitor", "none"]
+        ["-qmp", f"unix:{qemu_machine.qmp_sockpath},server,nowait", "-monitor", "none"]
     )
     # The memory snapshot might be compressed. See if the compressed was
     # recognized and we can decompress it. Create a command that results
@@ -265,8 +256,7 @@ def _make_command(qemu_machine, emulator_path, disposable_disk_path,
                 f"binary or command found."
             )
 
-        decompress_args = decompress_args.replace(
-            "%BINARY_PATH%", binary).replace(
+        decompress_args = decompress_args.replace("%BINARY_PATH%", binary).replace(
             "%SNAPSHOT_PATH%", qemu_machine.snapshot_path
         )
         # Feed the command to decompress the snapshot path to the incoming
@@ -274,25 +264,27 @@ def _make_command(qemu_machine, emulator_path, disposable_disk_path,
         command.extend(["-incoming", f"exec:{decompress_args}"])
     else:
         # Tell qemu how to read uncompressed snapshot path.
-        command.extend(
-            ["-incoming", f"exec:/bin/cat < {qemu_machine.snapshot_path}"]
-        )
+        command.extend(["-incoming", f"exec:/bin/cat < {qemu_machine.snapshot_path}"])
 
     return command
-
 
 
 statemapping = {
     "inmigrate": machines.States.STARTING,
     "postmigrate": machines.States.PAUSED,
     "paused": machines.States.PAUSED,
-    "running": machines.States.RUNNING
+    "running": machines.States.RUNNING,
 }
 
 
 _ILLEGAL_ARGS = (
-    "-incoming", "-monitor", "-qmp", "-loadvm", "-no-shutdown", "-qmp-pretty",
-    "-snapshot"
+    "-incoming",
+    "-monitor",
+    "-qmp",
+    "-loadvm",
+    "-no-shutdown",
+    "-qmp-pretty",
+    "-snapshot",
 )
 
 _DISPOSABLE_DISK_PLACEHOLDER = "%DISPOSABLE_DISK_PATH%"
@@ -331,6 +323,7 @@ def _get_valid_start_args(start_args):
 
     return start_args
 
+
 def vmcloak_info_to_machineconf(machineinfo_path):
     with open(machineinfo_path, "r") as fp:
         try:
@@ -342,15 +335,21 @@ def vmcloak_info_to_machineconf(machineinfo_path):
 
     machineinfo_path = Path(machineinfo_path)
     min_keys = (
-        "name", "ip", "agent_port", "os_name", "os_version",
-        "architecture", "bridge", "disk", "memory_snapshot", "tags",
-        "start_args"
+        "name",
+        "ip",
+        "agent_port",
+        "os_name",
+        "os_version",
+        "architecture",
+        "bridge",
+        "disk",
+        "memory_snapshot",
+        "tags",
+        "start_args",
     )
     machine = machineinfo_dict.get("machine", {})
     if not machine:
-        raise errors.MachineryError(
-            f"Invalid machineinfo: Missing key 'machine'"
-        )
+        raise errors.MachineryError(f"Invalid machineinfo: Missing key 'machine'")
 
     missing = []
     for k in min_keys:
@@ -366,9 +365,9 @@ def vmcloak_info_to_machineconf(machineinfo_path):
 
     return {
         "qcow2_path": str(machineinfo_path.parent.joinpath(machine["disk"])),
-        "snapshot_path": str(machineinfo_path.parent.joinpath(
-            machine["memory_snapshot"]
-        )),
+        "snapshot_path": str(
+            machineinfo_path.parent.joinpath(machine["memory_snapshot"])
+        ),
         "machineinfo_path": str(machineinfo_path),
         "ip": machine["ip"],
         "mac_address": machine.get("mac"),
@@ -377,17 +376,16 @@ def vmcloak_info_to_machineconf(machineinfo_path):
         "architecture": machine["architecture"],
         "interface": machine.get("bridge"),
         "agent_port": machine["agent_port"],
-        "tags": machine["tags"]
+        "tags": machine["tags"],
     }, machine["name"]
+
 
 def _read_start_args(path):
     with open(path, "r") as fp:
         try:
             info = json.load(fp)
         except json.JSONDecodeError as e:
-            raise errors.MachineryError(
-                f"Invalid machineinfo file: {path}. {e}"
-            )
+            raise errors.MachineryError(f"Invalid machineinfo file: {path}. {e}")
 
     machine = info.get("machine", {})
     if not machine:
@@ -398,21 +396,20 @@ def _read_start_args(path):
     start_args = machine.get("start_args", {})
     if not start_args:
         raise errors.MachineryError(
-            f"Invalid machineinfo file: {path}. Machine is missing key "
-            f"'start_args'"
+            f"Invalid machineinfo file: {path}. Machine is missing key 'start_args'"
         )
 
     return _get_valid_start_args(start_args)
 
-class QEMU(Machinery):
 
+class QEMU(Machinery):
     name = "qemu"
 
     def init(self):
         self.vms = {}
         self.emulator_binaries = {
             "amd64": self.cfg["binaries"]["qemu_system_x86_64"],
-            "x86": self.cfg["binaries"]["qemu_system_x86_64"]
+            "x86": self.cfg["binaries"]["qemu_system_x86_64"],
         }
 
         self.qemu_version = self.version()
@@ -439,14 +436,15 @@ class QEMU(Machinery):
 
             # Use the qcow2 image path as the disposable disk copy directory
             # if no directory was provided.
-            disposables_dir = self.cfg["disposable_copy_dir"] or \
-                              str(Path(values["qcow2_path"]).parent)
+            disposables_dir = self.cfg["disposable_copy_dir"] or str(
+                Path(values["qcow2_path"]).parent
+            )
 
             # Check if we can read and write to the directory that will be
             # used to make disposable disk copies.
-            if not os.access(disposables_dir, os.R_OK) and \
-                    os.access(disposables_dir, os.W_OK):
-
+            if not os.access(disposables_dir, os.R_OK) and os.access(
+                disposables_dir, os.W_OK
+            ):
                 raise errors.MachineryError(
                     f"The directory used for disposable copies of the "
                     f"qcow2_path is not readable and writable."
@@ -465,9 +463,7 @@ class QEMU(Machinery):
                 machine=machine,
                 start_args=_read_start_args(values["machineinfo_path"]),
                 disposables_dir=disposables_dir,
-                qmp_sockpath=UnixSocketPaths.machinery_socket(
-                    self.name, machine.name
-                )
+                qmp_sockpath=UnixSocketPaths.machinery_socket(self.name, machine.name),
             )
             qemu_machine.snapshot_determine_compression()
             if qemu_machine.snapshot_compressed:
@@ -502,13 +498,18 @@ class QEMU(Machinery):
 
     def _make_machine(self, name, values):
         return machines.Machine(
-            name=name, label=values["qcow2_path"], ip=values["ip"],
-            platform=values["platform"], os_version=values["os_version"],
-            tags=values["tags"], snapshot=values["snapshot_path"],
+            name=name,
+            label=values["qcow2_path"],
+            ip=values["ip"],
+            platform=values["platform"],
+            os_version=values["os_version"],
+            tags=values["tags"],
+            snapshot=values["snapshot_path"],
             architecture=values["architecture"],
             interface=values["interface"] or self.cfg.get("interface"),
             agent_port=values["agent_port"],
-            mac_address=values["mac_address"], machinery=self
+            mac_address=values["mac_address"],
+            machinery=self,
         )
 
     def state(self, machine):
@@ -544,15 +545,24 @@ class QEMU(Machinery):
         path = Path(vm.disposables_dir, f"{vm.machine.name}_disposable.qcow2")
         command = [
             self.cfg["binaries"]["qemu_img"],
-            "create", "-F", "qcow2",
-            "-o", "lazy_refcounts=on,cluster_size=2M",
-            "-b", vm.qcow2_path,
-            "-f", "qcow2", str(path)
+            "create",
+            "-F",
+            "qcow2",
+            "-o",
+            "lazy_refcounts=on,cluster_size=2M",
+            "-b",
+            vm.qcow2_path,
+            "-f",
+            "qcow2",
+            str(path),
         ]
         try:
             subprocess.run(
-                command, shell=False, stderr=subprocess.PIPE,
-                stdout=subprocess.DEVNULL, check=True
+                command,
+                shell=False,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                check=True,
             )
         except subprocess.CalledProcessError as e:
             raise errors.MachineryError(
@@ -585,19 +595,20 @@ class QEMU(Machinery):
         # machine architecture. This command results in a started machine
         # restored to the state of the memory snapshot.
         start_command = _make_command(
-            qemu_machine=vm, emulator_path=emulator_binary,
+            qemu_machine=vm,
+            emulator_path=emulator_binary,
             disposable_disk_path=self._make_disposable_disk(vm),
-            emulator_version=self.version(path=emulator_binary)
+            emulator_version=self.version(path=emulator_binary),
         )
 
         log.debug(
-            "Starting machine with command", machine=machine.name,
-            command=' '.join(start_command)
+            "Starting machine with command",
+            machine=machine.name,
+            command=" ".join(start_command),
         )
         try:
             proc = subprocess.Popen(
-                start_command, stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE
+                start_command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
             )
         except OSError as e:
             raise errors.MachineryError(
@@ -642,8 +653,7 @@ class QEMU(Machinery):
         state = self.state(machine)
         if state == machines.States.POWEROFF:
             raise errors.MachineStateReachedError(
-                "Failed to stop machine. Machine already stopped. "
-                f"State: {state}"
+                f"Failed to stop machine. Machine already stopped. State: {state}"
             )
 
         vm = self._get_vm(machine.name)
@@ -675,8 +685,7 @@ class QEMU(Machinery):
             stderr = vm.kill_process()
             if stderr:
                 log.warning(
-                    "Machine has stderr output", machine=machine.name,
-                    stderr=stderr
+                    "Machine has stderr output", machine=machine.name, stderr=stderr
                 )
 
         # Remove process reference and qmp client.
@@ -707,8 +716,10 @@ class QEMU(Machinery):
         try:
             stdout = subprocess.run(
                 [path, "--version"],
-                shell=False, stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE, check=True
+                shell=False,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                check=True,
             ).stdout
         except subprocess.CalledProcessError as e:
             raise errors.MachineryError(
@@ -718,9 +729,9 @@ class QEMU(Machinery):
 
         # Read QEMU version as if it were semver. It is not, but looks similar.
         version_r = (
-            br"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*"
-            br"[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-]"
-            br"[0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?"
+            rb"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*"
+            rb"[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-]"
+            rb"[0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?"
         )
 
         match = search(version_r, stdout)

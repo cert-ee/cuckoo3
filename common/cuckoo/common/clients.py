@@ -12,45 +12,59 @@ from aiohttp.client_exceptions import ClientError as aiohttpClientError
 from aiohttp_sse_client import client as sse_client
 
 from .ipc import (
-    request_unix_socket, message_unix_socket, ResponseTimeoutError, IPCError,
-    a_request_unix_socket, UnixSockClient, timeout_read_response
+    request_unix_socket,
+    message_unix_socket,
+    ResponseTimeoutError,
+    IPCError,
+    a_request_unix_socket,
+    UnixSockClient,
+    timeout_read_response,
 )
 from .machines import read_machines_dump_dict, MachineListError
 from .route import Routes
 
+
 class ClientError(Exception):
     pass
+
 
 class ClientConnectionError(ClientError):
     pass
 
+
 class ServerResponseError(ClientError):
     pass
+
 
 class ActionFailedError(ClientError):
     pass
 
+
 class APIError(ClientError):
     pass
+
 
 class APIServerError(APIError):
     pass
 
+
 class APIBadRequestError(APIError):
     pass
+
 
 class APIResourceConfictError(APIBadRequestError):
     pass
 
+
 class APIDoesNotExistError(APIError):
     pass
+
 
 class APIPermissionDenied(APIError):
     pass
 
 
 class ResultServerClient:
-
     @staticmethod
     def add(unix_sock_path, ip, task_id):
         try:
@@ -58,9 +72,7 @@ class ResultServerClient:
                 unix_sock_path, {"ip": ip, "task_id": task_id, "action": "add"}
             )
         except IPCError as e:
-            raise ActionFailedError(
-                f"Failure during resultserver add request: {e}"
-            )
+            raise ActionFailedError(f"Failure during resultserver add request: {e}")
 
         if msg.get("status") == "ok":
             return
@@ -71,33 +83,23 @@ class ResultServerClient:
     def remove(unix_sock_path, ip, task_id):
         try:
             msg = request_unix_socket(
-                unix_sock_path, {
-                    "ip": ip,
-                    "task_id": task_id,
-                    "action": "remove"
-                }
+                unix_sock_path, {"ip": ip, "task_id": task_id, "action": "remove"}
             )
         except IPCError as e:
-            raise ActionFailedError(
-                f"Failure during resultserver remove request: {e}"
-            )
+            raise ActionFailedError(f"Failure during resultserver remove request: {e}")
 
         if msg.get("status") == "ok":
             return
 
         raise ActionFailedError(msg.get("reason", ""))
 
-class MachineryManagerClient:
 
+class MachineryManagerClient:
     def __init__(self, sockpath):
         self.sockpath = sockpath
 
-    def machine_action(self, action, machine_name,
-                       wait_response=True, timeout=120):
-        msg = {
-            "action": action,
-            "machine": machine_name
-        }
+    def machine_action(self, action, machine_name, wait_response=True, timeout=120):
+        msg = {"action": action, "machine": machine_name}
 
         if not wait_response:
             try:
@@ -115,70 +117,76 @@ class MachineryManagerClient:
 
         if "success" not in response:
             raise ServerResponseError(
-                f"Response {repr(response)} does not contain "
-                f"mandatory key 'success'"
+                f"Response {repr(response)} does not contain mandatory key 'success'"
             )
 
         success = response["success"]
         reason = response.get("reason", "")
         if not success:
             raise ActionFailedError(
-                f"Machine action {action} for {machine_name} failed. "
-                f"Reason: {reason}"
+                f"Machine action {action} for {machine_name} failed. Reason: {reason}"
             )
 
     def restore_start(self, machine_name, wait_response=True, timeout=120):
         return self.machine_action(
-            "restore_start", machine_name, wait_response=wait_response,
-            timeout=timeout
+            "restore_start", machine_name, wait_response=wait_response, timeout=timeout
         )
 
     def norestore_start(self, machine_name, wait_response=True, timeout=120):
         return self.machine_action(
-            "norestore_start", machine_name, wait_response=wait_response,
-            timeout=timeout
+            "norestore_start",
+            machine_name,
+            wait_response=wait_response,
+            timeout=timeout,
         )
 
     def stop(self, machine_name, wait_response=True, timeout=120):
         return self.machine_action(
-            "stop", machine_name, wait_response=wait_response,
-            timeout=timeout
+            "stop", machine_name, wait_response=wait_response, timeout=timeout
         )
 
     def acpi_stop(self, machine_name, wait_response=True, timeout=120):
         return self.machine_action(
-            "acpi_stop", machine_name, wait_response=wait_response,
-            timeout=timeout
+            "acpi_stop", machine_name, wait_response=wait_response, timeout=timeout
         )
 
     def memory_dump(self, machine_name, wait_response=True, timeout=120):
         raise NotImplementedError()
 
-class TaskRunnerClient:
 
+class TaskRunnerClient:
     @staticmethod
-    def start_task(sockpath, kind, task_id, analysis_id, machine,
-                    resultserver, rooter_sock_path=None):
+    def start_task(
+        sockpath,
+        kind,
+        task_id,
+        analysis_id,
+        machine,
+        resultserver,
+        rooter_sock_path=None,
+    ):
         try:
-            resp = request_unix_socket(sockpath, {
-            "action": "starttask", "args": {
-                    "kind": kind,
-                    "task_id": task_id,
-                    "analysis_id": analysis_id,
-                    "machine": machine.to_dict(),
-                    "resultserver": resultserver.to_dict(),
-                    "rooter_sock_path": rooter_sock_path
-                }
-            }, timeout=60)
-        except IPCError as e:
-            raise ActionFailedError(
-                f"Failed to send new task to task runner: {e}"
+            resp = request_unix_socket(
+                sockpath,
+                {
+                    "action": "starttask",
+                    "args": {
+                        "kind": kind,
+                        "task_id": task_id,
+                        "analysis_id": analysis_id,
+                        "machine": machine.to_dict(),
+                        "resultserver": resultserver.to_dict(),
+                        "rooter_sock_path": rooter_sock_path,
+                    },
+                },
+                timeout=60,
             )
+        except IPCError as e:
+            raise ActionFailedError(f"Failed to send new task to task runner: {e}")
 
         if not resp.get("success"):
             raise ActionFailedError(
-                f"Task runner could not start task. "
-                f"Error: {resp.get('reason')}"
+                f"Task runner could not start task. Error: {resp.get('reason')}"
             )
 
     @staticmethod
@@ -191,9 +199,7 @@ class TaskRunnerClient:
             )
 
         if not resp.get("success"):
-            raise ActionFailedError(
-                f"Task runner failure while stopping all tasks"
-            )
+            raise ActionFailedError(f"Task runner failure while stopping all tasks")
 
     @staticmethod
     def disable(sockpath):
@@ -212,9 +218,7 @@ class TaskRunnerClient:
         try:
             resp = request_unix_socket(sockpath, {"action": "enable"})
         except IPCError as e:
-            raise ActionFailedError(
-                f"Failed to send enable message to task runner {e}"
-            )
+            raise ActionFailedError(f"Failed to send enable message to task runner {e}")
 
         if not resp.get("success"):
             raise ActionFailedError(f"Task runner failure during enable")
@@ -224,19 +228,15 @@ class TaskRunnerClient:
         try:
             resp = request_unix_socket(sockpath, {"action": "getflowcount"})
         except IPCError as e:
-            raise ActionFailedError(
-                f"Failed to send enable message to task runner {e}"
-            )
+            raise ActionFailedError(f"Failed to send enable message to task runner {e}")
 
         if "count" not in resp:
-            raise ServerResponseError(
-                f"Missing response key 'count' from task runner"
-            )
+            raise ServerResponseError(f"Missing response key 'count' from task runner")
 
         return resp.get("count")
 
-class StateControllerClient:
 
+class StateControllerClient:
     @staticmethod
     def notify(sockpath):
         """Send a ping to the state controller at the end of the given sock
@@ -264,18 +264,19 @@ class StateControllerClient:
     @staticmethod
     def manual_set_settings(sockpath, analysis_id, settings_dict):
         try:
-            message_unix_socket(sockpath, {
-                "subject": "manualsetsettings",
-                "analysis_id": analysis_id,
-                "settings_dict": settings_dict
-            })
-        except IPCError as e:
-            raise ActionFailedError(
-                f"Failed to send settings to state controller. {e}"
+            message_unix_socket(
+                sockpath,
+                {
+                    "subject": "manualsetsettings",
+                    "analysis_id": analysis_id,
+                    "settings_dict": settings_dict,
+                },
             )
+        except IPCError as e:
+            raise ActionFailedError(f"Failed to send settings to state controller. {e}")
+
 
 class ImportControllerClient:
-
     @staticmethod
     def notify(sockpath):
         """Send a ping to the import controller at the end of the given sock
@@ -287,13 +288,14 @@ class ImportControllerClient:
         except IPCError as e:
             raise ActionFailedError(f"Failed to notify state controller. {e}")
 
-class _Responsectx:
 
+class _Responsectx:
     __slots__ = ("status_code", "json")
 
     def __init__(self, status_code, json_body):
         self.status_code = status_code
         self.json = json_body or {}
+
 
 def _response_ctx(response):
     try:
@@ -303,6 +305,7 @@ def _response_ctx(response):
 
     return _Responsectx(response.status_code, r_json)
 
+
 async def _aiohttp_response_ctx(response):
     try:
         r_json = await response.json()
@@ -311,18 +314,17 @@ async def _aiohttp_response_ctx(response):
 
     return _Responsectx(response.status, r_json)
 
+
 def _raise_for_status(responsectx, endpoint, expected_status=200):
     error = responsectx.json.get("error") or responsectx.json.get("detail")
     code = responsectx.status_code
     if code >= 500:
         raise APIServerError(
-            f"API server error on endpoint: "
-            f"{endpoint}.{'' if not error else error}"
+            f"API server error on endpoint: {endpoint}.{'' if not error else error}"
         )
     elif code == 400:
         raise APIBadRequestError(
-            f"Bad request made to endpoint: "
-            f"{endpoint}.{'' if not error else error}"
+            f"Bad request made to endpoint: {endpoint}.{'' if not error else error}"
         )
     elif code == 401:
         raise APIPermissionDenied(
@@ -345,16 +347,14 @@ def _raise_for_status(responsectx, endpoint, expected_status=200):
         f"endpoint: {endpoint}.{'' if not error else error}"
     )
 
-class APIClient:
 
+class APIClient:
     def __init__(self, api_host, api_key):
         self._key = api_key
         self._host = api_host
 
     def _make_headers(self):
-        return {
-            "Authorization": f"token {self._key}"
-        }
+        return {"Authorization": f"token {self._key}"}
 
     def _do_json_get(self, endpoint, expected_status=200):
         url = urljoin(self._host, endpoint)
@@ -406,20 +406,15 @@ class APIClient:
         return res.raw
 
     def task_pcap(self, analysis_id, task_id):
-        return self._do_streamdownload(
-            f"/analysis/{analysis_id}/task/{task_id}/pcap"
-        )
+        return self._do_streamdownload(f"/analysis/{analysis_id}/task/{task_id}/pcap")
 
     def task_screenshot(self, analysis_id, task_id, screenshot_name):
         return self._do_streamdownload(
-            f"/analysis/{analysis_id}/task/"
-            f"{task_id}/screenshot/{screenshot_name}"
+            f"/analysis/{analysis_id}/task/{task_id}/screenshot/{screenshot_name}"
         )
 
     def analysis(self, analysis_id):
-        return self._do_json_get(
-            f"/analysis/{analysis_id}", expected_status=200
-        )
+        return self._do_json_get(f"/analysis/{analysis_id}", expected_status=200)
 
     def submitted_file(self, analysis_id):
         return self._do_streamdownload(
@@ -427,14 +422,10 @@ class APIClient:
         )
 
     def binary(self, sha256):
-        return self._do_streamdownload(
-            f"/targets/file/{sha256}", expected_status=200
-        )
+        return self._do_streamdownload(f"/targets/file/{sha256}", expected_status=200)
 
     def pre(self, analysis_id):
-        return self._do_json_get(
-            f"/analysis/{analysis_id}/pre", expected_status=200
-        )
+        return self._do_json_get(f"/analysis/{analysis_id}/pre", expected_status=200)
 
     def identification(self, analysis_id):
         return self._do_json_get(
@@ -443,8 +434,7 @@ class APIClient:
 
     def analysis_composite(self, analysis_id, retrieve=[]):
         return self._do_json_post(
-            f"/analysis/{analysis_id}/composite", expected_status=200,
-            retrieve=retrieve
+            f"/analysis/{analysis_id}/composite", expected_status=200, retrieve=retrieve
         )
 
     def task(self, analysis_id, task_id):
@@ -459,14 +449,14 @@ class APIClient:
 
     def task_machine(self, analysis_id, task_id):
         return self._do_json_get(
-            f"/analysis/{analysis_id}/task/{task_id}/machine",
-            expected_status=200
+            f"/analysis/{analysis_id}/task/{task_id}/machine", expected_status=200
         )
 
     def task_composite(self, analysis_id, task_id, retrieve=[]):
         return self._do_json_post(
             f"analysis/{analysis_id}/task/{task_id}/composite",
-            expected_status=200, retrieve=retrieve
+            expected_status=200,
+            retrieve=retrieve,
         )
 
     def import_analysis(self, zip_fp):
@@ -501,8 +491,8 @@ class APIClient:
         if res.status_code != 200:
             _raise_for_status(_response_ctx(res), endpoint, 200)
 
-class NodeAPIClient:
 
+class NodeAPIClient:
     def __init__(self, api_url, api_key, node_name=None):
         self.api_url = api_url
         self._api_key = api_key
@@ -518,9 +508,7 @@ class NodeAPIClient:
         # Requests needs the token to be encoded, otherwise it will try to
         # encode it as latin-1, which will fail with some characters.
         # aiohttp only accepts strings as header values.
-        return {
-            "Authorization": token if not encode_token else token.encode()
-        }
+        return {"Authorization": token if not encode_token else token.encode()}
 
     def ping(self):
         api = urljoin(self.api_url, "ping")
@@ -574,7 +562,7 @@ class NodeAPIClient:
 
         return res.json()["state"]
 
-    def download_result(self, task_id, file_path, chunk_size=256*1024):
+    def download_result(self, task_id, file_path, chunk_size=256 * 1024):
         if os.path.exists(file_path):
             raise ClientError(f"Path already exists: {file_path}")
 
@@ -602,8 +590,9 @@ class NodeAPIClient:
             async with aiohttp.ClientSession() as ses:
                 with open(zip_path, "rb") as fp:
                     res = await ses.post(
-                        api, data={"file": fp},
-                        headers=self.get_headers(encode_token=False)
+                        api,
+                        data={"file": fp},
+                        headers=self.get_headers(encode_token=False),
                     )
         except aiohttpClientError as e:
             raise ClientError(f"Error during work upload. {e}")
@@ -614,13 +603,12 @@ class NodeAPIClient:
     async def start_task(self, task_id, machine_name):
         api = urljoin(self.api_url, f"task/{task_id}/start")
 
-        async with aiohttp.ClientSession(
-                timeout=ClientTimeout(sock_read=5)
-        ) as ses:
+        async with aiohttp.ClientSession(timeout=ClientTimeout(sock_read=5)) as ses:
             try:
                 res = await ses.post(
-                    api, json={"machine_name": machine_name},
-                    headers=self.get_headers(encode_token=False)
+                    api,
+                    json={"machine_name": machine_name},
+                    headers=self.get_headers(encode_token=False),
                 )
             except aiohttp.client_exceptions.ClientError as e:
                 raise ClientError(f"Error during task start request. {e}")
@@ -640,13 +628,9 @@ class NodeAPIClient:
 
     async def a_reset(self):
         api = urljoin(self.api_url, "reset")
-        async with aiohttp.ClientSession(
-                timeout=ClientTimeout(sock_read=0)
-        ) as ses:
+        async with aiohttp.ClientSession(timeout=ClientTimeout(sock_read=0)) as ses:
             try:
-                res = await ses.post(
-                    api, headers=self.get_headers(encode_token=False)
-                )
+                res = await ses.post(api, headers=self.get_headers(encode_token=False))
             except aiohttp.client_exceptions.ClientError as e:
                 raise ClientError(f"Error during node reset request. {e}")
 
@@ -665,9 +649,7 @@ class NodeAPIClient:
 
     async def a_delete_analysis_work(self, analysis_id):
         api = urljoin(self.api_url, f"analysis/{analysis_id}")
-        async with aiohttp.ClientSession(
-                timeout=ClientTimeout(sock_read=10)
-        ) as ses:
+        async with aiohttp.ClientSession(timeout=ClientTimeout(sock_read=10)) as ses:
             try:
                 res = await ses.delete(
                     api, headers=self.get_headers(encode_token=False)
@@ -680,9 +662,9 @@ class NodeAPIClient:
 
 
 class NodeEventReader:
-
-    def __init__(self, nodeapi_client, message_cb, read_end_cb,
-                 connerr_cb=None, conn_cb=None):
+    def __init__(
+        self, nodeapi_client, message_cb, read_end_cb, connerr_cb=None, conn_cb=None
+    ):
         self.client = nodeapi_client
         self._connerr_cb = connerr_cb
         self._conn_cb = conn_cb
@@ -716,7 +698,9 @@ class NodeEventReader:
             headers["Last-Event-Id"] = str(self.last_id)
 
         evsource = sse_client.EventSource(
-            self.client.event_endpoint, session=ses, headers=headers,
+            self.client.event_endpoint,
+            session=ses,
+            headers=headers,
         )
         try:
             await evsource.connect(retry=0)
@@ -727,8 +711,7 @@ class NodeEventReader:
         except (aiohttpClientError, ConnectionError) as e:
             await ses.close()
             raise ClientError(
-                "Failed to connect to event source:"
-                f" {self.client.event_endpoint}. {e}"
+                f"Failed to connect to event source: {self.client.event_endpoint}. {e}"
             )
 
     async def read_stream(self):
@@ -749,8 +732,12 @@ class NodeEventReader:
                     # json.
                     continue
 
-        except (ConnectionError, aiohttpClientError, ValueError,
-                asyncio.TimeoutError) as e:
+        except (
+            ConnectionError,
+            aiohttpClientError,
+            ValueError,
+            asyncio.TimeoutError,
+        ) as e:
             if self._connerr_cb:
                 self._connerr_cb(e)
         finally:
@@ -759,8 +746,8 @@ class NodeEventReader:
 
             await self._readend_cb()
 
-class ResultRetrieverClient:
 
+class ResultRetrieverClient:
     @staticmethod
     async def retrieve_result(sock_path, task_id, node_name):
         try:
@@ -777,9 +764,7 @@ class ResultRetrieverClient:
 
 
 class RooterRouteRequest:
-
-    def __init__(self, sock_path, route, machine, resultserver,
-                 request_timeout=120):
+    def __init__(self, sock_path, route, machine, resultserver, request_timeout=120):
         self.sock_path = sock_path
         self.route = route
         self.machine = machine
@@ -810,8 +795,7 @@ class RooterRouteRequest:
         success = response.get("success")
         if success is None:
             raise ServerResponseError(
-                f"Response {repr(response)} does not contain "
-                f"mandatory key 'success'"
+                f"Response {repr(response)} does not contain mandatory key 'success'"
             )
 
         if not success:
@@ -820,14 +804,16 @@ class RooterRouteRequest:
             )
 
     def apply_route(self):
-        self._request_route({
-            "subject": "enableroute",
-            "args": {
-                "machine": self.machine.to_dict(),
-                "route": self.route.to_dict(),
-                "resultserver": self.resultserver.to_dict()
+        self._request_route(
+            {
+                "subject": "enableroute",
+                "args": {
+                    "machine": self.machine.to_dict(),
+                    "route": self.route.to_dict(),
+                    "resultserver": self.resultserver.to_dict(),
+                },
             }
-        })
+        )
 
     def disable_route(self):
         if not self._client:
@@ -842,13 +828,14 @@ class RooterRouteRequest:
 
 
 class RooterClient:
-
     @staticmethod
     def get_routes(sock_path, timeout=120):
         try:
-            return Routes.from_dict(request_unix_socket(
-                sock_path, {"subject": "getroutes"}, timeout=timeout
-            ))
+            return Routes.from_dict(
+                request_unix_socket(
+                    sock_path, {"subject": "getroutes"}, timeout=timeout
+                )
+            )
         except IPCError as e:
             raise ActionFailedError(
                 f"Failed to retrieve available routes from rooter at "

@@ -14,22 +14,24 @@ from .log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+
 class DatabaseError(Exception):
     pass
+
 
 class DatabaseMigrationNeeded(DatabaseError):
     pass
 
+
 @as_declarative()
 class CuckooDBTable:
-
     def to_dict(self):
-        return {
-            c.name: getattr(self, c.name) for c in self.__table__.columns
-        }
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class AlembicVersion(CuckooDBTable):
     """Database schema version. Used for automatic database migrations."""
+
     __tablename__ = "alembic_version"
 
     SCHEMA_VERSION = None
@@ -38,8 +40,8 @@ class AlembicVersion(CuckooDBTable):
         sqlalchemy.String(32), nullable=False, primary_key=True
     )
 
-class Analysis(CuckooDBTable):
 
+class Analysis(CuckooDBTable):
     __tablename__ = "analyses"
 
     id = sqlalchemy.Column(sqlalchemy.String(15), primary_key=True)
@@ -65,8 +67,8 @@ class Analysis(CuckooDBTable):
 
         return d
 
-class Task(CuckooDBTable):
 
+class Task(CuckooDBTable):
     __tablename__ = "tasks"
 
     id = sqlalchemy.Column(sqlalchemy.String(32), primary_key=True)
@@ -85,8 +87,9 @@ class Task(CuckooDBTable):
     score = sqlalchemy.Column(sqlalchemy.Integer, default=0, nullable=False)
 
     def __repr__(self):
-        return f"<Task(id={self.id}, number={self.number}," \
-               f" analysis={self.analysis_id})>"
+        return (
+            f"<Task(id={self.id}, number={self.number}, analysis={self.analysis_id})>"
+        )
 
     @hybrid_property
     def machine_tags(self):
@@ -106,26 +109,23 @@ class Task(CuckooDBTable):
 
         self._machine_tags = ",".join(value)
 
-class Target(CuckooDBTable):
 
+class Target(CuckooDBTable):
     __tablename__ = "targets"
 
     analysis_id = sqlalchemy.Column(
-        sqlalchemy.String(32), sqlalchemy.ForeignKey("analyses.id"),
-        primary_key=True
+        sqlalchemy.String(32), sqlalchemy.ForeignKey("analyses.id"), primary_key=True
     )
     category = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     target = sqlalchemy.Column(sqlalchemy.Text(), nullable=False)
-    media_type = sqlalchemy.Column(
-        sqlalchemy.Text(), nullable=True, default=""
-    )
+    media_type = sqlalchemy.Column(sqlalchemy.Text(), nullable=True, default="")
     md5 = sqlalchemy.Column(sqlalchemy.String(32), nullable=True)
     sha1 = sqlalchemy.Column(sqlalchemy.String(40), nullable=True)
     sha256 = sqlalchemy.Column(sqlalchemy.String(64), nullable=True)
     sha512 = sqlalchemy.Column(sqlalchemy.String(128), nullable=True)
 
-class DBMS:
 
+class DBMS:
     def __init__(self, schema_version=None, alembic_version_table=None):
         self.initialized = False
         self.session = sessionmaker()
@@ -139,7 +139,7 @@ class DBMS:
             return False, "", ""
 
         if not sqlalchemy_inspect(self.engine).has_table(
-                self.alembic_version_table.__tablename__
+            self.alembic_version_table.__tablename__
         ):
             return True, "No version table", self.latest_version
 
@@ -156,8 +156,9 @@ class DBMS:
         finally:
             ses.close()
 
-    def initialize(self, dsn, tablebaseclass, timeout=60,
-                   migration_check=True, create_tables=True):
+    def initialize(
+        self, dsn, tablebaseclass, timeout=60, migration_check=True, create_tables=True
+    ):
         if self.initialized:
             self.cleanup()
 
@@ -180,10 +181,7 @@ class DBMS:
             try:
                 tablebaseclass.metadata.create_all(engine)
             except Exception as e:
-                log.error(
-                    "Failed to create tables", error=e
-                )
-
+                log.error("Failed to create tables", error=e)
 
         self.initialized = True
 
@@ -194,6 +192,5 @@ class DBMS:
 
 
 dbms = DBMS(
-    schema_version=AlembicVersion.SCHEMA_VERSION,
-    alembic_version_table=AlembicVersion
+    schema_version=AlembicVersion.SCHEMA_VERSION, alembic_version_table=AlembicVersion
 )

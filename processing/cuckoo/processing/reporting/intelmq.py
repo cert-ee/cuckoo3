@@ -7,17 +7,15 @@ from cuckoo.common.intelmq import IntelMQEventMaker, IntelMQError
 
 from ..abtracts import Reporter
 
-class IntelMQ(Reporter):
 
+class IntelMQ(Reporter):
     @classmethod
     def enabled(cls):
         return cfg("intelmq.yaml", "reporting", "enabled", subpkg="processing")
 
     @classmethod
     def init_once(cls):
-        cls.api_url = cfg(
-            "intelmq.yaml", "reporting", "api_url", subpkg="processing"
-        )
+        cls.api_url = cfg("intelmq.yaml", "reporting", "api_url", subpkg="processing")
         cls.verify_tls = cfg(
             "intelmq.yaml", "reporting", "verify_tls", subpkg="processing"
         )
@@ -31,8 +29,7 @@ class IntelMQ(Reporter):
             "intelmq.yaml", "reporting", "feed_accuracy", subpkg="processing"
         )
         cls.event_desc = cfg(
-            "intelmq.yaml", "reporting", "event_description",
-            subpkg="processing"
+            "intelmq.yaml", "reporting", "event_description", subpkg="processing"
         )
 
         cls.domain_sl = DomainIntelMQ()
@@ -49,7 +46,6 @@ class IntelMQ(Reporter):
                 continue
 
             maker.add_dst_ip(ip)
-
 
     def _add_domains(self, maker):
         network = self.ctx.result.get("network", {})
@@ -79,15 +75,15 @@ class IntelMQ(Reporter):
                 target.md5, target.sha1, target.sha256, family=families[0]
             )
         else:
-            maker.add_malware_file(
-                target.md5, target.sha1, target.sha256
-            )
+            maker.add_malware_file(target.md5, target.sha1, target.sha256)
 
     def report_post_analysis(self):
         maker = IntelMQEventMaker(
-            self.ctx.analysis.id, self.ctx.task.id,
+            self.ctx.analysis.id,
+            self.ctx.task.id,
             webinterface_baseurl=self.web_baseurl,
-            feed_accuracy=self.feed_accuracy, event_description=self.event_desc
+            feed_accuracy=self.feed_accuracy,
+            event_description=self.event_desc,
         )
 
         self._add_ips(maker)

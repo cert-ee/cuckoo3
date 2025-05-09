@@ -8,13 +8,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cuckoo.common.result import (
-    retriever, ResultDoesNotExistError, InvalidResultDataError, Results
+    retriever,
+    ResultDoesNotExistError,
+    InvalidResultDataError,
+    Results,
 )
 from cuckoo.common.analyses import delete_analysis_disk, delete_analysis_db
 
 
 class Analysis(APIView):
-
     def get(self, request, analysis_id):
         try:
             analysis = retriever.get_analysis(
@@ -29,7 +31,6 @@ class Analysis(APIView):
 
 
 class Identification(APIView):
-
     def get(self, request, analysis_id):
         try:
             ident = retriever.get_analysis(
@@ -44,12 +45,9 @@ class Identification(APIView):
 
 
 class Pre(APIView):
-
     def get(self, request, analysis_id):
         try:
-            pre = retriever.get_analysis(
-                analysis_id, include=[Results.PRE]
-            ).pre
+            pre = retriever.get_analysis(analysis_id, include=[Results.PRE]).pre
         except ResultDoesNotExistError:
             return Response(status=404)
         except InvalidResultDataError as e:
@@ -60,14 +58,13 @@ class Pre(APIView):
 
 class CompositeRequest(serializers.Serializer):
     retrieve = serializers.ListField(
-        allow_empty=False, child=serializers.CharField(),
-        help_text="A list of one or more analysis information types to "
-                  "retrieve",
+        allow_empty=False,
+        child=serializers.CharField(),
+        help_text="A list of one or more analysis information types to retrieve",
     )
 
 
 class CompositeAnalysis(APIView):
-
     def post(self, request, analysis_id):
         serializer = CompositeRequest(data=request.data)
         if not serializer.is_valid():
@@ -86,20 +83,16 @@ class CompositeAnalysis(APIView):
 
 
 class SubmittedFile(APIView):
-
     def get(self, request, analysis_id):
         try:
-            result = retriever.get_analysis(
-                analysis_id, include=[Results.ANALYSIS]
-            )
+            result = retriever.get_analysis(analysis_id, include=[Results.ANALYSIS])
             analysis = result.analysis
             submitted_fp = result.submitted_file
         except ResultDoesNotExistError:
             return Response(status=404)
 
         return FileResponse(
-            submitted_fp, as_attachment=True,
-            filename=analysis.submitted.sha256
+            submitted_fp, as_attachment=True, filename=analysis.submitted.sha256
         )
 
 
@@ -108,6 +101,6 @@ class DeleteAnalysis(APIView):
         try:
             delete_analysis_db(analysis_id)
             delete_analysis_disk(analysis_id)
-        except (ResultDoesNotExistError):
+        except ResultDoesNotExistError:
             return Response(status=404)
         return Response(status=200)

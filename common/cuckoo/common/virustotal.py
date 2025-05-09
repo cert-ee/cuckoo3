@@ -8,22 +8,24 @@ import aiohttp
 import vt
 import vt.error
 
+
 class VirustotalError(Exception):
     pass
+
 
 _vt_api_key = ""
 
 MAX_VT_FILE_SIZE = 32 * 1024 * 1024
 
+
 def set_api_key(vt_api_key):
     global _vt_api_key
     _vt_api_key = vt_api_key
 
+
 def _make_results(avs, stats):
-    return {
-        "avs": avs,
-        "stats": stats
-    }
+    return {"avs": avs, "stats": stats}
+
 
 def _do_info_request(client, request_str):
     try:
@@ -40,6 +42,7 @@ def _do_info_request(client, request_str):
 
         raise VirustotalError(f"Virustotal request failed: {e.message}")
 
+
 def fileinfo_request(file_hash):
     with vt.Client(_vt_api_key) as client:
         result = _do_info_request(client, f"/files/{file_hash}")
@@ -47,9 +50,9 @@ def fileinfo_request(file_hash):
             return None
 
         return _make_results(
-            avs=result.last_analysis_results,
-            stats=result.last_analysis_stats
+            avs=result.last_analysis_results, stats=result.last_analysis_stats
         )
+
 
 def urlinfo_request(url):
     with vt.Client(_vt_api_key) as client:
@@ -58,9 +61,9 @@ def urlinfo_request(url):
             return None
 
         return _make_results(
-            avs=result.last_analysis_results,
-            stats=result.last_analysis_stats
+            avs=result.last_analysis_results, stats=result.last_analysis_stats
         )
+
 
 def submit_file(path):
     if Path(path).stat().st_size > MAX_VT_FILE_SIZE:
@@ -80,21 +83,18 @@ def submit_file(path):
                 elif e.code == "WrongCredentialsError":
                     raise VirustotalError("Invalid API key")
 
-                raise VirustotalError(
-                    f"Virustotal request failed: {e.message}")
+                raise VirustotalError(f"Virustotal request failed: {e.message}")
 
     return vt_submission.id
+
 
 def wait_completed(submission_id, timeout=300):
     startime = time.monotonic()
     with vt.Client(_vt_api_key) as client:
         while True:
             analysis = _do_info_request(client, f"/analyses/{submission_id}")
-            if analysis.status == 'completed':
-                return _make_results(
-                    avs=analysis.results,
-                    stats=analysis.stats
-                )
+            if analysis.status == "completed":
+                return _make_results(avs=analysis.results, stats=analysis.stats)
 
             if time.monotonic() - startime >= timeout:
                 return None

@@ -10,24 +10,24 @@ register_converter(converters.AnalysisId, "analysis_id")
 
 urlpatterns = [
     path(
-        "<analysis_id:analysis_id>/settings", views.Settings.as_view(),
+        "<analysis_id:analysis_id>/settings",
+        views.Settings.as_view(),
         name="Analyses/settings",
     ),
     path("<analysis_id:analysis_id>", views.Analysis.as_view()),
-    path(
-        "<analysis_id:analysis_id>/manualstatus",
-        views.ReadyForManual.as_view()
-    ),
+    path("<analysis_id:analysis_id>/manualstatus", views.ReadyForManual.as_view()),
     path(
         "<analysis_id:analysis_id>/submittedfile",
-        views.SubmittedFileDownload.as_view(), name="Analysis/submittedfile"
+        views.SubmittedFileDownload.as_view(),
+        name="Analysis/submittedfile",
     ),
     path(
         "<analysis_id:analysis_id>/task/",
-        include("cuckoo.web.uiapi.analyses.task.urls")
+        include("cuckoo.web.uiapi.analyses.task.urls"),
     ),
     path(
         "<analysis_id:analysis_id>/deleteanalysis",
-        views.DeleteAnalysis.as_view(), name="Analysis/deleteanalysis"
+        views.DeleteAnalysis.as_view(),
+        name="Analysis/deleteanalysis",
     ),
 ]

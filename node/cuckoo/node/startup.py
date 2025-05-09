@@ -16,19 +16,16 @@ from cuckoo.node.node import Node
 
 log = CuckooGlobalLogger(__name__)
 
+
 def start_taskrunner(nodectx):
     from cuckoo.node.taskrunner import TaskRunner
     from multiprocessing import Process
 
     sockpath = UnixSocketPaths.task_runner()
     if sockpath.exists():
-        raise StartupError(
-            f"Task runner socket path already exists: {sockpath}"
-        )
+        raise StartupError(f"Task runner socket path already exists: {sockpath}")
 
-    taskrunner = TaskRunner(
-        sockpath, cuckoocwd, loglevel=nodectx.loglevel
-    )
+    taskrunner = TaskRunner(sockpath, cuckoocwd, loglevel=nodectx.loglevel)
     runner_proc = Process(target=taskrunner.start)
 
     def _taskrunner_stopper():
@@ -44,9 +41,7 @@ def start_taskrunner(nodectx):
     MAXWAIT = 5
     while not os.path.exists(sockpath):
         if waited >= MAXWAIT:
-            raise StartupError(
-                f"Task runner was not started after {MAXWAIT} seconds."
-            )
+            raise StartupError(f"Task runner was not started after {MAXWAIT} seconds.")
 
         if not runner_proc.is_alive():
             raise StartupError("Task runner stopped unexpectedly")
@@ -63,9 +58,7 @@ def get_rooter_routes(nodectx):
         nodectx.routes = Routes(available=[])
         return
 
-    sock_path = Path(
-        config.cfg("cuckoo.yaml", "network_routing", "rooter_socket")
-    )
+    sock_path = Path(config.cfg("cuckoo.yaml", "network_routing", "rooter_socket"))
     if not sock_path.exists():
         raise StartupError(
             f"Network routing is enabled, but rooter socket path does not"
@@ -83,6 +76,7 @@ def get_rooter_routes(nodectx):
 
 def start_nodestatecontrol(nodectx, threaded=False):
     from cuckoo.node.control import NodeTaskController
+
     sockpath = UnixSocketPaths.node_state_controller()
     if sockpath.exists():
         raise StartupError(
@@ -99,6 +93,7 @@ def start_nodestatecontrol(nodectx, threaded=False):
         state_th.start()
     else:
         state_controller.start()
+
 
 def start_machinerymanager(nodectx):
     from cuckoo.common.machines import read_machines_dump
@@ -126,20 +121,15 @@ def start_machinerymanager(nodectx):
 
     sockpath = UnixSocketPaths.machinery_manager()
     if sockpath.exists():
-        raise StartupError(
-            f"Machinery manager socket path already exists: {sockpath}"
-        )
+        raise StartupError(f"Machinery manager socket path already exists: {sockpath}")
 
     manager = MachineryManager(sockpath, nodectx)
     nodectx.machinery_manager = manager
     shutdown.register_shutdown(manager.stop)
     shutdown.register_shutdown(manager.shutdown_all, order=999)
 
-
     try:
-        manager.load_machineries(
-            machinery_classes, previous_machinelist=machine_states
-        )
+        manager.load_machineries(machinery_classes, previous_machinelist=machine_states)
     except MachineryManagerError as e:
         raise StartupError(f"Machinery loading failure: {e}")
 
@@ -147,6 +137,7 @@ def start_machinerymanager(nodectx):
     # to ensure any machines started during shutdown is still stopped.
     manager_th = Thread(target=manager.start)
     manager_th.start()
+
 
 def start_resultserver(nodectx):
     from cuckoo.node.resultserver import ResultServer, servers
@@ -162,12 +153,13 @@ def start_resultserver(nodectx):
 
     ip = config.cfg("cuckoo", "resultserver", "listen_ip")
     port = config.cfg("cuckoo", "resultserver", "listen_port")
-    rs = ResultServer(
-        sockpath, cuckoocwd, ip, port, loglevel=nodectx.loglevel
-    )
+    rs = ResultServer(sockpath, cuckoocwd, ip, port, loglevel=nodectx.loglevel)
     log.debug(
-        "Starting resultserver.", listenip=ip, listenport=port,
-        sockpath=sockpath, cwd=cuckoocwd.root
+        "Starting resultserver.",
+        listenip=ip,
+        listenport=port,
+        sockpath=sockpath,
+        cwd=cuckoocwd.root,
     )
     rs_proc = Process(target=rs.start)
 
@@ -181,9 +173,7 @@ def start_resultserver(nodectx):
     MAXWAIT = 5
     while not sockpath.exists():
         if waited >= MAXWAIT:
-            raise StartupError(
-                f"Resultserver was not started after {MAXWAIT} seconds."
-            )
+            raise StartupError(f"Resultserver was not started after {MAXWAIT} seconds.")
 
         if not rs_proc.is_alive():
             raise StartupError("Resultserver stopped unexpectedly")
@@ -194,8 +184,8 @@ def start_resultserver(nodectx):
 
     servers.add(sockpath, ip, port)
 
-class NodeCtx:
 
+class NodeCtx:
     def __init__(self):
         self.node = None
         self.loglevel = None
@@ -205,6 +195,7 @@ class NodeCtx:
         self.zip_results = False
         self.rooter_sock = None
         self.is_resetting = False
+
 
 def start_local(stream_receiver, loglevel):
     ctx = NodeCtx()
@@ -221,6 +212,7 @@ def start_local(stream_receiver, loglevel):
     node.start()
     start_nodestatecontrol(ctx, threaded=True)
     return ctx
+
 
 def start_remote(loglevel, api_host="localhost", api_port=8090):
     from cuckoo.node.webapi import make_api_runner

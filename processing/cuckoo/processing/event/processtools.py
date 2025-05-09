@@ -3,38 +3,45 @@
 
 from pathlib import PureWindowsPath
 
+
 class UnknownProcessError(Exception):
     pass
+
 
 def normalize_wincommandline(commandline, image_path):
     if not image_path:
         return ""
 
-    return f"{PureWindowsPath(image_path).name} " \
-           f"{commandline_args(commandline)}"
+    return f"{PureWindowsPath(image_path).name} {commandline_args(commandline)}"
+
 
 def normalize_winimage(image_path):
     if not image_path:
         return ""
 
     path = image_path.lower()
-    if len(path) >= 7 and path[5] == ":" and path[6] == "\\" \
-            and path.startswith("\\??\\"):
+    if (
+        len(path) >= 7
+        and path[5] == ":"
+        and path[6] == "\\"
+        and path.startswith("\\??\\")
+    ):
         return path[4:]
 
     return path
+
 
 def commandline_args(commandline):
     if not commandline:
         return ""
 
-    if commandline[0] in ("\"", "'"):
+    if commandline[0] in ('"', "'"):
         end_quote = commandline[0]
         end_quote_index = commandline[1:].find(end_quote)
         if end_quote_index == -1:
             return ""
         else:
-            return commandline[end_quote_index + 2:].lstrip()
+            return commandline[end_quote_index + 2 :].lstrip()
 
     for char_index in range(len(commandline)):
         if commandline[char_index] in (" ", "\t", "\r", "\n"):
@@ -42,19 +49,29 @@ def commandline_args(commandline):
 
     return ""
 
+
 def is_windowserr_svc(process):
-    return process.commandline == \
-           "C:\\Windows\\System32\\svchost.exe -k WerSvcGroup"
+    return process.commandline == "C:\\Windows\\System32\\svchost.exe -k WerSvcGroup"
+
 
 class ProcessStates:
     RUNNING = "running"
     TERMINATED = "terminated"
 
-class Process:
 
-    def __init__(self, pid, ppid, procid, image, commandline, start_ts,
-                 state=ProcessStates.RUNNING, parent_procid=None,
-                 tracked=True):
+class Process:
+    def __init__(
+        self,
+        pid,
+        ppid,
+        procid,
+        image,
+        commandline,
+        start_ts,
+        state=ProcessStates.RUNNING,
+        parent_procid=None,
+        tracked=True,
+    ):
         self.pid = pid
         self.ppid = ppid
         self.procid = procid
@@ -96,24 +113,24 @@ class Process:
             "injected": self.injected,
             "state": self.state,
             "start_ts": self.start_ts,
-            "end_ts": self.end_ts
+            "end_ts": self.end_ts,
         }
 
     def __str__(self):
-        return f"<pid={self.pid}, ppid={self.ppid}, procid={self.procid}, " \
-               f"parent_procid={self.parent_procid}, image={self.image}, " \
-               f"state={self.state}>, tracked={self.tracked}"
+        return (
+            f"<pid={self.pid}, ppid={self.ppid}, procid={self.procid}, "
+            f"parent_procid={self.parent_procid}, image={self.image}, "
+            f"state={self.state}>, tracked={self.tracked}"
+        )
 
 
 class ProcessTracker:
-
     def __init__(self):
         self._pid_procid = {}
         self._pid_runningproc = {}
         self._procid_proc = {}
 
-    def new_process(self, start_ts, pid, ppid, image, commandline,
-                    tracked=True):
+    def new_process(self, start_ts, pid, ppid, image, commandline, tracked=True):
         parent = self._pid_runningproc.get(ppid)
 
         # Set the parent to None/unknown if its parent is not known to us as
@@ -126,9 +143,15 @@ class ProcessTracker:
 
         procid = len(self._procid_proc) + 1
         process = Process(
-            pid, ppid, procid, image, commandline, start_ts,
-            parent_procid=parent_procid, state=ProcessStates.RUNNING,
-            tracked=tracked
+            pid,
+            ppid,
+            procid,
+            image,
+            commandline,
+            start_ts,
+            parent_procid=parent_procid,
+            state=ProcessStates.RUNNING,
+            tracked=tracked,
         )
 
         self._pid_procid[pid] = procid
@@ -152,9 +175,7 @@ class ProcessTracker:
 
     def lookup_process(self, procid):
         if procid not in self._procid_proc:
-            raise UnknownProcessError(
-                f"No process with procid {procid}"
-            )
+            raise UnknownProcessError(f"No process with procid {procid}")
 
         return self._procid_proc[procid]
 
@@ -175,8 +196,7 @@ class ProcessTracker:
         proc_id = self.lookup_procid(pid)
         if not proc_id:
             raise UnknownProcessError(
-                f"Cannot set process with pid {pid} to tracked. "
-                f"Pid is unknown."
+                f"Cannot set process with pid {pid} to tracked. Pid is unknown."
             )
 
         process = self.lookup_process(proc_id)
@@ -205,5 +225,5 @@ class ProcessTracker:
         return {
             "truncated": truncated,
             "count": process_count,
-            "process_list": proclist
+            "process_list": proclist,
         }

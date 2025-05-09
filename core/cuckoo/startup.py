@@ -23,7 +23,6 @@ on Cuckoo shutdown"""
 
 
 class CuckooCtx:
-
     def __init__(self):
         self.nodes = NodesTracker(self)
         self.loglevel = logging.DEBUG
@@ -34,6 +33,7 @@ class CuckooCtx:
 
 def start_processing_handler(cuckooctx):
     from .runprocessing import ProcessingWorkerHandler
+
     cuckooctx.processing_handler = ProcessingWorkerHandler(cuckooctx)
     cuckooctx.processing_handler.daemon = True
     shutdown.register_shutdown(cuckooctx.processing_handler.stop)
@@ -43,7 +43,7 @@ def start_processing_handler(cuckooctx):
             "cuckoo.yaml", "processing", "worker_amount", "identification"
         ),
         pre=config.cfg("cuckoo.yaml", "processing", "worker_amount", "pre"),
-        post=config.cfg("cuckoo.yaml", "processing", "worker_amount", "post")
+        post=config.cfg("cuckoo.yaml", "processing", "worker_amount", "post"),
     )
 
     cuckooctx.processing_handler.start()
@@ -53,15 +53,14 @@ def start_processing_handler(cuckooctx):
             break
 
         if cuckooctx.processing_handler.has_failed_workers():
-            raise StartupError(
-                "One or more processing workers failed to start"
-            )
+            raise StartupError("One or more processing workers failed to start")
 
         time.sleep(1)
 
 
 def start_statecontroller(cuckooctx):
     from .control import StateController
+
     sockpath = UnixSocketPaths.state_controller()
     if sockpath.exists():
         raise StartupError(
@@ -85,6 +84,7 @@ def start_statecontroller(cuckooctx):
 
 def make_scheduler(cuckooctx, task_queue):
     from .scheduler import Scheduler
+
     sched = Scheduler(cuckooctx, task_queue)
 
     # Add scheduler to context for usage by other components
@@ -113,6 +113,7 @@ def import_vmcloak_vms(machinery_name, vms_path, machine_names=[]):
 def delete_machines(machinery_name, machine_names):
     from cuckoo.machineries.configtools import delete_machines
     from cuckoo.machineries.errors import MachineryError
+
     try:
         return delete_machines(machinery_name, machine_names)
     except MachineryError as e:
@@ -131,6 +132,7 @@ def add_machine(machinery_name, name, machine_dict):
 
 def start_importcontroller(cuckooctx):
     from .control import ImportController
+
     sockpath = Paths.unix_socket("importcontroller.sock")
     if os.path.exists(sockpath):
         raise StartupError(
@@ -148,10 +150,13 @@ def start_importcontroller(cuckooctx):
 
 def start_importmode(loglevel):
     from multiprocessing import set_start_method
+
     set_start_method("spawn")
 
     from cuckoo.common.startup import (
-        init_database, load_configurations, init_global_logging
+        init_database,
+        load_configurations,
+        init_global_logging,
     )
 
     ctx = CuckooCtx()
@@ -176,6 +181,7 @@ def start_localnode(cuckooctx):
     from cuckoo.node.startup import start_local
 
     from .nodeclient import LocalStreamReceiver, LocalNodeClient
+
     stream_receiver = LocalStreamReceiver()
     nodectx = start_local(stream_receiver, cuckooctx.loglevel)
 
@@ -190,13 +196,9 @@ def start_resultretriever(cuckooctx, nodeapi_clients):
 
     sockpath = UnixSocketPaths.result_retriever()
     if sockpath.exists():
-        raise StartupError(
-            f"Result retriever socket path already exists: {sockpath}"
-        )
+        raise StartupError(f"Result retriever socket path already exists: {sockpath}")
 
-    retriever = ResultRetriever(
-        sockpath, cuckoocwd, cuckooctx.loglevel
-    )
+    retriever = ResultRetriever(sockpath, cuckoocwd, cuckooctx.loglevel)
 
     for client in nodeapi_clients:
         retriever.add_node(client.name, client)
@@ -226,11 +228,10 @@ def start_resultretriever(cuckooctx, nodeapi_clients):
 
 def make_node_api_clients():
     from cuckoo.common.clients import NodeAPIClient, ClientError
+
     node_clients = []
     for name, values in config.cfg("distributed.yaml", "remote_nodes").items():
-        client = NodeAPIClient(
-            values["api_url"], values["api_key"], node_name=name
-        )
+        client = NodeAPIClient(values["api_url"], values["api_key"], node_name=name)
 
         log.info("Loading remote node client", node=name, url=client.api_url)
         try:
@@ -262,13 +263,14 @@ def make_remote_node_clients(cuckooctx, node_api_clients):
             if state != NodeStates.WAITING_MAIN:
                 log.warning(
                     "Remote node does not have expected state. Requesting "
-                    "node to reset itself", node=api.name, state=state,
-                    expected_state=NodeStates.WAITING_MAIN)
+                    "node to reset itself",
+                    node=api.name,
+                    state=state,
+                    expected_state=NodeStates.WAITING_MAIN,
+                )
                 api.reset()
         except ClientError as e:
-            raise StartupError(
-                f"Failure during node state retrieval or reset. {e}"
-            )
+            raise StartupError(f"Failure during node state retrieval or reset. {e}")
 
         try:
             remote_node.init()
@@ -294,10 +296,13 @@ def make_task_queue():
 
 def start_cuckoo_controller(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
+
     set_start_method("spawn")
 
     from cuckoo.common.startup import (
-        init_database, load_configurations, init_global_logging
+        init_database,
+        load_configurations,
+        init_global_logging,
     )
 
     # Initialize globing logging to cuckoo.log
@@ -331,9 +336,7 @@ def start_cuckoo_controller(loglevel, cancel_abandoned=False):
 
     make_scheduler(cuckooctx, task_queue)
 
-    remote_nodes, loop_wrapper = make_remote_node_clients(
-        cuckooctx, api_clients
-    )
+    remote_nodes, loop_wrapper = make_remote_node_clients(cuckooctx, api_clients)
 
     threading.Thread(target=loop_wrapper.start).start()
 
@@ -358,34 +361,35 @@ def _init_elasticsearch_pre_startup():
     from cuckoo.common.startup import init_elasticsearch
 
     hosts = config.cfg("elasticsearch.yaml", "hosts", subpkg="processing")
-    indices = config.cfg(
-        "elasticsearch.yaml", "indices", "names", subpkg="processing"
-    )
+    indices = config.cfg("elasticsearch.yaml", "indices", "names", subpkg="processing")
     timeout = config.cfg("elasticsearch.yaml", "timeout", subpkg="processing")
     max_result = config.cfg(
         "elasticsearch.yaml", "max_result_window", subpkg="processing"
     )
-    user = config.cfg(
-        "elasticsearch.yaml", "user", subpkg="processing"
-    )
-    password = config.cfg(
-        "elasticsearch.yaml", "password", subpkg="processing"
-    )
-    ca_certs = config.cfg(
-        "elasticsearch.yaml", "ca_certs", subpkg="processing"
-    )
+    user = config.cfg("elasticsearch.yaml", "user", subpkg="processing")
+    password = config.cfg("elasticsearch.yaml", "password", subpkg="processing")
+    ca_certs = config.cfg("elasticsearch.yaml", "ca_certs", subpkg="processing")
     init_elasticsearch(
-        hosts, indices, timeout=timeout, max_result_window=max_result,
-        create_missing_indices=True, user=user, password=password, ca_certs=ca_certs
+        hosts,
+        indices,
+        timeout=timeout,
+        max_result_window=max_result,
+        create_missing_indices=True,
+        user=user,
+        password=password,
+        ca_certs=ca_certs,
     )
 
 
 def start_cuckoo(loglevel, cancel_abandoned=False):
     from multiprocessing import set_start_method
+
     set_start_method("spawn")
 
     from cuckoo.common.startup import (
-        init_database, load_configurations, init_global_logging
+        init_database,
+        load_configurations,
+        init_global_logging,
     )
 
     # Initialize globing logging to cuckoo.log

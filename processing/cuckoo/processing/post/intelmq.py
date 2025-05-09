@@ -7,16 +7,14 @@ from cuckoo.common.config import cfg
 from ..abtracts import Processor
 from ..errors import DisablePluginError
 
-class IntelMQInfoGather(Processor):
 
+class IntelMQInfoGather(Processor):
     CATEGORY = ["file", "url"]
     KEY = "intelmq"
 
     @classmethod
     def enabled(cls):
-        return cfg(
-            "intelmq.yaml", "processing", "enabled", subpkg="processing"
-        )
+        return cfg("intelmq.yaml", "processing", "enabled", subpkg="processing")
 
     @classmethod
     def init_once(cls):
@@ -24,30 +22,25 @@ class IntelMQInfoGather(Processor):
         index_name = cfg(
             "intelmq.yaml", "processing", "index_name", subpkg="processing"
         )
-        limit = cfg(
-            "intelmq.yaml", "processing", "event_limit",
-            subpkg="processing"
-        )
-        link_url = cfg(
-            "intelmq.yaml", "processing", "link_url", subpkg="processing"
-        )
+        limit = cfg("intelmq.yaml", "processing", "event_limit", subpkg="processing")
+        link_url = cfg("intelmq.yaml", "processing", "link_url", subpkg="processing")
 
         cls.query_limit = cfg(
             "intelmq.yaml", "processing", "query_limit", subpkg="processing"
         )
 
         cls.intelmq = IntelMQElastic(
-            elastic_hosts=hosts, index_name=index_name, event_limit=limit,
-            link_url=link_url
+            elastic_hosts=hosts,
+            index_name=index_name,
+            event_limit=limit,
+            link_url=link_url,
         )
 
     def init(self):
         try:
             self.intelmq.verify()
         except IntelMQError as e:
-            raise DisablePluginError(
-                f"IntelMQ Elasticsearch verification failed: {e}"
-            )
+            raise DisablePluginError(f"IntelMQ Elasticsearch verification failed: {e}")
 
     def _search_ips(self, query_limit=10):
         network = self.ctx.result.get("network", {})

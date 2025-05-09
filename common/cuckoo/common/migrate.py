@@ -8,21 +8,27 @@ from pathlib import Path
 from cuckoo.common import packages
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import (
-    cuckoocwd, File, safe_copyfile, delete_file, Paths, move_file
+    cuckoocwd,
+    File,
+    safe_copyfile,
+    delete_file,
+    Paths,
+    move_file,
 )
 
 log = CuckooGlobalLogger("migration")
 
+
 class MigrationError(Exception):
     pass
 
-class DBMigrator:
 
+class DBMigrator:
     MIGRATION_DIRNAME = "dbmigrations"
     DBNAMES_PACKAGE = {
         "cuckoodb": "cuckoo.common",
         "safelistdb": "cuckoo.common",
-        "taskqueuedb": "cuckoo"
+        "taskqueuedb": "cuckoo",
     }
 
     @classmethod
@@ -43,15 +49,16 @@ class DBMigrator:
             )
 
         from subprocess import run, CalledProcessError
+
         try:
             run(
-                ["alembic", "-x", f"cwd={str(cuckoocwd.root)}",
-                 "upgrade", revision], cwd=migration_dir, check=True
+                ["alembic", "-x", f"cwd={str(cuckoocwd.root)}", "upgrade", revision],
+                cwd=migration_dir,
+                check=True,
             )
         except CalledProcessError as e:
             raise MigrationError(
-                f"Error during migration of '{name}'. "
-                f"Alembic exit code: {e.returncode}"
+                f"Error during migration of '{name}'. Alembic exit code: {e.returncode}"
             )
 
     @classmethod
@@ -64,14 +71,11 @@ class DBMigrator:
                 errs.append(str(e))
 
         if errs:
-            raise MigrationError(
-                f"One or more migrations failed. {', '.join(errs)}"
-            )
+            raise MigrationError(f"One or more migrations failed. {', '.join(errs)}")
+
 
 class _CWDFile:
-
     class States:
-
         NEW = "new"
         UPDATED = "updated"
         DELETED = "deleted"
@@ -103,8 +107,8 @@ class _CWDFile:
     def __str__(self):
         return f"{self.state},{self.relative_path},{self.latest_version or ''}"
 
-class CWDMigrateFile:
 
+class CWDMigrateFile:
     IGNORE_FILES = [".empty", ".gitkeep"]
 
     def __init__(self, filepath):
@@ -166,9 +170,7 @@ class CWDMigrateFile:
                 cwdfile = self.cwdfiles.get(relpath_file)
                 if cwdfile:
                     if not cwdfile.is_latest_version(f.sha1):
-                        cwdfile.update(
-                            state=_CWDFile.States.UPDATED, filehash=f.sha1
-                        )
+                        cwdfile.update(state=_CWDFile.States.UPDATED, filehash=f.sha1)
                 else:
                     cwdfile = self.cwdfiles.setdefault(
                         relpath_file, _CWDFile(relative_path=relpath_file)
@@ -176,8 +178,9 @@ class CWDMigrateFile:
                     cwdfile.update(state=_CWDFile.States.NEW, filehash=f.sha1)
 
     def write(self, comment=""):
-        changed = [f"{cwdfile}\n" for cwdfile in self.cwdfiles.values()
-                   if cwdfile.changed]
+        changed = [
+            f"{cwdfile}\n" for cwdfile in self.cwdfiles.values() if cwdfile.changed
+        ]
         if not changed:
             return
 
@@ -188,8 +191,8 @@ class CWDMigrateFile:
 
             fp.writelines(changed)
 
-class _MigratableFile:
 
+class _MigratableFile:
     DELETABLE_EXTENSION = ".old"
 
     def __init__(self, cwdpath, pkgpath, cwdfile, unknown_hash=False):
@@ -200,8 +203,7 @@ class _MigratableFile:
         self.unknown_hash = unknown_hash
 
     def do_migrate(self, remove_deleted=False):
-        if self.cwdfile.state in (_CWDFile.States.NEW,
-                                  _CWDFile.States.UPDATED):
+        if self.cwdfile.state in (_CWDFile.States.NEW, _CWDFile.States.UPDATED):
             safe_copyfile(self.pkgpath, self.cwdpath, overwrite=True)
             log.info("Updated file to latest version", file=self.cwdpath)
         elif self.cwdfile.state == _CWDFile.States.DELETED:
@@ -214,12 +216,11 @@ class _MigratableFile:
                 )
                 self.cwdpath.rename(newpath)
                 log.info(
-                    "Renamed unused from", original_name=self.cwdpath,
-                    renamed=newpath
+                    "Renamed unused from", original_name=self.cwdpath, renamed=newpath
                 )
 
-class CWDFileMigrator:
 
+class CWDFileMigrator:
     HASHFILE_NAME = "cwdmigrate.txt"
 
     @classmethod
@@ -231,9 +232,7 @@ class CWDFileMigrator:
 
             log.info("Updating CWD file hashes for package", package=fullname)
             data_path = packages.get_data_dir(package)
-            migratefile = CWDMigrateFile(
-                os.path.join(data_path, cls.HASHFILE_NAME)
-            )
+            migratefile = CWDMigrateFile(os.path.join(data_path, cls.HASHFILE_NAME))
             migratefile.load()
             migratefile.update_from(cwdfiles_path)
             migratefile.write(comment)
@@ -246,8 +245,10 @@ class CWDFileMigrator:
             return None
 
         return _MigratableFile(
-            cwdpath=cwdpath, pkgpath=pkgpath, cwdfile=cwdfile,
-            unknown_hash=not cwdfile.is_known_hash(f.sha1)
+            cwdpath=cwdpath,
+            pkgpath=pkgpath,
+            cwdfile=cwdfile,
+            unknown_hash=not cwdfile.is_known_hash(f.sha1),
         )
 
     @classmethod
@@ -255,9 +256,7 @@ class CWDFileMigrator:
         if not cwdpath.exists():
             return None
 
-        return _MigratableFile(
-            cwdpath=cwdpath, pkgpath=pkgpath, cwdfile=cwdfile
-        )
+        return _MigratableFile(cwdpath=cwdpath, pkgpath=pkgpath, cwdfile=cwdfile)
 
     @classmethod
     def find_migratable_files(cls):
@@ -270,9 +269,7 @@ class CWDFileMigrator:
                 continue
 
             data_path = packages.get_data_dir(package)
-            migratefile = CWDMigrateFile(
-                os.path.join(data_path, cls.HASHFILE_NAME)
-            )
+            migratefile = CWDMigrateFile(os.path.join(data_path, cls.HASHFILE_NAME))
             # Read state, file, and hashes from the cwd migrations txt file.
             # This is used to determine if a file should be updated.
             migratefile.load()
@@ -281,19 +278,16 @@ class CWDFileMigrator:
                 pkgpath = Path(cwdfiles_path, relpath)
                 cwdpath = cuckoocwd.root.joinpath(relpath)
                 migratable = None
-                if cwdfile.state in (_CWDFile.States.NEW,
-                                     _CWDFile.States.UPDATED):
-                    migratable = cls._state_new_modified(
-                        cwdpath, pkgpath, cwdfile
-                    )
+                if cwdfile.state in (_CWDFile.States.NEW, _CWDFile.States.UPDATED):
+                    migratable = cls._state_new_modified(cwdpath, pkgpath, cwdfile)
                 elif cwdfile.state == _CWDFile.States.DELETED:
                     migratable = cls._state_deleted(cwdpath, pkgpath, cwdfile)
 
                 if migratable:
                     yield migratable
 
-class ConfigMigrator:
 
+class ConfigMigrator:
     # A list of tuples that must be (full package name, subpkg name/None)
     MIGRATABLE_PACKAGES = [
         ("cuckoo", None),
@@ -303,20 +297,17 @@ class ConfigMigrator:
         ("cuckoo.web", "web"),
     ]
 
-    _MANUAL_MSG = "Manual migration required. Please backup the config file " \
-                  "and delete the original. After this, " \
-                  "run 'cuckoo createcwd --regen-configs'"
+    _MANUAL_MSG = (
+        "Manual migration required. Please backup the config file "
+        "and delete the original. After this, "
+        "run 'cuckoo createcwd --regen-configs'"
+    )
 
     @classmethod
-    def _overwrite_config(cls, confname, config_dict, conf_path,
-                          fullpkgname, subpkg):
-        from cuckoo.common.config import (
-            render_config_from_dict, ConfigurationError
-        )
+    def _overwrite_config(cls, confname, config_dict, conf_path, fullpkgname, subpkg):
+        from cuckoo.common.config import render_config_from_dict, ConfigurationError
 
-        templates = packages.get_conftemplates(
-            packages.get_module(fullpkgname)
-        )
+        templates = packages.get_conftemplates(packages.get_module(fullpkgname))
 
         # First render the config before overwriting it. If it successfully
         # renders, we overwrite the actual config file.
@@ -343,16 +334,13 @@ class ConfigMigrator:
     def migrate(cls, fullpkgname, subpkg):
         from cuckoo.common.config import read_config_raw
         from cuckoo.common.storage import ConfigVersions
-        migrations = packages.get_conf_migrations(
-            packages.get_module(fullpkgname)
-        )
+
+        migrations = packages.get_conf_migrations(packages.get_module(fullpkgname))
         if not migrations:
             return
 
         pkg_version = packages.get_package_version(fullpkgname)
-        confversions = ConfigVersions(
-            Paths.config_versionfile(subpkg), fullpkgname
-        )
+        confversions = ConfigVersions(Paths.config_versionfile(subpkg), fullpkgname)
         confversions.load()
         for confname, migrators in migrations.items():
             try:
@@ -375,9 +363,7 @@ class ConfigMigrator:
             confpath = Paths.config(confname, subpkg=subpkg)
             outdated_conf = read_config_raw(confpath)
             curr_migrate_version = curr_version
-            log.info(
-                "Migration needed for", conf=confpath, version=curr_version
-            )
+            log.info("Migration needed for", conf=confpath, version=curr_version)
             while True:
                 migrator_version = migrators.get(curr_migrate_version)
                 if not migrator_version:
@@ -385,10 +371,11 @@ class ConfigMigrator:
 
                 version_migrator, success_version = migrator_version
                 log.info(
-                    "Migrating file", confname=confname,
+                    "Migrating file",
+                    confname=confname,
                     from_version=curr_migrate_version,
                     to_version=success_version,
-                    change_description=version_migrator.__doc__
+                    change_description=version_migrator.__doc__,
                 )
                 try:
                     version_migrator(outdated_conf)
@@ -402,8 +389,11 @@ class ConfigMigrator:
 
             if curr_version != curr_migrate_version:
                 cls._overwrite_config(
-                    confname=confname, config_dict=outdated_conf,
-                    conf_path=confpath, fullpkgname=fullpkgname, subpkg=subpkg
+                    confname=confname,
+                    config_dict=outdated_conf,
+                    conf_path=confpath,
+                    fullpkgname=fullpkgname,
+                    subpkg=subpkg,
                 )
                 confversions.update_version(confname, pkg_version)
                 confversions.write()

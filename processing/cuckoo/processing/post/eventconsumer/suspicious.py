@@ -3,13 +3,11 @@
 
 from cuckoo.processing.abtracts import EventConsumer
 from cuckoo.processing.event.events import Kinds, SuspiciousEvents
-from cuckoo.processing.event.processtools import (
-    is_windowserr_svc, UnknownProcessError
-)
+from cuckoo.processing.event.processtools import is_windowserr_svc, UnknownProcessError
 from cuckoo.processing.signatures.signature import Scores, IOC
 
-class SuspiciousEventScoring(EventConsumer):
 
+class SuspiciousEventScoring(EventConsumer):
     event_types = (Kinds.SUSPICIOUS_EVENT,)
 
     event_handler = {}
@@ -23,19 +21,14 @@ class SuspiciousEventScoring(EventConsumer):
             SuspiciousEvents.DELETES_ITSELF: self._handle_deletesself,
             SuspiciousEvents.LOADS_DROPPED_DLL: self._handle_loaddll,
             SuspiciousEvents.EXECUTES_DROPPED_EXE: self._handle_execute_exe,
-            SuspiciousEvents.NTCREATEPROCESS_OTHER_PARENT_PROCESS:
-                self._handle_otherparent,
-            SuspiciousEvents.NTCREATEPROCESSEX_OTHER_PARENT_PROCESS:
-                self._handle_otherparent,
-            SuspiciousEvents.NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS:
-                self._handle_otherparent,
+            SuspiciousEvents.NTCREATEPROCESS_OTHER_PARENT_PROCESS: self._handle_otherparent,
+            SuspiciousEvents.NTCREATEPROCESSEX_OTHER_PARENT_PROCESS: self._handle_otherparent,
+            SuspiciousEvents.NTCREATEUSERPROCESS_OTHER_PARENT_PROCESS: self._handle_otherparent,
             SuspiciousEvents.SETWINDOWSHOOKEX: self._handle_sethook,
             SuspiciousEvents.SETWINDOWSHOOKAW: self._handle_sethook,
             SuspiciousEvents.ENUMERATES_PROCESSES: self._handle_processenum,
-            SuspiciousEvents.NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER:
-                self._handle_hidefromdebugger,
-            SuspiciousEvents.NTCREATETHREADEX_HIDE_FROM_DEBUGGER:
-                self._handle_hidefromdebugger,
+            SuspiciousEvents.NTSETINFORMATIONTHREAD_HIDE_FROM_DEBUGGER: self._handle_hidefromdebugger,
+            SuspiciousEvents.NTCREATETHREADEX_HIDE_FROM_DEBUGGER: self._handle_hidefromdebugger,
             SuspiciousEvents.LOADSDRIVER: self._handle_loaddriver,
             SuspiciousEvents.WRITEPROCESSMEMORY: self._handle_writeprocmem,
         }
@@ -44,8 +37,12 @@ class SuspiciousEventScoring(EventConsumer):
         iocs = [{"path": process.image}]
 
         return (
-            "deletes_itself", "Process deletes its own binary",
-            Scores.SUSPICIOUS, iocs, ["T1070.004"], ["evasion"]
+            "deletes_itself",
+            "Process deletes its own binary",
+            Scores.SUSPICIOUS,
+            iocs,
+            ["T1070.004"],
+            ["evasion"],
         )
 
     def _handle_loaddll(self, event, process):
@@ -54,8 +51,12 @@ class SuspiciousEventScoring(EventConsumer):
             ioc["path"] = event.args[0]
 
         return (
-            "loads_dropped_dll", "Loads a dropped DLL", Scores.SUSPICIOUS,
-            [ioc], [], []
+            "loads_dropped_dll",
+            "Loads a dropped DLL",
+            Scores.SUSPICIOUS,
+            [ioc],
+            [],
+            [],
         )
 
     def _handle_execute_exe(self, event, process):
@@ -64,27 +65,28 @@ class SuspiciousEventScoring(EventConsumer):
             ioc["path"] = event.args[0]
 
         return (
-            "executes_dropped_exe", "Executes a dropped executable file",
-            Scores.LIKELY_MALICIOUS, [ioc], [], []
+            "executes_dropped_exe",
+            "Executes a dropped executable file",
+            Scores.LIKELY_MALICIOUS,
+            [ioc],
+            [],
+            [],
         )
 
     def _handle_otherparent(self, event, process):
         # Ignore this event if the process that causes it is the Windows
         # error reporting service. It starts Werfault with the crashing
         # process as the parent.
-        if self.taskctx.machine.platform == "windows" \
-                and is_windowserr_svc(process):
+        if self.taskctx.machine.platform == "windows" and is_windowserr_svc(process):
             return None
 
         ioc = {}
         if len(event.args):
             try:
-                parent_proc = self.taskctx.process_tracker.process_by_pid(
-                    event.args[0]
-                )
+                parent_proc = self.taskctx.process_tracker.process_by_pid(event.args[0])
                 ioc = {
                     "fake_parent_process": parent_proc.process_name,
-                    "fake_parent_process_id": parent_proc.procid
+                    "fake_parent_process_id": parent_proc.procid,
                 }
             except UnknownProcessError:
                 pass
@@ -92,61 +94,78 @@ class SuspiciousEventScoring(EventConsumer):
         return (
             "process_other_parent",
             "Creates process with another process as the parent",
-            Scores.KNOWN_BAD, [ioc], ["T1134.004"], ["evasion"]
+            Scores.KNOWN_BAD,
+            [ioc],
+            ["T1134.004"],
+            ["evasion"],
         )
 
     def _handle_sethook(self, event, process):
         return (
-            "creates_event_hook", "Creates an event hook", Scores.SUSPICIOUS,
-            [], ["T1056.004"], []
+            "creates_event_hook",
+            "Creates an event hook",
+            Scores.SUSPICIOUS,
+            [],
+            ["T1056.004"],
+            [],
         )
 
     def _handle_processenum(self, event, process):
         return (
-            "enumerates_processes", "Enumerates existing processes",
-            Scores.SUSPICIOUS, [], ["T1057"], []
+            "enumerates_processes",
+            "Enumerates existing processes",
+            Scores.SUSPICIOUS,
+            [],
+            ["T1057"],
+            [],
         )
 
     def _handle_loaddriver(self, event, process):
-        return (
-            "loads_driver", "Loads a driver", Scores.SUSPICIOUS, [], [], []
-        )
+        return ("loads_driver", "Loads a driver", Scores.SUSPICIOUS, [], [], [])
 
     def _handle_hidefromdebugger(self, event, process):
         return (
             "thread_hidefromdebugger",
             "Creates or hides an existing thread from debuggers",
-            Scores.SUSPICIOUS, [], ["T1562.001"], ["evasion"]
+            Scores.SUSPICIOUS,
+            [],
+            ["T1562.001"],
+            ["evasion"],
         )
 
     def _handle_writeprocmem(self, event, process):
         ioc = {}
         if len(event.args):
             try:
-                target_proc = self.taskctx.process_tracker.process_by_pid(
-                    event.args[0]
-                )
+                target_proc = self.taskctx.process_tracker.process_by_pid(event.args[0])
 
                 if target_proc.procid == process.procid:
                     return None
 
                 ioc = {
                     "target_process": target_proc.process_name,
-                    "target_process_id": target_proc.procid
+                    "target_process_id": target_proc.procid,
                 }
             except UnknownProcessError:
                 pass
 
         return (
-            "wrote_proc_memory", "Wrote to the memory of another process",
-            Scores.INFORMATIONAL, [ioc], [], []
+            "wrote_proc_memory",
+            "Wrote to the memory of another process",
+            Scores.INFORMATIONAL,
+            [ioc],
+            [],
+            [],
         )
 
     def _handle_default(self, event, process):
         return (
             f"susevent_{event.name.lower()}",
             f"Suspicious behavior detected: {event.name}",
-            Scores.INFORMATIONAL, [], [], []
+            Scores.INFORMATIONAL,
+            [],
+            [],
+            [],
         )
 
     def use_event(self, event):
@@ -166,17 +185,19 @@ class SuspiciousEventScoring(EventConsumer):
 
         # Add extra process name and id field to each IoC
         if not iocs:
-            iocs = [{"process": process.process_name,
-                     "process_id": process.procid}]
+            iocs = [{"process": process.process_name, "process_id": process.procid}]
         else:
             for ioc in iocs:
-                ioc.update({
-                    "process": process.process_name,
-                    "process_id": process.procid
-                })
+                ioc.update(
+                    {"process": process.process_name, "process_id": process.procid}
+                )
 
         self.taskctx.signature_tracker.add_signature(
-            name=signame, short_description=short_desc,
-            description=event.description, ttps=ttps, tags=tags,
-            score=score, iocs=[IOC(**ioc) for ioc in iocs]
+            name=signame,
+            short_description=short_desc,
+            description=event.description,
+            ttps=ttps,
+            tags=tags,
+            score=score,
+            iocs=[IOC(**ioc) for ioc in iocs],
         )

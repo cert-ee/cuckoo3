@@ -16,11 +16,12 @@ _teardown_lock = Lock()
 
 _original_handlers = {
     signal.SIGINT: signal.getsignal(signal.SIGINT),
-    signal.SIGTERM: signal.getsignal(signal.SIGINT)
+    signal.SIGTERM: signal.getsignal(signal.SIGINT),
 }
 
 _call_original = False
 _currently_teardown = None
+
 
 def set_call_original_handlers(call_original):
     """Set call original to false or true. Causes the shutdown handler
@@ -29,6 +30,7 @@ def set_call_original_handlers(call_original):
     are called."""
     global _call_original
     _call_original = call_original
+
 
 def register_shutdown(stop_method, order=10):
     """Add a method that stops or cleans up a component to the shutdown method
@@ -40,8 +42,8 @@ def register_shutdown(stop_method, order=10):
     """
     _shutdown_methods.append((stop_method, order))
 
-def call_registered_shutdowns():
 
+def call_registered_shutdowns():
     # Acquire and never release lock to prevent registered shutdowns
     # from being called multiple times.
     if not _teardown_lock.acquire(blocking=False):
@@ -58,13 +60,14 @@ def call_registered_shutdowns():
             shutmethod()
         except Exception as e:
             log.exception(
-                "Error while calling shutdown method",
-                error=e, method=shutmethod
+                "Error while calling shutdown method", error=e, method=shutmethod
             )
 
         _currently_teardown = None
 
+
 _debugprint_lock = threading.Lock()
+
 
 def _print_shutdown_debuginfo():
     if not _debugprint_lock.acquire(blocking=False):
@@ -72,6 +75,7 @@ def _print_shutdown_debuginfo():
 
     try:
         import sys
+
         frames = sys._current_frames()
         msg = f"\n<--- Shutdown debug info start (PID: {os.getpid()})--->\n"
         msg += f"Number of existing threads: {len(frames)}"
@@ -87,6 +91,7 @@ def _print_shutdown_debuginfo():
 
 
 _debug_counter = 0
+
 
 def _wrap_call_registered_shutdowns(sig, frame):
     if _teardown_lock.locked():
@@ -112,6 +117,7 @@ def _wrap_call_registered_shutdowns(sig, frame):
     if _call_original and orig_handler:
         signal.signal(sig, orig_handler)
         os.kill(os.getpid(), sig)
+
 
 signal.signal(signal.SIGTERM, _wrap_call_registered_shutdowns)
 signal.signal(signal.SIGINT, _wrap_call_registered_shutdowns)

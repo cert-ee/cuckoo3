@@ -3,18 +3,19 @@
 
 from . import db
 
+
 class TargetError(Exception):
     pass
+
 
 class TargetCategories:
     FILE = "file"
     URL = "url"
 
+
 def update_target_row(analysis, target):
     if analysis.category == TargetCategories.URL:
-        row = {
-            "target": target.target
-        }
+        row = {"target": target.target}
     elif analysis.category == TargetCategories.FILE:
         row = {
             "target": target.target,
@@ -22,7 +23,7 @@ def update_target_row(analysis, target):
             "md5": target.md5,
             "sha1": target.sha1,
             "sha256": target.sha256,
-            "sha512": target.sha512
+            "sha512": target.sha512,
         }
     else:
         raise TargetError(f"No such target category: {analysis.category!r}")

@@ -14,16 +14,16 @@ from cuckoo.common.utils import parse_bool
 class SafelistError(Exception):
     pass
 
+
 @as_declarative()
 class SafelistTable:
-
     def to_dict(self):
-        return {
-            c.name: getattr(self, c.name) for c in self.__table__.columns
-        }
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class AlembicVersion(SafelistTable):
     """Database schema version. Used for automatic database migrations."""
+
     __tablename__ = "alembic_version"
 
     SCHEMA_VERSION = None
@@ -32,14 +32,12 @@ class AlembicVersion(SafelistTable):
         sqlalchemy.String(32), nullable=False, primary_key=True
     )
 
+
 class SafelistEntry(SafelistTable):
-
     __tablename__ = "safelists"
-    __table_args__ = sqlalchemy.Index("name_index", "name", unique=False),
+    __table_args__ = (sqlalchemy.Index("name_index", "name", unique=False),)
 
-    id = sqlalchemy.Column(
-        sqlalchemy.Integer, primary_key=True, autoincrement=True
-    )
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String(64), nullable=False)
     valuetype = sqlalchemy.Column(sqlalchemy.String(32))
     value = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
@@ -49,27 +47,45 @@ class SafelistEntry(SafelistTable):
     source = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
 
     def __str__(self):
-        return f"<id={self.id}, name={self.name}, value={self.value!r}, " \
-               f"valuetype={self.valuetype}, regex={self.regex}, " \
-               f"platform={self.platform!r}," \
-               f" description={self.description!r}, source={self.source}>"
+        return (
+            f"<id={self.id}, name={self.name}, value={self.value!r}, "
+            f"valuetype={self.valuetype}, regex={self.regex}, "
+            f"platform={self.platform!r},"
+            f" description={self.description!r}, source={self.source}>"
+        )
 
     def __repr__(self):
         return str(self)
 
 
 safelistdb = DBMS(
-    schema_version=AlembicVersion.SCHEMA_VERSION,
-    alembic_version_table=AlembicVersion
+    schema_version=AlembicVersion.SCHEMA_VERSION, alembic_version_table=AlembicVersion
 )
 
+
 class LoadedSafelistEntry:
+    __slots__ = (
+        "id",
+        "name",
+        "valuetype",
+        "loadedvalue",
+        "regex",
+        "platform",
+        "description",
+        "source",
+    )
 
-    __slots__ = ("id", "name", "valuetype", "loadedvalue", "regex", "platform",
-                 "description", "source")
-
-    def __init__(self, name, valuetype, loadedvalue, platform, regex=False,
-                 description="", source="", id=None):
+    def __init__(
+        self,
+        name,
+        valuetype,
+        loadedvalue,
+        platform,
+        regex=False,
+        description="",
+        source="",
+        id=None,
+    ):
         self.id = id
         self.name = name
         self.valuetype = valuetype
@@ -91,11 +107,11 @@ class LoadedSafelistEntry:
             "regex": self.regex,
             "platform": self.platform,
             "description": self.description,
-            "source": self.source
+            "source": self.source,
         }
 
-def get_entries(safelist_name="", platform=""):
 
+def get_entries(safelist_name="", platform=""):
     ses = safelistdb.session()
     try:
         q = ses.query(SafelistEntry)
@@ -107,6 +123,7 @@ def get_entries(safelist_name="", platform=""):
         return q.all()
     finally:
         ses.close()
+
 
 def _matches_platform(entry, required_platform):
     """Returns the safelist entry if the platform matches, if no platform
@@ -123,7 +140,6 @@ def _matches_platform(entry, required_platform):
 
 
 class Safelist:
-
     name = ""
     valuetype = ""
     description = ""
@@ -135,7 +151,7 @@ class Safelist:
 
     def load_safelist(self):
         """Performs any operations required to be able to query the
-         safelist"""
+        safelist"""
         raise NotImplementedError
 
     @classmethod
@@ -148,22 +164,28 @@ class Safelist:
     def find_existing(cls, value, platform, regex):
         ses = safelistdb.session()
         try:
-            return ses.query(SafelistEntry).filter(
-                SafelistEntry.name==cls.name,
-                SafelistEntry.valuetype==cls.valuetype,
-                SafelistEntry.value==value,
-                SafelistEntry.platform==platform,
-                SafelistEntry.regex==regex
-            ).first()
+            return (
+                ses.query(SafelistEntry)
+                .filter(
+                    SafelistEntry.name == cls.name,
+                    SafelistEntry.valuetype == cls.valuetype,
+                    SafelistEntry.value == value,
+                    SafelistEntry.platform == platform,
+                    SafelistEntry.regex == regex,
+                )
+                .first()
+            )
         finally:
             ses.close()
 
     @classmethod
-    def add_entry(cls, value, platform, regex=False, description="",
-                  source=""):
+    def add_entry(cls, value, platform, regex=False, description="", source=""):
         cls.validate(
-            value=value, platform=platform, regex=regex,
-            description=description, source=source
+            value=value,
+            platform=platform,
+            regex=regex,
+            description=description,
+            source=source,
         )
 
         existing = cls.find_existing(value, platform, regex)
@@ -175,11 +197,17 @@ class Safelist:
 
         ses = safelistdb.session()
         try:
-            ses.add(SafelistEntry(
-                name=cls.name, valuetype=cls.valuetype, value=value,
-                regex=regex, platform=platform, description=description,
-                source=source
-            ))
+            ses.add(
+                SafelistEntry(
+                    name=cls.name,
+                    valuetype=cls.valuetype,
+                    value=value,
+                    regex=regex,
+                    platform=platform,
+                    description=description,
+                    source=source,
+                )
+            )
             ses.commit()
         finally:
             ses.close()
@@ -198,20 +226,24 @@ class Safelist:
                 )
 
             cls.validate(
-                value=value, platform=platform,
-                regex=regex, description=entry.get("description", ""),
-                source=entry.get("source", "")
+                value=value,
+                platform=platform,
+                regex=regex,
+                description=entry.get("description", ""),
+                source=entry.get("source", ""),
             )
 
-            new_entries.append({
-                "name": cls.name,
-                "valuetype": cls.valuetype,
-                "value": value,
-                "platform": platform,
-                "regex": regex,
-                "description": entry.get("description", ""),
-                "source": entry.get("source", "")
-            })
+            new_entries.append(
+                {
+                    "name": cls.name,
+                    "valuetype": cls.valuetype,
+                    "value": value,
+                    "platform": platform,
+                    "regex": regex,
+                    "description": entry.get("description", ""),
+                    "source": entry.get("source", ""),
+                }
+            )
 
         ses = safelistdb.session()
         try:
@@ -225,17 +257,14 @@ class Safelist:
         for entry in ids:
             if not isinstance(entry, int):
                 raise SafelistError(
-                    "Safelist entry identifier must be an integer. "
-                    f"Got {entry!r}"
+                    f"Safelist entry identifier must be an integer. Got {entry!r}"
                 )
 
         ids = list(set(ids))
 
         ses = safelistdb.session()
         try:
-            stmnt = SafelistEntry.__table__.delete().where(
-                SafelistEntry.id.in_(ids)
-            )
+            stmnt = SafelistEntry.__table__.delete().where(SafelistEntry.id.in_(ids))
             safelistdb.engine.execute(stmnt)
         finally:
             ses.close()
@@ -245,7 +274,7 @@ class Safelist:
         ses = safelistdb.session()
         try:
             stmnt = SafelistEntry.__table__.delete().where(
-                SafelistEntry.name==cls.name
+                SafelistEntry.name == cls.name
             )
             safelistdb.engine.execute(stmnt)
         finally:
@@ -253,7 +282,6 @@ class Safelist:
 
 
 class SimpleSafelist(Safelist):
-
     def __init__(self):
         self._entries = {}
         self._entries_regex = []
@@ -286,19 +314,29 @@ class SimpleSafelist(Safelist):
                 f"value {entry.value} for safelist'{self.name}'. Error: {e}"
             )
 
-        self._entries_regex.append(LoadedSafelistEntry(
-            id=entry.id, name=entry.name, valuetype=entry.valuetype,
-            loadedvalue=compiled_regex, regex=True,
-            description=entry.description, source=entry.source,
-            platform=entry.platform
-        ))
+        self._entries_regex.append(
+            LoadedSafelistEntry(
+                id=entry.id,
+                name=entry.name,
+                valuetype=entry.valuetype,
+                loadedvalue=compiled_regex,
+                regex=True,
+                description=entry.description,
+                source=entry.source,
+                platform=entry.platform,
+            )
+        )
 
     def _load_entry(self, entry):
         self._entries[entry.value] = LoadedSafelistEntry(
-            id=entry.id, name=entry.name, valuetype=entry.valuetype,
-            loadedvalue=entry.value, regex=False,
+            id=entry.id,
+            name=entry.name,
+            valuetype=entry.valuetype,
+            loadedvalue=entry.value,
+            regex=False,
             description=entry.description,
-            source=entry.source, platform=entry.platform
+            source=entry.source,
+            platform=entry.platform,
         )
 
     def load_safelist(self):
@@ -320,25 +358,24 @@ class SimpleSafelist(Safelist):
 
 
 class Domain(SimpleSafelist):
-
     name = "domain_global"
     valuetype = "domain"
     description = "Domains to and from which traffic should be ignored"
 
-class FileHash(SimpleSafelist):
 
+class FileHash(SimpleSafelist):
     name = "filehash_submission"
     valuetype = "filehash"
-    description = "md5, sha1 or sha256 hashes of files that should be " \
-                  "cancelled after submission"
+    description = (
+        "md5, sha1 or sha256 hashes of files that should be cancelled after submission"
+    )
 
     @classmethod
     def validate(cls, value, regex, platform, description, source):
         if regex:
             raise SafelistError("Regexes are not supported for file hashes")
 
-        for hashlen in (r"^[a-f0-9]{32}$", r"^[a-f0-9]{40}$",
-                        r"^[a-f0-9]{64}$"):
+        for hashlen in (r"^[a-f0-9]{32}$", r"^[a-f0-9]{40}$", r"^[a-f0-9]{64}$"):
             if re.match(hashlen, value.lower()):
                 return
 
@@ -359,16 +396,20 @@ class FileHash(SimpleSafelist):
 
         if match:
             return LoadedSafelistEntry(
-                id=match.id, name=match.name, valuetype=match.valuetype,
-                loadedvalue=match.value, regex=match.regex,
-                platform=match.platform, description=match.description,
-                source=match.source
+                id=match.id,
+                name=match.name,
+                valuetype=match.valuetype,
+                loadedvalue=match.value,
+                regex=match.regex,
+                platform=match.platform,
+                description=match.description,
+                source=match.source,
             )
 
         return None
 
-class IP(Safelist):
 
+class IP(Safelist):
     name = "ip_global"
     valuetype = "ip"
     description = "IP (networks) to and from which traffic should be ignored"
@@ -383,12 +424,18 @@ class IP(Safelist):
 
     def add_temp_entry(self, ip_network, platform, description, source):
         self.validate(ip_network, False, platform, description, source)
-        self._tmp_networks.add(LoadedSafelistEntry(
-                id=None, name=self.name, valuetype=self.valuetype,
-                loadedvalue=self._make_ip_network(ip_network), regex=False,
-                platform=platform, description=description,
-                source=source
-            ))
+        self._tmp_networks.add(
+            LoadedSafelistEntry(
+                id=None,
+                name=self.name,
+                valuetype=self.valuetype,
+                loadedvalue=self._make_ip_network(ip_network),
+                regex=False,
+                platform=platform,
+                description=description,
+                source=source,
+            )
+        )
 
     @classmethod
     def _make_ip_network(cls, ip_network_str):
@@ -409,9 +456,7 @@ class IP(Safelist):
         try:
             ip = ipaddress.ip_address(ip_address)
         except ValueError as e:
-            raise SafelistError(
-                f"Invalid IP address: {ip_address!r}. Error: {e}"
-            )
+            raise SafelistError(f"Invalid IP address: {ip_address!r}. Error: {e}")
 
         network = self._search_networks(ip, self._networks)
         if network and _matches_platform(network, platform):
@@ -425,24 +470,32 @@ class IP(Safelist):
 
     def load_safelist(self):
         for entry in get_entries(safelist_name=self.name):
-            self._networks.add(LoadedSafelistEntry(
-                id=entry.id, name=entry.name, valuetype=entry.valuetype,
-                loadedvalue=self._make_ip_network(entry.value), regex=False,
-                platform=entry.platform, description=entry.description,
-                source=entry.source
-            ))
+            self._networks.add(
+                LoadedSafelistEntry(
+                    id=entry.id,
+                    name=entry.name,
+                    valuetype=entry.valuetype,
+                    loadedvalue=self._make_ip_network(entry.value),
+                    regex=False,
+                    platform=entry.platform,
+                    description=entry.description,
+                    source=entry.source,
+                )
+            )
 
     @classmethod
-    def add_entry(cls, value, platform, regex=False, description="",
-                  source=""):
+    def add_entry(cls, value, platform, regex=False, description="", source=""):
         if regex:
             raise SafelistError(
                 f"Safelist {cls.name} with value type {cls.valuetype} does not"
                 f" support regexes"
             )
         super().add_entry(
-            value=value, platform=platform, regex=False,
-            description=description, source=source
+            value=value,
+            platform=platform,
+            regex=False,
+            description=description,
+            source=source,
         )
 
     @classmethod
@@ -452,40 +505,39 @@ class IP(Safelist):
         except ValueError as e:
             raise SafelistError(f"Invalid IPv4 network {value}. Error: {e}")
 
-class DNSServerIP(IP):
 
+class DNSServerIP(IP):
     name = "dns_server"
-    description = "IPs of DNS servers that should not be considered a " \
-                  "contacted host"
+    description = "IPs of DNS servers that should not be considered a contacted host"
+
 
 class DomainMisp(Domain):
-
     name = "domain_misp"
     description = "Domains that should not be reported to MISP"
 
-class URLMisp(SimpleSafelist):
 
+class URLMisp(SimpleSafelist):
     name = "url_misp"
     description = "URLs that should not be reported to MISP"
     valuetype = "url"
 
-class IPMisp(IP):
 
+class IPMisp(IP):
     name = "ip_misp"
     description = "IP (networks) that should not be reported to MISP"
 
-class IPIntelMQ(IP):
 
+class IPIntelMQ(IP):
     name = "ip_intelmq"
     description = "IP (networks) that should not be reported to IntelMQ"
 
-class DomainIntelMQ(Domain):
 
+class DomainIntelMQ(Domain):
     name = "domain_intelmq"
     description = "Domains that should not be reported to IntelMQ"
 
-class URLIntelMQ(SimpleSafelist):
 
+class URLIntelMQ(SimpleSafelist):
     name = "url_intelmq"
     description = "URLs that should not be reported to IntelMQ"
     valuetype = "url"
@@ -503,6 +555,7 @@ class SafelistName:
     domain_intelmq = DomainIntelMQ.name
     url_intelmq = URLIntelMQ.name
 
+
 name_safelist = {
     SafelistName.ip_global: IP,
     SafelistName.domain_global: Domain,
@@ -513,8 +566,9 @@ name_safelist = {
     SafelistName.filehash_submission: FileHash,
     SafelistName.ip_intelmq: IPIntelMQ,
     SafelistName.domain_intelmq: DomainIntelMQ,
-    SafelistName.url_intelmq: URLIntelMQ
+    SafelistName.url_intelmq: URLIntelMQ,
 }
+
 
 def import_csv_safelist(csv_path, safelist_class):
     if not issubclass(safelist_class, Safelist):
@@ -527,8 +581,7 @@ def import_csv_safelist(csv_path, safelist_class):
         for key in min_keys:
             if key not in reader.fieldnames:
                 raise SafelistError(
-                    f"Safelist CSV file must have columns: {min_keys}. "
-                    f"Missing: {key}"
+                    f"Safelist CSV file must have columns: {min_keys}. Missing: {key}"
                 )
 
         for line in reader:
@@ -541,19 +594,20 @@ def import_csv_safelist(csv_path, safelist_class):
                     f"Invalid value at line: {reader.line_num}"
                 )
             if not value:
-                raise SafelistError(
-                    f"Value cannot be empty. Line {reader.line_num}"
-                )
+                raise SafelistError(f"Value cannot be empty. Line {reader.line_num}")
 
-            entries.append({
-                "value": value,
-                "regex": regex,
-                "platform": line.get("platform", ""),
-                "description": line.get("description", ""),
-                "source": line.get("source", "")
-            })
+            entries.append(
+                {
+                    "value": value,
+                    "regex": regex,
+                    "platform": line.get("platform", ""),
+                    "description": line.get("description", ""),
+                    "source": line.get("source", ""),
+                }
+            )
 
     safelist_class.add_many(entries)
+
 
 def dump_safelist_csv(csv_path, safelist_class):
     if not issubclass(safelist_class, Safelist):
@@ -561,16 +615,12 @@ def dump_safelist_csv(csv_path, safelist_class):
 
     ses = safelistdb.session()
     try:
-        entries = ses.query(
-            SafelistEntry
-        ).filter_by(name=safelist_class.name).all()
+        entries = ses.query(SafelistEntry).filter_by(name=safelist_class.name).all()
     finally:
         ses.close()
 
     with open(csv_path, "w") as fp:
-        csvfile = csv.DictWriter(
-            fp, fieldnames=list(SafelistEntry().to_dict().keys())
-        )
+        csvfile = csv.DictWriter(fp, fieldnames=list(SafelistEntry().to_dict().keys()))
         csvfile.writeheader()
         for entry in entries:
             csvfile.writerow(entry.to_dict())

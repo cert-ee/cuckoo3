@@ -17,6 +17,6 @@ urlpatterns = [
     path("<task_id:task_id>/pcap", views.Pcap.as_view()),
     path(
         "<task_id:task_id>/screenshot/<screenshot:screenshot>",
-        views.Screenshot.as_view()
-    )
+        views.Screenshot.as_view(),
+    ),
 ]
