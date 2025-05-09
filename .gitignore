@@ -67,3 +67,4 @@ cuckoo/web/src/package-lock.json
 
 # Vagrant
 .vagrant
+.vscode
