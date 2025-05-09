@@ -16,11 +16,14 @@ from .log import set_logger_level
 set_logger_level("elasticsearch", logging.ERROR)
 set_logger_level("urllib3.connectionpool", logging.ERROR)
 
+
 class IntelMQError(Exception):
     pass
 
+
 class IntelMQElasticError(IntelMQError):
     pass
+
 
 class Fields:
     DESTINATION_IP = "destination.ip"
@@ -64,12 +67,17 @@ class ElasticFields:
 
 
 class IntelMQEventMaker:
-
     # https://github.com/certtools/intelmq/blob/develop/intelmq/bots/collectors/api/collector_api.py
     PUSH_ENDPOINT = "/intelmq/push"
 
-    def __init__(self, analysis_id, task_id, webinterface_baseurl=None,
-                 feed_accuracy=None, event_description=None):
+    def __init__(
+        self,
+        analysis_id,
+        task_id,
+        webinterface_baseurl=None,
+        feed_accuracy=None,
+        event_description=None,
+    ):
         self._task_id = task_id
         self._analysis_id = analysis_id
         self._events = []
@@ -78,18 +86,19 @@ class IntelMQEventMaker:
         self._description = event_description
 
     def _add_event(self, event_dict, taxonomy, classification_type):
-        event_dict.update({
-            Fields.TIME_SOURCE: datetime.utcnow().isoformat(),
-            Fields.TAXONOMY: taxonomy,
-            Fields.TYPE: classification_type
-        })
+        event_dict.update(
+            {
+                Fields.TIME_SOURCE: datetime.utcnow().isoformat(),
+                Fields.TAXONOMY: taxonomy,
+                Fields.TYPE: classification_type,
+            }
+        )
         if self._feed_accuracy is not None:
             event_dict[Fields.FEED_ACCURACY] = self._feed_accuracy
 
         if self._web_baseurl:
             event_dict[Fields.EVENT_DESCRIPTION_URL] = urljoin(
-                self._web_baseurl,
-                f"analysis/{self._analysis_id}/task/{self._task_id}"
+                self._web_baseurl, f"analysis/{self._analysis_id}/task/{self._task_id}"
             )
 
         if self._description:
@@ -100,33 +109,35 @@ class IntelMQEventMaker:
     def add_dst_ip(self, ip):
         self._add_event(
             {Fields.DESTINATION_IP: ip},
-            taxonomy="malicious-code", classification_type="infected-system"
+            taxonomy="malicious-code",
+            classification_type="infected-system",
         )
 
     def add_dst_domain(self, domain):
         self._add_event(
             {Fields.DESTINATION_FQDN: domain},
-            taxonomy="malicious-code", classification_type="infected-system"
+            taxonomy="malicious-code",
+            classification_type="infected-system",
         )
 
     def add_dst_url(self, url):
         self._add_event(
             {Fields.DESTINATION_URL: url},
-            taxonomy="malicious-code", classification_type="infected-system"
+            taxonomy="malicious-code",
+            classification_type="infected-system",
         )
 
     def add_malware_file(self, md5, sha1, sha256, family=None):
         event = {
             Fields.MALWARE_MD5: md5,
             Fields.MALWARE_SHA1: sha1,
-            Fields.MALWARE_SHA256: sha256
+            Fields.MALWARE_SHA256: sha256,
         }
         if family:
             event[Fields.MALWARE_NAME] = family
 
         self._add_event(
-            event, taxonomy="malicious-code",
-            classification_type="infected-system"
+            event, taxonomy="malicious-code", classification_type="infected-system"
         )
 
     def submit(self, api_url, verify_tls=True):
@@ -137,22 +148,28 @@ class IntelMQEventMaker:
 
         events = "\n".join([json.dumps(event) for event in self._events])
         try:
-            requests.post(
-                endpoint, data=events, verify=verify_tls
-            ).raise_for_status()
+            requests.post(endpoint, data=events, verify=verify_tls).raise_for_status()
         except requests.exceptions.RequestException as e:
-            raise IntelMQError(
-                f"Failed to POST events to IntelMQ collector API: {e}"
-            )
+            raise IntelMQError(f"Failed to POST events to IntelMQ collector API: {e}")
 
 
 class IntelMQElastic:
-    def __init__(self, elastic_hosts, index_name, event_limit=10, link_url="", user="", password="", ca_certs=""):
+    def __init__(
+        self,
+        elastic_hosts,
+        index_name,
+        event_limit=10,
+        link_url="",
+        user="",
+        password="",
+        ca_certs="",
+    ):
         self._index_name = index_name
         self._limit = event_limit
         self._link_url = link_url
-        self._es = Elasticsearch(elastic_hosts, timeout=60,
-                                 http_auth=(user, password), ca_certs=ca_certs)
+        self._es = Elasticsearch(
+            elastic_hosts, timeout=60, http_auth=(user, password), ca_certs=ca_certs
+        )
 
     def verify(self):
         if not self._es.ping():
@@ -160,9 +177,7 @@ class IntelMQElastic:
                 "Could not connect to IntelMQ Elasticsearch host(s)"
             )
 
-        if not self._es.indices.exists(
-                self._index_name, allow_no_indices=False
-        ):
+        if not self._es.indices.exists(self._index_name, allow_no_indices=False):
             raise IntelMQElasticError(
                 f"Index with (wildcard)name does not exist: {self._index_name}"
             )
@@ -172,24 +187,18 @@ class IntelMQElastic:
         for hit in hits:
             d = hit.to_dict()
             event = {
-                ElasticFields.FEED_PROVIDER: d.get(
-                    ElasticFields.FEED_PROVIDER, ""
-                ),
-                ElasticFields.FEED_ACCURACY: d.get(
-                    ElasticFields.FEED_ACCURACY, ""
-                ),
+                ElasticFields.FEED_PROVIDER: d.get(ElasticFields.FEED_PROVIDER, ""),
+                ElasticFields.FEED_ACCURACY: d.get(ElasticFields.FEED_ACCURACY, ""),
                 ElasticFields.TAXONOMY: d.get(ElasticFields.TAXONOMY, ""),
                 ElasticFields.TYPE: d.get(ElasticFields.TYPE, ""),
                 ElasticFields.TIME_OBSERVATION: d.get(
                     ElasticFields.TIME_OBSERVATION, ""
                 ),
-                ElasticFields.TIME_SOURCE: d.get(
-                    ElasticFields.TIME_SOURCE, ""
-                ),
+                ElasticFields.TIME_SOURCE: d.get(ElasticFields.TIME_SOURCE, ""),
                 "ioc": ioc,
                 "index": hit.meta.index,
                 "id": hit.meta.id,
-                "url": ""
+                "url": "",
             }
 
             if self._link_url:
@@ -201,16 +210,13 @@ class IntelMQElastic:
         return events
 
     def _do_query(self, value, fields=[]):
-
-        search = elasticsearch_dsl.Search(
-            using=self._es, index=self._index_name
-        )
+        search = elasticsearch_dsl.Search(using=self._es, index=self._index_name)
         if len(fields) > 1:
             q = search.query("multi_match", fields=fields, query=value)
         else:
             q = search.query("match", **{fields[0]: value})
 
-        q = q[0:self._limit]
+        q = q[0 : self._limit]
         # Sort the events by the time of occurrence of the event as reported
         # to the feed.
         q = q.sort({ElasticFields.TIME_SOURCE: {"order": "desc"}})
@@ -231,29 +237,19 @@ class IntelMQElastic:
 
     def find_domain(self, domain):
         return self._do_query(
-            domain, fields=[
-                ElasticFields.SOURCE_FQDN, ElasticFields.DESTINATION_FQDN
-            ]
+            domain, fields=[ElasticFields.SOURCE_FQDN, ElasticFields.DESTINATION_FQDN]
         )
 
     def find_url(self, url):
         return self._do_query(
-            url, fields=[
-                ElasticFields.DESTINATION_URL, ElasticFields.SOURCE_URL
-            ]
+            url, fields=[ElasticFields.DESTINATION_URL, ElasticFields.SOURCE_URL]
         )
 
     def find_file_md5(self, md5):
-        return self._do_query(
-            md5, fields=[ElasticFields.MALWARE_MD5]
-        )
+        return self._do_query(md5, fields=[ElasticFields.MALWARE_MD5])
 
     def find_file_sha1(self, sha1):
-        return self._do_query(
-            sha1, fields=[ElasticFields.MALWARE_SHA1]
-        )
+        return self._do_query(sha1, fields=[ElasticFields.MALWARE_SHA1])
 
     def find_file_sha256(self, sha256):
-        return self._do_query(
-            sha256, fields=[ElasticFields.MALWARE_SHA256]
-        )
+        return self._do_query(sha256, fields=[ElasticFields.MALWARE_SHA256])

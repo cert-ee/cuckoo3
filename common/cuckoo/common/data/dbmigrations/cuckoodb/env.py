@@ -1,4 +1,3 @@
-
 import logging
 from logging.config import fileConfig
 
@@ -37,6 +36,7 @@ if not needs_migration:
     log.info("No migration needed for cuckoodb")
     exit(0)
 
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -71,9 +71,7 @@ def run_migrations_online():
     connectable = dbms.engine
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

@@ -9,8 +9,8 @@ from cuckoo.common.route import Routes
 from cuckoo.common.storage import safe_json_dump
 from .utils import tag_to_browser
 
-class NodeInfo:
 
+class NodeInfo:
     def __init__(self, name, version, machines_list, routes):
         self.name = name
         self.version = version
@@ -29,15 +29,16 @@ class NodeInfo:
             "name": self.name,
             "version": self.version,
             "machines_list": self.machines_list.to_dictlist(),
-            "routes": self.routes.to_dict()
+            "routes": self.routes.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, d):
         return cls(
-            name=d["name"], version=d["version"],
+            name=d["name"],
+            version=d["version"],
             machines_list=read_machines_dump_dict(d["machines_list"]),
-            routes=Routes.from_dict(d["routes"])
+            routes=Routes.from_dict(d["routes"]),
         )
 
     def has_route(self, route):
@@ -51,8 +52,9 @@ class NodeInfo:
             return True
 
         if self.machines_list.find(
-            platform=platform.platform, os_version=platform.os_version,
-            tags=set(platform.tags)
+            platform=platform.platform,
+            os_version=platform.os_version,
+            tags=set(platform.tags),
         ):
             return True
 
@@ -69,8 +71,8 @@ def dump_nodeinfos(path, *args):
     # replaces the existing dump.
     safe_json_dump(path, nodes, overwrite=True)
 
-class NodeInfos:
 
+class NodeInfos:
     def __init__(self, min_dump_wait=300):
         self.nodeinfos = set()
 
@@ -124,15 +126,14 @@ class NodeInfos:
             return True
 
         if datetime.utcnow() - self._last_dump >= timedelta(
-                seconds=self._min_dump_wait
+            seconds=self._min_dump_wait
         ):
             return True
 
         return False
 
     def should_dump(self):
-        return self.dump_wait_reached() and self.infos_changed() \
-               or self._changed
+        return self.dump_wait_reached() and self.infos_changed() or self._changed
 
     def make_dump(self, path):
         dump_nodeinfos(path, *self.nodeinfos)
@@ -172,12 +173,13 @@ class NodeInfos:
 
         return has_platform, has_route, None
 
+
 def read_nodesinfos_dump(path):
     with open(path, "r") as fp:
         return NodeInfos.from_dump(json.load(fp))
 
-class ExistingResultServer:
 
+class ExistingResultServer:
     def __init__(self, socket_path, listen_ip, listen_port):
         self.socket_path = socket_path
         self.listen_ip = listen_ip
@@ -187,22 +189,22 @@ class ExistingResultServer:
         return {
             "socket_path": str(self.socket_path),
             "listen_ip": self.listen_ip,
-            "listen_port": self.listen_port
+            "listen_port": self.listen_port,
         }
 
     @classmethod
     def from_dict(cls, d):
         return cls(
             socket_path=d["socket_path"],
-            listen_ip=d["listen_ip"], listen_port=d["listen_port"]
+            listen_ip=d["listen_ip"],
+            listen_port=d["listen_port"],
         )
 
     def __str__(self):
         return f"{self.listen_ip}:{self.listen_port}"
 
     def __eq__(self, other):
-        return (self.listen_ip, self.listen_port) \
-               != (other.listen_ip, other.port)
+        return (self.listen_ip, self.listen_port) != (other.listen_ip, other.port)
 
     def __hash__(self):
         return hash(self.listen_ip + str(self.listen_port))

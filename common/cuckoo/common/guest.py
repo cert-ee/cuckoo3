@@ -17,29 +17,36 @@ import requests
 from .storage import Paths, AnalysisPaths, TaskPaths
 from .importing import zinfo_has_illegal_chars, should_ignore_zinfo
 
+
 class AgentError(Exception):
     pass
+
 
 class WaitTimeout(AgentError):
     pass
 
+
 class AgentConnectionError(AgentError):
     pass
+
 
 class UnsupportedMethod(AgentError):
     pass
 
+
 class OutdatedAgentError(AgentError):
     pass
+
 
 class StagerError(Exception):
     pass
 
+
 class PayloadExecFailed(StagerError):
     pass
 
-class Agent:
 
+class Agent:
     def __init__(self, ip, port=8000):
         self.ip = ip
         self.port = port
@@ -60,13 +67,10 @@ class Agent:
 
         if code == 400:
             return AgentError(
-                f"Incorrect agent usage for {response.url}:"
-                f" {json_resp.get('message')}"
+                f"Incorrect agent usage for {response.url}: {json_resp.get('message')}"
             )
         if code == 404:
-            return UnsupportedMethod(
-                f"Unsupported method: {response.url}"
-            )
+            return UnsupportedMethod(f"Unsupported method: {response.url}")
         if code == 500:
             return AgentError(
                 f"Fatal agent error when requesting: {response.url}. "
@@ -102,9 +106,7 @@ class Agent:
         try:
             response = ses.get(url, **kwargs)
         except (requests.ConnectionError, requests.exceptions.Timeout) as e:
-            raise AgentConnectionError(
-                f"Failed performing HTTP GET on: {url}: {e}"
-            )
+            raise AgentConnectionError(f"Failed performing HTTP GET on: {url}: {e}")
 
         if response.status_code != 200:
             raise self._status_code_err(response)
@@ -117,9 +119,7 @@ class Agent:
         try:
             response = ses.post(url, **kwargs)
         except (requests.ConnectionError, requests.exceptions.Timeout) as e:
-            raise AgentConnectionError(
-                f"Failed performing HTTP POST on: {url}: {e}"
-            )
+            raise AgentConnectionError(f"Failed performing HTTP POST on: {url}: {e}")
 
         if response.status_code != 200:
             raise self._status_code_err(response)
@@ -145,8 +145,7 @@ class Agent:
                 pass
 
             except OSError as e:
-                ignore = (errno.EHOSTUNREACH, errno.ECONNREFUSED,
-                          errno.ECONNABORTED)
+                ignore = (errno.EHOSTUNREACH, errno.ECONNREFUSED, errno.ECONNABORTED)
                 if e.errno not in ignore:
                     raise
 
@@ -182,15 +181,14 @@ class Agent:
         return response["dirpath"]
 
     def extract_zip(self, zip_fp, extract_dir):
-        self._post(
-            "/extract", files={"zipfile": zip_fp},
-            data={"dirpath": extract_dir}
-        )
+        self._post("/extract", files={"zipfile": zip_fp}, data={"dirpath": extract_dir})
 
     def execute(self, command, cwd, timeout=None):
-        response = self._get_json(self._post(
-            "/execute", data={"command": command, "cwd": cwd}, timeout=timeout
-        ))
+        response = self._get_json(
+            self._post(
+                "/execute", data={"command": command, "cwd": cwd}, timeout=timeout
+            )
+        )
         return response.get("stdout", ""), response.get("stderr", "")
 
     def pin_host_ip(self):
@@ -309,6 +307,7 @@ class Payload:
         if self._tmpdir.exists():
             self._tmpdir.rmdir()
 
+
 def get_default_version(path):
     if not path.is_file():
         raise StagerError(f"Default version file does not exist: {path}")
@@ -319,8 +318,8 @@ def get_default_version(path):
 
     return version
 
-class StagerHelper:
 
+class StagerHelper:
     name = ""
     platforms = []
 
@@ -373,9 +372,7 @@ class StagerHelper:
 
         monitor_binary = monitor_path.joinpath(cls.MONITOR_BINARY)
         if not monitor_binary.is_file():
-            raise StagerError(
-                f"Monitor binary {monitor_binary} does not exist."
-            )
+            raise StagerError(f"Monitor binary {monitor_binary} does not exist.")
 
         return monitor_path
 
@@ -404,7 +401,6 @@ class StagerHelper:
 
 
 class TmStage(StagerHelper):
-
     name = "tmstage"
     platforms = ["windows"]
 
@@ -413,17 +409,18 @@ class TmStage(StagerHelper):
     STAGER_BINARY = "tmstage.exe"
     MONITOR_BINARY = "threemon.sys"
 
-    def _build_settings(self, debug, resultserver, options, target,
-                        is_archive):
-        return json.dumps({
-            "debug": debug,
-            "host": f"{resultserver.listen_ip}:{resultserver.listen_port}",
-            "launch": self.get_command_args(),
-            "clock": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "options": options,
-            "target": target,
-            "archive": is_archive,
-        })
+    def _build_settings(self, debug, resultserver, options, target, is_archive):
+        return json.dumps(
+            {
+                "debug": debug,
+                "host": f"{resultserver.listen_ip}:{resultserver.listen_port}",
+                "launch": self.get_command_args(),
+                "clock": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "options": options,
+                "target": target,
+                "archive": is_archive,
+            }
+        )
 
     def prepare(self):
         is_archive = False
@@ -439,17 +436,22 @@ class TmStage(StagerHelper):
 
         options = self.analysis.settings.options
         settings = self._build_settings(
-            debug=False, resultserver=self.resultserver,
-            options=options, target=target, is_archive=is_archive
+            debug=False,
+            resultserver=self.resultserver,
+            options=options,
+            target=target,
+            is_archive=is_archive,
         )
 
         stager_filepath = self.find_stager_dir(
-            platform="windows", archirecture="amd64",
-            version=options.get("stager.version")
+            platform="windows",
+            archirecture="amd64",
+            version=options.get("stager.version"),
         )
         monitor_filepath = self.find_monitor_dir(
-            platform="windows", archirecture="amd64",
-            version=options.get("monitor.version")
+            platform="windows",
+            archirecture="amd64",
+            version=options.get("monitor.version"),
         )
 
         with Payload() as pay:
@@ -464,13 +466,11 @@ class TmStage(StagerHelper):
             if self.analysis.category == "file":
                 if is_archive:
                     pay.add_file(
-                        AnalysisPaths.zipified_file(self.analysis.id),
-                        "payload.dat"
+                        AnalysisPaths.zipified_file(self.analysis.id), "payload.dat"
                     )
                 else:
                     pay.add_file(
-                        AnalysisPaths.submitted_file(self.analysis.id),
-                        "payload.dat"
+                        AnalysisPaths.submitted_file(self.analysis.id), "payload.dat"
                     )
 
             self.payload = pay
@@ -509,7 +509,9 @@ class TmStage(StagerHelper):
             # A timeout is important when delivering the payload in case the
             # agent stops responding.
             stdout, stderr = self.agent.execute(
-                stager_path, cwd=tmpdir, timeout=60 # TODO use task timeout?
+                stager_path,
+                cwd=tmpdir,
+                timeout=60,  # TODO use task timeout?
             )
         except AgentError as e:
             raise StagerError(f"Failed to execute stager: {e}")
@@ -540,19 +542,18 @@ class TmStage(StagerHelper):
             # indicate permission problems, however. So we do log it.
             self.log.warning("Failed to kill agent.", error=e)
 
-_stagers = {
-    "threemon": TmStage
-}
+
+_stagers = {"threemon": TmStage}
 
 DEFAULT_MONITOR_FILE = "default"
+
 
 def find_stager(platform, arch="amd64"):
     arch = arch.lower()
     monitor_path = Paths.monitor(platform, arch)
     if not monitor_path.is_dir():
         raise StagerError(
-            f"No monitor exists for platform '{platform}' with "
-            f"architecture: '{arch}'"
+            f"No monitor exists for platform '{platform}' with architecture: '{arch}'"
         )
 
     monitor_name = get_default_version(
@@ -560,17 +561,14 @@ def find_stager(platform, arch="amd64"):
     ).lower()
 
     if not monitor_path.joinpath(monitor_name).is_dir():
-        raise StagerError(
-            f"No monitor path for default monitor {monitor_name} exists."
-        )
+        raise StagerError(f"No monitor path for default monitor {monitor_name} exists.")
 
     stager = _stagers.get(monitor_name)
     if not stager:
-        raise StagerError(
-            f"No stager helper is mapped for monitor name {stager}"
-        )
+        raise StagerError(f"No stager helper is mapped for monitor name {stager}")
 
     return stager
+
 
 def unpack_monitor_components(zip_path, unpackto):
     if not Path(unpackto).is_dir():
@@ -580,7 +578,6 @@ def unpack_monitor_components(zip_path, unpackto):
     with ZipFile(zip_path, "r") as zfile:
         files = zfile.infolist()
         for entry in files:
-
             if zinfo_has_illegal_chars(entry) or should_ignore_zinfo(entry):
                 raise ValueError(
                     "Archive entry contains illegal characters or is of a "
@@ -588,7 +585,6 @@ def unpack_monitor_components(zip_path, unpackto):
                 )
 
             print(
-                f"Unpacking {entry.filename} "
-                f"-> {monitorpath.joinpath(entry.filename)}"
+                f"Unpacking {entry.filename} -> {monitorpath.joinpath(entry.filename)}"
             )
             zfile.extract(entry, monitorpath)

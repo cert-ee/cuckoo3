@@ -9,18 +9,25 @@ from . import db, targets
 from .config import cfg
 from .log import CuckooGlobalLogger
 from .storage import (
-    AnalysisPaths, delete_dirtree, delete_dir, split_analysis_id, todays_daydir
+    AnalysisPaths,
+    delete_dirtree,
+    delete_dir,
+    split_analysis_id,
+    todays_daydir,
 )
 from .strictcontainer import Settings as _Settings, Analysis, Errors, Platform
 from .utils import parse_bool, browser_to_tag
 
 log = CuckooGlobalLogger(__name__)
 
+
 class AnalysisError(Exception):
     pass
 
+
 class AnalysisLocation:
     REMOTE = "remote"
+
 
 class HumanStates:
     UNTRACKED = "Untracked"
@@ -31,6 +38,7 @@ class HumanStates:
     NO_SELECTED = "No selected target"
     FATAL_ERROR = "Fatal error"
     FINISHED = "Finished"
+
 
 class States:
     UNTRACKED = "untracked"
@@ -49,7 +57,7 @@ class States:
         NO_SELECTED: HumanStates.NO_SELECTED,
         FATAL_ERROR: HumanStates.FATAL_ERROR,
         TASKS_PENDING: HumanStates.TASKS_PENDING,
-        FINISHED: HumanStates.FINISHED
+        FINISHED: HumanStates.FINISHED,
     }
 
     @classmethod
@@ -57,15 +65,20 @@ class States:
         try:
             return cls._HUMAN[state]
         except KeyError:
-            raise AnalysisError(
-                f"No human readable version for state {state!r} exists"
-            )
+            raise AnalysisError(f"No human readable version for state {state!r} exists")
 
     @classmethod
     def list(self):
-        return [self.UNTRACKED, self.PENDING_IDENTIFICATION, self.WAITING_MANUAL,
-                self.PENDING_PRE, self.TASKS_PENDING, self.NO_SELECTED,
-                self.FATAL_ERROR, self.FINISHED]
+        return [
+            self.UNTRACKED,
+            self.PENDING_IDENTIFICATION,
+            self.WAITING_MANUAL,
+            self.PENDING_PRE,
+            self.TASKS_PENDING,
+            self.NO_SELECTED,
+            self.FATAL_ERROR,
+            self.FINISHED,
+        ]
 
 
 class Kinds:
@@ -73,7 +86,6 @@ class Kinds:
 
 
 class Settings(_Settings):
-
     def check_constraints(self):
         errors = []
         if self.priority < 1:
@@ -81,12 +93,13 @@ class Settings(_Settings):
 
         if errors:
             raise AnalysisError(
-                f"One or more invalid settings were specified: "
-                f"{'. '.join(errors)}"
+                f"One or more invalid settings were specified: {'. '.join(errors)}"
             )
+
 
 def exists(analysis_id):
     return AnalysisPaths.analysisjson(analysis_id).is_file()
+
 
 def track_analyses(analysis_ids):
     untracked_analyses = []
@@ -98,42 +111,44 @@ def track_analyses(analysis_ids):
         try:
             analysis = Analysis.from_file(info_path)
         except (ValueError, TypeError, FileNotFoundError) as e:
+            log.error("Failed to track analysis", analysis_id=analysis_id, error=e)
+            continue
+
+        if analysis.category not in (
+            targets.TargetCategories.FILE,
+            targets.TargetCategories.URL,
+        ):
             log.error(
-                "Failed to track analysis", analysis_id=analysis_id, error=e
+                "Failed to track analysis",
+                analysis_id=analysis_id,
+                error=f"Unknown target category {analysis.category!r}",
             )
             continue
 
-        if analysis.category not in (targets.TargetCategories.FILE,
-                                     targets.TargetCategories.URL):
-            log.error(
-                "Failed to track analysis", analysis_id=analysis_id,
-                error=f"Unknown target category {analysis.category!r}"
-            )
-            continue
+        untracked_analyses.append(
+            {
+                "id": analysis_id,
+                "kind": analysis.kind,
+                "created_on": analysis.created_on,
+                "priority": analysis.settings.priority,
+                "state": States.PENDING_IDENTIFICATION,
+            }
+        )
 
-        untracked_analyses.append({
-            "id": analysis_id,
-            "kind": analysis.kind,
-            "created_on": analysis.created_on,
-            "priority": analysis.settings.priority,
-            "state": States.PENDING_IDENTIFICATION
-        })
-
-        submitted_target = {
-            "analysis_id": analysis_id,
-            "category": analysis.category
-        }
+        submitted_target = {"analysis_id": analysis_id, "category": analysis.category}
         if analysis.category == targets.TargetCategories.URL:
             submitted_target["target"] = analysis.submitted.url
         elif analysis.category == targets.TargetCategories.FILE:
-            submitted_target.update({
-                "target": analysis.submitted.filename,
-                "media_type": analysis.submitted.media_type,
-                "md5": analysis.submitted.md5,
-                "sha1": analysis.submitted.sha1,
-                "sha256": analysis.submitted.sha256,
-                "sha512": analysis.submitted.sha512
-            })
+            submitted_target.update(
+                {
+                    "target": analysis.submitted.filename,
+                    "media_type": analysis.submitted.media_type,
+                    "md5": analysis.submitted.md5,
+                    "sha1": analysis.submitted.sha1,
+                    "sha256": analysis.submitted.sha256,
+                    "sha512": analysis.submitted.sha512,
+                }
+            )
 
         submitted_targets.append(submitted_target)
         tracked.append(analysis_id)
@@ -148,20 +163,17 @@ def track_analyses(analysis_ids):
 
     return tracked
 
+
 def db_set_remote(analyses):
     remote_analyses = []
     for analysis_id in analyses:
-
         # Ignore if not a valid analysis id
         try:
             split_analysis_id(analysis_id)
         except ValueError:
             continue
 
-        remote_analyses.append({
-            "id": analysis_id,
-            "location": AnalysisLocation.REMOTE
-        })
+        remote_analyses.append({"id": analysis_id, "location": AnalysisLocation.REMOTE})
 
     ses = db.dbms.session()
     try:
@@ -173,31 +185,30 @@ def db_set_remote(analyses):
 
 def track_imported(analysis):
     if analysis.state != States.FINISHED:
-        raise AnalysisError(
-            "Imported analyses can only have the finished state."
-        )
+        raise AnalysisError("Imported analyses can only have the finished state.")
 
-    target_dict = {
-        "analysis_id": analysis.id,
-        "category": analysis.category
-
-    }
+    target_dict = {"analysis_id": analysis.id, "category": analysis.category}
     if analysis.category == targets.TargetCategories.URL:
         target_dict["target"] = analysis.target.url
     elif analysis.category == targets.TargetCategories.FILE:
-        target_dict.update({
-            "target": analysis.target.filename,
-            "media_type": analysis.target.media_type,
-            "md5": analysis.target.md5,
-            "sha1": analysis.target.sha1,
-            "sha256": analysis.target.sha256,
-            "sha512": analysis.target.sha512
-        })
+        target_dict.update(
+            {
+                "target": analysis.target.filename,
+                "media_type": analysis.target.media_type,
+                "md5": analysis.target.md5,
+                "sha1": analysis.target.sha1,
+                "sha256": analysis.target.sha256,
+                "sha512": analysis.target.sha512,
+            }
+        )
 
     db_target = db.Target(**target_dict)
     db_analysis = db.Analysis(
-        id=analysis.id, kind=Kinds.STANDARD, created_on=analysis.created_on,
-        priority=analysis.settings.priority, state=analysis.state,
+        id=analysis.id,
+        kind=Kinds.STANDARD,
+        created_on=analysis.created_on,
+        priority=analysis.settings.priority,
+        state=analysis.state,
         score=analysis.score,
     )
     ses = db.dbms.session()
@@ -208,8 +219,10 @@ def track_imported(analysis):
     finally:
         ses.close()
 
+
 def overwrite_platforms(analysis, platforms):
     analysis.update_settings(platforms=platforms)
+
 
 def _update_existing_platforms(analysis, pre):
     """Update an existing platform list with machine tags if auto tagging
@@ -230,6 +243,7 @@ def _update_existing_platforms(analysis, pre):
         platform.tags = list(set(platform.tags))
 
     return analysis.settings.platforms
+
 
 def _platforms_from_target(analysis, pre):
     """Determine one or more platforms to create tasks for by using the
@@ -273,28 +287,23 @@ def _platforms_from_target(analysis, pre):
                 platform_obj = Platform(**version_copy)
                 # Set the command to the automatically determined launch
                 # command for the specific platform
-                platform_obj.set_command(
-                    pre.command.get(platform_obj.platform, [])
-                )
+                platform_obj.set_command(pre.command.get(platform_obj.platform, []))
                 auto_platforms.append(platform_obj)
         else:
             platform_obj = Platform(**platform_copy)
             # Set the command to the automatically determined launch
             # command for the specific platform
-            platform_obj.set_command(
-                pre.command.get(platform_obj.platform, [])
-            )
+            platform_obj.set_command(pre.command.get(platform_obj.platform, []))
             auto_platforms.append(platform_obj)
 
     return auto_platforms
+
 
 def _get_fallback_platforms(analysis, pre):
     """Uses the fallback platform settings and versions to determine one or
     more platforms to create tasks for. Use the pre command map to
     determine how a target should be started for a specific platform."""
-    fallback_platforms = cfg(
-        "analysissettings", "platform", "fallback_platforms"
-    )
+    fallback_platforms = cfg("analysissettings", "platform", "fallback_platforms")
     versions_dict = cfg("analysissettings", "platform", "versions")
     browser_tag = ""
     if analysis.settings.browser:
@@ -305,37 +314,35 @@ def _get_fallback_platforms(analysis, pre):
         versions = versions_dict.get(fallback_platform)
         if not versions:
             platform_obj = Platform(
-                platform=fallback_platform,
-                tag=[] if not browser_tag else [browser_tag]
+                platform=fallback_platform, tag=[] if not browser_tag else [browser_tag]
             )
             # Set the command to the automatically determined launch
             # command for the specific platform
-            platform_obj.set_command(
-                pre.command.get(platform_obj.platform, [])
-            )
+            platform_obj.set_command(pre.command.get(platform_obj.platform, []))
             settings_platforms.append(platform_obj)
         else:
             # Create a platform entry for each version of the fallback platform
             for os_version in versions:
                 platform_obj = Platform(
-                    platform=fallback_platform, os_version=os_version,
-                    tag=[] if not browser_tag else [browser_tag]
+                    platform=fallback_platform,
+                    os_version=os_version,
+                    tag=[] if not browser_tag else [browser_tag],
                 )
                 # Set the command to the automatically determined launch
                 # command for the specific platform
-                platform_obj.set_command(
-                    pre.command.get(platform_obj.platform, [])
-                )
+                platform_obj.set_command(pre.command.get(platform_obj.platform, []))
                 settings_platforms.append(platform_obj)
 
     for platform in settings_platforms:
         log.debug(
             "No platform given or identified. Using fallback_platform",
-            analysis_id=analysis.id, platform=platform.platform,
-            os_version=platform.os_version
+            analysis_id=analysis.id,
+            platform=platform.platform,
+            os_version=platform.os_version,
         )
 
     return settings_platforms
+
 
 def determine_final_platforms(analysis, pre):
     """Determine and set the final platforms list that will be used to
@@ -355,11 +362,13 @@ def determine_final_platforms(analysis, pre):
 
     overwrite_platforms(analysis, platforms)
 
+
 def merge_errors(analysis, error_container):
     if analysis.errors:
         analysis.errors.merge_errors(error_container)
     else:
         analysis.errors = error_container
+
 
 def merge_processing_errors(analysis):
     errpath = AnalysisPaths.processingerr_json(analysis.id)
@@ -370,12 +379,11 @@ def merge_processing_errors(analysis):
 
     os.remove(errpath)
 
+
 def get_state(analysis_id):
     ses = db.dbms.session()
     try:
-        analysis = ses.query(
-            db.Analysis.state
-        ).filter_by(id=analysis_id).first()
+        analysis = ses.query(db.Analysis.state).filter_by(id=analysis_id).first()
 
         if not analysis:
             return None
@@ -384,16 +392,16 @@ def get_state(analysis_id):
     finally:
         ses.close()
 
+
 def get_analysis(analysis_id):
     if not exists(analysis_id):
-        raise AnalysisError(
-            f"Analysis JSON file for {analysis_id} does not exist."
-        )
+        raise AnalysisError(f"Analysis JSON file for {analysis_id} does not exist.")
 
     try:
         return Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
     except ValueError as e:
         raise AnalysisError(f"Failed to read analysis JSON file. {e}")
+
 
 def get_filetree_fp(analysis_id):
     treepath = AnalysisPaths.filetree(analysis_id)
@@ -402,19 +410,20 @@ def get_filetree_fp(analysis_id):
 
     return open(treepath, "r")
 
+
 def get_filetree_dict(analysis_id):
     fp = get_filetree_fp(analysis_id)
     try:
         return json.load(fp)
     except json.JSONDecodeError as e:
-        raise AnalysisError(
-            f"Failed to read filetree JSON. JSON decoding error: {e}"
-        )
+        raise AnalysisError(f"Failed to read filetree JSON. JSON decoding error: {e}")
     finally:
         fp.close()
 
-def list_analyses(limit=None, offset=None, desc=True,
-                  older_than=None, state=None, remote=None):
+
+def list_analyses(
+    limit=None, offset=None, desc=True, older_than=None, state=None, remote=None
+):
     ses = db.dbms.session()
     try:
         query = ses.query(db.Analysis)
@@ -445,6 +454,7 @@ def list_analyses(limit=None, offset=None, desc=True,
     finally:
         ses.close()
 
+
 def dictlist(limit=None, offset=None, desc=True):
     if limit is not None and not isinstance(limit, int):
         try:
@@ -464,11 +474,8 @@ def dictlist(limit=None, offset=None, desc=True):
         except (TypeError, ValueError):
             raise TypeError("Desc must be a boolean")
 
-    return [
-        a.to_dict() for a in list_analyses(
-            limit=limit, offset=offset, desc=desc
-        )
-    ]
+    return [a.to_dict() for a in list_analyses(limit=limit, offset=offset, desc=desc)]
+
 
 def get_fatal_errors(analysis_id):
     analysis = get_analysis(analysis_id)
@@ -481,33 +488,33 @@ def get_fatal_errors(analysis_id):
 
     return fatalerrs
 
+
 def db_find_location(analysis_id):
     ses = db.dbms.session()
     try:
-        analysis = ses.query(
-            db.Analysis.location
-        ).filter_by(id=analysis_id).first()
+        analysis = ses.query(db.Analysis.location).filter_by(id=analysis_id).first()
         if not analysis:
             return None
         return analysis.location
     finally:
         ses.close()
 
+
 def count_submission(start=None, end=None):
     ses = db.dbms.session()
     try:
         q = ses.query(db.Analysis)
         if start and end:
-            q = q.filter(
-                db.Analysis.created_on>=start, db.Analysis.created_on<=end
-            )
+            q = q.filter(db.Analysis.created_on >= start, db.Analysis.created_on <= end)
         return q.count()
     finally:
         ses.close()
 
+
 def set_score(analysis, score):
     if score > analysis.score:
         analysis.score = score
+
 
 def update_db_row(analysis_id, **kwargs):
     ses = db.dbms.session()
@@ -516,6 +523,7 @@ def update_db_row(analysis_id, **kwargs):
         ses.commit()
     finally:
         ses.close()
+
 
 def write_changes(analysis):
     if not analysis.was_updated:
@@ -556,31 +564,27 @@ def delete_analysis_disk(analysis_id):
         if sum(1 for _ in daydir.iterdir()) < 1:
             delete_dir(daydir)
     except FileNotFoundError as e:
-        log.error(
-            "Failed to delete analysis", analysis_id=analysis_id, error=e
-        )
-        raise AnalysisError(
-            f"Analysis {analysis_id} not found"
-        )
+        log.error("Failed to delete analysis", analysis_id=analysis_id, error=e)
+        raise AnalysisError(f"Analysis {analysis_id} not found")
 
 
 def delete_analysis_db(analysis_id):
     ses = db.dbms.session()
     try:
-        analysis_sql = db.Analysis.__table__.delete().where(db.Analysis.id == analysis_id)
-        target_sql = db.Target.__table__.delete().where(db.Target.analysis_id == analysis_id)
+        analysis_sql = db.Analysis.__table__.delete().where(
+            db.Analysis.id == analysis_id
+        )
+        target_sql = db.Target.__table__.delete().where(
+            db.Target.analysis_id == analysis_id
+        )
         tasks_sql = db.Task.__table__.delete().where(db.Task.analysis_id == analysis_id)
         ses.execute(target_sql)
         ses.execute(tasks_sql)
         ses.execute(analysis_sql)
         ses.commit()
     except Exception as e:
-        log.error(
-            "Failed to delete analysis", analysis_id=analysis_id, error=e
-        )
-        raise AnalysisError(
-            f"Analysis {analysis_id} not found"
-        )
+        log.error("Failed to delete analysis", analysis_id=analysis_id, error=e)
+        raise AnalysisError(f"Analysis {analysis_id} not found")
     finally:
         ses.close()
 
@@ -603,6 +607,7 @@ def find_waiting_url_analysis(url=None):
         return None
     finally:
         ses.close()
+
 
 def find_waiting_file_analysis(sha256):
     ses = db.dbms.session()

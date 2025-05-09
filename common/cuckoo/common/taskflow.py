@@ -4,18 +4,18 @@
 from .clients import MachineryManagerClient
 from .storage import Paths
 
+
 class TaskFlowError(Exception):
     pass
 
-class TaskFlow:
 
+class TaskFlow:
     name = ""
     supports = []
 
     INTERVAL_CALL_WAIT = 1
 
     def __init__(self, machine, task, analysis, agent, resultserver, tasklog):
-
         self.machine = machine
         self.task = task
         self.analysis = analysis

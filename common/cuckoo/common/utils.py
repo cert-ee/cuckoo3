@@ -3,6 +3,7 @@
 
 from sys import getfilesystemencoding
 
+
 def parse_bool(value):
     """Attempt to parse a boolean value."""
     if value in ("true", "True", "yes", "1", "on"):
@@ -11,13 +12,15 @@ def parse_bool(value):
         return False
     return bool(int(value))
 
-def bytes_to_human(num, suffix='B'):
+
+def bytes_to_human(num, suffix="B"):
     # Stolen from Stackoverflow. https://stackoverflow.com/a/1094933
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    return "%.1f%s%s" % (num, "Yi", suffix)
+
 
 def fds_to_hardlimit():
     try:
@@ -47,6 +50,7 @@ def fds_to_hardlimit():
 
     return startlimit < currlimit, currlimit
 
+
 def force_valid_encoding(string):
     """Force file system encoding type by first encoding in as bytes
     with the replace handler, which will replace invalid chars. Then decode
@@ -58,8 +62,10 @@ def force_valid_encoding(string):
 
     return str(string)
 
+
 def browser_to_tag(browser):
     return f"browser_{browser.lower().replace(' ', '_')}"
+
 
 def tag_to_browser(tag):
     if not tag.startswith("browser_"):
@@ -70,6 +76,7 @@ def tag_to_browser(tag):
         return None
 
     return parts[1].replace("_", " ").strip()
+
 
 def getuser():
     try:

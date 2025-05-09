@@ -6,6 +6,7 @@ import os
 from importlib import import_module
 from pkgutil import iter_modules
 
+
 class NotACuckooPackageError(Exception):
     pass
 
@@ -17,11 +18,13 @@ def is_cuckoo_package(cuckoo_package):
     path = os.path.join(cuckoo_package.__path__[0], "data", ".cuckoopackage")
     return os.path.isfile(path)
 
+
 def find_cuckoo_packages():
     """Returns a list of tuples containing the full package name,
     a subpackage name, and imported module of all
      packages part of the cuckoo namespace"""
     import cuckoo
+
     found = [("cuckoo", "", cuckoo)]
 
     module_iter = iter_modules(cuckoo.__path__)
@@ -36,6 +39,7 @@ def find_cuckoo_packages():
 
     return found
 
+
 def get_package_versions():
     pkg_versions = {}
     for fullname, _, pkg in find_cuckoo_packages():
@@ -43,23 +47,26 @@ def get_package_versions():
 
     return pkg_versions
 
+
 def get_module(name):
     return import_module(name)
+
 
 def get_package_version(name):
     pkg = get_module(name)
     return pkg.__version__
 
+
 def get_data_dir(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
-        raise NotACuckooPackageError(
-            f"{cuckoo_package} is not a Cuckoo package"
-        )
+        raise NotACuckooPackageError(f"{cuckoo_package} is not a Cuckoo package")
 
     return os.path.join(cuckoo_package.__path__[0], "data")
 
+
 def get_conftemplate_dir(cuckoo_package):
     return os.path.join(get_data_dir(cuckoo_package), "conftemplates")
+
 
 def get_cwdfiles_dir(cuckoo_package):
     cwddata = os.path.join(get_data_dir(cuckoo_package), "cwd")
@@ -68,8 +75,10 @@ def get_cwdfiles_dir(cuckoo_package):
 
     return ""
 
+
 def has_conftemplates(cuckoo_package):
     return os.path.isdir(get_conftemplate_dir(cuckoo_package))
+
 
 def get_conftemplates(cuckoo_package):
     if not has_conftemplates(cuckoo_package):
@@ -84,11 +93,10 @@ def get_conftemplates(cuckoo_package):
 
     return templates
 
+
 def get_conf_typeloaders(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
-        raise NotACuckooPackageError(
-            f"{cuckoo_package} is not a Cuckoo package"
-        )
+        raise NotACuckooPackageError(f"{cuckoo_package} is not a Cuckoo package")
 
     pkgname = f"{cuckoo_package.__name__}.config"
     try:
@@ -105,11 +113,10 @@ def get_conf_typeloaders(cuckoo_package):
 
     return config.typeloaders, exclude_autoload
 
+
 def get_conf_migrations(cuckoo_package):
     if not is_cuckoo_package(cuckoo_package):
-        raise NotACuckooPackageError(
-            f"{cuckoo_package} is not a Cuckoo package"
-        )
+        raise NotACuckooPackageError(f"{cuckoo_package} is not a Cuckoo package")
 
     pkgname = f"{cuckoo_package.__name__}.confmigrations"
     try:
@@ -119,8 +126,8 @@ def get_conf_migrations(cuckoo_package):
 
     return confmigrations.migrations
 
-def enumerate_plugins(package_path, namespace, class_, attributes={}):
 
+def enumerate_plugins(package_path, namespace, class_, attributes={}):
     """Import plugins of type `class` located at `dirpath` into the
     `namespace` that starts with `module_prefix`. If `dirpath` represents a
     filepath then it is converted into its containing directory. The
@@ -131,9 +138,7 @@ def enumerate_plugins(package_path, namespace, class_, attributes={}):
     try:
         dirpath = import_module(package_path).__file__
     except ImportError as e:
-        raise ImportError(
-            f"Failed to import package: {package_path}. Error: {e}"
-        )
+        raise ImportError(f"Failed to import package: {package_path}. Error: {e}")
     if os.path.isfile(dirpath):
         dirpath = os.path.dirname(dirpath)
 
@@ -144,9 +149,7 @@ def enumerate_plugins(package_path, namespace, class_, attributes={}):
             try:
                 import_module(module_path)
             except ImportError as e:
-                raise ImportError(
-                    f"Failed to import: {module_path}. Error: {e}"
-                )
+                raise ImportError(f"Failed to import: {module_path}. Error: {e}")
 
     subclasses = class_.__subclasses__()[:]
 

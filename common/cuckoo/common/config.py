@@ -12,20 +12,26 @@ import yaml
 
 from .utils import parse_bool
 
+
 class ConfigurationError(Exception):
     pass
+
 
 class ConfigurationIncompleteError(ConfigurationError):
     pass
 
+
 class MissingValueError(ConfigurationError):
     pass
+
 
 class IncorrectTypeError(ConfigurationError):
     pass
 
+
 class ConstraintViolationError(ConfigurationError):
     pass
+
 
 class MissingConfigurationFileError(ConfigurationError):
     pass
@@ -36,14 +42,20 @@ _YAML_NULL = "null"
 # The configuration cache. This is were loaded configuration values are stored
 _cache = {}
 
-class TypeLoader:
 
+class TypeLoader:
     EMPTY_VALUE = _YAML_NULL
 
     IS_CONTAINER = False
 
-    def __init__(self, value=None, default_val=None, required=True,
-                 allow_empty=False, sensitive=False):
+    def __init__(
+        self,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+        sensitive=False,
+    ):
         self.required = required
         self.allow_empty = allow_empty
         self.sensitive = sensitive
@@ -76,7 +88,7 @@ class TypeLoader:
         raise NotImplementedError
 
     def check_constraints(self, value):
-        """Verify the the type is empty and potential constraints """
+        """Verify the the type is empty and potential constraints"""
         if self.is_empty(value):
             if self.allow_empty:
                 return
@@ -85,13 +97,24 @@ class TypeLoader:
 
         self.constraints(value)
 
-class String(TypeLoader):
 
-    def __init__(self, value=None, default_val=None, required=True,
-                 allow_empty=False, sensitive=False, to_lower=False):
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty,
-                         sensitive=sensitive)
+class String(TypeLoader):
+    def __init__(
+        self,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+        sensitive=False,
+        to_lower=False,
+    ):
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+            sensitive=sensitive,
+        )
         self.to_lower = to_lower
 
     def is_empty(self, value):
@@ -115,17 +138,28 @@ class String(TypeLoader):
                 f"Expected type string, got {type(value).__name__}"
             )
 
-class Int(TypeLoader):
 
-    def __init__(self, value=None, default_val=None, required=True,
-                 allow_empty=False, sensitive=False, min_value=None,
-                 max_value=None):
+class Int(TypeLoader):
+    def __init__(
+        self,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+        sensitive=False,
+        min_value=None,
+        max_value=None,
+    ):
         self.min_value = min_value
         self.max_value = max_value
 
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty,
-                         sensitive=sensitive)
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+            sensitive=sensitive,
+        )
 
     def parse(self, value):
         if value is None:
@@ -151,30 +185,41 @@ class Int(TypeLoader):
 
         if self.min_value and value < self.min_value:
             raise ConstraintViolationError(
-                f"Value {value} is lower than minimum value "
-                f"of {self.min_value}"
+                f"Value {value} is lower than minimum value of {self.min_value}"
             )
         if self.max_value and value > self.max_value:
             raise ConstraintViolationError(
-                f"Value {value} is larger than maximum value "
-                f"of {self.max_value}"
+                f"Value {value} is larger than maximum value of {self.max_value}"
             )
 
-class FilePath(String):
 
+class FilePath(String):
     _PATHTYPE = "file"
 
-    def __init__(self, value=None, default_val=None, required=True,
-                 allow_empty=False, sensitive=False, must_exist=False,
-                 readable=False, writable=False, executable=False):
+    def __init__(
+        self,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+        sensitive=False,
+        must_exist=False,
+        readable=False,
+        writable=False,
+        executable=False,
+    ):
         self.must_exist = must_exist
         self.readable = readable
         self.writable = writable
         self.executable = executable
 
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty,
-                         sensitive=sensitive)
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+            sensitive=sensitive,
+        )
 
     def _exists_check(self, path):
         return os.path.isfile(path)
@@ -194,19 +239,17 @@ class FilePath(String):
             raise ConstraintViolationError(f"Path {value} is not writable")
 
         if self.executable and not os.access(value, os.X_OK):
-            raise ConstraintViolationError(
-                f"Path {value} is not executable"
-            )
+            raise ConstraintViolationError(f"Path {value} is not executable")
+
 
 class DirectoryPath(FilePath):
-
     _PATHTYPE = "directory"
 
     def _exists_check(self, path):
         return os.path.isdir(path)
 
-class UnixSocketPath(FilePath):
 
+class UnixSocketPath(FilePath):
     _PATHTYPE = "unix socket"
 
     def _exists_check(self, path):
@@ -215,14 +258,25 @@ class UnixSocketPath(FilePath):
 
         return False
 
-class NetworkInterface(String):
 
-    def __init__(self, value=None, default_val=None, required=True,
-                 allow_empty=False, sensitive=False, must_exist=True,
-                 must_be_up=True):
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty,
-                         sensitive=sensitive)
+class NetworkInterface(String):
+    def __init__(
+        self,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+        sensitive=False,
+        must_exist=True,
+        must_be_up=True,
+    ):
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+            sensitive=sensitive,
+        )
 
         self.must_exist = must_exist
         self.must_be_up = must_be_up
@@ -232,6 +286,7 @@ class NetworkInterface(String):
             return
 
         from psutil import net_if_stats
+
         super().constraints(value)
 
         nic = net_if_stats().get(value)
@@ -241,12 +296,10 @@ class NetworkInterface(String):
             )
 
         if self.must_be_up and not nic.isup:
-            raise ConstraintViolationError(
-                f"Network interface '{value}' is not up."
-            )
+            raise ConstraintViolationError(f"Network interface '{value}' is not up.")
+
 
 class Boolean(TypeLoader):
-
     def parse(self, value):
         try:
             return parse_bool(value)
@@ -263,8 +316,8 @@ class Boolean(TypeLoader):
                 f"Expected type boolean, got {type(value).__name__}"
             )
 
-class HTTPUrl(String):
 
+class HTTPUrl(String):
     def constraints(self, value):
         super().constraints(value)
 
@@ -273,16 +326,26 @@ class HTTPUrl(String):
                 "HTTP url must start with http:// or https://"
             )
 
-class List(TypeLoader):
 
+class List(TypeLoader):
     IS_CONTAINER = True
 
-    def __init__(self, element_class, value=None, default_val=[],
-                 required=True, allow_empty=False):
+    def __init__(
+        self,
+        element_class,
+        value=None,
+        default_val=[],
+        required=True,
+        allow_empty=False,
+    ):
         self.element_class = element_class
 
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty)
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+        )
 
     @property
     def usable_value(self):
@@ -290,8 +353,8 @@ class List(TypeLoader):
             return []
 
         return [
-            val.usable_value if isinstance(val, TypeLoader)
-            else val for val in self.value
+            val.usable_value if isinstance(val, TypeLoader) else val
+            for val in self.value
         ]
 
     def is_empty(self, value):
@@ -321,28 +384,33 @@ class List(TypeLoader):
 
             return elements
 
-        raise IncorrectTypeError(
-            f"Expected type list, got {type(value).__name__}"
-        )
+        raise IncorrectTypeError(f"Expected type list, got {type(value).__name__}")
 
     def constraints(self, value):
         if not isinstance(value, list):
-            raise IncorrectTypeError(
-                f"Expected type list, got {type(value).__name__}"
-            )
+            raise IncorrectTypeError(f"Expected type list, got {type(value).__name__}")
 
         for element in value:
             element.check_constraints(element.value)
 
+
 class Dict(TypeLoader):
-
-    def __init__(self, element_class, value=None, default_val=None,
-                 required=True, allow_empty=False):
-
+    def __init__(
+        self,
+        element_class,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+    ):
         self.element_class = element_class
 
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty)
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+        )
 
     @property
     def usable_value(self):
@@ -359,9 +427,7 @@ class Dict(TypeLoader):
             return None
 
         if not isinstance(value, dict):
-            raise IncorrectTypeError(
-                f"Expected type dict, got {type(value).__name__}"
-            )
+            raise IncorrectTypeError(f"Expected type dict, got {type(value).__name__}")
 
         # If the given typeloader is also a container, it must be a class
         # instance instead of a class, as to pass its typeloader to it.
@@ -390,21 +456,29 @@ class Dict(TypeLoader):
 
     def constraints(self, value):
         if not isinstance(value, dict):
-            raise IncorrectTypeError(
-                f"Expected type dict, got {type(value).__name__}"
-            )
+            raise IncorrectTypeError(f"Expected type dict, got {type(value).__name__}")
 
         for v in value.values():
             v.check_constraints(v.value)
 
-class DictList(TypeLoader):
 
-    def __init__(self, child_typeloaders, value=None, default_val=None,
-                 required=True, allow_empty=False):
+class DictList(TypeLoader):
+    def __init__(
+        self,
+        child_typeloaders,
+        value=None,
+        default_val=None,
+        required=True,
+        allow_empty=False,
+    ):
         self.child_typeloaders = child_typeloaders
 
-        super().__init__(value=value, default_val=default_val,
-                         required=required, allow_empty=allow_empty)
+        super().__init__(
+            value=value,
+            default_val=default_val,
+            required=required,
+            allow_empty=allow_empty,
+        )
 
     @property
     def usable_value(self):
@@ -418,9 +492,7 @@ class DictList(TypeLoader):
 
     def parse(self, value):
         if not isinstance(value, list):
-            raise IncorrectTypeError(
-                f"Expected type list, got {type(value).__name__}"
-            )
+            raise IncorrectTypeError(f"Expected type list, got {type(value).__name__}")
 
         dict_list = []
         for entry in value:
@@ -444,9 +516,7 @@ class DictList(TypeLoader):
 
     def constraints(self, value):
         if not isinstance(value, list):
-            raise IncorrectTypeError(
-                f"Expected type list, got {type(value).__name__}"
-            )
+            raise IncorrectTypeError(f"Expected type list, got {type(value).__name__}")
 
         for entry in value:
             if not isinstance(entry, dict):
@@ -464,9 +534,7 @@ class DictList(TypeLoader):
 
 
 class NestedDictionary:
-
     def __init__(self, parentkey, child_typeloaders, required=True):
-
         self.parentkey = parentkey
         self.child_typeloaders = child_typeloaders
         self.required = required
@@ -476,9 +544,7 @@ class NestedDictionary:
     @property
     def yaml_value(self):
         if not self.value:
-            return {
-                self.parentkey: self.child_typeloaders
-            }
+            return {self.parentkey: self.child_typeloaders}
 
         return self.value
 
@@ -497,6 +563,7 @@ class NestedDictionary:
             typeloaders[section] = deepcopy(self.child_typeloaders)
         return typeloaders
 
+
 def platformconditional(default, **kwargs):
     plat = platform.system().lower()
     plat_val = kwargs.get(plat)
@@ -504,16 +571,15 @@ def platformconditional(default, **kwargs):
         return plat_val
     return default
 
+
 def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
     def _typeloader_to_yamlval(obj):
         if isinstance(obj, set):
-            raise ConfigurationError(
-                "Configuration value object cannot be a set"
-            )
+            raise ConfigurationError("Configuration value object cannot be a set")
 
         if isinstance(obj, TypeLoader):
             if obj.sensitive and filter_sensitive:
-                return "*"*8
+                return "*" * 8
 
             return obj.yaml_value
 
@@ -523,13 +589,13 @@ def typeloaders_to_templatedict(config_dictionary, filter_sensitive=True):
         return str(obj)
 
     # HACKY: A bit hacky.. But works well enough for now.
-    return json.loads(
-        json.dumps(config_dictionary, default=_typeloader_to_yamlval)
-    )
+    return json.loads(json.dumps(config_dictionary, default=_typeloader_to_yamlval))
+
 
 def render_config_from_typeloaders(template_path, typeloaders, write_to):
     values = typeloaders_to_templatedict(typeloaders, filter_sensitive=False)
     render_config_from_dict(template_path, values, write_to)
+
 
 def render_config_from_dict(template_path, values_dict, write_to):
     if os.path.exists(write_to):
@@ -541,10 +607,9 @@ def render_config_from_dict(template_path, values_dict, write_to):
         )
 
     import jinja2
+
     with open(template_path, "r") as fp:
-        template = jinja2.Template(
-            fp.read(), lstrip_blocks=True, trim_blocks=True
-        )
+        template = jinja2.Template(fp.read(), lstrip_blocks=True, trim_blocks=True)
 
     try:
         rendered = template.render(values_dict)
@@ -553,6 +618,7 @@ def render_config_from_dict(template_path, values_dict, write_to):
 
     with open(write_to, "w") as fp:
         fp.write(rendered)
+
 
 def cfg(file, *args, subpkg="", load_missing=False):
     """Read the specified config args from cache of file of (optional)subpkg.
@@ -569,11 +635,11 @@ def cfg(file, *args, subpkg="", load_missing=False):
     if not file_values:
         if not load_missing:
             raise ConfigurationError(
-                f"Configuration file {file} is not loaded. "
-                f"Cannot read values from it."
+                f"Configuration file {file} is not loaded. Cannot read values from it."
             )
 
         from .storage import Paths
+
         load_config(Paths.config(file=file, subpkg=subpkg), subpkg=subpkg)
         return cfg(file, *args, subpkg=subpkg)
 
@@ -599,6 +665,7 @@ def cfg(file, *args, subpkg="", load_missing=False):
 
     return val
 
+
 def _dump_to_cache(loaded_values, filename, subpkg):
     def _typeloader_to_val(obj):
         if isinstance(obj, (TypeLoader, NestedDictionary)):
@@ -607,9 +674,7 @@ def _dump_to_cache(loaded_values, filename, subpkg):
         return obj
 
     # HACKY: A bit hacky.. But works well enough for now.
-    values_dict = json.loads(
-        json.dumps(loaded_values, default=_typeloader_to_val)
-    )
+    values_dict = json.loads(json.dumps(loaded_values, default=_typeloader_to_val))
 
     if subpkg:
         if subpkg not in _cache:
@@ -620,11 +685,10 @@ def _dump_to_cache(loaded_values, filename, subpkg):
     else:
         _cache[filename] = values_dict
 
+
 def read_config_raw(filepath):
     if not os.path.isfile(filepath):
-        raise MissingConfigurationFileError(
-            f"Configuration file {filepath} not found."
-        )
+        raise MissingConfigurationFileError(f"Configuration file {filepath} not found.")
 
     with open(filepath, "r") as fp:
         try:
@@ -632,12 +696,10 @@ def read_config_raw(filepath):
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML in {filepath}. {e}")
 
-def load_config(filepath, subpkg="", cache_config=True,
-                check_constraints=True):
+
+def load_config(filepath, subpkg="", cache_config=True, check_constraints=True):
     if not os.path.isfile(filepath):
-        raise MissingConfigurationFileError(
-            f"Configuration file {filepath} not found."
-        )
+        raise MissingConfigurationFileError(f"Configuration file {filepath} not found.")
 
     if subpkg:
         pkgname = f"cuckoo.{subpkg}"
@@ -645,6 +707,7 @@ def load_config(filepath, subpkg="", cache_config=True,
         pkgname = "cuckoo"
 
     from importlib import import_module
+
     try:
         cuckoopkg = import_module(pkgname)
     except ModuleNotFoundError:
@@ -653,6 +716,7 @@ def load_config(filepath, subpkg="", cache_config=True,
         )
 
     from .packages import get_conf_typeloaders
+
     loaders, _ = get_conf_typeloaders(cuckoopkg)
 
     filename = os.path.basename(filepath)
@@ -669,19 +733,17 @@ def load_config(filepath, subpkg="", cache_config=True,
     loadercopy = deepcopy(loader)
     try:
         load_values(
-            read_config_raw(filepath), loadercopy,
-            check_constraints=check_constraints
+            read_config_raw(filepath), loadercopy, check_constraints=check_constraints
         )
     except ConfigurationError as e:
-        raise ConfigurationError(
-            f"Error in config file: {filepath}. {e}"
-        )
+        raise ConfigurationError(f"Error in config file: {filepath}. {e}")
 
     # Assign the loaded values under the subpkg key and filename in the cache
     if cache_config:
         _dump_to_cache(loadercopy, filename, subpkg)
 
     return loadercopy
+
 
 def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
     if not isinstance(conf_data_dict, dict):
@@ -697,22 +759,16 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
             check_constraints = False
 
     for key, loader in type_loader_dict.items():
-
         if key not in conf_data_dict:
-
             # Stop reading the configuration if the missing key is
             # marked as not required
             if isinstance(loader, (TypeLoader, NestedDictionary)):
                 if not loader.required:
                     continue
 
-                raise ConfigurationIncompleteError(
-                    f"Missing required key {key}"
-                )
+                raise ConfigurationIncompleteError(f"Missing required key {key}")
 
-            raise ConfigurationIncompleteError(
-                f"Missing configuration section: {key}"
-            )
+            raise ConfigurationIncompleteError(f"Missing configuration section: {key}")
 
         confval = conf_data_dict[key]
 
@@ -750,16 +806,12 @@ def load_values(conf_data_dict, type_loader_dict, check_constraints=True):
             if check_constraints:
                 loader.check_constraints(parsed)
         except ConstraintViolationError as e:
-            raise ConfigurationError(
-                f"Constraint violation for key {key}: {e}"
-            )
+            raise ConfigurationError(f"Constraint violation for key {key}: {e}")
         except MissingValueError as e:
             raise ConfigurationError(
                 f"Key '{key}' cannot be empty. {e}",
             )
         except IncorrectTypeError as e:
-            raise ConfigurationError(
-                f"Value of key '{key}' has an incorrect type. {e}"
-            )
+            raise ConfigurationError(f"Value of key '{key}' has an incorrect type. {e}")
 
         loader.value = parsed

@@ -1,16 +1,17 @@
 # Copyright (C) 2019-2021 Estonian Information System Authority.
 # See the file 'LICENSE' for copying permission.
 
+
 class CompareError(Exception):
     pass
 
-class ComparedValue:
 
+class ComparedValue:
     def __init__(self, value, valuetype, description, task_ids):
         self.valuetype = valuetype
         self.description = description
         self.value = value
-        self._tasks = {task_id:False for task_id in task_ids}
+        self._tasks = {task_id: False for task_id in task_ids}
 
     def task_has_value(self, task_id):
         if not task_id in self._tasks:
@@ -25,7 +26,7 @@ class ComparedValue:
         return {
             "value": self.value,
             "description": self.description,
-            "tasks": self._tasks
+            "tasks": self._tasks,
         }
 
     def __eq__(self, other):
@@ -34,8 +35,8 @@ class ComparedValue:
     def __hash__(self):
         return hash(self.valuetype + self.value)
 
-class PostReportCompare:
 
+class PostReportCompare:
     comparetype = ""
 
     def __init__(self, post_reports):
@@ -49,8 +50,8 @@ class PostReportCompare:
     def to_dict(self):
         return [compared.to_dict() for compared in self.compared]
 
-class TaskSignaturesCompare(PostReportCompare):
 
+class TaskSignaturesCompare(PostReportCompare):
     comparetype = "signatures"
 
     def _make_comparedvalues(self):
@@ -59,8 +60,10 @@ class TaskSignaturesCompare(PostReportCompare):
         for post in self._posts:
             for sig in post.signatures:
                 compare = ComparedValue(
-                    sig["short_description"], "signature", sig["description"],
-                    list(tasks.keys())
+                    sig["short_description"],
+                    "signature",
+                    sig["description"],
+                    list(tasks.keys()),
                 )
                 all_sigs.add(compare)
                 tasks[post.task_id].add(compare)
@@ -76,8 +79,8 @@ class TaskSignaturesCompare(PostReportCompare):
                 if sig in task_sigs:
                     sig.task_has_value(task_id)
 
-class TaskFamilyCompare(PostReportCompare):
 
+class TaskFamilyCompare(PostReportCompare):
     comparetype = "family"
 
     def _make_comparedvalues(self):
@@ -85,9 +88,7 @@ class TaskFamilyCompare(PostReportCompare):
         tasks = {p.task_id: set() for p in self._posts}
         for post in self._posts:
             for family in post.families:
-                compare = ComparedValue(
-                    family, "family", "", list(tasks.keys())
-                )
+                compare = ComparedValue(family, "family", "", list(tasks.keys()))
                 all_families.add(compare)
                 tasks[post.task_id].add(compare)
 
@@ -102,8 +103,8 @@ class TaskFamilyCompare(PostReportCompare):
                 if family in families:
                     family.task_has_value(task_id)
 
-class ComparePostReports:
 
+class ComparePostReports:
     def __init__(self, post_reports):
         self._post_reports = post_reports
         self._compares = []

@@ -9,11 +9,12 @@ from .log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+
 class NetworkCaptureError(Exception):
     pass
 
-class TCPDump:
 
+class TCPDump:
     DEFAULT_PATH = "/usr/sbin/tcpdump"
 
     def __init__(self, pcap_path, capture_interface, binary_path=None):
@@ -53,6 +54,7 @@ class TCPDump:
 
     def _create_args(self):
         tcpdump_args = []
+
         def add_args(*args):
             tcpdump_args.extend(list(args))
 
@@ -79,19 +81,21 @@ class TCPDump:
                 ignore = [direction, "host", host]
                 if port:
                     ignore.extend(["and", direction, "port", str(port)])
-                add_args(
-                    "(", *ignore, ")"
-                )
+                add_args("(", *ignore, ")")
 
         return tcpdump_args
 
     def _find_error(self, err):
         ignore_err_starts = (b"tcpdump: listening on ",)
         ignore_err_ends = (
-            b"packet captured", b"packets captured",
-            b"packet received by filter", b"packets received by filter",
-            b"packet dropped by kernel", b"packets dropped by kernel",
-            b"packet dropped by interface", b"packets dropped by interface",
+            b"packet captured",
+            b"packets captured",
+            b"packet received by filter",
+            b"packets received by filter",
+            b"packet dropped by kernel",
+            b"packets dropped by kernel",
+            b"packet dropped by interface",
+            b"packets dropped by interface",
             b"dropped privs to root",
         )
 
@@ -110,8 +114,7 @@ class TCPDump:
         log.debug("Starting tcpdump", args=args)
         try:
             self._proc = subprocess.Popen(
-                args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                close_fds=True
+                args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, close_fds=True
             )
         except OSError as e:
             raise NetworkCaptureError(f"Failed to start tcpdump process. {e}")
@@ -139,8 +142,7 @@ class TCPDump:
             self._proc.kill()
         except OSError as e:
             raise NetworkCaptureError(
-                f"Failed to stop tcpdump process ({self._proc.pid}). "
-                f"Error: {e}"
+                f"Failed to stop tcpdump process ({self._proc.pid}). Error: {e}"
             )
 
     def stop(self):
@@ -174,7 +176,8 @@ class TCPDump:
         except Exception as e:
             log.warning(
                 "Error sending sigterm to process. Sending sigkill.",
-                error=e, pid=self._proc.pid
+                error=e,
+                pid=self._proc.pid,
             )
             self.force_stop()
 
@@ -182,7 +185,9 @@ class TCPDump:
         if not self._proc.poll():
             log.debug(
                 "Reading tcpdump process stderr. Process has not exited yet. "
-                "Waiting for it to exit.", pid=self._proc.pid, timeout=60
+                "Waiting for it to exit.",
+                pid=self._proc.pid,
+                timeout=60,
             )
 
         read_stderr = False
@@ -191,8 +196,8 @@ class TCPDump:
             read_stderr = True
         except subprocess.TimeoutExpired:
             log.error(
-                "Timeout expired waiting for tcpdump process to stop. "
-                "Sending sigkill", pid=self._proc.pid
+                "Timeout expired waiting for tcpdump process to stop. Sending sigkill",
+                pid=self._proc.pid,
             )
             self.force_stop()
         except ValueError as e:
