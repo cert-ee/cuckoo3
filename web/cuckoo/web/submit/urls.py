@@ -12,13 +12,17 @@ urlpatterns = [
     path("", views.Submit.as_view(), name="Submit/index"),
     path(
         "waitidentify/<analysis_id:analysis_id>",
-        views.WaitIdentify.as_view(), name="Submit/waitidentify"),
-    path(
-        "settings/<analysis_id:analysis_id>/", views.Settings.as_view(),
-        name="Submit/settings"
+        views.WaitIdentify.as_view(),
+        name="Submit/waitidentify",
     ),
     path(
-        "resubmit/<analysis_id:analysis_id>/", views.Resubmit.as_view(),
-        name="Submit/resubmit"
+        "settings/<analysis_id:analysis_id>/",
+        views.Settings.as_view(),
+        name="Submit/settings",
+    ),
+    path(
+        "resubmit/<analysis_id:analysis_id>/",
+        views.Resubmit.as_view(),
+        name="Submit/resubmit",
     ),
 ]

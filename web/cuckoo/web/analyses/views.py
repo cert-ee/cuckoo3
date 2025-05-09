@@ -24,18 +24,17 @@ def index(request):
         limit = 20
 
     try:
-        analyses_list = analyses.dictlist(
-            limit=limit, offset=offset, desc=desc
-        )
+        analyses_list = analyses.dictlist(limit=limit, offset=offset, desc=desc)
     except TypeError as e:
         return HttpResponseBadRequest(str(e))
 
     return render(
-        request, template_name="analyses/index.html.jinja2",
+        request,
+        template_name="analyses/index.html.jinja2",
         context={
             "analyses": analyses_list,
             "offset": offset,
             "limit": limit,
-            "desc": desc
-        }
+            "desc": desc,
+        },
     )

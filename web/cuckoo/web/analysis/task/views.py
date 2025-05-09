@@ -6,15 +6,19 @@ from django.shortcuts import render
 
 from cuckoo.common.task import States
 from cuckoo.common.result import (
-    retriever, Results, ResultDoesNotExistError, InvalidResultDataError
+    retriever,
+    Results,
+    ResultDoesNotExistError,
+    InvalidResultDataError,
 )
+
 
 def index(request, analysis_id, task_id):
     try:
         result = retriever.get_task(
-            analysis_id, task_id,
-            include=[Results.ANALYSIS, Results.TASK,
-                     Results.POST, Results.MACHINE]
+            analysis_id,
+            task_id,
+            include=[Results.ANALYSIS, Results.TASK, Results.POST, Results.MACHINE],
         )
         analysis = result.analysis
         task = result.task
@@ -25,12 +29,13 @@ def index(request, analysis_id, task_id):
 
     if task.state == States.FATAL_ERROR:
         return render(
-            request, template_name="task/error.html.jinja2",
+            request,
+            template_name="task/error.html.jinja2",
             context={
                 "analysis": analysis.to_dict(),
                 "task": task.to_dict(),
-                "analysis_id": analysis_id
-            }
+                "analysis_id": analysis_id,
+            },
         )
 
     try:
@@ -42,12 +47,13 @@ def index(request, analysis_id, task_id):
         return HttpResponseServerError(str(e))
 
     return render(
-        request, template_name="task/index.html.jinja2",
+        request,
+        template_name="task/index.html.jinja2",
         context={
             "analysis": analysis.to_dict(),
             "analysis_id": analysis_id,
             "task": task.to_dict(),
             "report": postreport.to_dict(),
-            "machine": machine.to_dict()
-        }
+            "machine": machine.to_dict(),
+        },
     )

@@ -6,8 +6,10 @@ from urllib.parse import urlparse
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.http import (
-    HttpResponseBadRequest, HttpResponseServerError, HttpResponseNotAllowed,
-    HttpResponseNotFound
+    HttpResponseBadRequest,
+    HttpResponseServerError,
+    HttpResponseNotAllowed,
+    HttpResponseNotFound,
 )
 from django.shortcuts import render, redirect
 from django.views import View
@@ -17,9 +19,13 @@ import logging
 from cuckoo.common import submit, analyses
 from cuckoo.common.config import cfg
 from cuckoo.common.result import (
-    retriever, Results, ResultDoesNotExistError, InvalidResultDataError
+    retriever,
+    Results,
+    ResultDoesNotExistError,
+    InvalidResultDataError,
 )
 from cuckoo.common.storage import AnalysisPaths
+
 
 def _validate_website_url(website):
     """Validate website into valid URL"""
@@ -33,12 +39,8 @@ def _validate_website_url(website):
 
 
 def _make_web_platforms(available_platforms):
-    fallbacks = cfg(
-        "analysissettings.yaml", "platform", "fallback_platforms"
-    )
-    versions = cfg(
-        "analysissettings.yaml", "platform", "versions"
-    )
+    fallbacks = cfg("analysissettings.yaml", "platform", "fallback_platforms")
+    versions = cfg("analysissettings.yaml", "platform", "versions")
 
     default_platform = ""
     default_version = ""
@@ -53,7 +55,7 @@ def _make_web_platforms(available_platforms):
         entry = {
             "default": False,
             "platform": platform,
-            "os_version": list(os_versions)
+            "os_version": list(os_versions),
         }
         platforms.append(entry)
         if platform != default_platform:
@@ -77,7 +79,6 @@ def _make_web_platforms(available_platforms):
 
 
 class Submit(View):
-
     def get(self, request):
         return render(request, template_name="submit/index.html.jinja2")
 
@@ -89,8 +90,10 @@ class Submit(View):
                 url = _validate_website_url(request.POST.get("url"))
             except ValidationError as e:
                 return render(
-                    request, template_name="submit/index.html.jinja2",
-                    status=400, context={"error": str(e)}
+                    request,
+                    template_name="submit/index.html.jinja2",
+                    status=400,
+                    context={"error": str(e)},
                 )
         if not uploaded and not url:
             return HttpResponseBadRequest()
@@ -106,15 +109,16 @@ class Submit(View):
             settings = s_maker.make_settings()
             if uploaded:
                 analysis_id = submit.file(
-                    uploaded.temporary_file_path(), settings,
-                    file_name=uploaded.name
+                    uploaded.temporary_file_path(), settings, file_name=uploaded.name
                 )
             else:
                 analysis_id = submit.url(url, settings)
         except submit.SubmissionError as e:
             return render(
-                request, template_name="submit/index.html.jinja2",
-                status=400, context={"error": str(e)}
+                request,
+                template_name="submit/index.html.jinja2",
+                status=400,
+                context={"error": str(e)},
             )
 
         try:
@@ -128,16 +132,15 @@ class Submit(View):
 
 
 class WaitIdentify(View):
-
     def get(self, request, analysis_id):
         return render(
-            request, template_name="submit/loading.html.jinja2",
-            context={"analysis_id": analysis_id}
+            request,
+            template_name="submit/loading.html.jinja2",
+            context={"analysis_id": analysis_id},
         )
 
 
 class Settings(View):
-
     def get(self, request, analysis_id):
         if analyses.get_state(analysis_id) != analyses.States.WAITING_MANUAL:
             return HttpResponseNotAllowed(
@@ -160,11 +163,11 @@ class Settings(View):
                     submit.settings_maker.available_platforms()
                 ),
                 "routes": submit.settings_maker.available_routes(),
-                "browsers": submit.settings_maker.available_browsers()
+                "browsers": submit.settings_maker.available_browsers(),
             },
             "default_settings": submit.settings_maker.default,
             "analysis": analysis,
-            "analysis_id": analysis_id
+            "analysis_id": analysis_id,
         }
 
         if analysis.category == "file":
@@ -176,17 +179,15 @@ class Settings(View):
                 )
 
         return render(
-            request, template_name="submit/settings.html.jinja2",
-            context=context
+            request, template_name="submit/settings.html.jinja2", context=context
         )
-
 
 
 def _validate_analysis_id(analysis_id):
     """Validate analysis id"""
     ANALYSIS_ID_REGEX = "[0-9]{8}-[A-Z0-9]{6}"
 
-    #msg = "Cannot validate analysis_id": %s" % analysis_id
+    # msg = "Cannot validate analysis_id": %s" % analysis_id
     msg = f"Cannot validate this analysis_id: {analysis_id}"
     complied_regex = re.compile(ANALYSIS_ID_REGEX)
     match = complied_regex.fullmatch(analysis_id)
@@ -194,25 +195,26 @@ def _validate_analysis_id(analysis_id):
         raise ValidationError(message=msg)
     return analysis_id
 
-class Resubmit(View):
 
+class Resubmit(View):
     def get(self, request, *args, **kwargs):
         analysis_id = kwargs.get("analysis_id")
-        #analysis_id = request.GET.get("analysis_id")
+        # analysis_id = request.GET.get("analysis_id")
 
         if analysis_id:
             try:
                 analysis_id = _validate_analysis_id(analysis_id)
             except ValidationError as e:
                 return render(
-                    request, template_name="submit/index.html.jinja2",
-                    status=400, context={"error": str(e)}
+                    request,
+                    template_name="submit/index.html.jinja2",
+                    status=400,
+                    context={"error": str(e)},
                 )
         else:
             return HttpResponseBadRequest()
 
         analysis = retriever.get_analysis(analysis_id).analysis
-
 
         try:
             s_maker = submit.settings_maker.new_settings()
@@ -232,16 +234,20 @@ class Resubmit(View):
                 analysis_id = submit.url(analysis.target.target, settings)
         except submit.SubmissionError as e:
             return render(
-                request, template_name="submit/index.html.jinja2",
-                status=400, context={"error": str(e)}
+                request,
+                template_name="submit/index.html.jinja2",
+                status=400,
+                context={"error": str(e)},
             )
 
         try:
             submit.notify()
         except submit.SubmissionError as e:
-            logging.error(f"Failed to notify Cuckoo of new analysis {analysis_id}. Exception: {e}")
+            logging.error(
+                f"Failed to notify Cuckoo of new analysis {analysis_id}. Exception: {e}"
+            )
             return HttpResponseServerError(
                 "Failed to notify Cuckoo of new analysis. Please try again later."
             )
 
-        return redirect("Submit/waitidentify", analysis_id=analysis_id)      
+        return redirect("Submit/waitidentify", analysis_id=analysis_id)

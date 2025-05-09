@@ -3,6 +3,4 @@
 
 from django.urls import path, include
 
-urlpatterns = [
-    path("file/", include("cuckoo.web.api.targets.file.urls"))
-]
+urlpatterns = [path("file/", include("cuckoo.web.api.targets.file.urls"))]

@@ -10,7 +10,6 @@ from cuckoo.common.result import retriever, ResultDoesNotExistError
 
 
 class BinaryDownload(APIView):
-
     def get(self, request, sha256):
         sha256 = sha256.lower()
         try:

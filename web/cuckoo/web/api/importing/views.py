@@ -8,15 +8,19 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 
 from cuckoo.common.importing import (
-    store_importable, AnalysisImportError, list_importables, notify,
-    AnalysisExistsError
+    store_importable,
+    AnalysisImportError,
+    list_importables,
+    notify,
+    AnalysisExistsError,
 )
+
 
 class AnalysisImport(serializers.Serializer):
     file = serializers.FileField()
 
-class ImportAnalysis(APIView):
 
+class ImportAnalysis(APIView):
     permission_classes = (IsAdminUser,)
     parser_classes = [MultiPartParser]
 

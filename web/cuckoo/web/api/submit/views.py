@@ -20,7 +20,6 @@ class URLSubmission(serializers.Serializer):
 
 
 class SubmitFile(APIView):
-
     serializer_class = FileSubmission
     parser_classes = [MultiPartParser]
 
@@ -38,8 +37,7 @@ class SubmitFile(APIView):
 
             final_settings = s_maker.make_settings()
             analysis_id = submit.file(
-                uploaded.temporary_file_path(), final_settings,
-                file_name=uploaded.name
+                uploaded.temporary_file_path(), final_settings, file_name=uploaded.name
             )
         except submit.SubmissionError as e:
             return Response({"error": str(e)}, status=400)
@@ -47,21 +45,14 @@ class SubmitFile(APIView):
         try:
             submit.notify()
         except submit.SubmissionError as e:
-            return Response(
-                {
-                    "error": str(e),
-                    "analysis_id": analysis_id
-                }, status=503
-            )
+            return Response({"error": str(e), "analysis_id": analysis_id}, status=503)
 
-        return Response({
-            "analysis_id": analysis_id,
-            "settings": final_settings.to_dict()
-        })
+        return Response(
+            {"analysis_id": analysis_id, "settings": final_settings.to_dict()}
+        )
 
 
 class SubmitURL(APIView):
-
     serializer_class = URLSubmission
 
     def post(self, request):
@@ -84,32 +75,23 @@ class SubmitURL(APIView):
         try:
             submit.notify()
         except submit.SubmissionError as e:
-            return Response(
-                {
-                    "error": str(e),
-                    "analysis_id": analysis_id
-                }, status=503
-            )
+            return Response({"error": str(e), "analysis_id": analysis_id}, status=503)
 
-        return Response({
-            "analysis_id": analysis_id,
-            "settings": final_settings.to_dict()
-        })
+        return Response(
+            {"analysis_id": analysis_id, "settings": final_settings.to_dict()}
+        )
 
 
 class AvailablePlatforms(APIView):
-
     def get(self, request):
         return Response(submit.settings_maker.available_platforms())
 
 
 class AvailableRoutes(APIView):
-
     def get(self, request):
         return Response(submit.settings_maker.available_routes())
 
 
 class AvailableBrowsers(APIView):
-
     def get(self, request):
         return Response(submit.settings_maker.available_browsers())
