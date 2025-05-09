@@ -20,6 +20,7 @@ class NodeStateControlError(Exception):
 def _handle_task_failed(worktracker):
     worktracker.ctx.node.set_task_failed(worktracker.task_id)
 
+
 def _handle_task_success(worktracker):
     worktracker.ctx.node.set_task_success(worktracker.task_id)
 
@@ -33,7 +34,8 @@ def _handle_state(worktracker, state):
         except AnalysisImportError as e:
             log.exception(
                 "Failed to create task result zip.",
-                task_id=worktracker.task_id, error=e
+                task_id=worktracker.task_id,
+                error=e,
             )
             _handle_task_failed(worktracker)
             return
@@ -45,8 +47,8 @@ def _handle_state(worktracker, state):
     else:
         raise NodeStateControlError(f"Cannot handle unexpected state: {state}")
 
-class _WorkTracker:
 
+class _WorkTracker:
     def __init__(self, nodectx, func, **kwargs):
         self.ctx = nodectx
         self.func = func
@@ -61,7 +63,6 @@ class _WorkTracker:
 
 
 class StateControllerWorker(threading.Thread):
-
     def __init__(self, work_queue):
         super().__init__()
 
@@ -80,16 +81,18 @@ class StateControllerWorker(threading.Thread):
             except Exception as e:
                 log.exception(
                     "Failed to run handler function",
-                    function=worktracker.func, args=worktracker.func_args,
-                    error=e
+                    function=worktracker.func,
+                    args=worktracker.func_args,
+                    error=e,
                 )
                 try:
                     worktracker.ctx.node.set_task_failed(worktracker.task_id)
                 except Exception as e:
                     log.exception(
                         "Failed to set task to failed after failure",
-                        function=worktracker.func, args=worktracker.func_args,
-                        error=e
+                        function=worktracker.func,
+                        args=worktracker.func_args,
+                        error=e,
                     )
             finally:
                 worktracker.close()
@@ -99,9 +102,8 @@ class StateControllerWorker(threading.Thread):
 
 
 class NodeTaskController(UnixSocketServer):
-
     NUM_STATE_CONTROLLER_WORKERS = 4
-    
+
     def __init__(self, controller_sock_path, nodectx):
         super().__init__(controller_sock_path)
 
@@ -115,21 +117,15 @@ class NodeTaskController(UnixSocketServer):
 
     def queue_call(self, func, **kwargs):
         if not isinstance(kwargs, dict):
-            raise TypeError(
-                f"Kwargs dict must be a dict. Got: {type(kwargs)}"
-            )
+            raise TypeError(f"Kwargs dict must be a dict. Got: {type(kwargs)}")
 
         self.work_queue.put(_WorkTracker(self.ctx, func, **kwargs))
 
     def task_done(self, **kwargs):
-        self.queue_call(
-            _handle_state, task_id=kwargs["task_id"], state="success"
-        )
+        self.queue_call(_handle_state, task_id=kwargs["task_id"], state="success")
 
     def task_fail(self, **kwargs):
-        self.queue_call(
-            _handle_state, task_id=kwargs["task_id"], state="failed"
-        )
+        self.queue_call(_handle_state, task_id=kwargs["task_id"], state="failed")
 
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))
@@ -151,8 +147,7 @@ class NodeTaskController(UnixSocketServer):
             log.warning("Incorrect message received.", msg=repr(msg), error=e)
         except Exception as e:
             log.exception(
-                "Fatal error while handling message.",
-                error=e, message=repr(msg)
+                "Fatal error while handling message.", error=e, message=repr(msg)
             )
             raise
 

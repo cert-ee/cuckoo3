@@ -7,12 +7,18 @@ import time
 from threading import Thread
 
 from cuckoo.common.clients import (
-    ResultServerClient, ActionFailedError, RooterClient, ClientError
+    ResultServerClient,
+    ActionFailedError,
+    RooterClient,
+    ClientError,
 )
 from cuckoo.common.errors import ErrorTracker
 from cuckoo.common.guest import Agent, WaitTimeout
 from cuckoo.common.ipc import (
-    UnixSocketServer, ReaderWriter, message_unix_socket, IPCError
+    UnixSocketServer,
+    ReaderWriter,
+    message_unix_socket,
+    IPCError,
 )
 from cuckoo.common.log import CuckooGlobalLogger, TaskLogger, exit_error
 from cuckoo.common.machines import Machine
@@ -20,7 +26,11 @@ from cuckoo.common.node import ExistingResultServer
 from cuckoo.common.shutdown import register_shutdown
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import (
-    AnalysisPaths, TaskPaths, Paths, cuckoocwd, UnixSocketPaths
+    AnalysisPaths,
+    TaskPaths,
+    Paths,
+    cuckoocwd,
+    UnixSocketPaths,
 )
 from cuckoo.common.strictcontainer import Task, Analysis
 from cuckoo.common.taskflow import TaskFlowError
@@ -28,24 +38,34 @@ from .taskflow import StandardTask
 
 log = CuckooGlobalLogger(__name__)
 
+
 class _FlowRunner(Thread):
     """Runs a given taskflow in a thread"""
 
-    def __init__(self, taskflow_cls, task_id, analysis_id, machine,
-                 resultserver, rooter_sock_path=None):
+    def __init__(
+        self,
+        taskflow_cls,
+        task_id,
+        analysis_id,
+        machine,
+        resultserver,
+        rooter_sock_path=None,
+    ):
         super().__init__()
         self.taskflow_cls = taskflow_cls
         self.machine = machine
         self.resultserver = resultserver
 
         self.task = Task.from_file(TaskPaths.taskjson(task_id))
-        self.analysis = Analysis.from_file(
-            AnalysisPaths.analysisjson(analysis_id)
-        )
+        self.analysis = Analysis.from_file(AnalysisPaths.analysisjson(analysis_id))
         self.agent = Agent(self.machine.ip, self.machine.agent_port)
         self.taskflow = taskflow_cls(
-            self.machine, self.task, self.analysis,
-            self.agent, resultserver, TaskLogger(__name__, task_id)
+            self.machine,
+            self.task,
+            self.analysis,
+            self.agent,
+            resultserver,
+            TaskLogger(__name__, task_id),
         )
         self.do_run = True
 
@@ -57,9 +77,7 @@ class _FlowRunner(Thread):
         self.rooter_sock_path = rooter_sock_path
         self.route_request = None
 
-        self.setName(
-            f"Flowrunner_{self.taskflow_cls.name}_Task_{self.task.id}"
-        )
+        self.setName(f"Flowrunner_{self.taskflow_cls.name}_Task_{self.task.id}")
 
     def task_success(self):
         self.taskflow.log.debug("Sending task done state to state controller")
@@ -69,25 +87,23 @@ class _FlowRunner(Thread):
                 {
                     "subject": "taskrundone",
                     "analysis_id": self.analysis.id,
-                    "task_id": self.task.id
-                }
+                    "task_id": self.task.id,
+                },
             )
             self.taskflow.log.info("Task completed.")
         except IPCError as e:
             log.error("Failed to send task done to state controller.", error=e)
 
     def task_failed(self):
-        self.taskflow.log.debug(
-            "Sending task failed state to state controller"
-        )
+        self.taskflow.log.debug("Sending task failed state to state controller")
         try:
             message_unix_socket(
                 UnixSocketPaths.node_state_controller(),
                 {
                     "subject": "taskrunfailed",
                     "analysis_id": self.analysis.id,
-                    "task_id": self.task.id
-                }
+                    "task_id": self.task.id,
+                },
             )
             self.taskflow.log.info("Task failed.")
         except IPCError as e:
@@ -102,9 +118,7 @@ class _FlowRunner(Thread):
 
             total_passed = time.monotonic() - start
             if total_passed >= timeout:
-                self.taskflow.log.debug(
-                    "Task run timeout reached", timeout=timeout
-                )
+                self.taskflow.log.debug("Task run timeout reached", timeout=timeout)
                 break
 
             time.sleep(self.taskflow.INTERVAL_CALL_WAIT)
@@ -127,9 +141,7 @@ class _FlowRunner(Thread):
         try:
             self.taskflow.stop_machine()
         except TaskFlowError as e:
-            self.taskflow.log.error(
-                "Error during machine stop request", error=e
-            )
+            self.taskflow.log.error("Error during machine stop request", error=e)
             self.errtracker.fatal_error(e)
         except Exception as e:
             self.taskflow.log.exception(
@@ -148,16 +160,17 @@ class _FlowRunner(Thread):
         )
         try:
             self.route_request = RooterClient.request_route(
-                self.rooter_sock_path, self.task.route, self.machine,
-                self.resultserver
+                self.rooter_sock_path, self.task.route, self.machine, self.resultserver
             )
         except ClientError as e:
             raise TaskFlowError(f"Failure during rooter route request: {e}")
 
     def run(self):
         log.info(
-            "Task starting.", task_id=self.task.id, machine=self.machine.name,
-            target=repr(self.taskflow.analysis.target.target)
+            "Task starting.",
+            task_id=self.task.id,
+            machine=self.machine.name,
+            target=repr(self.taskflow.analysis.target.target),
         )
 
         # Dump the received machine to the task root directory to be read if
@@ -171,9 +184,7 @@ class _FlowRunner(Thread):
             self.taskflow.log.error("Error during task run", error=e)
         except Exception as e:
             self.errtracker.fatal_exception(f"Unhandled error: {e}")
-            self.taskflow.log.exception(
-                "Unhandled error during task run", error=e
-            )
+            self.taskflow.log.exception("Unhandled error during task run", error=e)
         finally:
             self.taskflow.log.debug(
                 "Requesting machine stop", machine=self.machine.name
@@ -188,7 +199,7 @@ class _FlowRunner(Thread):
             if self.route_request:
                 self.taskflow.log.debug(
                     "Asking rooter to disable requested route",
-                    route=self.route_request.route
+                    route=self.route_request.route,
                 )
                 self.route_request.disable_route()
 
@@ -221,9 +232,7 @@ class _FlowRunner(Thread):
         self.taskflow.initialize()
 
         # Start the machine however this flow wants to start the machine
-        self.taskflow.log.debug(
-            "Requesting machine start.", machine=self.machine.name
-        )
+        self.taskflow.log.debug("Requesting machine start.", machine=self.machine.name)
         self.taskflow.start_machine()
 
         # TODO get timeout from config
@@ -231,7 +240,7 @@ class _FlowRunner(Thread):
         # control back to the task flow
         self.taskflow.log.debug(
             "Waiting until agent is online.",
-            agent_address=f"{self.machine.ip}:{self.machine.agent_port}"
+            agent_address=f"{self.machine.ip}:{self.machine.agent_port}",
         )
         timeout = 120
         try:
@@ -254,9 +263,9 @@ class _FlowRunner(Thread):
     def stop(self):
         self.do_run = False
 
-_supported_flowkinds = {
-    StandardTask.name: StandardTask
-}
+
+_supported_flowkinds = {StandardTask.name: StandardTask}
+
 
 class TaskRunner(UnixSocketServer):
     """Accepts new tasks to run. Looks up a task flow for the matching
@@ -277,8 +286,9 @@ class TaskRunner(UnixSocketServer):
     def handle_connection(self, sock, addr):
         self.track(sock, ReaderWriter(sock))
 
-    def start_new_taskflow(self, task_id, analysis_id, kind, resultserver,
-                           machine, rooter_sock_path=None):
+    def start_new_taskflow(
+        self, task_id, analysis_id, kind, resultserver, machine, rooter_sock_path=None
+    ):
         taskflow_cls = _supported_flowkinds.get(kind)
         if not taskflow_cls:
             raise TaskFlowError(f"Flow kind {kind!r} not supported")
@@ -290,12 +300,9 @@ class TaskRunner(UnixSocketServer):
                 taskflow_cls, task_id, analysis_id, m, rs, rooter_sock_path
             )
         except Exception as e:
-            log.exception(
-                "Failure during task flow runner initialization", error=e
-            )
+            log.exception("Failure during task flow runner initialization", error=e)
             raise TaskFlowError(
-                f"Fatal error. Failed to initialize task flow runner. "
-                f"Error: {e}"
+                f"Fatal error. Failed to initialize task flow runner. Error: {e}"
             )
 
         flowrunner.daemon = True
@@ -311,19 +318,14 @@ class TaskRunner(UnixSocketServer):
         readerwriter = self.socks_readers[sock]
         if not self.enabled:
             self.responses.append(
-                (readerwriter, {
-                    "success": False,
-                    "reason": "Task runner is disabled"
-                })
+                (readerwriter, {"success": False, "reason": "Task runner is disabled"})
             )
             self.untrack(sock)
             return
 
         kwargs = msg.get("args", {})
         if not kwargs or not self._MIN_KEYS.issubset(set(kwargs.keys())):
-            log.debug(
-                "Invalid request received. Missing keys.", received=repr(msg)
-            )
+            log.debug("Invalid request received. Missing keys.", received=repr(msg))
             self.untrack(sock)
             return
 
@@ -333,18 +335,13 @@ class TaskRunner(UnixSocketServer):
             self.responses.append((readerwriter, {"success": True}))
         except TaskFlowError as e:
             log.error("Failed to start taskflow", task_id=task_id, error=e)
-            self.responses.append(
-                (readerwriter, {"success": False, "reason": str(e)})
-            )
+            self.responses.append((readerwriter, {"success": False, "reason": str(e)}))
             return
         except Exception as e:
             log.exception(
-                "Fatal error. Failed to start taskflow.", task_id=task_id,
-                error=e
+                "Fatal error. Failed to start taskflow.", task_id=task_id, error=e
             )
-            self.responses.append(
-                (readerwriter, {"success": False, "reason": str(e)})
-            )
+            self.responses.append((readerwriter, {"success": False, "reason": str(e)}))
             return
 
     def _do_enable_disable(self, sock, action):
@@ -360,9 +357,7 @@ class TaskRunner(UnixSocketServer):
 
     def _do_send_flowscount(self, sock):
         readerwriter = self.socks_readers[sock]
-        self.responses.append(
-            (readerwriter, {"count": len(self.active_flows)})
-        )
+        self.responses.append((readerwriter, {"count": len(self.active_flows)}))
 
     def handle_message(self, sock, msg):
         action = msg.get("action")
@@ -370,9 +365,7 @@ class TaskRunner(UnixSocketServer):
             self._do_new_task(sock, msg)
         elif action == "stopall":
             self.stop_all_taskflows()
-            self.responses.append(
-                (self.socks_readers[sock], {"success": True})
-            )
+            self.responses.append((self.socks_readers[sock], {"success": True}))
         elif action in ("disable", "enable"):
             self._do_enable_disable(sock, action)
         elif action == "getflowcount":
@@ -395,8 +388,7 @@ class TaskRunner(UnixSocketServer):
                 readerwriter.send_json_message(response)
             except socket.error as e:
                 log.debug(
-                    "Failed to send response task request.", response=response,
-                    error=e
+                    "Failed to send response task request.", response=response, error=e
                 )
                 self.untrack(readerwriter.sock)
                 continue
@@ -413,14 +405,10 @@ class TaskRunner(UnixSocketServer):
         self.cleanup()
 
     def start(self):
-        cuckoocwd.set(
-            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
-        )
+        cuckoocwd.set(self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses)
         register_shutdown(self.stop)
 
-        init_global_logging(
-            self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False
-        )
+        init_global_logging(self.loglevel, Paths.log("cuckoo.log"), use_logqueue=False)
 
         try:
             self.create_socket()
@@ -435,14 +423,13 @@ class TaskRunner(UnixSocketServer):
             if not flowrunner.is_alive():
                 continue
 
-            log.info(
-                "Waiting for task flow to stop.", task_id=flowrunner.task.id
-            )
+            log.info("Waiting for task flow to stop.", task_id=flowrunner.task.id)
 
             timeout = 10
             flowrunner.join(timeout=10)
             if flowrunner.is_alive():
                 log.warning(
                     "Task flow did not stop within timeout.",
-                    task_id=flowrunner.task.id, timeout=timeout
+                    task_id=flowrunner.task.id,
+                    timeout=timeout,
                 )

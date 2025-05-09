@@ -18,24 +18,29 @@ from .resultserver import servers
 
 log = CuckooGlobalLogger(__name__)
 
+
 class NodeError(Exception):
     pass
+
 
 class TaskWorkError(NodeError):
     pass
 
+
 class MachineNotAvailable(NodeError):
     pass
 
-class NodeMsgTypes:
 
+class NodeMsgTypes:
     TASK_STATE = "task_state"
     MACHINE_DISABLED = "machine_disabled"
+
 
 class NodeTaskStates:
     TASK_FAILED = "task_failed"
     TASK_RUNNING = "task_running"
     TASK_DONE = "task_done"
+
 
 class NodeStates:
     # State should be used if a node is waiting for a main to connect/give
@@ -44,8 +49,8 @@ class NodeStates:
     # Node should have this state if it has performed any task work at all.
     HAS_WORKED = "has_worked"
 
-class _TaskWork:
 
+class _TaskWork:
     def __init__(self, nodectx, task, machine):
         self.ctx = nodectx
         self.task = task
@@ -60,18 +65,14 @@ class _TaskWork:
     @property
     def errtracker(self):
         if self._closed:
-            raise TaskWorkError(
-                "Cannot access errtracker. Node work already closed."
-            )
+            raise TaskWorkError("Cannot access errtracker. Node work already closed.")
 
         return self._errtracker
 
     @property
     def log(self):
         if self._closed:
-            raise TaskWorkError(
-                "Cannot access task logger. Node work already closed"
-            )
+            raise TaskWorkError("Cannot access task logger. Node work already closed")
 
         if not self._log:
             return log
@@ -87,22 +88,24 @@ class _TaskWork:
     def _start_task(self):
         resultserver = servers.get()
         self.log.debug(
-            "Asking taskrunner to start task", task_id=self.task.id,
-            machine=self.machine.name, resultserver=resultserver
+            "Asking taskrunner to start task",
+            task_id=self.task.id,
+            machine=self.machine.name,
+            resultserver=resultserver,
         )
         try:
             TaskRunnerClient.start_task(
                 UnixSocketPaths.task_runner(),
-                kind=self.task.kind, task_id=self.task.id,
+                kind=self.task.kind,
+                task_id=self.task.id,
                 analysis_id=self.task.analysis_id,
-                machine=self.machine, resultserver=resultserver,
-                rooter_sock_path=self.ctx.rooter_sock
+                machine=self.machine,
+                resultserver=resultserver,
+                rooter_sock_path=self.ctx.rooter_sock,
             )
             return True
         except ActionFailedError as e:
-            self.log.error(
-                "Failed to start task.", task_id=self.task.id, error=e
-            )
+            self.log.error("Failed to start task.", task_id=self.task.id, error=e)
             self.task.state = task.States.FATAL_ERROR
             self.errtracker.fatal_error(f"Failed to start task. Error: {e}")
 
@@ -137,8 +140,8 @@ class _TaskWork:
 
         self._closed = True
 
-class InfoStreamReceiver:
 
+class InfoStreamReceiver:
     def task_state(self, task_id, state):
         raise NotImplementedError
 
@@ -148,8 +151,8 @@ class InfoStreamReceiver:
     def reset_stream(self):
         raise NotImplementedError
 
-class NodeInfoStream:
 
+class NodeInfoStream:
     def __init__(self, stream_receiver):
         self.receiver = stream_receiver
 
@@ -162,8 +165,8 @@ class NodeInfoStream:
     def disabled_machine(self, machine_name, reason):
         self.receiver.disabled_machine(machine_name, reason)
 
-class _TaskStartWorker(threading.Thread):
 
+class _TaskStartWorker(threading.Thread):
     def __init__(self, work_queue, task_tracker, nodectx):
         super().__init__()
 
@@ -188,21 +191,19 @@ class _TaskStartWorker(threading.Thread):
                 worktracker.set_ended()
                 worktracker.log.exception(
                     "Unexpected error when starting task.",
-                    task_id=worktracker.task.id, error=e
+                    task_id=worktracker.task.id,
+                    error=e,
                 )
             finally:
                 if worktracker.ended:
                     worktracker.close()
-                    self.ctx.state_controller.task_fail(
-                        task_id=worktracker.task.id
-                    )
+                    self.ctx.state_controller.task_fail(task_id=worktracker.task.id)
 
     def stop(self):
         self.do_run = False
 
 
 class _TasksTracker:
-
     def __init__(self, node):
         self._node = node
         self._tasks = {}
@@ -219,9 +220,7 @@ class _TasksTracker:
     def track_ongoing_taskwork(self, taskwork):
         with self._lock:
             if taskwork.task.id in self._tasks:
-                raise TaskWorkError(
-                    f"Task {taskwork.task.id} is already tracked"
-                )
+                raise TaskWorkError(f"Task {taskwork.task.id} is already tracked")
 
             self._tasks[taskwork.task.id] = taskwork
 
@@ -246,9 +245,7 @@ class _TasksTracker:
         with self._lock:
             taskwork = self._tasks.get(task_id)
             if not taskwork:
-                raise TaskWorkError(
-                    f"Cannot mark end for unknown task: {task_id}"
-                )
+                raise TaskWorkError(f"Cannot mark end for unknown task: {task_id}")
 
             taskwork.close()
             self._node.ctx.machinery_manager.machines.release(taskwork.machine)
@@ -262,7 +259,6 @@ class _TasksTracker:
 
 
 class Node:
-
     NUM_TASK_START_WORKER = 2
 
     def __init__(self, nodectx, stream_receiver):
@@ -291,14 +287,10 @@ class Node:
                 task_id, machine_name
             )
         except (KeyError, MachineListError) as e:
-            raise MachineNotAvailable(
-                f"Failed to acquire machine {machine_name}. {e}"
-            )
+            raise MachineNotAvailable(f"Failed to acquire machine {machine_name}. {e}")
 
         if not machine:
-            raise MachineNotAvailable(
-                f"Machine {machine_name} is not available"
-            )
+            raise MachineNotAvailable(f"Machine {machine_name} is not available")
 
         taskwork = _TaskWork(self.ctx, taskfile, machine)
         self._task_tracker.track_ongoing_taskwork(taskwork)
@@ -328,9 +320,7 @@ class Node:
         try:
             TaskRunnerClient.disable(UnixSocketPaths.task_runner())
         except ActionFailedError as e:
-            raise NodeError(
-                f"Failed to disable task runner. {e}"
-            )
+            raise NodeError(f"Failed to disable task runner. {e}")
 
         while True:
             log.debug("Waiting for work queue to be emptied")
@@ -343,21 +333,17 @@ class Node:
         try:
             TaskRunnerClient.stop_all(UnixSocketPaths.task_runner())
             while True:
-                count = TaskRunnerClient.get_task_count(
-                    UnixSocketPaths.task_runner()
-                )
+                count = TaskRunnerClient.get_task_count(UnixSocketPaths.task_runner())
                 if not count:
                     break
 
                 log.debug(
                     "Waiting for task runner to finish stopping all tasks",
-                    remaining=count
+                    remaining=count,
                 )
                 time.sleep(1)
         except ActionFailedError as e:
-            raise NodeError(
-                f"Failed to all stop active tasks. {e}"
-            )
+            raise NodeError(f"Failed to all stop active tasks. {e}")
 
         # Wait until all pending work in the machinery manager is done before
         # we tell it to stop all machines.
@@ -392,9 +378,7 @@ class Node:
             log.debug("enabling task runner")
             TaskRunnerClient.enable(UnixSocketPaths.task_runner())
         except ActionFailedError as e:
-            raise NodeError(
-                f"Failed to enable task runner. {e}"
-            )
+            raise NodeError(f"Failed to enable task runner. {e}")
 
         self.state = NodeStates.WAITING_MAIN
         self.ctx.is_resetting = False
@@ -404,8 +388,6 @@ class Node:
 
     def start(self):
         for _ in range(self.NUM_TASK_START_WORKER):
-            worker = _TaskStartWorker(
-                self._queue, self._task_tracker, self.ctx
-            )
+            worker = _TaskStartWorker(self._queue, self._task_tracker, self.ctx)
             self._workers.append(worker)
             worker.start()

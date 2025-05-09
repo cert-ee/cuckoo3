@@ -15,29 +15,40 @@ from cuckoo.common.node import ExistingResultServer
 from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
 from cuckoo.common.startup import init_global_logging
 from cuckoo.common.storage import (
-    cuckoocwd, TaskPaths, Paths, split_task_id, delete_file
+    cuckoocwd,
+    TaskPaths,
+    Paths,
+    split_task_id,
+    delete_file,
 )
 from cuckoo.common.utils import bytes_to_human, fds_to_hardlimit
 
 log = CuckooGlobalLogger(__name__)
 
+
 class CancelResult(Exception):
     pass
+
 
 class UnsupportedProtocol(CancelResult):
     pass
 
+
 class UnmappedIPError(CancelResult):
     pass
+
 
 class MaxBytesWritten(CancelResult):
     pass
 
+
 class IllegalFilePath(CancelResult):
     pass
 
+
 class HeaderMisMatch(CancelResult):
     pass
+
 
 class ResultServersNotStartedError(Exception):
     pass
@@ -45,31 +56,27 @@ class ResultServersNotStartedError(Exception):
 
 class _ResultServerTracker:
     """Simple wrapper around a set to keep track of existing resultservers and
-     retrieve information needed to use them."""
+    retrieve information needed to use them."""
 
     def __init__(self):
         self._servers = set()
 
     def add(self, socket_path, listen_ip, listen_port):
         if not os.path.exists(socket_path):
-            raise FileNotFoundError(
-                f"Socket path does not exist: {socket_path}"
-            )
+            raise FileNotFoundError(f"Socket path does not exist: {socket_path}")
 
-        self._servers.add(
-            ExistingResultServer(socket_path, listen_ip, listen_port)
-        )
+        self._servers.add(ExistingResultServer(socket_path, listen_ip, listen_port))
 
     def get(self):
         """Retrieve a running resultserver. Returns its unix sock path,
-         listen ip, and listen port"""
+        listen ip, and listen port"""
         if not self._servers:
             raise ResultServersNotStartedError(
-                "No resultservers were started and added to the "
-                "resultserver tracker."
+                "No resultservers were started and added to the resultserver tracker."
             )
 
         return next(iter(self._servers))
+
 
 # A single instance of __ResultServerTracker should be used to add and retrieve
 # running resultservers and information to use them.
@@ -81,7 +88,7 @@ servers = _ResultServerTracker()
 RESULT_UPLOADABLE = {
     "logs": TaskPaths.logfile,
     "memory": TaskPaths.procmem_dump,
-    "files": TaskPaths.dropped_file
+    "files": TaskPaths.dropped_file,
 }
 
 # Prevent malicious clients from using potentially dangerous filenames
@@ -106,6 +113,7 @@ def sanitize_dumppath(path):
 
     return RESULT_UPLOADABLE[dir_part], dir_part, name
 
+
 async def copy_to_fd(reader, fd, max_size=None, readsize=16384, header=None):
     if max_size:
         fd = WriteLimiter(fd, max_size)
@@ -118,9 +126,7 @@ async def copy_to_fd(reader, fd, max_size=None, readsize=16384, header=None):
                 raise HeaderMisMatch("EOF before header could be compared")
 
             if buf != header:
-                raise HeaderMisMatch(
-                    "Stream header does not match expected header"
-                )
+                raise HeaderMisMatch("Stream header does not match expected header")
 
             fd.write(buf)
         while True:
@@ -132,12 +138,14 @@ async def copy_to_fd(reader, fd, max_size=None, readsize=16384, header=None):
     finally:
         fd.flush()
 
+
 class ProtocolHandler(object):
     """Abstract class for protocol handlers used by _AsyncResultServer.
     An implement protocol should be added to _AsyncResultServer.protocols.
 
     Any state at which an incoming result must be ignored/stopped a
     CancelResult must be raised."""
+
     def __init__(self, task_mapping, reader):
         self.task = task_mapping
         self.reader = reader
@@ -167,16 +175,16 @@ class WriteLimiter:
         if size and size != write:
             self.fp.write(b"... (truncated by resultserver)")
             raise MaxBytesWritten(
-                f"Max size of {bytes_to_human(self.limit)} reached. "
-                f"File truncated."
+                f"Max size of {bytes_to_human(self.limit)} reached. File truncated."
             )
 
     def flush(self):
         self.fp.flush()
 
+
 class FileUpload(ProtocolHandler):
     def init(self):
-        self.max_upload_size = 1024 * 1024 * 128 # TODO read from config
+        self.max_upload_size = 1024 * 1024 * 128  # TODO read from config
 
     async def handle(self):
         dir_fname = await self.reader.readline()
@@ -199,9 +207,7 @@ class FileUpload(ProtocolHandler):
             raise CancelResult(f"Unhandled error: {e}")
 
         try:
-            await copy_to_fd(
-                self.reader, self.fd, self.max_upload_size, readsize=2048
-            )
+            await copy_to_fd(self.reader, self.fd, self.max_upload_size, readsize=2048)
         except MaxBytesWritten as e:
             raise CancelResult(
                 f"Task {self.task.task_id} file upload {dirpart}/{fname!r}"
@@ -214,12 +220,13 @@ class FileUpload(ProtocolHandler):
             )
         finally:
             self.task.log.debug(
-                "File upload ended.", newfile=newfile,
-                size=bytes_to_human(self.fd.tell())
+                "File upload ended.",
+                newfile=newfile,
+                size=bytes_to_human(self.fd.tell()),
             )
 
-class ScreenshotUpload(ProtocolHandler):
 
+class ScreenshotUpload(ProtocolHandler):
     # All screenshots must be jpegs. We check this when accepting a new
     # screenshot upload. This can be circumvented, it is purely meant as a
     # simple check.
@@ -250,8 +257,11 @@ class ScreenshotUpload(ProtocolHandler):
 
         try:
             await copy_to_fd(
-                self.reader, self.fd, self.max_upload_size, readsize=2048,
-                header=self.JPEG_HEADER
+                self.reader,
+                self.fd,
+                self.max_upload_size,
+                readsize=2048,
+                header=self.JPEG_HEADER,
             )
         except HeaderMisMatch as e:
             delete_file(upload_path)
@@ -261,8 +271,7 @@ class ScreenshotUpload(ProtocolHandler):
             )
         except MaxBytesWritten as e:
             raise CancelResult(
-                f"Task {self.task.task_id} screenshot upload {fname} "
-                f"cancelled. {e}"
+                f"Task {self.task.task_id} screenshot upload {fname} cancelled. {e}"
             )
         except ConnectionError as e:
             raise CancelResult(
@@ -271,12 +280,13 @@ class ScreenshotUpload(ProtocolHandler):
             )
         finally:
             self.task.log.debug(
-                "Screenshot upload ended.", newfile=fname,
-                size=bytes_to_human(self.fd.tell())
+                "Screenshot upload ended.",
+                newfile=fname,
+                size=bytes_to_human(self.fd.tell()),
             )
 
-class _MappedTask:
 
+class _MappedTask:
     def __init__(self, task_id, ip, asyncio_rs):
         self.task_id = task_id
         self.ip = ip
@@ -318,11 +328,7 @@ class _MappedTask:
 
 
 class _AsyncResultServer:
-
-    protocols = {
-        "FILE": FileUpload,
-        "SCREENSHOT": ScreenshotUpload
-    }
+    protocols = {"FILE": FileUpload, "SCREENSHOT": ScreenshotUpload}
 
     def __init__(self):
         self._ip_task = {}
@@ -337,8 +343,7 @@ class _AsyncResultServer:
             if task_id in self._ip_task:
                 existing_mapping = self._ip_task[ip]
                 raise KeyError(
-                    f"IP {ip} is already mapped to task "
-                    f"{existing_mapping.task_id}"
+                    f"IP {ip} is already mapped to task {existing_mapping.task_id}"
                 )
 
             self._ip_task[ip] = _MappedTask(task_id, ip, self)
@@ -361,8 +366,7 @@ class _AsyncResultServer:
             task_mapping = self._ip_task.get(ip)
             if not task_mapping:
                 raise UnmappedIPError(
-                    f"IP {ip} is not mapped to any tasks. Cannot store "
-                    f"results."
+                    f"IP {ip} is not mapped to any tasks. Cannot store results."
                 )
             return task_mapping
 
@@ -383,9 +387,7 @@ class _AsyncResultServer:
         try:
             await protocol_instance.handle()
         except CancelResult as e:
-            protocol_instance.task.log.warning(
-                "Result for task cancelled.", error=e
-            )
+            protocol_instance.task.log.warning("Result for task cancelled.", error=e)
         finally:
             protocol_instance.close()
             writer.close()
@@ -407,7 +409,8 @@ class _AsyncResultServer:
         except CancelResult as e:
             task_mapping.log.warning(
                 "Task result cancelled during initialization.",
-                task_id=task_mapping.task_id, error=e
+                task_id=task_mapping.task_id,
+                error=e,
             )
             writer.close()
             return
@@ -420,7 +423,8 @@ class _AsyncResultServer:
                 if exp:
                     log.exception(
                         "Unhandled exception during asyncio task",
-                        error=exp, exc_info=exp
+                        error=exp,
+                        exc_info=exp,
                     )
             except asyncio.CancelledError:
                 pass
@@ -429,9 +433,7 @@ class _AsyncResultServer:
                 writer.close()
                 task_mapping.asynctasks.discard(task)
 
-        async_task = self.loop.create_task(
-            self.handle_protocol(handler, writer)
-        )
+        async_task = self.loop.create_task(self.handle_protocol(handler, writer))
         task_mapping.asynctasks.add(async_task)
         async_task.add_done_callback(_cleanup_cb)
 
@@ -439,22 +441,16 @@ class _AsyncResultServer:
         """Start the asyncresultserver on the given ip:port and handle
         incoming results that are mapped."""
         self.loop = asyncio.get_event_loop()
-        routine = asyncio.start_server(
-            self.new_result, listen_ip, listen_port
-        )
+        routine = asyncio.start_server(self.new_result, listen_ip, listen_port)
 
         try:
             self._server = self.loop.run_until_complete(routine)
         except OSError as e:
             exit_error(
-                f"Failed to start resultserver on: "
-                f"{listen_ip}:{listen_port}. {e}"
+                f"Failed to start resultserver on: {listen_ip}:{listen_port}. {e}"
             )
 
-        log.info(
-            "Started resultserver.", listen_ip=listen_ip,
-            listen_port=listen_port
-        )
+        log.info("Started resultserver.", listen_ip=listen_ip, listen_port=listen_port)
 
         # Give the loop its own thread so we can accept add/remove requests
         # in the main thread.
@@ -474,24 +470,19 @@ class _AsyncResultServer:
 
 
 class _RSResponses:
-
     @staticmethod
     def success():
-        return {
-            "status": "ok"
-        }
+        return {"status": "ok"}
 
     @staticmethod
     def fail(reason=""):
-        return {
-            "status": "fail",
-            "reason": reason
-        }
+        return {"status": "fail", "reason": reason}
+
 
 class ResultServer(UnixSocketServer):
-
-    def __init__(self, unix_sock_path, cuckoo_cwd, listen_ip, listen_port,
-                 loglevel=logging.DEBUG):
+    def __init__(
+        self, unix_sock_path, cuckoo_cwd, listen_ip, listen_port, loglevel=logging.DEBUG
+    ):
         super().__init__(unix_sock_path)
         self.cuckoocwd = cuckoo_cwd
         self.listen_ip = listen_ip
@@ -501,9 +492,7 @@ class ResultServer(UnixSocketServer):
         self._rs = None
 
     def init(self):
-        cuckoocwd.set(
-            self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses
-        )
+        cuckoocwd.set(self.cuckoocwd.root, analyses_dir=self.cuckoocwd.analyses)
         register_shutdown(self.stop)
 
         init_global_logging(
@@ -516,16 +505,12 @@ class ResultServer(UnixSocketServer):
                 log.info(
                     "Changed maximum file descriptors to hard limit for "
                     "current process",
-                    newmax=newmax
+                    newmax=newmax,
                 )
         except ResourceWarning as e:
-            log.error(
-                "Error while increasing maximum file descriptors", error=e
-            )
+            log.error("Error while increasing maximum file descriptors", error=e)
         except OSError as e:
-            exit_error(
-                f"Failure during increasing of maximum file descriptors: {e}"
-            )
+            exit_error(f"Failure during increasing of maximum file descriptors: {e}")
 
         # Initialize here, as we are currently using multiprocessing.Process
         # to start this in a new process. _AsyncResultServer uses an RLock,
@@ -580,7 +565,8 @@ class ResultServer(UnixSocketServer):
         except socket.error as e:
             log.debug(
                 "Failed to send response to action requester.",
-                response=response, error=e
+                response=response,
+                error=e,
             )
 
     def handle_message(self, sock, msg):
@@ -590,18 +576,14 @@ class ResultServer(UnixSocketServer):
         readerwriter = self.socks_readers[sock]
         if not ip or not task_id or not action:
             self.respond(
-                readerwriter,
-                _RSResponses.fail("Missing ip, task_id, or action")
+                readerwriter, _RSResponses.fail("Missing ip, task_id, or action")
             )
             return
 
         try:
             split_task_id(task_id)
         except ValueError as e:
-            self.respond(
-                readerwriter,
-                _RSResponses.fail(f"Invalid task_id: {e}")
-            )
+            self.respond(readerwriter, _RSResponses.fail(f"Invalid task_id: {e}"))
             return
 
         try:

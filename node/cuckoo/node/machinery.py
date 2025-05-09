@@ -13,13 +13,17 @@ from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.storage import TaskPaths
 from cuckoo.machineries import errors
 
+
 class MachineryManagerError(Exception):
     pass
+
 
 class MachineDoesNotExistError(MachineryManagerError):
     pass
 
+
 log = CuckooGlobalLogger(__name__)
+
 
 # These call the machines underlying machinery implementation of the called
 # method. All of these cause the state to change. This change can take a while.
@@ -29,13 +33,18 @@ log = CuckooGlobalLogger(__name__)
 # different way. An example of this is first trying acpi shutdown, and then
 # force shutdown if that times out.
 class _ExecutedMachineWork:
-
-    def __init__(self, expected_state, state_timeout, fallback_work_func=None,
-                 cancel_work_func=None):
+    def __init__(
+        self,
+        expected_state,
+        state_timeout,
+        fallback_work_func=None,
+        cancel_work_func=None,
+    ):
         self.expected_state = expected_state
         self.state_timeout = state_timeout
         self.fallback_work_func = fallback_work_func
         self.cancel_work_func = cancel_work_func
+
 
 def stop(machine):
     """Stop the given machine"""
@@ -51,9 +60,10 @@ def stop(machine):
         expected_state=machines.States.POWEROFF, state_timeout=60
     )
 
+
 def acpi_stop(machine):
     """Stop the machine using an ACPI signal. Normal stop is called when the
-     timeout of 120 seconds expires.
+    timeout of 120 seconds expires.
     """
     try:
         machine.machinery.acpi_stop(machine)
@@ -65,9 +75,11 @@ def acpi_stop(machine):
 
     # Call the stop function if stop takes longer than the timeout.
     return _ExecutedMachineWork(
-        expected_state=machines.States.POWEROFF, state_timeout=120,
-        fallback_work_func=stop
+        expected_state=machines.States.POWEROFF,
+        state_timeout=120,
+        fallback_work_func=stop,
     )
+
 
 def restore_start(machine):
     """Restore the machine to its configured snapshot and start the machine"""
@@ -88,9 +100,9 @@ def restore_start(machine):
     # If the machine is not running within the state timeout, run the stop
     # machine method. This stops netcapture and the machine.
     return _ExecutedMachineWork(
-        expected_state=machines.States.RUNNING, state_timeout=180,
-        cancel_work_func=stop
+        expected_state=machines.States.RUNNING, state_timeout=180, cancel_work_func=stop
     )
+
 
 def norestore_start(machine):
     """Start the machine without restoring a snapshot"""
@@ -111,9 +123,9 @@ def norestore_start(machine):
     # Return stop_netcapture as fallback so that this is called if the start
     # timeout expires.
     return _ExecutedMachineWork(
-        expected_state=machines.States.RUNNING, state_timeout=60,
-        cancel_work_func=stop
+        expected_state=machines.States.RUNNING, state_timeout=60, cancel_work_func=stop
     )
+
 
 def start_netcapture(machine):
     """Ask the machinery to start network capture for the given machine"""
@@ -121,33 +133,36 @@ def start_netcapture(machine):
         return
 
     ignore_ip_ports = [
-        (cfg("cuckoo", "resultserver", "listen_ip"),
-         cfg("cuckoo", "resultserver", "listen_port")),
-        (machine.ip, machine.agent_port)
+        (
+            cfg("cuckoo", "resultserver", "listen_ip"),
+            cfg("cuckoo", "resultserver", "listen_port"),
+        ),
+        (machine.ip, machine.agent_port),
     ]
     machine.machinery.start_netcapture(
-        machine, TaskPaths.pcap(machine.locked_by),
-        ignore_ip_ports=ignore_ip_ports
+        machine, TaskPaths.pcap(machine.locked_by), ignore_ip_ports=ignore_ip_ports
     )
+
 
 def stop_netcapture(machine):
     """Stop the network capture for a machine"""
     machine.machinery.stop_netcapture(machine)
 
+
 def dump_memory(machine):
     """Create a memory dump for the given running machine in the task folder
     of the task that has currently locked the machine."""
-    machine.machinery.dump_memory(
-        machine, TaskPaths.memory_dump(machine.locked_by)
-    )
+    machine.machinery.dump_memory(machine, TaskPaths.memory_dump(machine.locked_by))
 
     return _ExecutedMachineWork(
         expected_state=machines.States.RUNNING, state_timeout=60
     )
 
+
 def machine_state(machine):
     """Return a normalized machine state of the given machine."""
     return machine.machinery.state(machine)
+
 
 def handle_paused(machine):
     """Call the pause handler for the machine. Some machinery types have
@@ -155,12 +170,13 @@ def handle_paused(machine):
     should change that state to running."""
     machine.machinery.handle_paused(machine)
 
+
 def shutdown(machinery):
     """Shutdown all machines of the given machinery module"""
     return machinery.shutdown()
 
-class _MachineryMessages:
 
+class _MachineryMessages:
     @staticmethod
     def success():
         return {"success": True}
@@ -171,10 +187,8 @@ class _MachineryMessages:
 
     @staticmethod
     def invalid_msg(reason):
-        return {
-            "success": False,
-            "reason": reason
-        }
+        return {"success": False, "reason": reason}
+
 
 class MachineryWorker(threading.Thread):
     """Retrieves a WorkTracker from work_queue and runs it. Running
@@ -193,8 +207,7 @@ class MachineryWorker(threading.Thread):
     located in a machinery module's statemapping attribute.
     """
 
-    def __init__(self, machines, nodectx, work_queue, state_waiters,
-                 waiter_lock):
+    def __init__(self, machines, nodectx, work_queue, state_waiters, waiter_lock):
         super().__init__()
 
         self._machines = machines
@@ -215,15 +228,14 @@ class MachineryWorker(threading.Thread):
         if state == work.expected_state:
             log.debug(
                 "Updating machine state.",
-                machine=work.machine.name, newstate=work.expected_state
+                machine=work.machine.name,
+                newstate=work.expected_state,
             )
             self._machines.set_state(work.machine, work.expected_state)
             work.work_success()
         elif state == machines.States.ERROR:
             err = "Machinery returned error state for machine"
-            log.error(
-                f"{err}. Disabling machine.", machine=work.machine.name
-            )
+            log.error(f"{err}. Disabling machine.", machine=work.machine.name)
             self._disable_machine(work.machine, err)
             work.work_failed(reason=err)
         elif state == machines.States.PAUSED:
@@ -231,27 +243,25 @@ class MachineryWorker(threading.Thread):
                 handle_paused(work.machine)
             except errors.MachineryError as e:
                 log.error(
-                    "Failure in pause state handler",
-                    machine=work.machine.name, error=e
+                    "Failure in pause state handler", machine=work.machine.name, error=e
                 )
-                work.work_failed(
-                    reason=f"Failure in pause state handler: {e}"
-                )
+                work.work_failed(reason=f"Failure in pause state handler: {e}")
         elif work.timeout_reached():
             # The timeout work the work has reached. The expected
             # machine state was not reached. Call the fallback or
             # cancel the work.
             log.warning(
-                "Timeout reached while waiting for machine to reach "
-                "expected state", machine=work.machine.name,
-                state=state, expected_state=work.expected_state
+                "Timeout reached while waiting for machine to reach expected state",
+                machine=work.machine.name,
+                state=state,
+                expected_state=work.expected_state,
             )
             # Requeue fallback work for machine.
             if work.has_fallback():
                 log.warning(
                     "Calling fallback to handle timeout",
                     machine=work.machine.name,
-                    fallback=work.fallback_func
+                    fallback=work.fallback_func,
                 )
                 work.fall_back()
             else:
@@ -259,13 +269,14 @@ class MachineryWorker(threading.Thread):
                 # disable machine. The timeout should not really ever
                 # be hit unless a process is stuck/is not responding,
                 # etc. We do not want to try to handle that.
-                err = "Timeout reached while waiting for machine to " \
-                      "reach expected state."
+                err = (
+                    "Timeout reached while waiting for machine to reach expected state."
+                )
                 log.error(
                     f"{err} Disabling machine",
                     machine=work.machine.name,
                     expected_state=work.expected_state,
-                    actual_state=state
+                    actual_state=state,
                 )
                 self._disable_machine(work.machine, err)
                 work.work_failed(reason=err)
@@ -273,7 +284,7 @@ class MachineryWorker(threading.Thread):
                 log.warning(
                     "Calling cancel handler to handle timeout",
                     machine=work.machine.name,
-                    cancel_func=work.cancel_func
+                    cancel_func=work.cancel_func,
                 )
                 try:
                     work.run_cancel()
@@ -281,7 +292,8 @@ class MachineryWorker(threading.Thread):
                     log.error(
                         "Failure during cancelling of work",
                         machine=work.machine,
-                        cancel_func=work.cancel_func, error=e
+                        cancel_func=work.cancel_func,
+                        error=e,
                     )
 
     def handle_waiters(self):
@@ -296,17 +308,16 @@ class MachineryWorker(threading.Thread):
                     err = "Unhandled machine state"
                     log.error(
                         f" {err}. Disabling machine.",
-                        machine=work.machine.name, error=e
+                        machine=work.machine.name,
+                        error=e,
                     )
                     self._disable_machine(work.machine, f"{err}. {e}")
                     work.work_failed(reason=f"{err}. {e}")
 
                 except errors.MachineryError as e:
-                    err = "Unexpected machinery error while requesting " \
-                          "machine state"
+                    err = "Unexpected machinery error while requesting machine state"
                     log.error(
-                        f"{err}. Disabling machine", machine=work.machine.name,
-                        error=e
+                        f"{err}. Disabling machine", machine=work.machine.name, error=e
                     )
                     self._disable_machine(work.machine, f"{err}. {e}")
                     work.work_failed(reason=f"{err}. {e}")
@@ -335,9 +346,10 @@ class MachineryWorker(threading.Thread):
             except NotImplementedError:
                 err = "Machinery does not support work type."
                 log.error(
-                    err, machine=work.machine.name,
+                    err,
+                    machine=work.machine.name,
                     machinery=work.machine.machinery.name,
-                    action=work.work_func
+                    action=work.work_func,
                 )
 
                 err += f" action={work.work_func}"
@@ -351,16 +363,17 @@ class MachineryWorker(threading.Thread):
                     "Machine already has expected state on action start.",
                     machine=work.machine.name,
                     expected_state=work.expected_state,
-                    action=work.work_func
+                    action=work.work_func,
                 )
                 work.work_success()
 
             except errors.MachineUnexpectedStateError as e:
                 err = "Machine has unexpected state"
                 log.error(
-                    f"{err}. Disabling machine.", machine=work.machine.name,
+                    f"{err}. Disabling machine.",
+                    machine=work.machine.name,
                     machinery=work.machine.machinery.name,
-                    error=e
+                    error=e,
                 )
                 self._disable_machine(work.machine, f"{err}. {e}")
                 work.work_failed(reason=f"{err}. {e}")
@@ -368,8 +381,10 @@ class MachineryWorker(threading.Thread):
             except errors.MachineryUnhandledStateError as e:
                 err = "Machine has an unknown/unhandled state"
                 log.error(
-                    f"{err}. Disabling machine", machine=work.machine.name,
-                    machinery=work.machine.machinery.name, error=e
+                    f"{err}. Disabling machine",
+                    machine=work.machine.name,
+                    machinery=work.machine.machinery.name,
+                    error=e,
                 )
                 self._disable_machine(work.machine, f"{err}. {e}")
                 work.work_failed(reason=f"{err}. {e}")
@@ -379,7 +394,8 @@ class MachineryWorker(threading.Thread):
                 log.error(
                     f"{err}. Disabling machine.",
                     machine=work.machine.name,
-                    machinery=work.machine.machinery.name, error=e
+                    machinery=work.machine.machinery.name,
+                    error=e,
                 )
                 self._disable_machine(work.machine, f"{err}. {e}")
                 work.work_failed(reason=f"{err}. {e}")
@@ -387,9 +403,11 @@ class MachineryWorker(threading.Thread):
             except Exception as e:
                 err = "Unhandled error in machinery module."
                 log.exception(
-                    err, machine=work.machine.name,
+                    err,
+                    machine=work.machine.name,
                     machinery=work.machine.machinery.name,
-                    action=work.work_func, error=e
+                    action=work.work_func,
+                    error=e,
                 )
 
                 err += f" action={work.work_func}. error={e}"
@@ -398,8 +416,8 @@ class MachineryWorker(threading.Thread):
                 # this happened.
                 raise
 
-class WorkTracker:
 
+class WorkTracker:
     def __init__(self, func, machine, readerwriter, machinerymngr):
         self.work_func = func
         self.machine = machine
@@ -452,16 +470,15 @@ class WorkTracker:
             return
 
         log.debug(
-            "Running cancel for work", machine=self.machine.name,
-            cancel_func=self.cancel_func, cancelled_work=self.work_func
+            "Running cancel for work",
+            machine=self.machine.name,
+            cancel_func=self.cancel_func,
+            cancelled_work=self.work_func,
         )
         self.cancel_func(self.machine)
 
     def run_work(self):
-        log.debug(
-            "Starting work.", machine=self.machine.name,
-            action=self.work_func
-        )
+        log.debug("Starting work.", machine=self.machine.name, action=self.work_func)
         executed_work = self.work_func(self.machine)
 
         self.expected_state = executed_work.expected_state
@@ -484,8 +501,7 @@ class WorkTracker:
     def fall_back(self):
         """Queue a work instance of the fallback function in the work queue"""
         self.machinerymngr.work_queue.add_work(
-            self.fallback_func, self.machine, self.readerwriter,
-            self.machinerymngr
+            self.fallback_func, self.machine, self.readerwriter, self.machinerymngr
         )
         self.stop_wait()
         self.unlock_work()
@@ -510,7 +526,6 @@ class WorkTracker:
 
 
 class _WorkQueue:
-
     def __init__(self):
         self._queue = []
         self._lock = threading.Lock()
@@ -519,12 +534,8 @@ class _WorkQueue:
         return len(self._queue) < 1
 
     def add_work(self, work_action, machine, readerwriter, msghandler):
-        log.debug(
-            "Machine action request", machine=machine.name, action=work_action
-        )
-        self._queue.append(
-            WorkTracker(work_action, machine, readerwriter, msghandler)
-        )
+        log.debug("Machine action request", machine=machine.name, action=work_action)
+        self._queue.append(WorkTracker(work_action, machine, readerwriter, msghandler))
 
     def get_work(self):
         """Only returns a work instance if the machine for this work is not
@@ -549,6 +560,7 @@ class _WorkQueue:
                 return work
 
         return None
+
 
 class MachineryManager(UnixSocketServer):
     """The Machinery manager accepts connections and reads message from a
@@ -577,7 +589,7 @@ class MachineryManager(UnixSocketServer):
         "restore_start": restore_start,
         "norestore_start": norestore_start,
         "stop": stop,
-        "acpi_stop": acpi_stop
+        "acpi_stop": acpi_stop,
     }
 
     # TODO read number of MachineryWorkers from a configuration file?
@@ -615,8 +627,7 @@ class MachineryManager(UnixSocketServer):
             machine_conf = cfg(machinery_class.name, subpkg="machineries")
 
             log.debug(
-                "Loading machinery and its machines.",
-                machinery=machinery_class.name
+                "Loading machinery and its machines.", machinery=machinery_class.name
             )
             try:
                 machinery_class.verify_dependencies()
@@ -625,8 +636,7 @@ class MachineryManager(UnixSocketServer):
                 machinery.load_machines()
             except errors.MachineryError as e:
                 raise MachineryManagerError(
-                    f"Loading of machinery module {machinery_class.name} "
-                    f"failed. {e}"
+                    f"Loading of machinery module {machinery_class.name} failed. {e}"
                 )
 
             for machine in machinery.list_machines():
@@ -654,7 +664,8 @@ class MachineryManager(UnixSocketServer):
                 self.machines.add_machine(machine)
                 log.debug(
                     "Machinery loaded machine.",
-                    machinery=machinery.name, machine=machine.name
+                    machinery=machinery.name,
+                    machine=machine.name,
                 )
 
             self._machineries[machinery.name] = machinery
@@ -664,8 +675,11 @@ class MachineryManager(UnixSocketServer):
     def start(self):
         for _ in range(self.NUM_MACHINERY_WORKERS):
             worker = MachineryWorker(
-                self.machines, self.ctx, self.work_queue, self.state_waiters,
-                self.waiter_lock
+                self.machines,
+                self.ctx,
+                self.work_queue,
+                self.state_waiters,
+                self.waiter_lock,
             )
             self.workers.append(worker)
             worker.start()
@@ -744,9 +758,8 @@ class MachineryManager(UnixSocketServer):
         if not self.enabled and action != "stop":
             self.queue_response(
                 readerwriter,
-                _MachineryMessages.fail(
-                    reason="Machinery manager is disabled"
-                ), close=True
+                _MachineryMessages.fail(reason="Machinery manager is disabled"),
+                close=True,
             )
             return
 
@@ -754,9 +767,8 @@ class MachineryManager(UnixSocketServer):
         if not action or not machine_name:
             self.queue_response(
                 readerwriter,
-                _MachineryMessages.invalid_msg(
-                    reason="Missing action or machine name"
-                ), close=True
+                _MachineryMessages.invalid_msg(reason="Missing action or machine name"),
+                close=True,
             )
             return
 
@@ -765,8 +777,7 @@ class MachineryManager(UnixSocketServer):
         except KeyError as e:
             # Send error if the machine does not exist.
             self.queue_response(
-                readerwriter,
-                _MachineryMessages.invalid_msg(reason=str(e))
+                readerwriter, _MachineryMessages.invalid_msg(reason=str(e))
             )
             return
 
@@ -777,7 +788,7 @@ class MachineryManager(UnixSocketServer):
             self.queue_response(
                 readerwriter,
                 _MachineryMessages.invalid_msg(reason="No such action"),
-                close=True
+                close=True,
             )
             return
 
