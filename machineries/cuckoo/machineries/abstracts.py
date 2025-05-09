@@ -10,6 +10,7 @@ from . import errors
 
 log = CuckooGlobalLogger(__name__)
 
+
 class Machinery:
     name = ""
 
@@ -27,7 +28,6 @@ class Machinery:
         labels = []
         ips = []
         for name, values in self.cfg["machines"].items():
-
             label = values["label"]
             ip = values["ip"]
             if label in labels:
@@ -50,17 +50,22 @@ class Machinery:
         """Method must return a cuckoo.common.machiches.Machine helper object
         created with the data from values."""
         return machines.Machine(
-            name=name, label=values["label"], ip=values["ip"],
-            platform=values["platform"], os_version=values["os_version"],
-            tags=values["tags"], snapshot=values["snapshot"],
+            name=name,
+            label=values["label"],
+            ip=values["ip"],
+            platform=values["platform"],
+            os_version=values["os_version"],
+            tags=values["tags"],
+            snapshot=values["snapshot"],
             architecture=values["architecture"],
             interface=values["interface"] or self.cfg.get("interface"),
             agent_port=values["agent_port"],
-            mac_address=values["mac_address"], machinery=self
+            mac_address=values["mac_address"],
+            machinery=self,
         )
 
     def list_machines(self):
-        """"List machines defined in the configuration of a machinery. Should
+        """ "List machines defined in the configuration of a machinery. Should
         return a list of cuckoo.common.machines.Machine helper objects"""
         return self.machines
 
@@ -108,8 +113,7 @@ class Machinery:
             netcapture.start()
         except NetworkCaptureError as e:
             raise errors.MachineNetCaptureError(
-                f"Failed to start network capture for machine {machine.name}: "
-                f"{e}"
+                f"Failed to start network capture for machine {machine.name}: {e}"
             )
 
         self.netcaptures[machine.name] = netcapture
@@ -128,10 +132,7 @@ class Machinery:
         failed_shutdown_machines = []
         for machine in self.machines:
             try:
-                log.info(
-                    "Stopping machine.", machinery=self.name,
-                    machine=machine.name
-                )
+                log.info("Stopping machine.", machinery=self.name, machine=machine.name)
                 self.stop(machine)
             except errors.MachineStateReachedError:
                 # Ignore this error, as it simply means the machine already
@@ -140,7 +141,9 @@ class Machinery:
             except errors.MachineryError as e:
                 log.error(
                     "Error while stopping machine in machinery shutdown.",
-                    machinery=self.name, machine=machine.name, error=e
+                    machinery=self.name,
+                    machine=machine.name,
+                    error=e,
                 )
                 failed_shutdown_machines.append(machine)
 

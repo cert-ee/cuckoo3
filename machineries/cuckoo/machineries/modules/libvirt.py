@@ -11,12 +11,13 @@ from ..abstracts import Machinery
 
 try:
     import libvirt
+
     _HAVE_LIBIRT = True
 except ImportError:
     _HAVE_LIBIRT = False
 
-class LibvirtConn:
 
+class LibvirtConn:
     _conns = {}
 
     @classmethod
@@ -84,8 +85,8 @@ statemapping = {
     5: machines.States.POWEROFF,
 }
 
-class Libvirt(Machinery):
 
+class Libvirt(Machinery):
     def init(self):
         self.dsn = ""
         self.vms = {}
@@ -169,8 +170,7 @@ class Libvirt(Machinery):
         state = self.state(machine)
         if state == machines.States.POWEROFF:
             raise errors.MachineStateReachedError(
-                f"Failed to stop machine. Machine already stopped. "
-                f"state: {state}"
+                f"Failed to stop machine. Machine already stopped. state: {state}"
             )
 
         libvirt_vm = self._get_vm(machine.label)
@@ -225,11 +225,10 @@ class Libvirt(Machinery):
         allowed_pauses = (
             libvirt.VIR_DOMAIN_PAUSED_DUMP,
             libvirt.VIR_DOMAIN_PAUSED_FROM_SNAPSHOT,
-            libvirt.VIR_DOMAIN_PAUSED_STARTING_UP
+            libvirt.VIR_DOMAIN_PAUSED_STARTING_UP,
         )
 
-        if normalized_state == machines.States.PAUSED \
-                and reason not in allowed_pauses:
+        if normalized_state == machines.States.PAUSED and reason not in allowed_pauses:
             err = "Unexpected machine paused state"
             machine.add_error(err)
             raise errors.MachineryUnhandledStateError(err)
@@ -252,6 +251,7 @@ class Libvirt(Machinery):
                 "To install it the following system package must also be "
                 "installed: 'libvirt-dev'"
             )
+
 
 class KVM(Libvirt):
     name = "kvm"

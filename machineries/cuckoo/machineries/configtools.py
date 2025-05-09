@@ -7,30 +7,30 @@ from pathlib import Path
 
 from cuckoo.common.storage import Paths
 from cuckoo.common.config import (
-    load_config, render_config_from_typeloaders, load_values,
-    ConfigurationError
+    load_config,
+    render_config_from_typeloaders,
+    load_values,
+    ConfigurationError,
 )
 from cuckoo.common.packages import get_conftemplates
 
 from .errors import MachineryError
 
+
 def _get_existing_loaders(machinery_name):
     conf_path = Paths.config(f"{machinery_name}.yaml", subpkg="machineries")
     if not conf_path.is_file():
-        raise MachineryError(
-            f"Configuration file '{conf_path}' does not exist."
-        )
+        raise MachineryError(f"Configuration file '{conf_path}' does not exist.")
 
     try:
-        return load_config(conf_path, subpkg="machineries", cache_config=False, check_constraints=False)
-    except ConfigurationError as e:
-        raise MachineryError(
-            f"Failed to load config file {conf_path}. {e}"
+        return load_config(
+            conf_path, subpkg="machineries", cache_config=False, check_constraints=False
         )
+    except ConfigurationError as e:
+        raise MachineryError(f"Failed to load config file {conf_path}. {e}")
 
 
 def _add_machine(machinery_name, loaders, machine_name, machine_dict):
-
     if machine_name in loaders["machines"].value:
         raise MachineryError(
             f"Machine with name '{machine_name}' already exists configuration "
@@ -51,24 +51,23 @@ def _add_machine(machinery_name, loaders, machine_name, machine_dict):
 
 def _update_machinery_config(machinery_name, updated_loaders):
     import cuckoo.machineries
+
     conf_name = f"{machinery_name}.yaml"
     conf_templates = get_conftemplates(cuckoo.machineries)
     machinery_template = conf_templates.get(conf_name)
     if not machinery_template:
         raise MachineryError(
-            f"No machinery configuration template was found "
-            f"for: {machinery_template}"
+            f"No machinery configuration template was found for: {machinery_template}"
         )
 
     tmpdir = tempfile.mkdtemp()
     tmp_path = Path(tmpdir, conf_name)
     try:
-        render_config_from_typeloaders(
-            machinery_template, updated_loaders, tmp_path
-        )
+        render_config_from_typeloaders(machinery_template, updated_loaders, tmp_path)
         shutil.move(tmp_path, Paths.config(conf_name, subpkg="machineries"))
     finally:
         shutil.rmtree(tmpdir)
+
 
 def delete_machines(machinery_name, machine_names):
     loaders = _get_existing_loaders(machinery_name)
@@ -80,25 +79,24 @@ def delete_machines(machinery_name, machine_names):
     _update_machinery_config(machinery_name, loaders)
     return deleted
 
+
 def add_machine(machinery_name, machine_name, machine_dict):
     loaders = _get_existing_loaders(machinery_name)
     _add_machine(machinery_name, loaders, machine_name, machine_dict)
     _update_machinery_config(machinery_name, loaders)
 
+
 _VMCLOAK_MACHINEINFO_FUNC = "vmcloak_info_to_machineconf"
 _MACHINEINFO_NAME = "machineinfo.json"
+
 
 def import_vmcloak_machines(machinery_name, vms_path, machine_names=[]):
     from importlib import import_module
 
     try:
-        machinery = import_module(
-            f"cuckoo.machineries.modules.{machinery_name}"
-        )
+        machinery = import_module(f"cuckoo.machineries.modules.{machinery_name}")
     except ImportError:
-        raise MachineryError(
-            f"No machinery module named '{machinery_name}' was found"
-        )
+        raise MachineryError(f"No machinery module named '{machinery_name}' was found")
 
     machineinfo_reader = getattr(machinery, _VMCLOAK_MACHINEINFO_FUNC, None)
     if not machineinfo_reader:
@@ -120,8 +118,7 @@ def import_vmcloak_machines(machinery_name, vms_path, machine_names=[]):
             machine_dict, name = machineinfo_reader(machineinfo_path)
         except MachineryError as e:
             raise MachineryError(
-                f"Error importing machine from machine info "
-                f"{machineinfo_path}. {e}"
+                f"Error importing machine from machine info {machineinfo_path}. {e}"
             )
         _add_machine(machinery_name, loaders, name, machine_dict)
         imported_machines.append(name)
