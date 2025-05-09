@@ -4,27 +4,26 @@
 import asyncio
 from threading import Lock
 
-from cuckoo.common.clients import (
-    ClientError, NodeEventReader, ResultRetrieverClient
-)
+from cuckoo.common.clients import ClientError, NodeEventReader, ResultRetrieverClient
 from cuckoo.common.importing import NodeWorkZipper, AnalysisImportError
 from cuckoo.common.log import CuckooGlobalLogger
 from cuckoo.common.node import NodeInfo
 from cuckoo.common.storage import TaskPaths, UnixSocketPaths
-from cuckoo.node.node import (
-    NodeError, InfoStreamReceiver, NodeTaskStates, NodeMsgTypes
-)
+from cuckoo.node.node import NodeError, InfoStreamReceiver, NodeTaskStates, NodeMsgTypes
+
 
 class NodeActionError(Exception):
     pass
 
+
 class NodeUnavailableError(NodeActionError):
     pass
 
+
 log = CuckooGlobalLogger(__name__)
 
-class AssignedTasks:
 
+class AssignedTasks:
     def __init__(self):
         self._taskid_startabletask = {}
         self._lock = Lock()
@@ -73,13 +72,13 @@ class AssignedTasks:
                 except Exception as e:
                     log.exception(
                         "Failed to close started task context after cancel.",
-                        task_id=task_id, error=e
+                        task_id=task_id,
+                        error=e,
                     )
         return tasks
 
 
 class LocalStreamReceiver(InfoStreamReceiver):
-
     def __init__(self):
         self.node_client = None
 
@@ -94,28 +93,26 @@ class LocalStreamReceiver(InfoStreamReceiver):
         elif state == NodeTaskStates.TASK_RUNNING:
             pass
         else:
-            log.error(
-                "Unhandled task state update", task_id=task_id, state=state
-            )
+            log.error("Unhandled task state update", task_id=task_id, state=state)
 
     def disabled_machine(self, machine_name, reason):
         log.warning(
-            "Received machine disable event", machine=machine_name,
-            reason=reason
+            "Received machine disable event", machine=machine_name, reason=reason
         )
         try:
             machine = self.node_client.machines.get_by_name(machine_name)
         except KeyError:
             log.error(
                 "Received machine disabled event for unknown machine",
-                machine=machine_name, disable_reason=reason
+                machine=machine_name,
+                disable_reason=reason,
             )
             return
 
         self.node_client.machines.mark_disabled(machine, reason)
 
-class NodeClientLoop:
 
+class NodeClientLoop:
     def __init__(self, loop):
         self.loop = loop
         self._task_stopper = {}
@@ -132,7 +129,9 @@ class NodeClientLoop:
                     except Exception as e:
                         log.exception(
                             "Exception in stopper for asynctask",
-                            stopper=stopper, asynctask=task, error=e
+                            stopper=stopper,
+                            asynctask=task,
+                            error=e,
                         )
             finally:
                 try:
@@ -155,9 +154,7 @@ class NodeClientLoop:
         try:
             self.loop.close()
         except Exception as e:
-            log.exception(
-                "Unexpected error when closing asyncio event loop", error=e
-            )
+            log.exception("Unexpected error when closing asyncio event loop", error=e)
 
     def stop(self):
         self._stopped = True
@@ -167,21 +164,22 @@ class NodeClientLoop:
         if self._stopped:
             log.debug(
                 "New asynctask after loop stopped. Will never start",
-                coro=coro, args=args
+                coro=coro,
+                args=args,
             )
             return
 
         asyncio.run_coroutine_threadsafe(
-            self.newtask(
-                coro, args=args, done_cb=done_cb, stopper_cb=stopper_cb
-            ), self.loop
+            self.newtask(coro, args=args, done_cb=done_cb, stopper_cb=stopper_cb),
+            self.loop,
         )
 
     async def newtask(self, coro, args=(), done_cb=None, stopper_cb=None):
         if self._stopped:
             log.debug(
                 "New asynctask after loop stopped. Will never start",
-                coro=coro, args=args
+                coro=coro,
+                args=args,
             )
             return
 
@@ -196,7 +194,8 @@ class NodeClientLoop:
                 if exp:
                     log.exception(
                         "Asyncio task ended in unexpected error",
-                        error=exp, exc_info=exp
+                        error=exp,
+                        exc_info=exp,
                     )
             except asyncio.CancelledError:
                 pass
@@ -217,8 +216,8 @@ class NodeClientLoop:
         finally:
             self._cleanup()
 
-class NodeClient:
 
+class NodeClient:
     @property
     def name(self):
         raise NotImplementedError
@@ -248,8 +247,8 @@ class NodeClient:
     def delete_completed_analysis(self, analysis_id):
         pass
 
-class RemoteNodeClient(NodeClient):
 
+class RemoteNodeClient(NodeClient):
     def __init__(self, cuckooctx, nodeapi_client, loop_wrapper):
         self.ctx = cuckooctx
         self.client = nodeapi_client
@@ -268,8 +267,12 @@ class RemoteNodeClient(NodeClient):
 
     @property
     def ready(self):
-        return self._info and self._events_open and not self._fatal_error \
-               and not self._resetting
+        return (
+            self._info
+            and self._events_open
+            and not self._fatal_error
+            and not self._resetting
+        )
 
     @property
     def machines(self):
@@ -295,13 +298,9 @@ class RemoteNodeClient(NodeClient):
     async def _handle_taskstate(self, task_id, state):
         log.debug("Received new task state", task_id=task_id, state=state)
         if state == NodeTaskStates.TASK_FAILED:
-            await self.loop_wrapper.newtask(
-                self._task_failed, args=(task_id, True)
-            )
+            await self.loop_wrapper.newtask(self._task_failed, args=(task_id, True))
         elif state == NodeTaskStates.TASK_DONE:
-            await self.loop_wrapper.newtask(
-                self._task_done, args=(task_id,)
-            )
+            await self.loop_wrapper.newtask(self._task_done, args=(task_id,))
         elif state == NodeTaskStates.TASK_RUNNING:
             pass
         else:
@@ -309,15 +308,19 @@ class RemoteNodeClient(NodeClient):
 
     async def _handle_disabled_machine(self, name, reason):
         log.warning(
-            "Received machine disable event", node=self.name,
-            machine=name, reason=reason
+            "Received machine disable event",
+            node=self.name,
+            machine=name,
+            reason=reason,
         )
         try:
             machine = self.machines.get_by_name(name)
         except KeyError:
             log.error(
                 "Received machine disabled event for unknown machine",
-                node=self.name, machine=name, disable_reason=reason
+                node=self.name,
+                machine=name,
+                disable_reason=reason,
             )
             return
 
@@ -349,8 +352,8 @@ class RemoteNodeClient(NodeClient):
         of event stream fail. This is meant to restore the node to a state
         where we can use it again."""
         log.warning(
-            "Starting node reset. Node will be unavailable until this is "
-            "complete.", node=self.name
+            "Starting node reset. Node will be unavailable until this is complete.",
+            node=self.name,
         )
         self._resetting = True
         # First requeue all assigned tasks so that they can still be
@@ -376,16 +379,11 @@ class RemoteNodeClient(NodeClient):
             await self.client.a_reset()
         except ClientError as e:
             log.error(
-                "Failure during remote node reset request", node=self.name,
-                error=e
+                "Failure during remote node reset request", node=self.name, error=e
             )
-            raise NodeActionError(
-                f"Failure during remote node reset request: {e}"
-            )
+            raise NodeActionError(f"Failure during remote node reset request: {e}")
 
-        log.debug(
-            "Deleting all cancelled analysis work on node", node=self.name
-        )
+        log.debug("Deleting all cancelled analysis work on node", node=self.name)
         for task in requeued:
             try:
                 await self.client.a_delete_analysis_work(task.task.analysis_id)
@@ -393,14 +391,15 @@ class RemoteNodeClient(NodeClient):
             except ClientError as e:
                 log.warning(
                     "Failure during deletion of analysis work",
-                    node=self.name, error=e, task_id=task.task.analysis_id
+                    node=self.name,
+                    error=e,
+                    task_id=task.task.analysis_id,
                 )
 
         # Create a new node info with the new available machines and routes
         # objects.
         log.debug(
-            "Requesting available machine and routes for reset node",
-            node=self.name
+            "Requesting available machine and routes for reset node", node=self.name
         )
         self.init()
         self._resetting = False
@@ -418,14 +417,14 @@ class RemoteNodeClient(NodeClient):
             try:
                 await self.events.open()
                 await self.loop_wrapper.newtask(
-                    self.events.read_stream,
-                    stopper_cb=self.events.stop_reading
+                    self.events.read_stream, stopper_cb=self.events.stop_reading
                 )
                 break
             except ClientError as e:
                 log.error(
-                    "Failed to re-open event stream. Trying again in 10 "
-                    "seconds", error=e, node=self.name
+                    "Failed to re-open event stream. Trying again in 10 seconds",
+                    error=e,
+                    node=self.name,
                 )
                 await asyncio.sleep(10, self.loop_wrapper.loop)
 
@@ -451,9 +450,11 @@ class RemoteNodeClient(NodeClient):
 
     async def start_reader(self):
         self.events = NodeEventReader(
-            self.client, message_cb=self._event_msg,
-            read_end_cb=self._event_read_end, conn_cb=self._event_conn_opened,
-            connerr_cb=self._event_conn_err
+            self.client,
+            message_cb=self._event_msg,
+            read_end_cb=self._event_read_end,
+            conn_cb=self._event_conn_opened,
+            connerr_cb=self._event_conn_err,
         )
 
         try:
@@ -467,9 +468,10 @@ class RemoteNodeClient(NodeClient):
 
     def init(self):
         self._info = NodeInfo(
-            name=self.name, version="",
+            name=self.name,
+            version="",
             machines_list=self._retrieve_machine_list(),
-            routes=self._retrieve_available_routes()
+            routes=self._retrieve_available_routes(),
         )
 
     def _retrieve_machine_list(self):
@@ -487,21 +489,22 @@ class RemoteNodeClient(NodeClient):
     async def _start_task(self, startable_task):
         log.debug(
             "Asking node to start work for task",
-            task_id=startable_task.task.id, node=self.name
+            task_id=startable_task.task.id,
+            node=self.name,
         )
         try:
             await self.client.start_task(
                 startable_task.task.id, startable_task.machine.name
             )
             log.debug(
-                "Node has started task", task_id=startable_task.task.id,
-                node=self.name
+                "Node has started task", task_id=startable_task.task.id, node=self.name
             )
         except ClientError as e:
             startable_task.log.error(
                 "Failed to start remote task",
-                task_id=startable_task.task.id, node=self.name,
-                error=e
+                task_id=startable_task.task.id,
+                node=self.name,
+                error=e,
             )
             startable_task.errtracker.fatal_error(
                 f"Failed to start remote task. {self.name}. {e}"
@@ -513,25 +516,27 @@ class RemoteNodeClient(NodeClient):
 
     async def _upload_and_start(self, nodework, startable_task):
         log.debug(
-            "Uploading task work to node", task_id=startable_task.task.id,
-            node=self.name
+            "Uploading task work to node",
+            task_id=startable_task.task.id,
+            node=self.name,
         )
         with nodework:
             try:
                 await self.client.upload_taskwork(nodework.path)
                 log.debug(
                     "Upload task work complete",
-                    task_id=startable_task.task.id, node=self.name
+                    task_id=startable_task.task.id,
+                    node=self.name,
                 )
             except ClientError as e:
                 startable_task.log.error(
                     "Failed to upload work for task.",
-                    task_id=startable_task.task.id, node=self.name,
-                    error=e
+                    task_id=startable_task.task.id,
+                    node=self.name,
+                    error=e,
                 )
                 startable_task.errtracker.fatal_error(
-                    f"Failed to upload work to node. {self.name}. "
-                    f"{e}"
+                    f"Failed to upload work to node. {self.name}. {e}"
                 )
                 return await self._task_failed(
                     startable_task.task.id, retrieve_result=False
@@ -558,7 +563,8 @@ class RemoteNodeClient(NodeClient):
 
         log.debug(
             "Starting asyncio task for new task",
-            task_id=startable_task.task.id, node=self.name
+            task_id=startable_task.task.id,
+            node=self.name,
         )
         self.loop_wrapper.newtask_threadsafe(
             self._upload_and_start, args=(nodework, startable_task)
@@ -568,28 +574,31 @@ class RemoteNodeClient(NodeClient):
         # This is only called by the scheduler in case of some fail during
         # assigning.
         self.loop_wrapper.newtask_threadsafe(
-            self._task_failed, args=(task_id, False),
+            self._task_failed,
+            args=(task_id, False),
         )
 
     async def _retrieve_result(self, startable_task):
         log.debug(
             "Asking result retriever to get result",
-            task_id=startable_task.task.id, node=self.name
+            task_id=startable_task.task.id,
+            node=self.name,
         )
         try:
             await ResultRetrieverClient.retrieve_result(
-                UnixSocketPaths.result_retriever(), startable_task.task.id,
-                self.client.name
+                UnixSocketPaths.result_retriever(),
+                startable_task.task.id,
+                self.client.name,
             )
         except ClientError as e:
             startable_task.log.error(
                 "Failed to retrieve result for task.",
-                task_id=startable_task.task.id, node=self.name,
-                error=e
+                task_id=startable_task.task.id,
+                node=self.name,
+                error=e,
             )
             startable_task.errtracker.fatal_error(
-                f"Failed to retrieve result {self.name}. "
-                f"{e}"
+                f"Failed to retrieve result {self.name}. {e}"
             )
             return False
 
@@ -605,13 +614,12 @@ class RemoteNodeClient(NodeClient):
             startable_task.close()
         except Exception as e:
             log.exception(
-                "Failed to close started task context", task_id=task_id,
-                error=e
+                "Failed to close started task context", task_id=task_id, error=e
             )
         finally:
             self.ctx.state_controller.task_failed(
                 task_id=startable_task.task.id,
-                analysis_id=startable_task.task.analysis_id
+                analysis_id=startable_task.task.analysis_id,
             )
             self.assigned_tasks.untrack_assigned(task_id)
 
@@ -626,13 +634,12 @@ class RemoteNodeClient(NodeClient):
             startable_task.close()
         except Exception as e:
             log.exception(
-                "Failed to close started task context", task_id=task_id,
-                error=e
+                "Failed to close started task context", task_id=task_id, error=e
             )
         finally:
             self.ctx.state_controller.task_done(
                 task_id=startable_task.task.id,
-                analysis_id=startable_task.task.analysis_id
+                analysis_id=startable_task.task.analysis_id,
             )
             self.assigned_tasks.untrack_assigned(task_id)
 
@@ -645,21 +652,24 @@ class RemoteNodeClient(NodeClient):
         except ClientError as e:
             log.warning(
                 "Error while deleting analysis work on remote node",
-                node=self.name, analysis_id=analysis_id, error=e
+                node=self.name,
+                analysis_id=analysis_id,
+                error=e,
             )
             return
 
         self.assigned_tasks.remove_history(analysis_id)
 
-class LocalNodeClient(NodeClient):
 
+class LocalNodeClient(NodeClient):
     def __init__(self, cuckooctx, localnode):
         self.ctx = cuckooctx
         self.node = localnode
         self._info = NodeInfo(
-            name=self.name, version="",
+            name=self.name,
+            version="",
             machines_list=localnode.ctx.machinery_manager.machines.copy(),
-            routes=localnode.ctx.routes
+            routes=localnode.ctx.routes,
         )
         self.assigned_tasks = AssignedTasks()
         self._lock = Lock()
@@ -689,9 +699,7 @@ class LocalNodeClient(NodeClient):
         self.assigned_tasks.track_assigned(startable_task)
         with self._lock:
             try:
-                self.node.add_work(
-                    startable_task.task.id, startable_task.machine.name
-                )
+                self.node.add_work(startable_task.task.id, startable_task.machine.name)
             except NodeError as e:
                 raise NodeActionError(e)
 
@@ -702,13 +710,12 @@ class LocalNodeClient(NodeClient):
             startable_task.close()
         except Exception as e:
             log.exception(
-                "Failed to close started task context", task_id=task_id,
-                error=e
+                "Failed to close started task context", task_id=task_id, error=e
             )
         finally:
             self.ctx.state_controller.task_failed(
                 task_id=startable_task.task.id,
-                analysis_id=startable_task.task.analysis_id
+                analysis_id=startable_task.task.analysis_id,
             )
             self.assigned_tasks.untrack_assigned(task_id)
 
@@ -719,12 +726,11 @@ class LocalNodeClient(NodeClient):
             startable_task.close()
         except Exception as e:
             log.exception(
-                "Failed to close started task context", task_id=task_id,
-                error=e
+                "Failed to close started task context", task_id=task_id, error=e
             )
         finally:
             self.ctx.state_controller.task_done(
                 task_id=startable_task.task.id,
-                analysis_id=startable_task.task.analysis_id
+                analysis_id=startable_task.task.analysis_id,
             )
             self.assigned_tasks.untrack_assigned(task_id)

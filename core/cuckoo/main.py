@@ -7,17 +7,33 @@ import logging
 
 from cuckoo.common.storage import cuckoocwd, Paths, CWDError
 from cuckoo.common.log import (
-    exit_error, print_info, print_error, print_warning, VERBOSE
+    exit_error,
+    print_info,
+    print_error,
+    print_warning,
+    VERBOSE,
 )
 from cuckoo.common.startup import init_database
+
 
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.option("--distributed", is_flag=True, help="Start Cuckoo in distributed mode")
-@click.option("-v", "--verbose", is_flag=True, help="Enable debug logging, including for non-Cuckoo modules")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable debug logging, including for non-Cuckoo modules",
+)
 @click.option("-d", "--debug", is_flag=True, help="Enable debug logging")
-@click.option("-q", "--quiet", is_flag=True, help="Only log warnings and critical messages")
-@click.option("--cancel-abandoned", is_flag=True, help="Do not recover and cancel tasks that are abandoned and still 'running'")
+@click.option(
+    "-q", "--quiet", is_flag=True, help="Only log warnings and critical messages"
+)
+@click.option(
+    "--cancel-abandoned",
+    is_flag=True,
+    help="Do not recover and cancel tasks that are abandoned and still 'running'",
+)
 @click.pass_context
 def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
     if not cwd:
@@ -59,9 +75,7 @@ def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
         )
 
     from cuckoo.common.startup import StartupError
-    from cuckoo.common.shutdown import (
-        register_shutdown, call_registered_shutdowns
-    )
+    from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
 
     if distributed:
         from .startup import start_cuckoo_controller as start_cuckoo
@@ -79,10 +93,12 @@ def main(ctx, cwd, distributed, debug, quiet, verbose, cancel_abandoned):
         exit_error(f"Failure during Cuckoo startup: {e}")
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         exit_error(f"Unexpected failure during Cuckoo startup: {e}")
     finally:
         call_registered_shutdowns()
+
 
 @main.command("createcwd")
 @click.option("--regen-configs", is_flag=True)
@@ -128,27 +144,36 @@ def create_cwd(ctx, update_directories, regen_configs):
     except StartupError as e:
         exit_error(f"Failure during configuration generation: {e}")
 
+
 @main.command("getmonitor")
 @click.argument("zip_path")
 def get_monitor(zip_path):
     """Use the monitor and stager binaries from the given
     Cuckoo monitor zip file."""
     from cuckoo.common.guest import unpack_monitor_components
+
     if not os.path.isfile(zip_path):
         exit_error(f"Zip file does not exist: {zip_path}")
 
     unpack_monitor_components(zip_path, cuckoocwd.root)
+
 
 @main.group()
 def machine():
     """Add machines to machinery configuration files."""
     pass
 
+
 @machine.command("add")
 @click.argument("machinery_name")
 @click.argument("machine_name")
 @click.argument("config_fields", nargs=-1)
-@click.option("--tags", default="", type=str, help="A comma separated list of tags that identify what dependencies/software is installed on the machine.")
+@click.option(
+    "--tags",
+    default="",
+    type=str,
+    help="A comma separated list of tags that identify what dependencies/software is installed on the machine.",
+)
 def machine_add(machinery_name, machine_name, config_fields, tags):
     """Add a machine to the configuration of the specified machinery.
     config_fields be all non-optional configuration entries in key=value
@@ -160,9 +185,7 @@ def machine_add(machinery_name, machine_name, config_fields, tags):
             f"must be given"
         )
 
-    machine_dict = {
-        "tags": list(filter(None, [t.strip() for t in tags.split(",")]))
-    }
+    machine_dict = {"tags": list(filter(None, [t.strip() for t in tags.split(",")]))}
     for entry in config_fields:
         try:
             key, value = tuple(filter(None, entry.split("=", 1)))
@@ -181,11 +204,10 @@ def machine_add(machinery_name, machine_name, config_fields, tags):
 
     try:
         add_machine(machinery_name, machine_name, machine_dict)
-        print_info(
-            f"Added machine: '{machine_name}' to machinery: '{machinery_name}'"
-        )
+        print_info(f"Added machine: '{machine_name}' to machinery: '{machinery_name}'")
     except StartupError as e:
         exit_error(e)
+
 
 @machine.command("import")
 @click.argument("machinery_name")
@@ -202,6 +224,7 @@ def vmcloak_import(machinery_name, vms_path, machine_names):
 
     from cuckoo.common.startup import StartupError
     from .startup import import_vmcloak_vms
+
     try:
         imported = import_vmcloak_vms(machinery_name, vms_path, machine_names)
     except StartupError as e:
@@ -211,9 +234,8 @@ def vmcloak_import(machinery_name, vms_path, machine_names):
         print_warning("No machines imported. Is it the correct directory?")
     else:
         for name in imported:
-            print_info(
-                f"Imported machine: '{name}' to machinery '{machinery_name}'"
-            )
+            print_info(f"Imported machine: '{name}' to machinery '{machinery_name}'")
+
 
 @machine.command("delete")
 @click.argument("machinery_name")
@@ -226,6 +248,7 @@ def delete_machines(machinery_name, machine_names):
 
     from cuckoo.common.startup import StartupError
     from .startup import delete_machines
+
     try:
         deleted = delete_machines(machinery_name, machine_names)
     except StartupError as e:
@@ -251,21 +274,22 @@ def _submit_files(settings, *targets):
 
     for path in files:
         try:
-            analysis_id = submit.file(
-                path, settings, file_name=os.path.basename(path)
-            )
+            analysis_id = submit.file(path, settings, file_name=os.path.basename(path))
             yield analysis_id, path, None
         except submit.SubmissionError as e:
             yield None, path, e
 
+
 def _submit_urls(settings, *targets):
     from cuckoo.common import submit
+
     for url in targets:
         try:
             analysis_id = submit.url(url, settings)
             yield analysis_id, url, None
         except submit.SubmissionError as e:
             yield None, url, e
+
 
 def _parse_settings(**kwargs):
     """Transform and yield (per platform) settings to a format that the
@@ -297,9 +321,13 @@ def _parse_settings(**kwargs):
                     option, val = value.split("=", 1)
                     value = {option: val}
                 except ValueError:
-                    yield None, None, None, \
-                          f"Invalid option value for {kw}. {val!r}. " \
-                          f"Format must be key=value."
+                    yield (
+                        None,
+                        None,
+                        None,
+                        f"Invalid option value for {kw}. {val!r}. "
+                        f"Format must be key=value.",
+                    )
 
             yield plat_index, kw, value, None
 
@@ -308,22 +336,61 @@ def _parse_settings(**kwargs):
 @click.argument("target", nargs=-1)
 @click.option("-u", "--url", is_flag=True, help="Submit URL(s) instead of files.")
 @click.option(
-    "--platform", multiple=True,
+    "--platform",
+    multiple=True,
     help="The platform and optionally the OS version the analysis task must "
-         "run on. Specified as platform,osversion or just platform. "
-         "Use <index of param>,value to specific browser, command, and route settings."
+    "run on. Specified as platform,osversion or just platform. "
+    "Use <index of param>,value to specific browser, command, and route settings.",
 )
 @click.option("--timeout", type=int, default=120, help="Analysis timeout in seconds.")
-@click.option("--priority", type=int, default=1, help="The priority of this analysis. A higher number means a higher priority.")
-@click.option("--orig-filename", is_flag=True, help="Ignore auto detected file extension and use the original file extension.")
-@click.option("--browser",  multiple=True, help="The browser to use for a URL analysis. (Supports per platform configuration).")
-@click.option("--command", multiple=True, help="The command/args that should be used to start the target. Enclose in quotes. "
-                                "Use %PAYLOAD% where the target should be in the command. (Supports per platform configuration)")
-@click.option("--route-type", multiple=True, help="The route type to use. (Supports per platform configuration)")
-@click.option("--route-option", multiple=True, help="Option for given route. Key=value format. (Supports per platform configuration)")
-@click.option("--option", multiple=True, help="Option for the analysis. Key=value format.")
-def submission(target, url, platform, timeout, priority, orig_filename,
-               browser, command, route_type, route_option, option):
+@click.option(
+    "--priority",
+    type=int,
+    default=1,
+    help="The priority of this analysis. A higher number means a higher priority.",
+)
+@click.option(
+    "--orig-filename",
+    is_flag=True,
+    help="Ignore auto detected file extension and use the original file extension.",
+)
+@click.option(
+    "--browser",
+    multiple=True,
+    help="The browser to use for a URL analysis. (Supports per platform configuration).",
+)
+@click.option(
+    "--command",
+    multiple=True,
+    help="The command/args that should be used to start the target. Enclose in quotes. "
+    "Use %PAYLOAD% where the target should be in the command. (Supports per platform configuration)",
+)
+@click.option(
+    "--route-type",
+    multiple=True,
+    help="The route type to use. (Supports per platform configuration)",
+)
+@click.option(
+    "--route-option",
+    multiple=True,
+    help="Option for given route. Key=value format. (Supports per platform configuration)",
+)
+@click.option(
+    "--option", multiple=True, help="Option for the analysis. Key=value format."
+)
+def submission(
+    target,
+    url,
+    platform,
+    timeout,
+    priority,
+    orig_filename,
+    browser,
+    command,
+    route_type,
+    route_option,
+    option,
+):
     """Create a new file/url analysis. Use index,value of the used --platform
     parameter to specify a platform specific setting. No index given means the
     setting is the default for all platforms.
@@ -341,12 +408,8 @@ def submission(target, url, platform, timeout, priority, orig_filename,
     try:
         load_configuration("cuckoo.yaml", check_constraints=False)
         load_configuration("analysissettings.yaml")
-        submit.settings_maker.set_limits(
-            cfg("analysissettings.yaml", "limits")
-        )
-        submit.settings_maker.set_defaults(
-            cfg("analysissettings.yaml", "default")
-        )
+        submit.settings_maker.set_limits(cfg("analysissettings.yaml", "limits"))
+        submit.settings_maker.set_defaults(cfg("analysissettings.yaml", "default"))
         submit.settings_maker.set_nodesinfosdump_path(Paths.nodeinfos_dump())
         init_database(migration_check=False, create_tables=False)
     except (submit.SubmissionError, StartupError, ConfigurationError) as e:
@@ -368,26 +431,26 @@ def submission(target, url, platform, timeout, priority, orig_filename,
 
             elif len(platform_version) == 2:
                 s_helper.add_platform(
-                    platform=platform_version[0],
-                    os_version=platform_version[1]
+                    platform=platform_version[0], os_version=platform_version[1]
                 )
             elif len(platform_version) == 3:
                 s_helper.add_platform(
                     platform=platform_version[0],
                     os_version=platform_version[1],
-                    tags=platform_version[2].split(",")
+                    tags=platform_version[2].split(","),
                 )
 
         for platform_index, setting_key, value, error in _parse_settings(
-            browser=browser, command=command, route_type=route_type,
-            route_option=route_option, options=option
+            browser=browser,
+            command=command,
+            route_type=route_type,
+            route_option=route_option,
+            options=option,
         ):
             if error:
                 raise submit.SubmissionError(error)
 
-            s_helper.set_setting(
-                setting_key, value, platform_index=platform_index
-            )
+            s_helper.set_setting(setting_key, value, platform_index=platform_index)
 
         settings = s_helper.make_settings()
     except submit.SubmissionError as e:
@@ -412,9 +475,21 @@ def submission(target, url, platform, timeout, priority, orig_filename,
 
 
 @main.group(invoke_without_command=True)
-@click.option("-h", "--host", default="localhost", help="Host to bind the development web interface server on")
-@click.option("-p", "--port", default=8000, help="Port to bind the development web interface server on")
-@click.option("--autoreload", is_flag=True, help="Automatically reload modified Python files")
+@click.option(
+    "-h",
+    "--host",
+    default="localhost",
+    help="Host to bind the development web interface server on",
+)
+@click.option(
+    "-p",
+    "--port",
+    default=8000,
+    help="Port to bind the development web interface server on",
+)
+@click.option(
+    "--autoreload", is_flag=True, help="Automatically reload modified Python files"
+)
 @click.pass_context
 def web(ctx, host, port, autoreload):
     """Start the Cuckoo web interface (development server)"""
@@ -422,14 +497,20 @@ def web(ctx, host, port, autoreload):
         return
 
     from cuckoo.web.web.startup import init_web, start_web
-    init_web(
-        ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("web.log")
-    )
+
+    init_web(ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("web.log"))
     start_web(host, port, autoreload=autoreload)
 
+
 @web.command("generateconfig")
-@click.option("--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo web")
-@click.option("--nginx", is_flag=True, help="Generate basic NGINX configuration to serve static and Cuckoo web run by uWSGI")
+@click.option(
+    "--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo web"
+)
+@click.option(
+    "--nginx",
+    is_flag=True,
+    help="Generate basic NGINX configuration to serve static and Cuckoo web run by uWSGI",
+)
 def _generate_web_confs(nginx, uwsgi):
     """Generate basic configurations for uWSGI and NGINX"""
     if not nginx and not uwsgi:
@@ -438,6 +519,7 @@ def _generate_web_confs(nginx, uwsgi):
 
     from cuckoo.common.startup import StartupError
     from cuckoo.web.web.confgen import make_nginx_base, make_uwsgi_base
+
     try:
         if nginx:
             print(make_nginx_base())
@@ -448,29 +530,39 @@ def _generate_web_confs(nginx, uwsgi):
     except StartupError as e:
         exit_error(e)
 
+
 @web.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
 @click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def webdjangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
-    from cuckoo.web.web.startup import (
-        djangocommands, set_path_settings, init_web
-    )
+    from cuckoo.web.web.startup import djangocommands, set_path_settings, init_web
 
     if "runserver" in django_args:
         init_web(
-            ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
-            logfile=Paths.log("web.log")
+            ctx.parent.parent.cwd_path,
+            ctx.parent.parent.loglevel,
+            logfile=Paths.log("web.log"),
         )
     else:
         set_path_settings()
 
     djangocommands(*django_args)
 
+
 @main.group(invoke_without_command=True)
-@click.option("-h", "--host", default="localhost", help="Host to bind the development web API server on")
-@click.option("-p", "--port", default=8090, help="Port to bind the development web API server on")
-@click.option("--autoreload", is_flag=True, help="Automatically reload modified Python files")
+@click.option(
+    "-h",
+    "--host",
+    default="localhost",
+    help="Host to bind the development web API server on",
+)
+@click.option(
+    "-p", "--port", default=8090, help="Port to bind the development web API server on"
+)
+@click.option(
+    "--autoreload", is_flag=True, help="Automatically reload modified Python files"
+)
 @click.pass_context
 def api(ctx, host, port, autoreload):
     """Start the Cuckoo web API (development server)"""
@@ -478,14 +570,20 @@ def api(ctx, host, port, autoreload):
         return
 
     from cuckoo.web.api.startup import init_api, start_api
-    init_api(
-        ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("api.log")
-    )
+
+    init_api(ctx.parent.cwd_path, ctx.parent.loglevel, logfile=Paths.log("api.log"))
     start_api(host, port, autoreload=autoreload)
 
+
 @api.command("generateconfig")
-@click.option("--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo API")
-@click.option("--nginx", is_flag=True, help="Generate basic NGINX configuration to serve the Cuckoo web API by uWSGI")
+@click.option(
+    "--uwsgi", is_flag=True, help="Generate basic uWSGI configuration to run Cuckoo API"
+)
+@click.option(
+    "--nginx",
+    is_flag=True,
+    help="Generate basic NGINX configuration to serve the Cuckoo web API by uWSGI",
+)
 def _generate_api_confs(nginx, uwsgi):
     """Generate basic configurations for uWSGI and NGINX"""
     if not nginx and not uwsgi:
@@ -494,6 +592,7 @@ def _generate_api_confs(nginx, uwsgi):
 
     from cuckoo.common.startup import StartupError
     from cuckoo.web.api.confgen import make_nginx_base, make_uwsgi_base
+
     try:
         if nginx:
             print(make_nginx_base())
@@ -504,17 +603,28 @@ def _generate_api_confs(nginx, uwsgi):
     except StartupError as e:
         exit_error(e)
 
+
 @api.command("token")
-@click.option("-l", "--list", is_flag=True, help="List all current API tokens and their owners")
-@click.option("-c", "--create", type=str, help="Create a new API token for a given owner name")
-@click.option("--admin", is_flag=True, help="Grant admin priviles to API token being created")
-@click.option("-d", "--delete", type=int, help="Delete the specified token by its token ID")
+@click.option(
+    "-l", "--list", is_flag=True, help="List all current API tokens and their owners"
+)
+@click.option(
+    "-c", "--create", type=str, help="Create a new API token for a given owner name"
+)
+@click.option(
+    "--admin", is_flag=True, help="Grant admin priviles to API token being created"
+)
+@click.option(
+    "-d", "--delete", type=int, help="Delete the specified token by its token ID"
+)
 @click.option("--clear", is_flag=True, help="Delete all API tokens")
 def apitoken(list, create, admin, delete, clear):
     """List, create, and delete API tokens."""
     from cuckoo.web.api.startup import load_app
+
     load_app()
     from cuckoo.web.api import apikey
+
     if list:
         apikey.print_api_keys()
     elif create:
@@ -534,24 +644,25 @@ def apitoken(list, create, admin, delete, clear):
         with click.Context(apitoken) as ctx:
             print(apitoken.get_help(ctx))
 
+
 @api.command("djangocommand", context_settings=(dict(ignore_unknown_options=True)))
 @click.argument("django_args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def apidjangocommand(ctx, django_args):
     """Arguments for this command are passed to Django."""
-    from cuckoo.web.api.startup import(
-        djangocommands, set_path_settings, init_api
-    )
+    from cuckoo.web.api.startup import djangocommands, set_path_settings, init_api
 
     if "runserver" in django_args:
         init_api(
-            ctx.parent.parent.cwd_path, ctx.parent.parent.loglevel,
-            logfile=Paths.log("api.log")
+            ctx.parent.parent.cwd_path,
+            ctx.parent.parent.loglevel,
+            logfile=Paths.log("api.log"),
         )
     else:
         set_path_settings()
 
     djangocommands(*django_args)
+
 
 @main.command()
 @click.pass_context
@@ -561,9 +672,7 @@ def importmode(ctx):
         return
 
     from cuckoo.common.startup import StartupError
-    from cuckoo.common.shutdown import (
-        register_shutdown, call_registered_shutdowns
-    )
+    from cuckoo.common.shutdown import register_shutdown, call_registered_shutdowns
     from .startup import start_importmode
 
     def _stopmsg():

@@ -18,8 +18,8 @@ log = CuckooGlobalLogger(__name__)
 class SchedulerError(Exception):
     pass
 
-class NodesTracker:
 
+class NodesTracker:
     def __init__(self, cuckooctx):
         self.ctx = cuckooctx
         self._nodes = []
@@ -70,9 +70,10 @@ class NodesTracker:
                 continue
 
             machine = node.machines.acquire_available(
-                queued_task.id, platform=queued_task.platform,
+                queued_task.id,
+                platform=queued_task.platform,
                 os_version=queued_task.os_version,
-                tags=queued_task.machine_tags
+                tags=queued_task.machine_tags,
             )
             if not machine:
                 continue
@@ -81,8 +82,8 @@ class NodesTracker:
 
         return None, None
 
-class StartableTask:
 
+class StartableTask:
     def __init__(self, cuckooctx, queued_task, machine, node):
         self.ctx = cuckooctx
         self.task = queued_task
@@ -97,14 +98,16 @@ class StartableTask:
     @property
     def log(self):
         if not self._logger:
-            self._logger = TaskLogger( __name__, self.task.id)
+            self._logger = TaskLogger(__name__, self.task.id)
 
         return self._logger
 
     def task_running(self):
         self.ctx.state_controller.task_running(
-            task_id=self.task.id, analysis_id=self.task.analysis_id,
-            machine=self.machine, node=self.node
+            task_id=self.task.id,
+            analysis_id=self.task.analysis_id,
+            machine=self.machine,
+            node=self.node,
         )
 
     def assign_to_node(self):
@@ -142,8 +145,8 @@ class StartableTask:
 
         self.release_resources()
 
-class TaskStarter(threading.Thread):
 
+class TaskStarter(threading.Thread):
     def __init__(self, cuckooctx, workqueue):
         super().__init__()
         self.workqueue = workqueue
@@ -155,7 +158,6 @@ class TaskStarter(threading.Thread):
         self._do_run = False
 
     def run(self):
-
         while self._do_run:
             try:
                 startable_task = self.workqueue.get(timeout=1)
@@ -164,15 +166,17 @@ class TaskStarter(threading.Thread):
 
             log.info(
                 "Assigning startable task to node",
-                task_id=startable_task.task.id, node=startable_task.node.name,
-                machine=startable_task.machine.name
+                task_id=startable_task.task.id,
+                node=startable_task.node.name,
+                machine=startable_task.machine.name,
             )
             try:
                 startable_task.assign_to_node()
             except NodeUnavailableError as e:
                 startable_task.log.error(
                     "Failed to start task. Node unavailable. Requeueing",
-                    node=startable_task.node.name, error=e
+                    node=startable_task.node.name,
+                    error=e,
                 )
                 # Requeue and close task. Normally the node client would
                 # close the startable task when the tasks ends in either
@@ -182,26 +186,22 @@ class TaskStarter(threading.Thread):
                 startable_task.close()
             except NodeActionError as e:
                 startable_task.log.error(
-                    "Failed to start task", task_id=startable_task.task.id,
-                    error=e
+                    "Failed to start task", task_id=startable_task.task.id, error=e
                 )
-                startable_task.errtracker.fatal_error(
-                    f"Failed to start task: {e}"
-                )
+                startable_task.errtracker.fatal_error(f"Failed to start task: {e}")
                 startable_task.node.task_failed(startable_task.task.id)
             except Exception as e:
                 log.exception(
                     "Unexpected failure while starting task",
-                    task_id=startable_task.task.id, error=e
+                    task_id=startable_task.task.id,
+                    error=e,
                 )
-                startable_task.node.task_failed(
-                    startable_task.task.id
-                )
+                startable_task.node.task_failed(startable_task.task.id)
             else:
                 startable_task.task_running()
 
-class Scheduler:
 
+class Scheduler:
     NUM_TASK_STARTERS = 1
 
     def __init__(self, cuckooctx, taskqueue):
@@ -266,11 +266,28 @@ class Scheduler:
         with self._requeue_lock:
             self._requeue.add(task_id)
 
-    def queue_task(self, task_id, kind, created_on, analysis_id, priority,
-                   platform, os_version, machine_tags, route):
+    def queue_task(
+        self,
+        task_id,
+        kind,
+        created_on,
+        analysis_id,
+        priority,
+        platform,
+        os_version,
+        machine_tags,
+        route,
+    ):
         self.taskqueue.queue_task(
-            task_id, kind, created_on, analysis_id, priority, platform,
-            os_version, machine_tags, route
+            task_id,
+            kind,
+            created_on,
+            analysis_id,
+            priority,
+            platform,
+            os_version,
+            machine_tags,
+            route,
         )
         self._change_event.set()
 
@@ -320,16 +337,14 @@ class Scheduler:
                 # Add work to task starter worker queue
                 try:
                     log.debug(
-                        "Adding entry to task starter queue", task_id=task.id,
-                        machine=machine.name, node=node.name
+                        "Adding entry to task starter queue",
+                        task_id=task.id,
+                        machine=machine.name,
+                        node=node.name,
                     )
-                    self._queue_startable(
-                        StartableTask(self.ctx, task, machine, node)
-                    )
+                    self._queue_startable(StartableTask(self.ctx, task, machine, node))
                 except SchedulerError as e:
-                    log.warning(
-                        "Failed to add entry to starter worker queue", error=e
-                    )
+                    log.warning("Failed to add entry to starter worker queue", error=e)
                     return
 
                 wf.mark_scheduled(task)
@@ -362,9 +377,7 @@ class Scheduler:
             # by other components to see the available platforms, routes etc
             # for all nodes.
             if self.ctx.nodes.nodeinfos.should_dump():
-                self.ctx.nodes.nodeinfos.make_dump(
-                    Paths.nodeinfos_dump()
-                )
+                self.ctx.nodes.nodeinfos.make_dump(Paths.nodeinfos_dump())
 
             # Remove tasks from the task queue db. These tasks have been
             # marked completed/unqueued by node clients closing the

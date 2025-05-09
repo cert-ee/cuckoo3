@@ -7,6 +7,7 @@ import click
 from cuckoo.common.storage import cuckoocwd, CWDError, Paths
 from cuckoo.common.log import exit_error, print_warning
 
+
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.pass_context
@@ -28,10 +29,12 @@ def main(ctx, cwd):
 
     if ctx.invoked_subcommand:
         from cuckoo.common.startup import init_global_logging
+
         init_global_logging(
             logging.DEBUG, Paths.log("migrations.log"), use_logqueue=False
         )
         return
+
 
 @main.command("database")
 @click.argument("name", type=str)
@@ -48,9 +51,18 @@ def migrate_database(name):
     except MigrationError as e:
         exit_error(e)
 
+
 @main.command("cwdfiles")
-@click.option("--overwrite", is_flag=True, help="Skip confirmation and overwrite file(s) when user-modified files are detected.")
-@click.option("--delete-unused", is_flag=True, help="Remove files from CWD that Cuckoo no longer uses")
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Skip confirmation and overwrite file(s) when user-modified files are detected.",
+)
+@click.option(
+    "--delete-unused",
+    is_flag=True,
+    help="Remove files from CWD that Cuckoo no longer uses",
+)
 def migrate_cwdfiles(overwrite, delete_unused):
     """Overwrite files in the CWD to their newer version(s)."""
     from cuckoo.common.migrate import CWDFileMigrator
@@ -71,11 +83,13 @@ def migrate_cwdfiles(overwrite, delete_unused):
 
     cuckoocwd.write_versions_file(cuckoocwd.root)
 
+
 @main.command("configs")
 def migrate_configs():
     """Attempts to automatically migrate configuration files to a newer
     version. This is needed after a (subpackage) update."""
     from cuckoo.common.migrate import ConfigMigrator, MigrationError
+
     try:
         ConfigMigrator.migrate_all()
     except MigrationError as e:

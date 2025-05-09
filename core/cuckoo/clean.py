@@ -7,49 +7,45 @@ import os.path
 from pathlib import Path
 
 from cuckoo.common.storage import delete_dirtree, Paths
-from cuckoo.common.importing import (
-    AnalysisZipper, AnalysisZippingError
-)
+from cuckoo.common.importing import AnalysisZipper, AnalysisZippingError
 from cuckoo.common.clients import (
-    APIBadRequestError, ClientError, APIResourceConfictError,
-    StateControllerClient
+    APIBadRequestError,
+    ClientError,
+    APIResourceConfictError,
+    StateControllerClient,
 )
 from cuckoo.common import analyses
 from cuckoo.common.log import CuckooGlobalLogger
 
 log = CuckooGlobalLogger(__name__)
 
+
 class CleanerError(Exception):
     pass
 
 
 def find_analyses(older_than_days, state):
-    match_before = datetime.datetime.now() - datetime.timedelta(
-        days=older_than_days
-    )
+    match_before = datetime.datetime.now() - datetime.timedelta(days=older_than_days)
 
     return analyses.list_analyses(
-        state=state, older_than=match_before,
-        remote=False
+        state=state, older_than=match_before, remote=False
     ), match_before
 
+
 def find_analyses_hours(older_than_hours, state):
-    match_before = datetime.datetime.now() - datetime.timedelta(
-        hours=older_than_hours
-    )
+    match_before = datetime.datetime.now() - datetime.timedelta(hours=older_than_hours)
 
     return analyses.list_analyses(
-        state=state, older_than=match_before,
-        remote=False
+        state=state, older_than=match_before, remote=False
     ), match_before
 
 
 class AnalysisRemoteExporter:
-
     EXPORT_STEP_SIZE = 5
 
-    def __init__(self, analysis_ids, api_client, ignore_task_dirs=[],
-                 ignore_task_files=[]):
+    def __init__(
+        self, analysis_ids, api_client, ignore_task_dirs=[], ignore_task_files=[]
+    ):
         self._analysis_ids = analysis_ids
         self._api = api_client
         self._ignore_task_dirs = ignore_task_dirs
@@ -61,8 +57,8 @@ class AnalysisRemoteExporter:
     def start(self):
         log.info("Exporting analyses", count=len(self._analysis_ids))
         while self._analysis_ids:
-            exportables = self._analysis_ids[0:self.EXPORT_STEP_SIZE]
-            del self._analysis_ids[0:self.EXPORT_STEP_SIZE]
+            exportables = self._analysis_ids[0 : self.EXPORT_STEP_SIZE]
+            del self._analysis_ids[0 : self.EXPORT_STEP_SIZE]
 
             # No analyses left to export. Quit
             if not exportables:
@@ -83,8 +79,7 @@ class AnalysisRemoteExporter:
                 self._api.import_notify()
             except ClientError as e:
                 raise CleanerError(
-                    f"Failed to notify remote import controller of "
-                    f"new imports: {e}"
+                    f"Failed to notify remote import controller of new imports: {e}"
                 )
 
             # Notify the local Cuckoo state controller that it should
@@ -112,7 +107,8 @@ class AnalysisRemoteExporter:
         except AnalysisZippingError as e:
             log.warning(
                 "Failed to zip analysis. Skipping export",
-                analysis_id=analysis_id, error=e
+                analysis_id=analysis_id,
+                error=e,
             )
             return False
 
@@ -122,8 +118,9 @@ class AnalysisRemoteExporter:
 
     def _zip_analysis(self, analysis_id):
         zipper = AnalysisZipper(
-            analysis_id, ignore_dirs=self._ignore_task_dirs,
-            ignore_files=self._ignore_task_files
+            analysis_id,
+            ignore_dirs=self._ignore_task_dirs,
+            ignore_files=self._ignore_task_files,
         )
         zippath = os.path.join(self._tmpdir, f"{analysis_id}.zip")
         return zipper.make_zip(zippath)
@@ -136,7 +133,8 @@ class AnalysisRemoteExporter:
             except APIResourceConfictError as e:
                 log.warning(
                     "Export already exists on remote host",
-                    analysis_id=analysis_id, error=e
+                    analysis_id=analysis_id,
+                    error=e,
                 )
             except APIBadRequestError as e:
                 log.warning("Export failed", analysis_id=analysis_id, error=e)

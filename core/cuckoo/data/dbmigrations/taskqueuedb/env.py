@@ -1,4 +1,3 @@
-
 import logging
 from logging.config import fileConfig
 from alembic import context
@@ -10,12 +9,10 @@ from cuckoo.taskqueue import AlembicVersion, Base
 cuckoocwd.set(context.get_x_argument(as_dictionary=True)["cwd"])
 
 queuedbms = DBMS(
-    schema_version=AlembicVersion.SCHEMA_VERSION,
-    alembic_version_table=AlembicVersion
+    schema_version=AlembicVersion.SCHEMA_VERSION, alembic_version_table=AlembicVersion
 )
 queuedbms.initialize(
-    f"sqlite:///{Paths.queuedb()}", Base,
-    migration_check=False, create_tables=False
+    f"sqlite:///{Paths.queuedb()}", Base, migration_check=False, create_tables=False
 )
 
 # this is the Alembic Config object, which provides
@@ -42,6 +39,7 @@ needs_migration, _, _ = queuedbms.needs_migration()
 if not needs_migration:
     log.info("No migration needed for cuckoodb")
     exit(0)
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -77,9 +75,7 @@ def run_migrations_online():
     connectable = queuedbms.engine
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

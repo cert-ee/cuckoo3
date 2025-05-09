@@ -9,6 +9,7 @@ from cuckoo.common import safelist
 from cuckoo.common.log import exit_error, print_info
 from cuckoo.common.startup import init_safelist_db, MigrationNeededError
 
+
 @click.group(invoke_without_command=True)
 @click.option("--cwd", help="Cuckoo Working Directory")
 @click.pass_context
@@ -37,6 +38,7 @@ def main(ctx, cwd):
     if ctx.invoked_subcommand:
         return
 
+
 @main.command()
 def listnames():
     """Show all existing safelists and their types."""
@@ -46,8 +48,7 @@ def listnames():
 
     print(
         tabulate(
-            safelists, headers=("Name", "Value type", "Description"),
-            tablefmt="github"
+            safelists, headers=("Name", "Value type", "Description"), tablefmt="github"
         )
     )
 
@@ -63,6 +64,7 @@ def dump_csv(filepath, name):
     FILEPATH A path to write the CSV file to
     """
     import os.path
+
     if os.path.exists(filepath):
         exit_error(f"File {filepath} already exists")
 
@@ -74,6 +76,7 @@ def dump_csv(filepath, name):
         safelist.dump_safelist_csv(filepath, sl_class)
     except safelist.SafelistError as e:
         exit_error(f"Failed to dump safelist: {e}")
+
 
 @main.command("csvimport")
 @click.argument("name", type=str)
@@ -87,6 +90,7 @@ def import_csv(name, filepath):
     safelist name
     """
     import os.path
+
     if not os.path.exists(filepath):
         exit_error(f"File {filepath} does not exist")
 
@@ -98,6 +102,7 @@ def import_csv(name, filepath):
         safelist.import_csv_safelist(filepath, sl_class)
     except safelist.SafelistError as e:
         exit_error(f"Failed to import safelist: {e}")
+
 
 @main.command("show")
 @click.argument("name", type=str)
@@ -118,23 +123,44 @@ def show_safelist(name):
 
     values = []
     for entry in entries:
-        values.append((
-            entry.id, entry.valuetype, entry.regex, entry.platform,
-            entry.value, entry.description, entry.source
-        ))
+        values.append(
+            (
+                entry.id,
+                entry.valuetype,
+                entry.regex,
+                entry.platform,
+                entry.value,
+                entry.description,
+                entry.source,
+            )
+        )
 
-    headers = (
-        "ID", "Type", "Regex", "Platform", "Value", "Description", "Source"
-    )
+    headers = ("ID", "Type", "Regex", "Platform", "Value", "Description", "Source")
     print(tabulate(values, headers, tablefmt="github"))
+
 
 @main.command("add")
 @click.argument("name", type=str)
 @click.argument("value", type=str)
-@click.option("--platform", type=str, default="", help="The platform for which to use this value. No platform means the entry is used for all platforms.")
+@click.option(
+    "--platform",
+    type=str,
+    default="",
+    help="The platform for which to use this value. No platform means the entry is used for all platforms.",
+)
 @click.option("--regex", is_flag=True, help="Indicate that the given value is a regex.")
-@click.option("--description", type=str, default="", help="A short description of the value and why it is safelisted")
-@click.option("--source", type=str, default="", help="The source of the safelist value. E.G a URL.")
+@click.option(
+    "--description",
+    type=str,
+    default="",
+    help="A short description of the value and why it is safelisted",
+)
+@click.option(
+    "--source",
+    type=str,
+    default="",
+    help="The source of the safelist value. E.G a URL.",
+)
 def add_entry(name, value, platform, regex, description, source):
     """Add a value to the specified safelist.
 
@@ -150,13 +176,17 @@ def add_entry(name, value, platform, regex, description, source):
 
     try:
         sl_class.add_entry(
-            value, platform=platform, regex=regex, description=description,
-            source=source
+            value,
+            platform=platform,
+            regex=regex,
+            description=description,
+            source=source,
         )
     except safelist.SafelistError as e:
         exit_error(f"Failed to add value to safelist. {e}")
 
     print_info(f"Added {value!r} to safelist {name!r}")
+
 
 @main.command("delete")
 @click.argument("name", type=str)
@@ -177,6 +207,7 @@ def delete_entries(name, ids):
         exit_error(f"Failed to delete safelist entries. {e}")
 
     print_info(f"Deleted safelist entries {ids}")
+
 
 @main.command("clear")
 @click.argument("name", type=str)
