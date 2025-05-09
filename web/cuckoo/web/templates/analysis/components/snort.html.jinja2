@@ -1,0 +1,18 @@
+{% call ui_box(title="SNORT Antivirus Engines", has_padding=False) %}
+  <table class="table has-sticky-header has-striped-rows">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for av, probe in pre.snort.probe_results.antivirus.items() %}
+        <tr>
+          <td {% if probe.results %}class="has-text-red"{% endif %}>{{ av }}</td>
+          <td>{{ probe.results|default('-', True) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endcall %}

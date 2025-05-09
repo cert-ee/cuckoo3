@@ -94,6 +94,20 @@
             {% endcall %}
           </div>
         {% endif %}
+        {# tab: static.snort #}
+        {% if pre.snort %}
+        <div id="tab-snort">
+            {% call ui_box(title="SNORT Antivirus Engines", has_padding=False, collapsed=True) %}
+              {{ render_table(
+                  data=pre.snort.probe_results.antivirus,
+                  cols=["engine_name","result"],
+                  labels=["Name","Result"],
+                  has_sticky_header=True
+              )}}
+            {% endcall %}
+          </div>
+        {% endif %}
+
         {# tab: static.irma #}
         {% if pre.irma %}
         <div id="tab-irma" >

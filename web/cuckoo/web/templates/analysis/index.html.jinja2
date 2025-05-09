@@ -133,6 +133,15 @@
           {% endif %}
         {% endif %}
 
+        {# tab: static.snort #}
+        {% if pre.snort is defined %}
+          {% if pre.snort.antivirus_detection_rate %}
+            <div role="region" id="snort" hidden>
+              {% include "analysis/components/snort.html.jinja2" %}
+            </div>
+          {% endif %}
+        {% endif %}
+
         {# tab: static.mhr #}
         {% if pre.mhr is defined %}
           {% if pre.mhr %}

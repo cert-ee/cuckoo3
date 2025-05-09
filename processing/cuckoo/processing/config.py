@@ -21,6 +21,11 @@ class ScoringLevel(config.String):
 
 exclude_autoload = []
 typeloaders = {
+    "snort.yaml": {
+        "enabled": config.Boolean(default_val=False),
+        "snort": config.String(default_val="/usr/local/bin/snort"),
+        "conf": config.String(default_val="/etc/snort/snort.conf"),
+    },
     "identification.yaml": {
         "tags": config.Dict(
             config.List(config.String),
