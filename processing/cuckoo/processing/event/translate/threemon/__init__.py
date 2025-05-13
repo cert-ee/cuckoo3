@@ -14,7 +14,6 @@ from . import suspicious_pb2
 from . import thread_pb2
 from . import whois_pb2
 from . import autogen_pb2
-from . import dumped_pb2
 from . import vminfo_pb2
 
 messages = {
@@ -27,7 +26,6 @@ messages = {
     9: mutant_pb2.Mutant,
     10: thread_pb2.ThreadContext,
     12: network_pb2.NetworkFlow,
-    13: dumped_pb2.Dumped,
     14: whois_pb2.Whois,
     15: vminfo_pb2.Vminfo,
     16: mutant_pb2.Event,
