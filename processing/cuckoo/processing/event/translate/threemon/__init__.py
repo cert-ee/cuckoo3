@@ -1,3 +1,5 @@
+# Copyright (C) 2019-2021 Estonian Information System Authority.
+# See the file 'LICENSE' for copying permission.
 import google.protobuf.message
 
 from . import debug_pb2
@@ -34,6 +36,7 @@ messages = {
     126: debug_pb2.Debug,
     127: debug_pb2.Log,
 }
+
 
 def parse_event(kind, buf):
     msg = messages.get(kind)
