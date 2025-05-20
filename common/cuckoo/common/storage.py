@@ -8,7 +8,7 @@ import random
 import shutil
 import string
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import gettempdir
 
@@ -744,7 +744,7 @@ def create_analysis_folder(day, identifier):
 
 
 def todays_daydir():
-    return datetime.utcnow().date().strftime("%Y%m%d")
+    return datetime.now(timezone.utc).date().strftime("%Y%m%d")
 
 
 def make_analysis_folder(tries=0):

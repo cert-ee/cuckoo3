@@ -3,7 +3,7 @@
 
 import json
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from .log import CuckooGlobalLogger
 from .storage import safe_json_dump
@@ -443,7 +443,7 @@ class MachineListDumper:
         if not self._last_dump:
             return True
 
-        if datetime.utcnow() - self._last_dump >= timedelta(
+        if datetime.now(timezone.utc) - self._last_dump >= timedelta(
             seconds=self._min_dump_wait
         ):
             return True
@@ -455,7 +455,7 @@ class MachineListDumper:
 
     def make_dump(self, path):
         dump_machine_lists(path, *self.lists)
-        self._last_dump = datetime.utcnow()
+        self._last_dump = datetime.now(timezone.utc)
 
         self._lists_changed = False
         for mlist in self.lists:

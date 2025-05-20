@@ -3,7 +3,7 @@
 
 import sqlalchemy
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.pool import NullPool
@@ -47,7 +47,7 @@ class Analysis(CuckooDBTable):
     id = sqlalchemy.Column(sqlalchemy.String(15), primary_key=True)
     kind = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     created_on = sqlalchemy.Column(
-        sqlalchemy.DateTime, nullable=False, default=datetime.utcnow()
+        sqlalchemy.DateTime, nullable=False, default=datetime.now(timezone.utc)
     )
     state = sqlalchemy.Column(sqlalchemy.String(32), nullable=False)
     priority = sqlalchemy.Column(sqlalchemy.Integer, default=1, nullable=False)

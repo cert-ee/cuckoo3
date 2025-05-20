@@ -5,7 +5,7 @@ import json
 import os.path
 import shlex
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import RLock
 
@@ -73,7 +73,7 @@ def _write_analysis(analysis_id, settings, target_strictcontainer):
             "kind": AnalysisKinds.STANDARD,
             "state": AnalysisStates.UNTRACKED,
             "settings": settings,
-            "created_on": datetime.utcnow(),
+            "created_on": datetime.now(timezone.utc),
             "category": target_strictcontainer.category,
             "submitted": target_strictcontainer,
         }
@@ -587,7 +587,7 @@ class SettingsMaker:
 
         # Check if the dump file changed if the last reload is at least
         # RELOAD MINS minutes ago
-        if datetime.utcnow() - self._last_reload < timedelta(minutes=self.RELOAD_MINS):
+        if datetime.now(timezone.utc) - self._last_reload < timedelta(minutes=self.RELOAD_MINS):
             return False
 
         # Only reload if the dump file was actually modified since last check
@@ -627,7 +627,7 @@ class SettingsMaker:
 
         with self._dmp_load_lock:
             self._last_modify_time = self._dump_modify_dt()
-            self._last_reload = datetime.utcnow()
+            self._last_reload = datetime.now(timezone.utc)
             self.nodeinfos = read_nodesinfos_dump(self._nodeinfos_dump_path)
 
     def available_platforms(self):

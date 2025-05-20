@@ -3,7 +3,7 @@
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 import elasticsearch_dsl
 import requests
@@ -88,7 +88,7 @@ class IntelMQEventMaker:
     def _add_event(self, event_dict, taxonomy, classification_type):
         event_dict.update(
             {
-                Fields.TIME_SOURCE: datetime.utcnow().isoformat(),
+                Fields.TIME_SOURCE: datetime.now(timezone.utc).isoformat(),
                 Fields.TAXONOMY: taxonomy,
                 Fields.TYPE: classification_type,
             }
