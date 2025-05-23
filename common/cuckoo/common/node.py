@@ -2,7 +2,7 @@
 # See the file 'LICENSE' for copying permission.
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from cuckoo.common.machines import read_machines_dump_dict
 from cuckoo.common.route import Routes
@@ -125,7 +125,7 @@ class NodeInfos:
         if not self._last_dump:
             return True
 
-        if datetime.utcnow() - self._last_dump >= timedelta(
+        if datetime.now(timezone.utc) - self._last_dump >= timedelta(
             seconds=self._min_dump_wait
         ):
             return True
@@ -137,7 +137,7 @@ class NodeInfos:
 
     def make_dump(self, path):
         dump_nodeinfos(path, *self.nodeinfos)
-        self._last_dump = datetime.utcnow()
+        self._last_dump = datetime.now(timezone.utc)
 
         self._changed = False
         for info in self.nodeinfos:
