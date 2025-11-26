@@ -4,6 +4,7 @@ about: Help us enhance documentation
 title: '[DOC] '
 labels: ['documentation']
 assignees: ''
+type: 'Task'
 
 ---
 
