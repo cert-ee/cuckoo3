@@ -369,16 +369,31 @@ def _init_elasticsearch_pre_startup():
     user = config.cfg("elasticsearch.yaml", "user", subpkg="processing")
     password = config.cfg("elasticsearch.yaml", "password", subpkg="processing")
     ca_certs = config.cfg("elasticsearch.yaml", "ca_certs", subpkg="processing")
-    init_elasticsearch(
-        hosts,
-        indices,
-        timeout=timeout,
-        max_result_window=max_result,
-        create_missing_indices=True,
-        user=user,
-        password=password,
-        ca_certs=ca_certs,
-    )
+    https = False
+    for host in hosts:
+        if "https://" in host:
+            https = True
+    if https:
+        init_elasticsearch(
+            hosts,
+            indices,
+            timeout=timeout,
+            max_result_window=max_result,
+            create_missing_indices=True,
+            user=user,
+            password=password,
+            ca_certs=ca_certs,
+        )
+    else:
+        init_elasticsearch(
+            hosts,
+            indices,
+            timeout=timeout,
+            max_result_window=max_result,
+            create_missing_indices=True,
+            user=user,
+            password=password,
+        )
 
 
 def start_cuckoo(loglevel, cancel_abandoned=False):

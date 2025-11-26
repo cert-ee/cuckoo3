@@ -97,9 +97,14 @@ class _ESManager:
 
         self._max_result_window = max_result_window
         self._hosts = hosts
-        self._client = Elasticsearch(
-            hosts, timeout=timeout, http_auth=(user, password), ca_certs=ca_certs
-        )
+        if ca_certs:
+            self._client = Elasticsearch(
+                hosts, timeout=timeout, http_auth=(user, password), ca_certs=ca_certs
+            )
+        else:
+            self._client = Elasticsearch(
+                hosts, timeout=timeout, http_auth=(user, password)
+            )
         self._initialized = True
 
     def verify(self):
@@ -136,7 +141,7 @@ class _ESManager:
         existing = []
         for name, realname in self._names_realnames.items():
             try:
-                if self.client.indices.exists(realname):
+                if self.client.indices.exists(index=realname):
                     existing.append(name)
             except (ApiError, TransportError) as e:
                 raise ElasticSearchError(
