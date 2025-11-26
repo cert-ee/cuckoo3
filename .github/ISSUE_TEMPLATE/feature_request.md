@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: '[FEATURE] '
-labels: ['feature']
+labels: ['enhancement']
 assignees: ''
 
 ---
@@ -22,7 +22,7 @@ A clear and concise description of what the problem is. Ex. _I'm always frustrat
 _Propose a clear and concise description of what you want to happen._
 
 * _Describe alternatives you've considered_
-* _Describe a﻿ clear and concise description of any alternative solutions or features you've considered._
+* _Describe a clear and concise description of any alternative solutions or features you've considered._
 
 ## Additional context
 **Additional context**
