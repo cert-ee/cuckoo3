@@ -43,7 +43,7 @@ class ElasticSearch(Reporter):
                 indices,
                 timeout=timeout,
                 max_result_window=max_result,
-                create_missing_indices=True,
+                create_missing_indices=False,
                 user=user,
                 password=password,
                 ca_certs=ca_certs,
@@ -54,7 +54,7 @@ class ElasticSearch(Reporter):
                 indices,
                 timeout=timeout,
                 max_result_window=max_result,
-                create_missing_indices=True,
+                create_missing_indices=False,
                 user=user,
                 password=password,
             )

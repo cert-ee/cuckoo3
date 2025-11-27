@@ -55,8 +55,7 @@ def _init_elasticsearch_web():
         init_elasticsearch(
             hosts,
             indices,
-            timeout=timeout,
-            max_result_window=max_result,
+            max_result_window=max_window,
             create_missing_indices=True,
             user=user,
             password=password,
@@ -66,8 +65,7 @@ def _init_elasticsearch_web():
         init_elasticsearch(
             hosts,
             indices,
-            timeout=timeout,
-            max_result_window=max_result,
+            max_result_window=max_window,
             create_missing_indices=True,
             user=user,
             password=password,
