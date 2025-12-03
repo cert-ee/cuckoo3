@@ -25,7 +25,8 @@ A clear and concise description of what the problem is. Ex. _I'm always frustrat
 [ ] CLI interface (_Ex: Add <X> parameter to `cuckoosafelist add`; Change command name from <X> to <Y> in cuckoonode; etc_)
 [ ] API (_Ex: Add <X> information to <Y> endpoint response; etc_)
 [ ] Documentation (_Ex: Move section for <X> to <Y> location; Add screen capture in <Y> instructions; etc_)
-[ ] Logging (_Ex: Add <Z> exception error treatment in <X> function; Add <Y> debug log to <X>; etc)
+[ ] Logging (_Ex: Add <Z> exception error treatment in <X> function; Add <Y> debug log to <X>; etc_)
+[ ] Code refactoring (_Ex: Improve <funtion/class> readability; Make <function/class> more concise by extracting <logic> into helper function; etc_)
 
 ## Proposed solution
 **Describe the solution you'd like.**
