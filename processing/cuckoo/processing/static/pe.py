@@ -407,6 +407,11 @@ class PEFile:
         except ValueError:
             return str(pe_ts)
 
+    def get_machine_type(self):
+        """Returns the machine type"""
+        val = self._pe.FILE_HEADER.Machine
+        return pefile.MACHINE_TYPE.get(val, hex(val))
+
     def get_pdb_path(self):
         """Return the PDB path or None"""
         if not hasattr(self._pe, "DIRECTORY_ENTRY_DEBUG"):
@@ -449,5 +454,6 @@ class PEFile:
             "pe_versioninfo": self.get_versioninfo(),
             "pe_imphash": self.get_imphash(),
             "pe_timestamp": self.get_compile_timestamp(),
+            "pe_machine_type": self.get_machine_type(),
             "signatures": self.get_certificates(),
         }
